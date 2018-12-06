@@ -1,0 +1,10 @@
+*.a
+*.o
+*.swp
+*.swo
+*.output
+
+doc/
+bin/
+
+tags
