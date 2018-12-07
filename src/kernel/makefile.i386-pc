@@ -23,15 +23,15 @@
 #
 
 # C Source Files
-C_SRC = $(wildcard hal/arch/$(TARGET)/*.c)   \
-        $(wildcard hal/*.c)             \
+C_SRC = $(wildcard hal/arch/$(ARCH)/*.c) \
+        $(wildcard hal/*.c)              \
         $(wildcard init/*.c)             \
         $(wildcard klib/*.c)             \
         $(wildcard dev/*.c)              \
         $(wildcard dev/stdout/console.c) \
 
 # Asembly Source Files
-ASM_SRC = $(wildcard hal/arch/$(TARGET)/*.S)
+ASM_SRC = $(wildcard hal/arch/$(ARCH)/*.S)
 
 # Object Files
 OBJ = $(ASM_SRC:.S=.o) \
@@ -41,7 +41,7 @@ OBJ = $(ASM_SRC:.S=.o) \
 EXEC = kernel
 
 # Linker Configuration
-export LDFLAGS = -T hal/arch/$(TARGET)/link.ld
+export LDFLAGS = -T hal/arch/$(ARCH)/link.ld
 
 # Builds All Object Files
 all: $(OBJ)

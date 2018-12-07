@@ -23,7 +23,7 @@
 #
 
 # Source Files
-SRC = $(wildcard nanvix/$(TARGET)/*.c)
+SRC = $(wildcard nanvix/$(ARCH)/*.c)
 
 # Object Files
 OBJ = $(SRC:.c=.o)

@@ -33,7 +33,7 @@ mppa256: $(OBJ)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC) -o $(BINDIR)/$(EXECBIN) $(LIBS)
 
 # Builds object files for i386 target.
-i386:
+i386-pc:
 	# Nothing to do.
 
 # Cleans all object files.
