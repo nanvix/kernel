@@ -29,6 +29,7 @@
 #include <arch/k1b/core.h>
 #include <arch/k1b/elf.h>
 #include <arch/k1b/int.h>
+#include <arch/k1b/ivt.h>
 #include <arch/k1b/util.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
@@ -82,9 +83,10 @@ PRIVATE void core_setup(void)
 	coreid = get_core_id();
 	kprintf("booting up core %d", coreid);
 
-	idt_setup();
-	mOS_register_scall_handler((mOS_exception_handler_t) &_syscall); 
-	mOS_enable_hw_loop();
+	k1b_ivt_setup(
+		(k1b_hwint_handler_fn) k1b_do_hwint,
+		(k1b_swint_handler_fn) _syscall
+	);
 }
 
 /**
