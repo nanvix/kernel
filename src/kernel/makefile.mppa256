@@ -23,19 +23,19 @@
 #
 
 # C Source Files
-C_SRC = $(wildcard *.c)                \
-        $(wildcard hal/arch/$(TARGET)/*.c) \
-        $(wildcard hal/*.c) \
-        $(wildcard dev/jtag.c)         \
-        $(wildcard dev/*.c)            \
-        $(wildcard dev/stdout/jtag.c)  \
-        $(wildcard init/*.c)           \
-        $(wildcard klib/*.c)           \
-        $(wildcard pm/*.c)             \
+C_SRC = $(wildcard *.c)                  \
+        $(wildcard hal/arch/$(ARCH)/*.c) \
+        $(wildcard hal/*.c)              \
+        $(wildcard dev/jtag.c)           \
+        $(wildcard dev/*.c)              \
+        $(wildcard dev/stdout/jtag.c)    \
+        $(wildcard init/*.c)             \
+        $(wildcard klib/*.c)             \
+        $(wildcard pm/*.c)               \
         $(wildcard sys/*.c)
 
 # Asembly Source Files
-ASM_SRC = $(wildcard hal/arch/$(TARGET)/*.S)
+ASM_SRC = $(wildcard hal/arch/$(ARCH)/*.S)
 
 # Object Files
 OBJ = $(ASM_SRC:.S=.o) \

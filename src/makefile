@@ -22,14 +22,7 @@
 # SOFTWARE.
 #
 
-ifeq ($(TARGET), mppa256)
-	include $(MAKEDIR)/makefile.mppa256
-else
-ifeq ($(TARGET), i386-pc)
-	export TARGET=i386
-	include $(MAKEDIR)/makefile.i386
-endif
-endif
+include $(MAKEDIR)/makefile.$(TARGET)
 
 #===============================================================================
 # Toolchain Configuration
