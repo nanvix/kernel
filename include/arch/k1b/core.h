@@ -59,7 +59,7 @@
 	 *
 	 * @cond k1b
 	 */
-	static inline int hal_processor_get_core_id(void)
+	static inline int hal_core_get_id(void)
 	{
 		return (k1b_core_get_id());
 	}

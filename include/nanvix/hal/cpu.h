@@ -63,9 +63,9 @@
 	/**
 	 * @brief Gets the ID of the underlying core.
 	 *
-	 * @returns THe ID of the underlying core.
+	 * @returns The ID of the underlying core.
 	 */
-	EXTERN int hal_processor_get_core_id(void);
+	EXTERN int hal_core_get_id(void);
 
 /**@}*/
 
