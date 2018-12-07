@@ -26,23 +26,6 @@
 #include <nanvix/const.h>
 
 /**
- * @brief Enables interrupts in the underlying core.
- */
-PUBLIC void hal_enable_interrupts(void)
-{
-	mOS_set_it_level(0);
-	mOS_it_enable();
-}
-
-/**
- * @brief Disables interrupts in the underlying core.
- */
-PUBLIC void hal_disable_interrupts(void)
-{
-	mOS_it_disable();
-}
-
-/**
  * @brief Gets the ID of the underlying core.
  *
  * @returns The ID of the underlying core.

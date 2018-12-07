@@ -32,10 +32,6 @@
 /**@{*/
 
 	#include <nanvix/const.h>
-
-	/* Forward definitions. */
-	EXTERN void hal_enable_interrupts(void);
-	EXTERN void hal_disable_interrupts(void);
 	EXTERN int get_core_id(void);
 
 	static inline int hal_processor_get_core_id(void)

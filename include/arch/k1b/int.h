@@ -36,6 +36,7 @@
 	#include <arch/k1b/context.h>
 	#include <arch/k1b/ivt.h>
 	#include <nanvix/const.h>
+	#include <mOS_vcore_u.h>
 	#include <vbsp.h>
 
 	/**
@@ -47,6 +48,50 @@
 	 * @note This function is called from mOS.
 	 */
 	EXTERN void k1b_do_hwint(k1b_hwint_id_t hwintid, struct k1b_context *ctx);
+
+	/**
+	 * @brief Enables interrupts.
+	 *
+	 * Enables all hardware interrupts in the underlying core.
+	 */
+	static inline void k1b_hwint_enable(void)
+	{
+		mOS_set_it_level(0);
+		mOS_it_enable();
+	}
+
+	/**
+	 * @see k1b_hwint_enable()
+	 *
+	 * @cond k1b
+	 */
+	static inline void hal_enable_interrupts(void)
+	{
+		k1b_hwint_enable();
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Disables interrupts.
+	 *
+	 * Disables all hardware interrupts in the underlying core.
+	 */
+	static inline void k1b_hwint_disable(void)
+	{
+		mOS_it_disable();
+		mOS_set_it_level(0xf);
+	}
+
+	/**
+	 * @see k1b_hwint_disable()
+	 *
+	 * @cond k1b
+	 */
+	static inline void hal_disable_interrupts(void)
+	{
+		k1b_hwint_disable();
+	}
+	/**@endcond*/
 
 /**@}*/
 
