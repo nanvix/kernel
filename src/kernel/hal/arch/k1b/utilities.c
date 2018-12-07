@@ -26,21 +26,6 @@
 #include <nanvix/const.h>
 
 /**
- * Invalidates the data cache of the underlying core.
- *
- * @cond mppa256
- */
-PUBLIC void hal_dcache_invalidate(void)
-{
-	__builtin_k1_wpurge();
-	__builtin_k1_fence();
-	__builtin_k1_dinval();
-}
-/**
- * @endcond
- */
-
-/**
  * @brief Enables interrupts in the underlying core.
  */
 PUBLIC void hal_enable_interrupts(void)

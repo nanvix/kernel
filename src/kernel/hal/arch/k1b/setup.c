@@ -26,6 +26,7 @@
 #include <HAL/hal/core/legacy.h>
 #include <mOS_common_types_c.h>
 
+#include <arch/k1b/cache.h>
 #include <arch/k1b/core.h>
 #include <arch/k1b/elf.h>
 #include <arch/k1b/int.h>
@@ -68,7 +69,7 @@ PRIVATE void tls_init(void)
 
 	__k1_uint8_t *tls_base1 = __k1_tls_pe_base_address(coreid);
 	__k1_setup_tls_pe(tls_base1);
-	hal_dcache_invalidate();
+	k1b_dcache_inval();
 }
 
 /**
@@ -108,7 +109,7 @@ PRIVATE NORETURN void setup_master_core(void)
 
 	get_k1_boot_args(&args);
 
-	hal_dcache_invalidate();
+	k1b_dcache_inval();
 
 	kmain(args.argc, (const char **)args.argv);
 }
@@ -124,7 +125,7 @@ PUBLIC void core_halt(void)
 	{
 		mOS_it_disable_num(MOS_VC_IT_USER_0);
 		mOS_idle1();
-		hal_dcache_invalidate();
+		k1b_dcache_inval();
 		mOS_it_clear_num(MOS_VC_IT_USER_0);
 		mOS_it_enable_num(MOS_VC_IT_USER_0);
 	}
@@ -141,13 +142,13 @@ PUBLIC void core_start(void)
 	{
 		core_setup();
 		cores[coreid].initialized = 1;
-		hal_dcache_invalidate();
+		k1b_dcache_inval();
 	}
 	
 	cores[coreid].start();
 
 	cores[coreid].state = CORE_IDLE;
-	hal_dcache_invalidate();
+	k1b_dcache_inval();
 }
 
 /**
@@ -160,7 +161,7 @@ PUBLIC void core_wakeup(int coreid, void (*start)(void))
 {
 	cores[coreid].state = CORE_BUSY;
 	cores[coreid].start = start;
-	hal_dcache_invalidate();
+	k1b_dcache_inval();
 	
 	bsp_inter_pe_event_notify(1 << coreid, BSP_IT_LINE);
 }
