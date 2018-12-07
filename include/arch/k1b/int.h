@@ -26,8 +26,10 @@
 #define ARCH_K1B_INT_H_
 
 /**
- * @addtogroup k1b-hwint Hardware Interrupts
+ * @addtogroup k1b-int Interrupt
  * @ingroup k1b
+ *
+ * @brief Interface for dealing with hardware and software interrupts.
  */
 /**@{*/
 

@@ -25,6 +25,14 @@
 #ifndef ARCH_K1B_IVT_H_
 #define ARCH_K1B_IVT_H_
 
+/**
+ * @addtogroup k1b-int IVT
+ * @ingroup k1b
+ *
+ * @brief Interface for managing the interrupt vector table.
+ */
+/**@{*/
+
 	#include <nanvix/const.h>
 	#include <vbsp.h>
 	#include <mOS_vcore_u.h>
@@ -72,5 +80,7 @@
 	 * @param do_swint Default software interrupt handler.
 	 */
 	EXTERN void k1b_ivt_setup(k1b_hwint_handler_fn do_hwint, k1b_swint_handler_fn do_swint);
+
+/**@}*/
 
 #endif /* ARCH_K1B_IVT_H_ */

@@ -26,8 +26,10 @@
 #define ARCH_K1B_CORE_H_
 
 /**
- * @addtogroup k1b-core Core Interface
+ * @addtogroup k1b-core Core
  * @ingroup k1b
+ *
+ * @brief Interface for dealing with processor cores.
  */
 /**@{*/
 
