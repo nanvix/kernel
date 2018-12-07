@@ -22,35 +22,26 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_K1B_INT_H_
-#define ARCH_K1B_INT_H_
+#ifndef ARCH_K1B_CONTEXT_H_
+#define ARCH_K1B_CONTEXT_H_
 
 /**
- * @addtogroup k1b-hwint Hardware Interrupts
+ * @addtogroup k1b-context Interrupted Context
  * @ingroup k1b
  */
 /**@{*/
 
-	#include <arch/k1b/context.h>
-	#include <arch/k1b/ivt.h>
-	#include <nanvix/const.h>
 	#include <vbsp.h>
 
 	/**
-	 * @brief Number of hardware interrupts in the k1b architecture.
-	 */
-	#define K1B_INT_NR 24
-
-	/**
-	 * @brief Hardware interrupt dispatcher.
+	 * @brief Interrupted context.
 	 *
-	 * @param hwintid ID of the hardware interrupt that was triggered.
-	 * @param ctx     Interrupted context.
-	 *
-	 * @note This function is called from mOS.
+	 * @note This is actually an alias for low-level libraries. We do
+	 * not want to use ugly coding style that hides structs for the
+	 * interface.
 	 */
-	EXTERN void k1b_do_hwint(k1b_hwint_id_t hwintid, struct k1b_context *ctx);
+	#define k1b_context ___k1_vcontext_t
 
 /**@}*/
 
-#endif /* ARCH_K1B_INT_H_ */
+#endif /* ARCH_K1B_CONTEXT_H_ */

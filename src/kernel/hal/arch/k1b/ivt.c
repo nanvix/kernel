@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#include <nanvix/const.h>
 #include <arch/k1b/ivt.h>
+#include <nanvix/const.h>
 
 /**
  * Lookup table that maps hardware interrupt IDs into numbers.

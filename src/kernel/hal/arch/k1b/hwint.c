@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include <arch/k1b/int.h>
+#include <arch/k1b/context.h>
 #include <arch/k1b/int.h>
 #include <arch/k1b/ivt.h>
 #include <arch/k1b/util.h>
