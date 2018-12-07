@@ -23,6 +23,7 @@
  */
 
 #include <arch/k1b/ivt.h>
+#include <arch/k1b/pic.h>
 #include <nanvix/const.h>
 
 /**
@@ -71,4 +72,6 @@ PUBLIC void k1b_ivt_setup(
 	for (int i = 0; i < K1B_NUM_HWINT; i++)
 		bsp_register_it(do_hwint, hwints[i]);
 	mOS_register_scall_handler(do_swint); 
+
+	k1b_pic_setup();
 }

@@ -56,7 +56,6 @@
 	 */
 	static inline void k1b_hwint_enable(void)
 	{
-		mOS_set_it_level(0);
 		mOS_it_enable();
 	}
 
@@ -79,7 +78,6 @@
 	static inline void k1b_hwint_disable(void)
 	{
 		mOS_it_disable();
-		mOS_set_it_level(0xf);
 	}
 
 	/**
