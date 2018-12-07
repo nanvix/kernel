@@ -34,12 +34,36 @@
 /**@{*/
 
 	#include <nanvix/const.h>
+	#include <mOS_vcore_u.h>
 
 	#ifdef __k1io__
 		#define K1B_NUM_CORES 4
 	#else
 		#define K1B_NUM_CORES 16
 	#endif
+
+	/**
+	 * @brief Gets the ID of the core.
+	 *
+	 * The k1b_core_get_id() returns the ID of the underlying core.
+	 *
+	 * @returns The ID of the underlying core.
+	 */
+	static inline int k1b_core_get_id(void)
+	{
+		return (__k1_get_cpu_id());
+	}
+
+	/**
+	 * @see k1b_core_get_id()
+	 *
+	 * @cond k1b
+	 */
+	static inline int hal_processor_get_core_id(void)
+	{
+		return (k1b_core_get_id());
+	}
+	/*@endcond*/
 
 	/* Forward definitions. */
 	EXTERN void core_wakeup(int, void (*)(void));

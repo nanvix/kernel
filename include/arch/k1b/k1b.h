@@ -30,6 +30,5 @@
 	#include <arch/k1b/elf.h>
 	#include <arch/k1b/int.h>
 	#include <arch/k1b/io.h>
-	#include <arch/k1b/util.h>
 
 #endif /* ARCH_K1B_K1B_H_ */

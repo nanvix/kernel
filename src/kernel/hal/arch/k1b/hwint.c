@@ -25,7 +25,6 @@
 #include <arch/k1b/context.h>
 #include <arch/k1b/int.h>
 #include <arch/k1b/ivt.h>
-#include <arch/k1b/util.h>
 #include <nanvix/const.h>
 #include <nanvix/hal/memory.h>
 #include <nanvix/hal/interrupt.h>

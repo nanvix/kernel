@@ -66,7 +66,7 @@ PRIVATE void thread_exit(void)
 {
 	int coreid;
 
-	coreid = get_core_id();
+	coreid = hal_processor_get_core_id();
 	threads[coreid].state = THREAD_TERMINATED;
 	hal_dcache_invalidate();
 }
@@ -78,7 +78,7 @@ PRIVATE void thread_start(void)
 {
 	int coreid;
 
-	coreid = get_core_id();
+	coreid = hal_processor_get_core_id();
 	threads[coreid].start(threads[coreid].arg);
 
 	thread_exit();

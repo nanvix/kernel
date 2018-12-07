@@ -31,7 +31,6 @@
 #include <arch/k1b/elf.h>
 #include <arch/k1b/int.h>
 #include <arch/k1b/ivt.h>
-#include <arch/k1b/util.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
 #include "mppa256.h"
@@ -65,7 +64,7 @@ PRIVATE struct
  */
 PRIVATE void tls_init(void)
 {
-	int coreid = get_core_id();
+	int coreid = k1b_core_get_id();
 
 	__k1_uint8_t *tls_base1 = __k1_tls_pe_base_address(coreid);
 	__k1_setup_tls_pe(tls_base1);
@@ -81,7 +80,7 @@ PRIVATE void core_setup(void)
 
 	tls_init();
 
-	coreid = get_core_id();
+	coreid = k1b_core_get_id();
 	kprintf("booting up core %d", coreid);
 
 	k1b_ivt_setup(
@@ -119,7 +118,7 @@ PRIVATE NORETURN void setup_master_core(void)
  */
 PUBLIC void core_halt(void)
 {
-	int coreid = get_core_id();
+	int coreid = k1b_core_get_id();
 
 	while (cores[coreid].state == CORE_IDLE)
 	{
@@ -136,7 +135,7 @@ PUBLIC void core_halt(void)
  */
 PUBLIC void core_start(void)
 {
-	int coreid = get_core_id();
+	int coreid = k1b_core_get_id();
 
 	if (!cores[coreid].initialized)
 	{
