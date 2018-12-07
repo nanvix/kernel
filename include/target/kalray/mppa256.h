@@ -35,6 +35,7 @@
 	 * @defgroup k1b Bostan Architecture
 	 */
 	#include <arch/k1b/k1b.h>
+	#include <arch/k1b/ivt.h>
 	#include <arch/k1b/core.h>
 
 	#include <driver/jtag.h>
@@ -72,7 +73,7 @@
 	/**
 	 * @brief Number of hardware interrupts in the Kalray MPPA-256 target.
 	 */
-	#define _HAL_INT_NR K1B_INT_NR
+	#define _HAL_INT_NR K1B_NUM_HWINT
 
 	/**
 	 * @name Hardware Interrupts

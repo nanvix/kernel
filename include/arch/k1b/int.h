@@ -37,11 +37,6 @@
 	#include <vbsp.h>
 
 	/**
-	 * @brief Number of hardware interrupts in the k1b architecture.
-	 */
-	#define K1B_INT_NR 24
-
-	/**
 	 * @brief Hardware interrupt dispatcher.
 	 *
 	 * @param hwintid ID of the hardware interrupt that was triggered.
