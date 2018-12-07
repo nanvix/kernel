@@ -22,19 +22,18 @@
  * SOFTWARE.
  */
 
+#include <arch/k1b/cache.h>
 #include <arch/k1b/context.h>
 #include <arch/k1b/int.h>
 #include <arch/k1b/ivt.h>
 #include <nanvix/const.h>
-#include <nanvix/hal/memory.h>
-#include <nanvix/hal/interrupt.h>
 #include <nanvix/klib.h>
 #include <errno.h>
 
 /**
  * @brief Interrupt handlers.
  */
-PRIVATE hal_interrupt_handler_t k1b_handlers[K1B_NUM_HWINT] = {
+PRIVATE void (*k1b_handlers[K1B_NUM_HWINT])(int) = {
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
@@ -74,12 +73,12 @@ found:
 }
 
 /**
- * The hal_interrupt_set_handler() function sets the function pointed
- * to by @p handler as the handler for the hardware interrupt whose
+ * The k1b_hwint_handler_set() function sets the function pointed to
+ * by @p handler as the handler for the hardware interrupt whose
  * number is @p num.
  */
-PUBLIC void hal_interrupt_set_handler(int num, hal_interrupt_handler_t handler)
+PUBLIC void k1b_hwint_handler_set(int num, void (*handler)(int))
 {
 	k1b_handlers[num] = handler;
-	hal_dcache_invalidate();
+	k1b_dcache_inval();
 }

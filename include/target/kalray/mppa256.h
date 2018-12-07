@@ -36,6 +36,7 @@
 	 */
 	#include <arch/k1b/cache.h>
 	#include <arch/k1b/k1b.h>
+	#include <arch/k1b/int.h>
 	#include <arch/k1b/ivt.h>
 	#include <arch/k1b/core.h>
 

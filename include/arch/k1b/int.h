@@ -91,6 +91,22 @@
 	}
 	/**@endcond*/
 
+	/**
+	 * @brief Sets a handler for a hardware interrupt.
+	 *
+	 * @param num     Number of the target hardware interrupt.
+	 * @param handler Hardware interrupt handler.
+	 */
+	EXTERN void k1b_hwint_handler_set(int num, void (*handler)(int));
+
+	/**
+	 * @see k1b_hwint_handler_set()
+	 */
+	static inline void hal_interrupt_set_handler(int num, void (*handler)(int))
+	{
+		k1b_hwint_handler_set(num, handler);
+	}
+
 /**@}*/
 
 #endif /* ARCH_K1B_INT_H_ */
