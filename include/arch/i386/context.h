@@ -54,8 +54,6 @@
 	#define SS      64
 	/**@}*/
 
-#ifndef _ASM_FILE_
-
 	#include <arch/i386/core.h>
 
 	/**
@@ -68,7 +66,5 @@
         dword_t edi, esi, ebp, ebx, edx, ecx, eax;
         dword_t eip, cs, eflags, useresp, ss;	
 	};
-
-#endif /* _ASM_FILE */
 
 #endif /* ARCH_I386_H_ */

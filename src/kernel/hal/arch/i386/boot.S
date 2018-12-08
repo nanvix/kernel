@@ -115,7 +115,7 @@ start:
 		movl $core0.kstack + PAGE_SIZE - DWORD_SIZE, %ebp
 		movl $core0.kstack + PAGE_SIZE - DWORD_SIZE, %esp
 
-	call hal_processor_setup
+	call i386_core_setup
 
 	call kmain
 

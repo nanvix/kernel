@@ -44,9 +44,9 @@
 	/**
 	 * @brief Gets the number of cores.
 	 *
-	 * @returns The number of cores of the underlying processor.
+	 * @returns The number of cores in the underlying processor.
 	 */
-	EXTERN int hal_processor_get_num_cores(void);
+	EXTERN int hal_cpu_get_num_cores(void);
 
 /**@}*/
 

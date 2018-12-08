@@ -69,8 +69,6 @@
 	#define TSS_IOMAP  100 /* IO map.               */
 	/**@}*/
 
-#ifndef _ASM_FILE_
-
 	#include <nanvix/const.h>
 	#include <arch/i386/gdt.h>
 
@@ -130,8 +128,6 @@
 			: "eax"
 		);
 	}
-
-#endif /* _ASM_FILE_ */
 
 /**@}*/
 

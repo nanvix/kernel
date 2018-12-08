@@ -39,12 +39,12 @@
 	/**
 	 * @brief Initializes the processor.
 	 */
-	EXTERN void hal_processor_setup(void);
+	EXTERN void hal_core_setup(void);
 
 	/**
 	 * @brief Halts the processor.
 	 */
-	EXTERN void hal_processor_halt(void);
+	EXTERN void hal_core_halt(void);
 
 	/**
 	 * @brief Gets the ID of the underlying core.

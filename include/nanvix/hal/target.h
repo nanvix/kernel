@@ -37,8 +37,8 @@
 	#error "_HAL_NUM_CORES not defined"
 	#endif
 
-	#ifndef __hal_processor_get_num_cores
-	#error "hal_processor_get_num_cores() not defined?"
+	#ifndef __hal_cpu_get_num_cores
+	#error "hal_cpu_get_num_cores() not defined?"
 	#endif
 
 	#ifndef HAL_INT_CLOCK
@@ -53,12 +53,12 @@
 	#error "hal_core_get_id() not defined?"
 	#endif
 
-	#ifndef __hal_processor_halt
-	#error "hal_processor_halt() not defined?"
+	#ifndef __hal_core_halt
+	#error "hal_core_halt() not defined?"
 	#endif
 
-	#ifndef __hal_processor_setup
-	#error "hal_processor_setup() not defined?"
+	#ifndef __hal_core_setup
+	#error "hal_core_setup() not defined?"
 	#endif
 
 	#ifndef __hal_stdout_init

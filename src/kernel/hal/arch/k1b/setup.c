@@ -28,6 +28,7 @@
 
 #include <arch/k1b/cache.h>
 #include <arch/k1b/core.h>
+#include <arch/k1b/cpu.h>
 #include <arch/k1b/elf.h>
 #include <arch/k1b/int.h>
 #include <arch/k1b/ivt.h>
@@ -123,7 +124,7 @@ PUBLIC void core_halt(void)
 	while (cores[coreid].state == CORE_IDLE)
 	{
 		mOS_it_disable_num(MOS_VC_IT_USER_0);
-		mOS_idle1();
+		k1b_await();
 		k1b_dcache_inval();
 		mOS_it_clear_num(MOS_VC_IT_USER_0);
 		mOS_it_enable_num(MOS_VC_IT_USER_0);

@@ -22,19 +22,17 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_K1B_IO_H_
-#define ARCH_K1B_IO_H_
+#ifndef ARCH_I386_IO_H_
+#define ARCH_I386_IO_H_
 
 /**
- * @addtogroup k1b-io I/O
- * @ingroup k1b
+ * @addtogroup i386-io I/O
+ * @ingroup i386
  *
  * @brief Input/Output
  */
 /**@{*/
 
-	#include <nanvix/const.h>
-	#include <nanvix/klib.h>
 	#include <stdint.h>
 
 	/**
@@ -46,32 +44,53 @@
 	/**@}*/
 
 	/**
-	 * @brief Size of JTAG buffer (in bytes).
+	 * @brief Writes a byte to an I/O port.
+	 *
+	 * The i386_outb() function writes @p byte to I/o port whose number is
+	 * @p port.
+	 *
+	 * @param port Number of the target port.
+	 * @param byte Byte to write.
 	 */
-	#define JTAG_BUFSIZE 32
+	static inline void i386_outb(uint16_t port, uint8_t byte)
+	{
+		__asm__ __volatile__ ("outb %0, %1" : : "a"(byte), "Nd"(port));
+	}
 
 	/**
-	 * The hal_outputb() function is a dummy function. In the k1b
-	 * architecture, there are not I/O ports.
+	 * @see i386_outb()
+	 *
+	 * @cond i386
 	 */
 	static inline void hal_outputb(uint16_t port, uint8_t byte)
 	{
-		UNUSED(port);
-		UNUSED(byte);
+		i386_outb(port, byte);
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Waits an operation in an I/O port to complete.
+	 *
+	 * The i386_iowait() function forces a delay, so that an on-going
+	 * operation in an I/O port completes.
+	 */
+	static inline void i386_iowait(void)
+	{
+		__asm__ __volatile__("outb %%al, $0x80" : : "a"(0));
 	}
 
 	/**
-	 * The hal_iowait() function is a dummy function. In the k1b
-	 * architecture, there are not I/O ports.
+	 * @see i386_iowait()
+	 *
+	 * @cond i386
 	 */
 	static inline void hal_iowait(void)
 	{
-		noop();
+		i386_iowait();
 	}
-
-	/* Forward definitions. */
-	EXTERN void hal_jtag_write(const uint8_t *, size_t);
+	/**@endcond*/
 
 /**@}*/
 
-#endif /* ARCH_K1B_IO_H_ */
+#endif /* ARCH_I386_IO_H_ */
+

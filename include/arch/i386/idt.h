@@ -59,8 +59,6 @@
 	#define IDT_TRAP32 0xf /**< 32-bit trap gate.      */
 	/**@}*/
 
-#ifndef _ASM_FILE_
-
 	#include <nanvix/const.h>
 
 	/**
@@ -107,8 +105,6 @@
 			: "memory", "eax"
 		);
 	}
-
-#endif /* _ASM_FILE_ */
 
 /**@}*/
 

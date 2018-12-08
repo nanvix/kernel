@@ -8,7 +8,6 @@
 
 #ifndef _STDINT_H
 #define _STDINT_H
-#ifndef _ASM_FILE_
 
 #include <machine/_default_types.h>
 #include <sys/_intsup.h>
@@ -509,5 +508,4 @@ typedef __uintptr_t uintptr_t;
 }
 #endif
 
-#endif /* _ASM_FILE_ */
 #endif /* _STDINT_H */

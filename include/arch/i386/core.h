@@ -37,11 +37,9 @@
 	 * @name Provided Interface
 	 */
 	/**@{*/
-	#define __hal_iowait
-	#define __hal_outputb
-	#define __hal_processor_halt
+	#define __hal_core_setup
+	#define __hal_core_halt
 	#define __hal_core_get_id
-	#define __hal_processor_setup
 	/**@}*/
 
 	/**
@@ -64,11 +62,6 @@
 	#define QWORD_BIT  64 /**< Quad word.   */
 	/**@}*/
 
-	/**
-	 * @brief Number of cores in the i386 architecture.
-	 */
-	#define I386_NUM_CORES 1
-
 #ifndef _ASM_FILE_
 
 	#include <nanvix/const.h>
@@ -84,74 +77,46 @@
 	/**@}*/
 
 	/**
+	 * @brief Gets the ID of the core.
+	 *
+	 * The i386_core_get_id() returns the ID of the underlying core.
+	 *
+	 * @returns The ID of the underlying core.
+	 */
+	static inline int i386_core_get_id(void)
+	{
+		return (0);
+	}
+
+	/**
+	 * @see i386_core_get_id()
+	 *
+	 * @cond i386
+	 */
+	static inline int hal_core_get_id(void)
+	{
+		return (i386_core_get_id());
+	}
+	/*@endcond*/
+
+	/**
 	 * @brief Halts the processor.
 	 *
-	 * Stops instruction execution and places the processor in a halt
-	 * state. An enabled interrupt, NMI, or a reset will resume
-	 * execution. If an interrupt (including NMI) is used to resume
-	 * execution after HLT, the saved CS:IP (or CS:EIP) value points
-	 * to the instruction following HLT.
+	 * The i386_hlt() function stops instruction execution in the the
+	 * underlying core and places it in a halt state. An enabled
+	 * hardware interrupt, NMI, or a reset resumes execution.
 	 */
-	static inline void hlt(void)
+	static inline void i386_hlt(void)
 	{
 		__asm__ __volatile__("hlt");
 	}
 
 	/**
-	 * @see hlt()
+	 * @see i386_hlt()
 	 */
-	static inline void hal_processor_halt(void)
+	static inline void hal_core_halt(void)
 	{
-		hlt();
-	}
-
-	/**
-	 * @brief Writes a byte to an I/O port.
-	 *
-	 * The outb() function writes @p byte to I/o port whose number is
-	 * @p port.
-	 *
-	 * @param port Number of the target port.
-	 * @param byte Byte to write.
-	 */
-	static inline void outb(uint16_t port, uint8_t byte)
-	{
-		__asm__ __volatile__ ("outb %0, %1" : : "a"(byte), "Nd"(port));
-	}
-
-	/**
-	 * @see outb()
-	 */
-	static inline void hal_outputb(uint16_t port, uint8_t byte)
-	{
-		outb(port, byte);
-	}
-
-	/**
-	 * @brief Waits an operation in an I/O port to complete.
-	 *
-	 * The iowait() function forces a delay, so that an on-going
-	 * operation in an I/O port completes.
-	 */
-	static inline void iowait(void)
-	{
-		__asm__ __volatile__("outb %%al, $0x80" : : "a"(0));
-	}
-
-	/**
-	 * @see iowait()
-	 */
-	static inline void hal_iowait(void)
-	{
-		iowait();
-	}
-
-	/**
-	 * Returns the ID of the underlying core.
-	 */
-	static inline int hal_core_get_id(void)
-	{
-		return (0);
+		i386_hlt();
 	}
 
 #endif /* _ASM_FILE_ */

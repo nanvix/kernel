@@ -28,19 +28,11 @@
 #include <arch/i386/tss.h>
 
 /**
- * @cond i386
- */
-
-/**
  * Initializes the GDT, TSS and IDT.
  */
-PUBLIC void hal_processor_setup(void)
+PUBLIC void i386_core_setup(void)
 {
 	gdt_setup();
 	tss_setup();
 	idt_setup();
 }
-
-/**
- * @endcond
- */

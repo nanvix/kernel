@@ -22,25 +22,57 @@
  * SOFTWARE.
  */
 
-#include <nanvix/const.h>
-#include <arch/i386/8253.h>
-#include <arch/i386/io.h>
+#ifndef ARCH_K1B_CPU_H_
+#define ARCH_K1B_CPU_H_
 
 /**
- * The i386_clock_init() function initializes the clock driver in the
- * i386 architecture. The frequency of the device is set to @freq Hz.
+ * @addtogroup k1b-cpu CPU
+ * @ingroup k1b
+ *
+ * @brief k1b Processor
  */
-PUBLIC void i386_clock_init(unsigned freq)
-{
-	uint16_t freq_divisor;
-	
-	freq_divisor = PIT_FREQUENCY/freq;
-	
-	/* Send control byte: adjust frequency divisor. */
-	i386_outb(PIT_CTRL, 0x36);
-	
-	/* Send data byte: divisor_low and divisor_high. */
-	i386_outb(PIT_DATA, (uint8_t)(freq_divisor & 0xff));
-	i386_outb(PIT_DATA, (uint8_t)((freq_divisor >> 8)));
-}
+/**@{*/
 
+	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_cpu_get_num_cores
+	/**@}*/
+
+	/**
+	 * @brief Number of cores in the k1b processor.
+	 */
+	#ifdef __k1io__
+		#define K1B_NUM_CORES 4
+	#else
+		#define K1B_NUM_CORES 16
+	#endif
+
+	/**
+	 * @brief Gets the number of cores.
+	 *
+	 * The k1b_cpu_get_num_cores() gets the number of cores in the
+	 * underlying k1b processor.
+	 *
+	 * @returns The the number of cores in the underlying processor.
+	 */
+	static inline int k1b_cpu_get_num_cores(void)
+	{
+		return (K1B_NUM_CORES);
+	}
+
+	/**
+	 * @see k1b_cpu_get_num_cores()
+	 *
+	 * @cond k1b
+	 */
+	static inline int hal_cpu_get_num_cores(void)
+	{
+		return (k1b_cpu_get_num_cores());
+	}
+	/**@endcond*/
+
+/**@}*/
+
+#endif /* ARCH_K1B_CPU_H_ */

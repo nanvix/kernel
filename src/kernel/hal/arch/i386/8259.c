@@ -24,7 +24,7 @@
 
 #include <nanvix/const.h>
 #include <arch/i386/8259.h>
-#include <arch/i386/core.h>
+#include <arch/i386/io.h>
 #include <stdint.h>
 
 /*============================================================================*
@@ -37,8 +37,8 @@
  */
 PUBLIC void pic_mask(uint16_t mask)
 {
-	outb(PIC_DATA_MASTER, mask & 0xff);
-	outb(PIC_DATA_SLAVE, mask >> 8);
+	i386_outb(PIC_DATA_MASTER, mask & 0xff);
+	i386_outb(PIC_DATA_SLAVE, mask >> 8);
 }
 
 /*============================================================================*
@@ -57,32 +57,32 @@ PUBLIC void pic_setup(uint8_t offset1, uint8_t offset2)
 	 * Starts initialization sequence
 	 * in cascade mode.
 	 */
-	outb(PIC_CTRL_MASTER, 0x11);
-	iowait();
-	outb(PIC_CTRL_SLAVE, 0x11);
-	iowait();
+	i386_outb(PIC_CTRL_MASTER, 0x11);
+	i386_iowait();
+	i386_outb(PIC_CTRL_SLAVE, 0x11);
+	i386_iowait();
 	
 	/* Send new vector offset. */
-	outb(PIC_DATA_MASTER, offset1);
-	iowait();
-	outb(PIC_DATA_SLAVE, offset2);
-	iowait();
+	i386_outb(PIC_DATA_MASTER, offset1);
+	i386_iowait();
+	i386_outb(PIC_DATA_SLAVE, offset2);
+	i386_iowait();
 	
 	/*
 	 * Tell the master that there is a slave
 	 * PIC hired up at IRQ line 2 and tell
 	 * the slave PIC that it is the second PIC. 
 	 */
-	outb(PIC_DATA_MASTER, 0x04);
-	iowait();
-	outb(PIC_DATA_SLAVE, 0x02);
-	iowait();
+	i386_outb(PIC_DATA_MASTER, 0x04);
+	i386_iowait();
+	i386_outb(PIC_DATA_SLAVE, 0x02);
+	i386_iowait();
 	
 	/* Set 8086 mode. */
-	outb(PIC_DATA_MASTER, 0x01);
-	iowait();
-	outb(PIC_DATA_SLAVE, 0x01);
-	iowait();
+	i386_outb(PIC_DATA_MASTER, 0x01);
+	i386_iowait();
+	i386_outb(PIC_DATA_SLAVE, 0x01);
+	i386_iowait();
 	
 	/* Clears interrupt mask. */
 	pic_mask(0x0000);

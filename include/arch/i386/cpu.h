@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,25 +22,53 @@
  * SOFTWARE.
  */
 
-#include <nanvix/const.h>
-#include <arch/i386/8253.h>
-#include <arch/i386/io.h>
+#ifndef ARCH_I386_CPU_H_
+#define ARCH_I386_CPU_H_
 
 /**
- * The i386_clock_init() function initializes the clock driver in the
- * i386 architecture. The frequency of the device is set to @freq Hz.
+ * @addtogroup i386-cpu CPU
+ * @ingroup i386
+ *
+ * @brief i386 Processor
  */
-PUBLIC void i386_clock_init(unsigned freq)
-{
-	uint16_t freq_divisor;
-	
-	freq_divisor = PIT_FREQUENCY/freq;
-	
-	/* Send control byte: adjust frequency divisor. */
-	i386_outb(PIT_CTRL, 0x36);
-	
-	/* Send data byte: divisor_low and divisor_high. */
-	i386_outb(PIT_DATA, (uint8_t)(freq_divisor & 0xff));
-	i386_outb(PIT_DATA, (uint8_t)((freq_divisor >> 8)));
-}
+/**@{*/
 
+	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_cpu_get_num_cores
+	/**@}*/
+
+	/**
+	 * @brief Number of cores in the i386 architecture.
+	 */
+	#define I386_NUM_CORES 1
+
+	/**
+	 * @brief Gets the number of cores.
+	 *
+	 * The i386_cpu_get_num_cores() gets the number of cores in the
+	 * underlying i386 processor.
+	 *
+	 * @returns The the number of cores in the underlying processor.
+	 */
+	static inline int i386_cpu_get_num_cores(void)
+	{
+		return (I386_NUM_CORES);
+	}
+
+	/**
+	 * @see i386_cpu_get_num_cores()
+	 *
+	 * @cond i386
+	 */
+	static inline int hal_cpu_get_num_cores(void)
+	{
+		return (i386_cpu_get_num_cores());
+	}
+	/**@endcond*/
+
+/**@}*/
+
+#endif /* ARCH_I386_CPU_H_ */
