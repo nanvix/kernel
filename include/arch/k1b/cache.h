@@ -34,6 +34,13 @@
 /**@{*/
 
 	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_dcache_invalidate
+	/**@}*/
+
+	/**
 	 * @brief Invalidates the data cache.
 	 *
 	 * The k1b_dcache_inval() function invalidates the data cache of

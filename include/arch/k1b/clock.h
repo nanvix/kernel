@@ -34,6 +34,13 @@
 /**@{*/
 
 	#include <nanvix/const.h>
+
+	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_clock_init
+	/**@}*/
 	
 	/**
 	 * @brief Initializes the clock driver in the k1b architecture.
@@ -44,11 +51,14 @@
 
 	/**
 	 * @see k1b_clock_init()
+	 *
+	 * @cond k1b
 	 */
 	static inline void hal_clock_init(unsigned freq)
 	{
 		k1b_clock_init(freq);
 	}
+	/**@endcond*/
 
 /**@}*/
 

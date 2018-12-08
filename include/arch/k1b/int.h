@@ -40,6 +40,15 @@
 	#include <vbsp.h>
 
 	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_disable_interrupts
+	#define __hal_enable_interrupts
+	#define __hal_interrupt_set_handler
+	/**@}*/
+
+	/**
 	 * @brief Hardware interrupt dispatcher.
 	 *
 	 * @param hwintid ID of the hardware interrupt that was triggered.
@@ -101,11 +110,14 @@
 
 	/**
 	 * @see k1b_hwint_handler_set()
+	 *
+	 * @cond k1b
 	 */
 	static inline void hal_interrupt_set_handler(int num, void (*handler)(int))
 	{
 		k1b_hwint_handler_set(num, handler);
 	}
+	/**@endcond*/
 
 /**@}*/
 

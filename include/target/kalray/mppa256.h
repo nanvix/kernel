@@ -35,12 +35,16 @@
 	 * @defgroup k1b Bostan Architecture
 	 */
 	#include <arch/k1b/cache.h>
+	#include <arch/k1b/core.h>
 	#include <arch/k1b/k1b.h>
 	#include <arch/k1b/int.h>
 	#include <arch/k1b/ivt.h>
-	#include <arch/k1b/core.h>
+	#include <arch/k1b/pic.h>
 
 	#include <driver/jtag.h>
+
+	#define __hal_stdout_init
+	#define __hal_stdout_write
 
 	/**
 	 * @name Hardware Interrupts for Kalray MPPA-256 Target
@@ -91,19 +95,25 @@
 
 	/**
 	 * @see jtag_init()
+	 *
+	 * @cond mppa256
 	 */
 	static inline void hal_stdout_init(void)
 	{
 		jtag_init();
 	}
+	/**@endcond*/
 
 	/**
 	 * @see jtag_write()
+	 *
+	 * @cond mppa256
 	 */
 	static inline void hal_stdout_write(const char *buf, size_t n)
 	{
 		jtag_write(buf, n);
 	}
+	/**@endcond*/
 
 /**@}*/
 

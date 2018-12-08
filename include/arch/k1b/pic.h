@@ -38,6 +38,14 @@
 	#include <stdint.h>
 
 	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_intlvl_drop
+	#define __hal_intlvl_raise
+	/**@}*/
+
+	/**
 	 * @brief Number of interrupt levels.
 	 */
 	#define K1B_NUM_INTLVL 16
@@ -119,6 +127,17 @@
 	}
 
 	/**
+	 * @see k1b_pic_drop()
+	 *
+	 * @cond k1b
+	 */
+	static inline int hal_intlvl_raise(int newlevel)
+	{
+		return (k1b_pic_raise(newlevel));
+	}
+	/**@endcond*/
+
+	/**
 	 * @brief Drops the interrupt level of the calling core.
 	 *
 	 * The k1b_pic_drop() function drops the interrupt level of the
@@ -128,6 +147,17 @@
 	{
 		mOS_set_it_level(intlvl_masks[newlevel]);
 	}
+
+	/**
+	 * @see k1b_pic_drop(int newlevel)
+	 *
+	 * @cond
+	 */
+	static inline void hal_intlvl_drop(int newlevel)
+	{
+		k1b_pic_drop(newlevel);
+	}
+	/**@}*/
 
 	/**
 	 * @brief Initializes the PIC.

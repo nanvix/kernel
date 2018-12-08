@@ -36,6 +36,16 @@
 	#include <nanvix/const.h>
 	#include <mOS_vcore_u.h>
 
+	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_core_get_id
+	#define __hal_processor_get_num_cores
+	#define __hal_processor_halt
+	#define __hal_processor_setup
+	/**@}*/
+
 	#ifdef __k1io__
 		#define K1B_NUM_CORES 4
 	#else
