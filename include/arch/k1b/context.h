@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,71 +22,28 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_I386_H_
-#define ARCH_I386_H_
+#ifndef ARCH_K1B_CONTEXT_H_
+#define ARCH_K1B_CONTEXT_H_
 
 /**
- * @addtogroup i386-processor Processor
- * @ingroup i386
+ * @addtogroup k1b-context Interrupt Context
+ * @ingroup k1b
  *
- * @brief Interface for dealing with the processor.
+ * @brief Interface for manipulating interrupt contexts.
  */
 /**@{*/
 
-	/**
-	 * @name Provided Interface
-	 */
-	/**@{*/
-	#define __hal_disable_interrupts
-	#define __hal_enable_interrupts
-	#define __hal_core_get_id
-	#define __hal_processor_setup
-	#define __hal_processor_get_num_cores
-	/**@}*/
-
-	#include <arch/i386/8253.h>
-	#include <arch/i386/8259.h>
-	#include <arch/i386/cache.h>
-	#include <arch/i386/core.h>
-	#include <arch/i386/int.h>
-	#include <arch/i386/paging.h>
-
-#ifndef _ASM_FILE_
+	#include <vbsp.h>
 
 	/**
-	 * Returns the number of cores of the underlying processor.
+	 * @brief Interrupted context.
+	 *
+	 * @note This is actually an alias for low-level libraries. We do
+	 * not want to use ugly coding style that hides structs for the
+	 * interface.
 	 */
-	static inline int hal_processor_get_num_cores(void)
-	{
-		return (1);
-	}
-
-	/**
-	 * Returns the ID of the underlying core.
-	 */
-	static inline int hal_core_get_id(void)
-	{
-		return (0);
-	}
-
-	/**
-	 * @see cli()
-	 */
-	static inline void hal_disable_interrupts(void)
-	{
-		cli();
-	}
-
-	/**
-	 * @see sti()
-	 */
-	static inline void hal_enable_interrupts(void)
-	{
-		sti();
-	}
-
-#endif /* _ASM_FILE_ */
+	#define k1b_context ___k1_vcontext_t
 
 /**@}*/
 
-#endif /* ARCH_I386_H_ */
+#endif /* ARCH_K1B_CONTEXT_H_ */

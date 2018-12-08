@@ -22,48 +22,50 @@
  * SOFTWARE.
  */
 
-#include <mOS_vcore_u.h>
-#include <nanvix/const.h>
+#ifndef ARCH_K1B_CACHE_H_
+#define ARCH_K1B_CACHE_H_
 
 /**
- * Invalidates the data cache of the underlying core.
+ * @addtogroup k1b-cache Memory Cache
+ * @ingroup k1b
  *
- * @cond mppa256
+ * @brief Interface for managing the memory cache.
  */
-PUBLIC void hal_dcache_invalidate(void)
-{
-	__builtin_k1_wpurge();
-	__builtin_k1_fence();
-	__builtin_k1_dinval();
-}
-/**
- * @endcond
- */
+/**@{*/
 
-/**
- * @brief Enables interrupts in the underlying core.
- */
-PUBLIC void hal_enable_interrupts(void)
-{
-	mOS_set_it_level(0);
-	mOS_it_enable();
-}
+	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_dcache_invalidate
+	/**@}*/
 
-/**
- * @brief Disables interrupts in the underlying core.
- */
-PUBLIC void hal_disable_interrupts(void)
-{
-	mOS_it_disable();
-}
+	/**
+	 * @brief Invalidates the data cache.
+	 *
+	 * The k1b_dcache_inval() function invalidates the data cache of
+	 * the underlying core. First, it purges the write buffer, then it
+	 * waits all pending write operations of other cores to complete,
+	 * and finally it performs a full invalidation in the data cache.
+	 */
+	static inline void k1b_dcache_inval(void)
+	{
+		__builtin_k1_wpurge();
+		__builtin_k1_fence();
+		__builtin_k1_dinval();
+	}
 
-/**
- * @brief Gets the ID of the underlying core.
- *
- * @returns The ID of the underlying core.
- */
-PUBLIC int get_core_id(void)
-{
-	return (__k1_get_cpu_id());
-}
+	/**
+	 * @see k1b_dcache_inval()
+	 *
+	 * @cond k1b
+	 */
+	static inline void hal_dcache_invalidate(void)
+	{
+		k1b_dcache_inval();
+	}
+	/**@endcond*/
 
+/**@}*/
+
+#endif /* ARCH_K1B_CACHE_H_ */

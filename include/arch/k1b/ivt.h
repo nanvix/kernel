@@ -22,28 +22,65 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_K1B_UTIL_H_
-#define ARCH_K1B_UTIL_H_
+#ifndef ARCH_K1B_IVT_H_
+#define ARCH_K1B_IVT_H_
 
 /**
- * @addtogroup k1b-util Utilities Interface
+ * @addtogroup k1b-int IVT
  * @ingroup k1b
+ *
+ * @brief Interface for managing the interrupt vector table.
  */
 /**@{*/
 
 	#include <nanvix/const.h>
+	#include <vbsp.h>
+	#include <mOS_vcore_u.h>
 
-	/* Forward definitions. */
-	EXTERN void hal_dcache_invalidate(void);
-	EXTERN void hal_enable_interrupts(void);
-	EXTERN void hal_disable_interrupts(void);
-	EXTERN int get_core_id(void);
+	/**
+	 * @brief Number of hardware interrupts.
+	 *
+	 * Number of hardware interrupt entries in the Interrupt Vector
+	 * Table (IVT).
+	 */
+	#define K1B_NUM_HWINT 24
 
-	static inline int hal_processor_get_core_id(void)
-	{
-		return (get_core_id());
-	}
+	/**
+	 * @brief Number of software interrupts.
+	 *
+	 * Number of software interrupt entries in the Interrupt vector
+	 * table (IVT).
+	 */
+	#define K1B_NUM_SWINT 1
+
+	/**
+	 * @brief Hardware interrupt ID.
+	 */
+	typedef bsp_ev_src_e k1b_hwint_id_t;
+
+	/**
+	 * @brief Hardware Interrupt handler.
+	 */
+	typedef it_handler_t k1b_hwint_handler_fn;
+
+	/**
+	 * @brief Software interrupt handler.
+	 */
+	typedef mOS_exception_handler_t k1b_swint_handler_fn;
+
+	/**
+	 * @brief Hardware interrupt numbers.
+	 */
+	EXTERN const k1b_hwint_id_t hwints[K1B_NUM_HWINT];
+
+	/**
+	 * @brief Initializes the interrupt vector table.
+	 *
+	 * @param do_hwint Default hardware interrupt handler.
+	 * @param do_swint Default software interrupt handler.
+	 */
+	EXTERN void k1b_ivt_setup(k1b_hwint_handler_fn do_hwint, k1b_swint_handler_fn do_swint);
 
 /**@}*/
 
-#endif /* ARCH_K1B_UTIL_H_ */
+#endif /* ARCH_K1B_IVT_H_ */

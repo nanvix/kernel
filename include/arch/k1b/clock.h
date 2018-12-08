@@ -26,12 +26,21 @@
 #define ARCH_K1B_CLOCK_H_
 
 /**
- * @addtogroup k1b-clock Prgrammable Interval Timer
+ * @addtogroup k1b-clock Real Time Programmable Timer
  * @ingroup k1b
+ *
+ * @brief Interface for dealing with the real time programmable timer.
  */
 /**@{*/
 
 	#include <nanvix/const.h>
+
+	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_clock_init
+	/**@}*/
 	
 	/**
 	 * @brief Initializes the clock driver in the k1b architecture.
@@ -42,11 +51,14 @@
 
 	/**
 	 * @see k1b_clock_init()
+	 *
+	 * @cond k1b
 	 */
 	static inline void hal_clock_init(unsigned freq)
 	{
 		k1b_clock_init(freq);
 	}
+	/**@endcond*/
 
 /**@}*/
 

@@ -26,18 +26,26 @@
 #define TARGET_KALRAY_MPPA256_H_
 
 /**
- * @defgroup kalray-mppa256 Kalray MPPA-256
+ * @defgroup mppa256 Kalray MPPA-256
  * @ingroup targets
  */
 /**@{*/
 
-	/**
-	 * @defgroup k1b Bostan Architecture
-	 */
+	#ifndef NANVIX_HAL_TARGET_H_
+	#error "include <nanvix/hal/target.h> instead"
+	#endif
+
 	#include <arch/k1b/k1b.h>
-	#include <arch/k1b/core.h>
 
 	#include <driver/jtag.h>
+
+	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_stdout_init
+	#define __hal_stdout_write
+	/**@}*/
 
 	/**
 	 * @name Hardware Interrupts for Kalray MPPA-256 Target
@@ -72,7 +80,7 @@
 	/**
 	 * @brief Number of hardware interrupts in the Kalray MPPA-256 target.
 	 */
-	#define _HAL_INT_NR K1B_INT_NR
+	#define _HAL_INT_NR K1B_NUM_HWINT
 
 	/**
 	 * @name Hardware Interrupts
@@ -82,25 +90,31 @@
 	/**@}*/
 
 	/**
-	 * @brief Number of cores in a cluster in the the Kalray MPPA-256 target.
+	 * @brief Number of cores in a cluster in the Kalray MPPA-256 target.
 	 */
 	#define _HAL_NUM_CORES K1B_NUM_CORES
 
 	/**
 	 * @see jtag_init()
+	 *
+	 * @cond mppa256
 	 */
 	static inline void hal_stdout_init(void)
 	{
 		jtag_init();
 	}
+	/**@endcond*/
 
 	/**
 	 * @see jtag_write()
+	 *
+	 * @cond mppa256
 	 */
 	static inline void hal_stdout_write(const char *buf, size_t n)
 	{
 		jtag_write(buf, n);
 	}
+	/**@endcond*/
 
 /**@}*/
 

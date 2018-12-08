@@ -30,10 +30,6 @@
  */
 /**@{*/
 
-	#if defined(__mppa256__)
-	#include <arch/k1b/io.h>
-	#endif
-
 	#include <stddef.h>
 	#include <stdint.h>
 

@@ -42,6 +42,8 @@ export TOOLSDIR = $(CURDIR)/tools
 
 #===============================================================================
 
+include $(MAKEDIR)/makefile.$(TARGET)
+
 # Image Name
 export IMAGE = nanvix-debug.img
 
@@ -75,5 +77,5 @@ distclean:
 # Builds documentation.
 documentation:
 	mkdir -p $(DOCDIR)
-	( sed -e "s/ENABLED_SECTIONS=/ENABLED_SECTIONS=$(TARGET)/g"  doxygen/doxygen.conf ) | doxygen -
+	( sed -e "s/ENABLED_SECTIONS=/ENABLED_SECTIONS=$(TARGET) $(ARCH)/g"  doxygen/doxygen.conf ) | doxygen -
 

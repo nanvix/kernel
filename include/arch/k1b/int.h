@@ -26,26 +26,98 @@
 #define ARCH_K1B_INT_H_
 
 /**
- * @addtogroup k1b-hwint Hardware Interrupts
+ * @addtogroup k1b-int Interrupt
  * @ingroup k1b
+ *
+ * @brief Interface for dealing with hardware and software interrupts.
  */
 /**@{*/
 
+	#include <arch/k1b/context.h>
+	#include <arch/k1b/ivt.h>
 	#include <nanvix/const.h>
+	#include <mOS_vcore_u.h>
 	#include <vbsp.h>
 
 	/**
-	 * @brief Number of hardware interrupts in the k1b architecture.
+	 * @name Provided Interface
 	 */
-	#define K1B_INT_NR 24
+	/**@{*/
+	#define __hal_disable_interrupts
+	#define __hal_enable_interrupts
+	#define __hal_interrupt_set_handler
+	/**@}*/
 
 	/**
-	 * @brief Interrupt context.
+	 * @brief Hardware interrupt dispatcher.
+	 *
+	 * @param hwintid ID of the hardware interrupt that was triggered.
+	 * @param ctx     Interrupted context.
+	 *
+	 * @note This function is called from mOS.
 	 */
-	typedef __k1_vcontext_t context_t;
+	EXTERN void k1b_do_hwint(k1b_hwint_id_t hwintid, struct k1b_context *ctx);
 
-	/* Forward definitions. */
-	EXTERN void idt_setup(void);
+	/**
+	 * @brief Enables interrupts.
+	 *
+	 * Enables all hardware interrupts in the underlying core.
+	 */
+	static inline void k1b_hwint_enable(void)
+	{
+		mOS_it_enable();
+	}
+
+	/**
+	 * @see k1b_hwint_enable()
+	 *
+	 * @cond k1b
+	 */
+	static inline void hal_enable_interrupts(void)
+	{
+		k1b_hwint_enable();
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Disables interrupts.
+	 *
+	 * Disables all hardware interrupts in the underlying core.
+	 */
+	static inline void k1b_hwint_disable(void)
+	{
+		mOS_it_disable();
+	}
+
+	/**
+	 * @see k1b_hwint_disable()
+	 *
+	 * @cond k1b
+	 */
+	static inline void hal_disable_interrupts(void)
+	{
+		k1b_hwint_disable();
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Sets a handler for a hardware interrupt.
+	 *
+	 * @param num     Number of the target hardware interrupt.
+	 * @param handler Hardware interrupt handler.
+	 */
+	EXTERN void k1b_hwint_handler_set(int num, void (*handler)(int));
+
+	/**
+	 * @see k1b_hwint_handler_set()
+	 *
+	 * @cond k1b
+	 */
+	static inline void hal_interrupt_set_handler(int num, void (*handler)(int))
+	{
+		k1b_hwint_handler_set(num, handler);
+	}
+	/**@endcond*/
 
 /**@}*/
 

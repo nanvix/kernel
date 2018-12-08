@@ -22,22 +22,27 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_K1B_K1B_H_
-#define ARCH_K1B_K1B_H_
+#include <arch/k1b/pic.h>
+#include <nanvix/const.h>
 
-	#ifndef TARGET_KALRAY_MPPA256_H_
-	#error "include <target/kalray/mppa256.h> instead"
-	#endif
-
-	/**
-	 * @defgroup k1b Bostan Architecture
-	 * @ingroup mppa256
-	 */
-	#include <arch/k1b/cache.h>
-	#include <arch/k1b/clock.h>
-	#include <arch/k1b/core.h>
-	#include <arch/k1b/int.h>
-	#include <arch/k1b/io.h>
-	#include <arch/k1b/pic.h>
-
-#endif /* ARCH_K1B_K1B_H_ */
+/**
+ * Lookup table for masks of interrupt levels.
+ */
+PUBLIC uint32_t intlvl_masks[K1B_NUM_INTLVL] = {
+	K1B_INTLVL_MASK_0,
+	K1B_INTLVL_MASK_1,
+	K1B_INTLVL_MASK_2,
+	K1B_INTLVL_MASK_3,
+	K1B_INTLVL_MASK_4,
+	K1B_INTLVL_MASK_5,
+	K1B_INTLVL_MASK_6,
+	K1B_INTLVL_MASK_7,
+	K1B_INTLVL_MASK_8,
+	K1B_INTLVL_MASK_9,
+	K1B_INTLVL_MASK_10,
+	K1B_INTLVL_MASK_11,
+	K1B_INTLVL_MASK_12,
+	K1B_INTLVL_MASK_13,
+	K1B_INTLVL_MASK_14,
+	K1B_INTLVL_MASK_15,
+};

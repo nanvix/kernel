@@ -42,7 +42,7 @@ PRIVATE void do_clock(int num)
 {
 	UNUSED(num);
 
-	if (hal_processor_get_core_id() == 0)
+	if (hal_core_get_id() == 0)
 	{
 		ticks++;
 		hal_dcache_invalidate();

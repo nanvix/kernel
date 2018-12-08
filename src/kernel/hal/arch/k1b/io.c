@@ -25,7 +25,6 @@
 #include <arch/k1b/core.h>
 #include <arch/k1b/elf.h>
 #include <arch/k1b/io.h>
-#include <arch/k1b/util.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
 #include <vbsp.h>

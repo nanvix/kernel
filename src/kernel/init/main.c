@@ -59,7 +59,7 @@ PUBLIC void kmain(int argc, const char *argv[])
 
 	int coreid;
 
-	coreid = get_core_id();
+	coreid = hal_core_get_id();
 
 	/* Slave core. */
 	if (coreid != 0)
