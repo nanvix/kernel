@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
+#include <nanvix/hal/hal.h>
 #include <driver/console.h>
 #include <nanvix/const.h>
-#include <nanvix/hal/io.h>
 #include <stddef.h>
 #include <stdint.h>
 

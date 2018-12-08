@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
+#include <nanvix/hal/hal.h>
 #include <nanvix/const.h>
-#include <nanvix/hal/interrupt.h>
 #include <nanvix/klog.h>
 
 /**

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
+#include <nanvix/hal/hal.h>
 #include <nanvix/const.h>
-#include <nanvix/hal/memory.h>
 
 /**
  * @brief Flushes the data cache of the underlying core.

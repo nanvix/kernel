@@ -24,7 +24,7 @@
 
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
-#include <nanvix/hal/debug.h>
+#include <nanvix/hal/hal.h>
 #include <stdint.h>
 
 /**

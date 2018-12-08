@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,30 +22,20 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hal/hal.h>
-#include <nanvix/const.h>
+#ifndef NANVIX_HAL_H_
+#define NANVIX_HAL_H_
 
-/**
- * @brief Sets bytes in memory.
- * 
- * @param ptr Pointer to target memory area.
- * @param c   Character to use.
- * @param n   Number of bytes to be set.
- * 
- * @returns A pointer to the target memory area. 
- */
-PUBLIC void *kmemset(void *ptr, int c, size_t n)
-{
-    unsigned char *p;
-    
-    p = ptr;
-    
-    /* Set bytes. */
-    while (n-- > 0)
-	{
-		*p++ = (unsigned char) c;
-		hal_dcache_invalidate();
-	}
+	/**
+	 * @defgroup kernel-hal HAL
+	 * @ingroup kernel
+	 *
+	 * @brief Hardware Abstraction Layer
+	 */
+	#include <nanvix/hal/clock.h>
+	#include <nanvix/hal/cpu.h>
+	#include <nanvix/hal/debug.h>
+	#include <nanvix/hal/interrupt.h>
+	#include <nanvix/hal/io.h>
+	#include <nanvix/hal/memory.h>
 
-    return (ptr);	
-}
+#endif /* NANVIX_HAL_H_ */

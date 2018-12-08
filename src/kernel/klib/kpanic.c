@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hal/cpu.h>
+#include <nanvix/hal/hal.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
 #include <stdarg.h>

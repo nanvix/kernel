@@ -23,11 +23,9 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hal/debug.h>
-#include <nanvix/hal/memory.h>
-#include <nanvix/hal/cpu.h>
 #include <nanvix/const.h>
 #include <nanvix/dev.h>
+#include <nanvix/hal/hal.h>
 #include <nanvix/klib.h>
 #include <nanvix/klog.h>
 #include <stdint.h>

@@ -23,7 +23,7 @@
  */
 
 #include <nanvix/const.h>
-#include <nanvix/hal/cpu.h>
+#include <nanvix/hal/hal.h>
 #include <nanvix/klib.h>
 
 EXTERN int main(int argc, const char *argv[], char **envp);

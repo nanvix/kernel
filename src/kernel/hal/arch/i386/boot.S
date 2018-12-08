@@ -28,7 +28,8 @@
 #define _ASM_FILE_
 
 #include <grub/mboot.h>
-#include <arch/i386/i386.h>
+#include <arch/i386/core.h>
+#include <arch/i386/paging.h>
 
 /**
  * @brief Multiboot flags.
