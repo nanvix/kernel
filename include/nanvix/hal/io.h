@@ -31,9 +31,17 @@
  */
 /**@{*/
 
+	#include <nanvix/hal/target.h>
 	#include <nanvix/const.h>
 	#include <stdint.h>
-	#include <nanvix/hal/target.h>
+
+	#ifndef __hal_outputb
+	#error "hal_outputb() not defined?"
+	#endif
+
+	#ifndef __hal_iowait
+	#error "hal_iowait() not defined?"
+	#endif
 
 	/**
 	 * @brief Writes a byte to an I/O port.

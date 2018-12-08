@@ -32,6 +32,14 @@
 /**@{*/
 
 	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_stdout_init
+	#define __hal_stdout_write
+	/**@}*/
+
+	/**
 	 * @defgroup i386
 	 */
 	#include <arch/i386/i386.h>

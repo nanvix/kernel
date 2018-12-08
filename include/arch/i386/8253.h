@@ -36,6 +36,13 @@
 	#include <nanvix/const.h>
 
 	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_clock_init
+	/**@}*/
+
+	/**
 	 * @brief Oscillator frequency (in Hz)
 	 */
 	#define PIT_FREQUENCY 1193182

@@ -26,16 +26,22 @@
 #define NANVIX_HAL_CLOCK_H_
 
 /**
- * @addtogroup kernel-hal-clock Clock Device
+ * @addtogroup kernel-hal-clock Clock
  * @ingroup kernel-hal
+ *
+ * @brief Clock Device
  */
 /**@{*/
 
 	#include <nanvix/const.h>
 	#include <nanvix/hal/target.h>
 
-	#if !defined(HAL_INT_CLOCK)
-	#error "target has not defined hardware interrupt number for the clock device"
+	#ifndef HAL_INT_CLOCK
+	#error "HAL_INT_CLOCK not defined"
+	#endif
+
+	#ifndef __hal_clock_init
+	#error "hal_clock_init() not defined?"
 	#endif
 
 	/**
@@ -44,6 +50,7 @@
 	 * @param freq Frequency for the clock device.
 	 */
 	EXTERN void hal_clock_init(unsigned freq);
+	#define __hal_clock_init
 
 /**@}*/
 

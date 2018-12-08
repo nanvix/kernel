@@ -34,8 +34,8 @@
 	#include <nanvix/const.h>
 	#include <nanvix/hal/target.h>
 
-	#ifndef _HAL_INT_NR
-	#error "target has not defined the number of hardware interrupts"
+	#ifndef __hal_dcache_invalidate
+	#error "hal_dcache_invalidate() not defined?"
 	#endif
 
 	/**
