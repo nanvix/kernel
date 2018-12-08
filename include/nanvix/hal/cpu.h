@@ -28,6 +28,8 @@
 /**
  * @addtogroup kernel-hal-processor Processor
  * @ingroup kernel-hal
+ *
+ * @brief Processor
  */
 /**@{*/
 
@@ -35,7 +37,23 @@
 	#include <nanvix/hal/target.h>
 
 	#ifndef _HAL_NUM_CORES
-	#error "target has not defined the number of cores"
+	#error "_HAL_NUM_CORES not defined"
+	#endif
+
+	#ifndef __hal_core_get_id
+	#error "hal_core_get_id() not defined?"
+	#endif
+
+	#ifndef __hal_processor_get_num_cores
+	#error "hal_processor_get_num_cores() not defined?"
+	#endif
+
+	#ifndef __hal_processor_halt
+	#error "hal_processor_halt() not defined?"
+	#endif
+
+	#ifndef __hal_processor_setup
+	#error "hal_processor_setup() not defined?"
 	#endif
 
 	/**
@@ -63,9 +81,9 @@
 	/**
 	 * @brief Gets the ID of the underlying core.
 	 *
-	 * @returns THe ID of the underlying core.
+	 * @returns The ID of the underlying core.
 	 */
-	EXTERN int hal_processor_get_core_id(void);
+	EXTERN int hal_core_get_id(void);
 
 /**@}*/
 

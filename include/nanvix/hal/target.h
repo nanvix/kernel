@@ -26,8 +26,10 @@
 #define NANVIX_HAL_TARGET_H_
 
 /**
- * @addtogroup kernel-hal Hardware Abstraction Layer
- * @ingroup kernel
+ * @addtogroup kernel-hal-target Target
+ * @ingroup kernel-hal
+ *
+ * @brief Target Platform
  */
 /**@{*/
 

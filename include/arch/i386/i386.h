@@ -33,10 +33,23 @@
  */
 /**@{*/
 
+	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_disable_interrupts
+	#define __hal_enable_interrupts
+	#define __hal_core_get_id
+	#define __hal_processor_setup
+	#define __hal_processor_get_num_cores
+	/**@}*/
+
+	#include <arch/i386/8253.h>
+	#include <arch/i386/8259.h>
+	#include <arch/i386/cache.h>
 	#include <arch/i386/core.h>
 	#include <arch/i386/int.h>
 	#include <arch/i386/paging.h>
-	#include <arch/i386/cache.h>
 
 #ifndef _ASM_FILE_
 

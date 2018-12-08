@@ -34,6 +34,14 @@
 #define ARCH_I386_8259_H_
 
 	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_intlvl_drop
+	#define __hal_intlvl_raise
+	/**@}*/
+
+	/**
 	 * @name Master PIC Registers
 	 */
 	/**@{*/

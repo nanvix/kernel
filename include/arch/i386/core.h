@@ -34,6 +34,15 @@
 /**@{*/
 
 	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_iowait
+	#define __hal_outputb
+	#define __hal_processor_halt
+	/**@}*/
+
+	/**
 	 * @name Size of Machine Types
 	 */
 	/**@{*/

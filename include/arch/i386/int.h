@@ -34,6 +34,13 @@
 /**@{*/
 
 	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_interrupt_set_handler
+	/**@}*/
+
+	/**
 	 * @brief Number of hardware interrupts in the i386 architecture.
 	 */
 	#define I386_INT_NR 16

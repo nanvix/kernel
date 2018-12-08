@@ -33,6 +33,13 @@
  */
 /**@{*/
 
+	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_dcache_invalidate
+	/**@}*/
+
 #ifndef _ASM_FILE_
 
 	/**
