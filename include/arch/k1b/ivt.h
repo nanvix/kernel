@@ -29,7 +29,7 @@
  * @addtogroup k1b-int IVT
  * @ingroup k1b
  *
- * @brief Interface for managing the interrupt vector table.
+ * @brief Interrupt Vector Table
  */
 /**@{*/
 

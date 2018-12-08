@@ -33,6 +33,7 @@
 	 */
 	#include <nanvix/hal/clock.h>
 	#include <nanvix/hal/cpu.h>
+	#include <nanvix/hal/core.h>
 	#include <nanvix/hal/debug.h>
 	#include <nanvix/hal/interrupt.h>
 	#include <nanvix/hal/io.h>

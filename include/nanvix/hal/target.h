@@ -25,14 +25,6 @@
 #ifndef NANVIX_HAL_TARGET_H_
 #define NANVIX_HAL_TARGET_H_
 
-/**
- * @addtogroup kernel-hal-target Target
- * @ingroup kernel-hal
- *
- * @brief Target Platform
- */
-/**@{*/
-
 	#if defined(__mppa256__)
 	#include <target/kalray/mppa256.h>
 	#endif
@@ -41,6 +33,82 @@
 	#include <target/ibm/pc.h>
 	#endif
 
-/**@}*/
+	#ifndef _HAL_NUM_CORES
+	#error "_HAL_NUM_CORES not defined"
+	#endif
+
+	#ifndef __hal_processor_get_num_cores
+	#error "hal_processor_get_num_cores() not defined?"
+	#endif
+
+	#ifndef HAL_INT_CLOCK
+	#error "HAL_INT_CLOCK not defined"
+	#endif
+
+	#ifndef __hal_clock_init
+	#error "hal_clock_init() not defined?"
+	#endif
+
+	#ifndef __hal_core_get_id
+	#error "hal_core_get_id() not defined?"
+	#endif
+
+	#ifndef __hal_processor_halt
+	#error "hal_processor_halt() not defined?"
+	#endif
+
+	#ifndef __hal_processor_setup
+	#error "hal_processor_setup() not defined?"
+	#endif
+
+	#ifndef __hal_stdout_init
+	#error "hal_stdout_init() not defined?"
+	#endif
+
+	#ifndef __hal_stdout_write
+	#error "hal_stdout_write() not defined?"
+	#endif
+
+	#ifndef _HAL_INT_NR
+	#error "_HAL_INT_NR not defined"
+	#endif
+
+	#ifndef __hal_disable_interrupts
+	#error "hal_disable_interrupts() not defined?"
+	#endif
+
+	#ifndef __hal_enable_interrupts
+	#error "hal_enable_interrupts() not defined?"
+	#endif
+
+#ifdef XXX
+	#ifndef __hal_interrupt_ack
+	#error "hal_interrupt_ack() not defined?"
+	#endif
+#endif
+
+	#ifndef __hal_interrupt_set_handler
+	#error "hal_interrupt_set_handler() not defined?"
+	#endif
+
+	#ifndef __hal_intlvl_raise
+	#error "hal_intlvl_raise() not defined?"
+	#endif
+
+	#ifndef __hal_intlvl_drop
+	#error "hal_intlvl_hal_drop() not defined?"
+	#endif
+
+	#ifndef __hal_outputb
+	#error "hal_outputb() not defined?"
+	#endif
+
+	#ifndef __hal_iowait
+	#error "hal_iowait() not defined?"
+	#endif
+
+	#ifndef __hal_dcache_invalidate
+	#error "hal_dcache_invalidate() not defined?"
+	#endif
 
 #endif /* NANVIX_HAL_TARGET_H_ */

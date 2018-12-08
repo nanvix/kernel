@@ -29,7 +29,7 @@
  * @addtogroup k1b-int Interrupt
  * @ingroup k1b
  *
- * @brief Interface for dealing with hardware and software interrupts.
+ * @brief Hardware and Software Interrupts
  */
 /**@{*/
 

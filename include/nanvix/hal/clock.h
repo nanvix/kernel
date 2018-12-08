@@ -29,20 +29,12 @@
  * @addtogroup kernel-hal-clock Clock
  * @ingroup kernel-hal
  *
- * @brief Clock Device
+ * @brief Clock Device Interface
  */
 /**@{*/
 
 	#include <nanvix/const.h>
 	#include <nanvix/hal/target.h>
-
-	#ifndef HAL_INT_CLOCK
-	#error "HAL_INT_CLOCK not defined"
-	#endif
-
-	#ifndef __hal_clock_init
-	#error "hal_clock_init() not defined?"
-	#endif
 
 	/**
 	 * @brief Initializes the hardware dependent clock driver.

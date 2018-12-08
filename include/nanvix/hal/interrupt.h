@@ -27,44 +27,14 @@
 
 /**
  * @addtogroup kernel-hal-interrupts Interrupt
- * @ingroup kernel-hal
+ * @ingroup kernel-hal-cpu
  *
- * @brief Hardware and Software Interrupts
+ * @brief Hardware and Software Interrupt Interface
  */
 /**@{*/
 
 	#include <nanvix/hal/target.h>
 	#include <nanvix/const.h>
-
-	#ifndef _HAL_INT_NR
-	#error "_HAL_INT_NR not defined"
-	#endif
-
-	#ifndef __hal_disable_interrupts
-	#error "hal_disable_interrupts() not defined?"
-	#endif
-
-	#ifndef __hal_enable_interrupts
-	#error "hal_enable_interrupts() not defined?"
-	#endif
-
-#ifdef XXX
-	#ifndef __hal_interrupt_ack
-	#error "hal_interrupt_ack() not defined?"
-	#endif
-#endif
-
-	#ifndef __hal_interrupt_set_handler
-	#error "hal_interrupt_set_handler() not defined?"
-	#endif
-
-	#ifndef __hal_intlvl_raise
-	#error "hal_intlvl_raise() not defined?"
-	#endif
-
-	#ifndef __hal_intlvl_drop
-	#error "hal_intlvl_hal_drop() not defined?"
-	#endif
 
 	/**
 	 * @brief Number of hardware interrupts.

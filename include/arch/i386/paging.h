@@ -26,10 +26,10 @@
 #define ARCH_I386_PAGING_H_
 
 /**
- * @addtogroup i386-paging Paging
+ * @addtogroup i386-mmu MMU
  * @ingroup i386
  *
- * @brief Interface for dealing with paging.
+ * @brief Memory Management Unit
  */
 /**@{*/
 

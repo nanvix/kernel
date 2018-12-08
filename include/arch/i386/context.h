@@ -29,7 +29,7 @@
  * @addtogroup i386-context Context
  * @ingroup i386
  *
- * @brief Interface for manipulating the execution context.
+ * @brief Execution Context
  */
 
 	/**

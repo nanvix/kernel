@@ -29,7 +29,7 @@
  * @addtogroup i386-idt IDT
  * @ingroup i386
  *
- * @brief Interface for managing with the interrupt descriptor table.
+ * @brief Interrupt Descritor Table
  */
 /**@{*/
 

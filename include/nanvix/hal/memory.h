@@ -28,15 +28,13 @@
 /**
  * @addtogroup kernel-hal-memory Memory
  * @ingroup kernel-hal
+ *
+ * @brief Memory Interface
  */
 /**@{*/
 
 	#include <nanvix/const.h>
 	#include <nanvix/hal/target.h>
-
-	#ifndef __hal_dcache_invalidate
-	#error "hal_dcache_invalidate() not defined?"
-	#endif
 
 	/**
 	 * @brief Invalidates the data cache.

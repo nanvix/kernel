@@ -29,7 +29,7 @@
  * @addtogroup i386-8253 8253 Chip
  * @ingroup i386
  *
- * @brief Interface for dealing with the programmable interval timer interface.
+ * @brief Programmable Interval Timer
  */
 /**@{*/
 

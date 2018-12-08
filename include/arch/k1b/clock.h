@@ -26,10 +26,10 @@
 #define ARCH_K1B_CLOCK_H_
 
 /**
- * @addtogroup k1b-clock Real Time Programmable Timer
+ * @addtogroup k1b-rtc RTC
  * @ingroup k1b
  *
- * @brief Interface for dealing with the real time programmable timer.
+ * @brief Programmable Real Time Clock
  */
 /**@{*/
 

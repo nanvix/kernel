@@ -26,7 +26,7 @@
  * @addtogroup i386-8259 8259 Chip
  * @ingroup i386
  *
- * @brief Interface for dealing with the programmable interrupt controller.
+ * @brief Programmable Interrupt Controller
  */
 /**@{*/
 

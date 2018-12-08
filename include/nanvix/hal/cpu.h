@@ -26,35 +26,15 @@
 #define NANVIX_HAL_CPU_H_
 
 /**
- * @addtogroup kernel-hal-processor Processor
+ * @addtogroup kernel-hal-cpu Processor
  * @ingroup kernel-hal
  *
- * @brief Processor
+ * @brief Processor Intercace
  */
 /**@{*/
 
 	#include <nanvix/const.h>
 	#include <nanvix/hal/target.h>
-
-	#ifndef _HAL_NUM_CORES
-	#error "_HAL_NUM_CORES not defined"
-	#endif
-
-	#ifndef __hal_core_get_id
-	#error "hal_core_get_id() not defined?"
-	#endif
-
-	#ifndef __hal_processor_get_num_cores
-	#error "hal_processor_get_num_cores() not defined?"
-	#endif
-
-	#ifndef __hal_processor_halt
-	#error "hal_processor_halt() not defined?"
-	#endif
-
-	#ifndef __hal_processor_setup
-	#error "hal_processor_setup() not defined?"
-	#endif
 
 	/**
 	 * @brief Number of cores.
@@ -62,28 +42,11 @@
 	#define HAL_NUM_CORES _HAL_NUM_CORES
 
 	/**
-	 * @brief Initializes the processor.
-	 */
-	EXTERN void hal_processor_setup(void);
-
-	/**
-	 * @brief Halts the processor.
-	 */
-	EXTERN void hal_processor_halt(void);
-
-	/**
 	 * @brief Gets the number of cores.
 	 *
 	 * @returns The number of cores of the underlying processor.
 	 */
 	EXTERN int hal_processor_get_num_cores(void);
-
-	/**
-	 * @brief Gets the ID of the underlying core.
-	 *
-	 * @returns The ID of the underlying core.
-	 */
-	EXTERN int hal_core_get_id(void);
 
 /**@}*/
 

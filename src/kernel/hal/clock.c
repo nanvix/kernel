@@ -25,6 +25,7 @@
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
 #include <nanvix/hal/clock.h>
+#include <nanvix/hal/core.h>
 #include <nanvix/hal/interrupt.h>
 #include <nanvix/hal/memory.h>
 

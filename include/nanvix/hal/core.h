@@ -22,50 +22,38 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_K1B_CACHE_H_
-#define ARCH_K1B_CACHE_H_
+#ifndef NANVIX_HAL_CORE_H_
+#define NANVIX_HAL_CORE_H_
 
 /**
- * @addtogroup k1b-cache Memory Cache
- * @ingroup k1b
+ * @addtogroup kernel-hal-core Core
+ * @ingroup kernel-hal-cpu
  *
- * @brief Memory Cache
+ * @brief Core Interface
  */
 /**@{*/
 
-	/**
-	 * @name Provided Interface
-	 */
-	/**@{*/
-	#define __hal_dcache_invalidate
-	/**@}*/
+	#include <nanvix/const.h>
+	#include <nanvix/hal/target.h>
 
 	/**
-	 * @brief Invalidates the data cache.
-	 *
-	 * The k1b_dcache_inval() function invalidates the data cache of
-	 * the underlying core. First, it purges the write buffer, then it
-	 * waits all pending write operations of other cores to complete,
-	 * and finally it performs a full invalidation in the data cache.
+	 * @brief Initializes the processor.
 	 */
-	static inline void k1b_dcache_inval(void)
-	{
-		__builtin_k1_wpurge();
-		__builtin_k1_fence();
-		__builtin_k1_dinval();
-	}
+	EXTERN void hal_processor_setup(void);
 
 	/**
-	 * @see k1b_dcache_inval()
-	 *
-	 * @cond k1b
+	 * @brief Halts the processor.
 	 */
-	static inline void hal_dcache_invalidate(void)
-	{
-		k1b_dcache_inval();
-	}
-	/**@endcond*/
+	EXTERN void hal_processor_halt(void);
+
+	/**
+	 * @brief Gets the ID of the underlying core.
+	 *
+	 * @returns The ID of the underlying core.
+	 */
+	EXTERN int hal_core_get_id(void);
 
 /**@}*/
 
-#endif /* ARCH_K1B_CACHE_H_ */
+#endif /* NANVIX_HAL_CORE_H_ */
+

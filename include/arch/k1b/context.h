@@ -26,10 +26,10 @@
 #define ARCH_K1B_CONTEXT_H_
 
 /**
- * @addtogroup k1b-context Interrupt Context
+ * @addtogroup k1b-context Context
  * @ingroup k1b
  *
- * @brief Interface for manipulating interrupt contexts.
+ * @brief Execution Context
  */
 /**@{*/
 

@@ -26,8 +26,10 @@
 #define ARCH_K1B_ELF_H_
 
 /**
- * @addtogroup k1b-elf ELF Interface
+ * @addtogroup k1b-elf ELF
  * @ingroup k1b
+ *
+ * @brief ELF Multibinary Sections
  */
 /**@{*/
 

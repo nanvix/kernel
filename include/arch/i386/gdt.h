@@ -29,7 +29,7 @@
  * @addtogroup i386-gdt GDT
  * @ingroup i386
  *
- * @brief Interface for managing the global descriptor table.
+ * @brief Global Descriptor Table
  */
 /**@{*/
 

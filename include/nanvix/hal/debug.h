@@ -28,19 +28,14 @@
 /**
  * @addtogroup kernel-hal-debug Debug
  * @ingroup kernel-hal
+ *
+ *
+ * @brief Debug Interface
  */
 /**@{*/
 
 	#include <nanvix/const.h>
 	#include <nanvix/hal/target.h>
-
-	#ifndef __hal_stdout_init
-	#error "hal_stdout_init() not defined?"
-	#endif
-
-	#ifndef __hal_stdout_write
-	#error "hal_stdout_write() not defined?"
-	#endif
 
 	/**
 	 * @brief Initializes the standard output device.

@@ -29,7 +29,7 @@
  * @addtogroup i386-cache Memory Cache
  * @ingroup i386
  *
- * @brief Interface for the manipulating the memory cache.
+ * @brief Memory Cache
  */
 /**@{*/
 

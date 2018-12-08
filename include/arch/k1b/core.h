@@ -29,7 +29,7 @@
  * @addtogroup k1b-core Core
  * @ingroup k1b
  *
- * @brief Interface for dealing with processor cores.
+ * @brief k1b Core
  */
 /**@{*/
 

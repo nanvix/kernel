@@ -25,13 +25,6 @@
 #ifndef ARCH_I386_H_
 #define ARCH_I386_H_
 
-/**
- * @addtogroup i386-processor Processor
- * @ingroup i386
- *
- * @brief Interface for dealing with the processor.
- */
-/**@{*/
 
 	/**
 	 * @name Provided Interface
@@ -44,6 +37,10 @@
 	#define __hal_processor_get_num_cores
 	/**@}*/
 
+	/**
+	 * @defgroup i386 x86 Architecture
+	 * @ingroup i386-pc
+	 */
 	#include <arch/i386/8253.h>
 	#include <arch/i386/8259.h>
 	#include <arch/i386/cache.h>
@@ -86,7 +83,5 @@
 	}
 
 #endif /* _ASM_FILE_ */
-
-/**@}*/
 
 #endif /* ARCH_I386_H_ */

@@ -29,7 +29,7 @@
  * @addtogroup i386-tss TSS
  * @ingroup i386
  *
- * @brief Interface for namaging with the task state segment.
+ * @brief Task State Segment
  */
 /**@{*/
 

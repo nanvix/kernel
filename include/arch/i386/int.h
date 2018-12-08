@@ -29,7 +29,7 @@
  * @addtogroup i386-int Hardware Interrupts
  * @ingroup i386
  *
- * @brief Interface for dealing with hardware interrupts.
+ * @brief Hardware and Software Interrupts
  */
 /**@{*/
 

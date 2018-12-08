@@ -29,7 +29,7 @@
  * @addtogroup i386-core Core
  * @ingroup i386
  *
- * @brief Interface for dealing with cores.
+ * @brief i386 Core
  */
 /**@{*/
 

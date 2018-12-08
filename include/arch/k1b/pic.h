@@ -26,11 +26,11 @@
 #define ARCH_K1B_PIC_H_
 
 /**
- * @addtogroup k1b-pic Programmable Interrupt Controller
+ * @addtogroup k1b-pic PIC
+ * @ingroup k1b
  *
- * @brief Interface for dealing with the programmble interrupt controller.
+ * @brief Programmble Interrupt Controller
  */
-
 /**@{*/
 
 	#include <nanvix/const.h>

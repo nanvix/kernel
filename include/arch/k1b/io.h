@@ -26,8 +26,10 @@
 #define ARCH_K1B_JTAG_H_
 
 /**
- * @addtogroup k1b-io Input/Output
+ * @addtogroup k1b-io I/O
  * @ingroup k1b
+ *
+ * @brief Input/Output
  */
 /**@{*/
 
