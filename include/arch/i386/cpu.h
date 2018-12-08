@@ -22,14 +22,14 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_I386_CACHE_H_
-#define ARCH_I386_CACHE_H_
+#ifndef ARCH_I386_CPU_H_
+#define ARCH_I386_CPU_H_
 
 /**
- * @addtogroup i386-cache Memory Cache
+ * @addtogroup i386-cpu CPU
  * @ingroup i386
  *
- * @brief Memory Cache
+ * @brief i386 Processor
  */
 /**@{*/
 
@@ -37,16 +37,38 @@
 	 * @name Provided Interface
 	 */
 	/**@{*/
-	#define __hal_dcache_invalidate
+	#define __hal_cpu_get_num_cores
 	/**@}*/
 
 	/**
-	 * @note The i386 target features cache coherency.
+	 * @brief Number of cores in the i386 architecture.
 	 */
-	static inline void hal_dcache_invalidate(void)
+	#define I386_NUM_CORES 1
+
+	/**
+	 * @brief Gets the number of cores.
+	 *
+	 * The i386_cpu_get_num_cores() gets the number of cores in the
+	 * underlying i386 processor.
+	 *
+	 * @returns The the number of cores in the underlying processor.
+	 */
+	static inline int i386_cpu_get_num_cores(void)
 	{
+		return (I386_NUM_CORES);
 	}
+
+	/**
+	 * @see i386_cpu_get_num_cores()
+	 *
+	 * @cond i386
+	 */
+	static inline int hal_cpu_get_num_cores(void)
+	{
+		return (i386_cpu_get_num_cores());
+	}
+	/**@endcond*/
 
 /**@}*/
 
-#endif /* ARCH_I386_CACHE_H_ */
+#endif /* ARCH_I386_CPU_H_ */

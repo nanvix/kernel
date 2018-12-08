@@ -42,7 +42,6 @@
 	 * @param freq Frequency for the clock device.
 	 */
 	EXTERN void hal_clock_init(unsigned freq);
-	#define __hal_clock_init
 
 /**@}*/
 

@@ -40,17 +40,10 @@
 	 * @name Provided Interface
 	 */
 	/**@{*/
+	#define __hal_core_setup
+	#define __hal_core_halt
 	#define __hal_core_get_id
-	#define __hal_processor_get_num_cores
-	#define __hal_processor_halt
-	#define __hal_processor_setup
 	/**@}*/
-
-	#ifdef __k1io__
-		#define K1B_NUM_CORES 4
-	#else
-		#define K1B_NUM_CORES 16
-	#endif
 
 	/**
 	 * @brief Gets the ID of the core.
@@ -72,6 +65,29 @@
 	static inline int hal_core_get_id(void)
 	{
 		return (k1b_core_get_id());
+	}
+	/*@endcond*/
+
+	/**
+	 * @brief Puts the processor in idle mode 1.
+	 *
+	 * The k1b_await() function puts the processor in idle mode 1, in
+	 * which intruction execution is stopped until any event or
+	 * interrupt is triggered.
+	 */
+	static inline void k1b_await(void)
+	{
+		mOS_idle1();
+	}
+
+	/**
+	 * @see k1b_await()
+	 *
+	 * @cond k1b
+	 */
+	static inline void hal_core_halt(void)
+	{
+		k1b_await();
 	}
 	/*@endcond*/
 

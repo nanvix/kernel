@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,31 +22,75 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_I386_CACHE_H_
-#define ARCH_I386_CACHE_H_
+#ifndef ARCH_I386_IO_H_
+#define ARCH_I386_IO_H_
 
 /**
- * @addtogroup i386-cache Memory Cache
+ * @addtogroup i386-io I/O
  * @ingroup i386
  *
- * @brief Memory Cache
+ * @brief Input/Output
  */
 /**@{*/
+
+	#include <stdint.h>
 
 	/**
 	 * @name Provided Interface
 	 */
 	/**@{*/
-	#define __hal_dcache_invalidate
+	#define __hal_outputb
+	#define __hal_iowait
 	/**@}*/
 
 	/**
-	 * @note The i386 target features cache coherency.
+	 * @brief Writes a byte to an I/O port.
+	 *
+	 * The i386_outb() function writes @p byte to I/o port whose number is
+	 * @p port.
+	 *
+	 * @param port Number of the target port.
+	 * @param byte Byte to write.
 	 */
-	static inline void hal_dcache_invalidate(void)
+	static inline void i386_outb(uint16_t port, uint8_t byte)
 	{
+		__asm__ __volatile__ ("outb %0, %1" : : "a"(byte), "Nd"(port));
 	}
+
+	/**
+	 * @see i386_outb()
+	 *
+	 * @cond i386
+	 */
+	static inline void hal_outputb(uint16_t port, uint8_t byte)
+	{
+		i386_outb(port, byte);
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Waits an operation in an I/O port to complete.
+	 *
+	 * The i386_iowait() function forces a delay, so that an on-going
+	 * operation in an I/O port completes.
+	 */
+	static inline void i386_iowait(void)
+	{
+		__asm__ __volatile__("outb %%al, $0x80" : : "a"(0));
+	}
+
+	/**
+	 * @see i386_iowait()
+	 *
+	 * @cond i386
+	 */
+	static inline void hal_iowait(void)
+	{
+		i386_iowait();
+	}
+	/**@endcond*/
 
 /**@}*/
 
-#endif /* ARCH_I386_CACHE_H_ */
+#endif /* ARCH_I386_IO_H_ */
+

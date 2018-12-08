@@ -26,8 +26,6 @@
 #ifndef MBOOT_H_
 #define MBOOT_H_
 
-	#include <stdint.h>
-
 	/* Multiboot header magic number. */
 	#define MBOOT_MAGIC 0x1badb002
 
@@ -56,6 +54,8 @@
 	#define MBOOT_MEMORY_RESERVED  2 /* Memory reserved.  */
 
 #ifndef _ASM_FILE_
+
+	#include <stdint.h>
 
 	/*
 	 * Multiboot header.

@@ -36,6 +36,7 @@
 	#include <arch/k1b/cache.h>
 	#include <arch/k1b/clock.h>
 	#include <arch/k1b/core.h>
+	#include <arch/k1b/cpu.h>
 	#include <arch/k1b/int.h>
 	#include <arch/k1b/io.h>
 	#include <arch/k1b/pic.h>

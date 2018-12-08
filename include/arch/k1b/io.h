@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_K1B_JTAG_H_
-#define ARCH_K1B_JTAG_H_
+#ifndef ARCH_K1B_IO_H_
+#define ARCH_K1B_IO_H_
 
 /**
  * @addtogroup k1b-io I/O
@@ -74,4 +74,4 @@
 
 /**@}*/
 
-#endif /* ARCH_K1B_JTAG_H_ */
+#endif /* ARCH_K1B_IO_H_ */

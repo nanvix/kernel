@@ -33,10 +33,14 @@
  */
 /**@{*/
 
+	#include <nanvix/const.h>
+
 	/**
 	 * @name Provided Interface
 	 */
 	/**@{*/
+	#define __hal_disable_interrupts
+	#define __hal_enable_interrupts
 	#define __hal_interrupt_set_handler
 	/**@}*/
 
@@ -44,10 +48,6 @@
 	 * @brief Number of hardware interrupts in the i386 architecture.
 	 */
 	#define I386_INT_NR 16
-
-#ifndef _ASM_FILE_
-
-	#include <nanvix/const.h>
 
 	/* Software interrupt hooks. */
 	/**
@@ -105,21 +105,47 @@
 
 	/**
 	 * @brief Disables hardware interrupts.
+	 *
+	 * The i386_cli() function disables all hardware interrupts in the
+	 * underlying i386 core.
 	 */
-	static inline void cli(void)
+	static inline void i386_cli(void)
+	{
+		 __asm__("cli");
+	}
+
+	/**
+	 * @see i386_cli()
+	 *
+	 * @cond i386
+	 */
+	static inline void hal_disable_interrupts(void)
+	{
+		i386_cli();
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Enables hardware interrupts.
+	 *
+	 * The i386_sti() function enables all hardware interrupts in the
+	 * underlying i386 core.
+	 */
+	static inline void i386_sti(void)
 	{
 		 __asm__("sti");
 	}
 
 	/**
-	 * @brief Enables hardware interrupts.
+	 * @see i386_sti()
+	 *
+	 * @cond i386
 	 */
-	static inline void sti(void)
+	static inline void hal_enable_interrupts(void)
 	{
-		 __asm__("sti");
+		i386_sti();
 	}
-
-#endif /* _ASM_FILE */
+	/**@endcond*/
 
 /**@}*/
 

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,14 +22,14 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_I386_CACHE_H_
-#define ARCH_I386_CACHE_H_
+#ifndef ARCH_K1B_CPU_H_
+#define ARCH_K1B_CPU_H_
 
 /**
- * @addtogroup i386-cache Memory Cache
- * @ingroup i386
+ * @addtogroup k1b-cpu CPU
+ * @ingroup k1b
  *
- * @brief Memory Cache
+ * @brief k1b Processor
  */
 /**@{*/
 
@@ -37,16 +37,42 @@
 	 * @name Provided Interface
 	 */
 	/**@{*/
-	#define __hal_dcache_invalidate
+	#define __hal_cpu_get_num_cores
 	/**@}*/
 
 	/**
-	 * @note The i386 target features cache coherency.
+	 * @brief Number of cores in the k1b processor.
 	 */
-	static inline void hal_dcache_invalidate(void)
+	#ifdef __k1io__
+		#define K1B_NUM_CORES 4
+	#else
+		#define K1B_NUM_CORES 16
+	#endif
+
+	/**
+	 * @brief Gets the number of cores.
+	 *
+	 * The k1b_cpu_get_num_cores() gets the number of cores in the
+	 * underlying k1b processor.
+	 *
+	 * @returns The the number of cores in the underlying processor.
+	 */
+	static inline int k1b_cpu_get_num_cores(void)
 	{
+		return (K1B_NUM_CORES);
 	}
+
+	/**
+	 * @see k1b_cpu_get_num_cores()
+	 *
+	 * @cond k1b
+	 */
+	static inline int hal_cpu_get_num_cores(void)
+	{
+		return (k1b_cpu_get_num_cores());
+	}
+	/**@endcond*/
 
 /**@}*/
 
-#endif /* ARCH_I386_CACHE_H_ */
+#endif /* ARCH_K1B_CPU_H_ */

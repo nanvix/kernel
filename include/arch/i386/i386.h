@@ -22,20 +22,13 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_I386_H_
-#define ARCH_I386_H_
+#ifndef ARCH_I386_I386_H_
+#define ARCH_I386_I386_H_
 
 
-	/**
-	 * @name Provided Interface
-	 */
-	/**@{*/
-	#define __hal_disable_interrupts
-	#define __hal_enable_interrupts
-	#define __hal_core_get_id
-	#define __hal_processor_setup
-	#define __hal_processor_get_num_cores
-	/**@}*/
+	#ifndef TARGET_IBM_PC_H_
+	#error "include <target/ibm/pc.h> instead"
+	#endif
 
 	/**
 	 * @defgroup i386 x86 Architecture
@@ -45,43 +38,9 @@
 	#include <arch/i386/8259.h>
 	#include <arch/i386/cache.h>
 	#include <arch/i386/core.h>
+	#include <arch/i386/cpu.h>
 	#include <arch/i386/int.h>
+	#include <arch/i386/io.h>
 	#include <arch/i386/paging.h>
 
-#ifndef _ASM_FILE_
-
-	/**
-	 * Returns the number of cores of the underlying processor.
-	 */
-	static inline int hal_processor_get_num_cores(void)
-	{
-		return (1);
-	}
-
-	/**
-	 * Returns the ID of the underlying core.
-	 */
-	static inline int hal_core_get_id(void)
-	{
-		return (0);
-	}
-
-	/**
-	 * @see cli()
-	 */
-	static inline void hal_disable_interrupts(void)
-	{
-		cli();
-	}
-
-	/**
-	 * @see sti()
-	 */
-	static inline void hal_enable_interrupts(void)
-	{
-		sti();
-	}
-
-#endif /* _ASM_FILE_ */
-
-#endif /* ARCH_I386_H_ */
+#endif /* ARCH_I386_I386_H_ */
