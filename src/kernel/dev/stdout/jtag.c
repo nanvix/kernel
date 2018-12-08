@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
-#include <nanvix/const.h>
 #include <driver/jtag.h>
 #include <nanvix/const.h>
+#include <nanvix/hal/io.h>
 #include <stddef.h>
 #include <stdint.h>
 

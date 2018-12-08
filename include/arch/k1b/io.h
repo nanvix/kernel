@@ -32,12 +32,40 @@
 /**@{*/
 
 	#include <nanvix/const.h>
+	#include <nanvix/klib.h>
 	#include <stdint.h>
+
+	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_outputb
+	#define __hal_iowait
+	/**@}*/
 
 	/**
 	 * @brief Size of JTAG buffer (in bytes).
 	 */
 	#define JTAG_BUFSIZE 32
+
+	/**
+	 * The hal_outputb() function is a dummy function. In the k1b
+	 * architecture, there are not I/O ports.
+	 */
+	static inline void hal_outputb(uint16_t port, uint8_t byte)
+	{
+		UNUSED(port);
+		UNUSED(byte);
+	}
+
+	/**
+	 * The hal_iowait() function is a dummy function. In the k1b
+	 * architecture, there are not I/O ports.
+	 */
+	static inline void hal_iowait(void)
+	{
+		noop();
+	}
 
 	/* Forward definitions. */
 	EXTERN void hal_jtag_write(const uint8_t *, size_t);

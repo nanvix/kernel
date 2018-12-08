@@ -25,10 +25,19 @@
 #ifndef ARCH_K1B_K1B_H_
 #define ARCH_K1B_K1B_H_
 
+	#ifndef TARGET_KALRAY_MPPA256_H_
+	#error "include <target/kalray/mppa256.h> instead"
+	#endif
+
+	/**
+	 * @defgroup k1b Bostan Architecture
+	 * @ingroup mppa256
+	 */
+	#include <arch/k1b/cache.h>
 	#include <arch/k1b/clock.h>
 	#include <arch/k1b/core.h>
-	#include <arch/k1b/elf.h>
 	#include <arch/k1b/int.h>
 	#include <arch/k1b/io.h>
+	#include <arch/k1b/pic.h>
 
 #endif /* ARCH_K1B_K1B_H_ */

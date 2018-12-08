@@ -26,20 +26,16 @@
 #define TARGET_KALRAY_MPPA256_H_
 
 /**
- * @defgroup kalray-mppa256 Kalray MPPA-256
+ * @defgroup mppa256 Kalray MPPA-256
  * @ingroup targets
  */
 /**@{*/
 
-	/**
-	 * @defgroup k1b Bostan Architecture
-	 */
-	#include <arch/k1b/cache.h>
-	#include <arch/k1b/core.h>
+	#ifndef NANVIX_HAL_TARGET_H_
+	#error "include <nanvix/hal/target.h> instead"
+	#endif
+
 	#include <arch/k1b/k1b.h>
-	#include <arch/k1b/int.h>
-	#include <arch/k1b/ivt.h>
-	#include <arch/k1b/pic.h>
 
 	#include <driver/jtag.h>
 
@@ -89,7 +85,7 @@
 	/**@}*/
 
 	/**
-	 * @brief Number of cores in a cluster in the the Kalray MPPA-256 target.
+	 * @brief Number of cores in a cluster in the Kalray MPPA-256 target.
 	 */
 	#define _HAL_NUM_CORES K1B_NUM_CORES
 
