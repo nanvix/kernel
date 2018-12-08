@@ -39,8 +39,13 @@
 
 	#include <driver/jtag.h>
 
+	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
 	#define __hal_stdout_init
 	#define __hal_stdout_write
+	/**@}*/
 
 	/**
 	 * @name Hardware Interrupts for Kalray MPPA-256 Target
