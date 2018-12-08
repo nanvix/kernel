@@ -40,6 +40,8 @@
 	#define __hal_iowait
 	#define __hal_outputb
 	#define __hal_processor_halt
+	#define __hal_core_get_id
+	#define __hal_processor_setup
 	/**@}*/
 
 	/**
@@ -142,6 +144,14 @@
 	static inline void hal_iowait(void)
 	{
 		iowait();
+	}
+
+	/**
+	 * Returns the ID of the underlying core.
+	 */
+	static inline int hal_core_get_id(void)
+	{
+		return (0);
 	}
 
 #endif /* _ASM_FILE_ */

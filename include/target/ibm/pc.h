@@ -31,6 +31,13 @@
  */
 /**@{*/
 
+	#ifndef NANVIX_HAL_TARGET_H_
+	#error "include <nanvix/hal/target.h> instead"
+	#endif
+
+	#include <arch/i386/i386.h>
+	#include <driver/console.h>
+
 	/**
 	 * @name Provided Interface
 	 */
@@ -38,15 +45,6 @@
 	#define __hal_stdout_init
 	#define __hal_stdout_write
 	/**@}*/
-
-	/**
-	 * @defgroup i386
-	 */
-	#include <arch/i386/i386.h>
-	#include <arch/i386/8253.h>
-
-	#include <driver/console.h>
-	#include <nanvix/const.h>
 
 	/**
 	 * @name Hardware Interrupts for the IBM PC Target

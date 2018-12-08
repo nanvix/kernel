@@ -36,7 +36,6 @@
 	#endif
 
 	#include <arch/k1b/k1b.h>
-
 	#include <driver/jtag.h>
 
 	/**

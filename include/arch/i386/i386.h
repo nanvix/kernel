@@ -25,6 +25,9 @@
 #ifndef ARCH_I386_H_
 #define ARCH_I386_H_
 
+	#ifndef TARGET_IBM_PC_H_
+	#error "include <target/ibm/pc.h> instead"
+	#endif
 
 	/**
 	 * @name Provided Interface
@@ -32,8 +35,6 @@
 	/**@{*/
 	#define __hal_disable_interrupts
 	#define __hal_enable_interrupts
-	#define __hal_core_get_id
-	#define __hal_processor_setup
 	#define __hal_processor_get_num_cores
 	/**@}*/
 
@@ -56,14 +57,6 @@
 	static inline int hal_processor_get_num_cores(void)
 	{
 		return (1);
-	}
-
-	/**
-	 * Returns the ID of the underlying core.
-	 */
-	static inline int hal_core_get_id(void)
-	{
-		return (0);
 	}
 
 	/**

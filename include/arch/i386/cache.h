@@ -40,8 +40,6 @@
 	#define __hal_dcache_invalidate
 	/**@}*/
 
-#ifndef _ASM_FILE_
-
 	/**
 	 * @note The i386 target features cache coherency.
 	 */
@@ -50,7 +48,5 @@
 	}
 
 /**@}*/
-
-#endif /* _ASM_FILE_ */
 
 #endif /* ARCH_I386_CACHE_H_ */
