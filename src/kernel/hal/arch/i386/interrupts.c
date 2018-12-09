@@ -28,7 +28,7 @@
 /**
  * @brief Interrupt handlers.
  */
-PRIVATE hal_interrupt_handler_t i386_handlers[HAL_INT_NR] = {
+PRIVATE hal_interrupt_handler_t i386_handlers[I386_NUM_HWINT] = {
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,

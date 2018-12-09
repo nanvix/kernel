@@ -67,7 +67,12 @@
 	/**
 	 * @brief Number of hardware interrupts in the IBM PC target.
 	 */
-	#define _HAL_INT_NR I386_INT_NR
+	#define _HAL_INT_NR I386_NUM_HWINT
+
+	/**
+	 * @brief Number of exceptions in the IBM PC target.
+	 */
+	#define _HAL_NUM_EXCEPTION I386_NUM_EXCEPTION
 
 	/**
 	 * @name Hardware Interrupts

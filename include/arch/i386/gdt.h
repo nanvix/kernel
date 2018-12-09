@@ -33,8 +33,6 @@
  */
 /**@{*/
 
-	#include <nanvix/const.h>
-
 	/**
 	 * @brief Size of a GDT entry (in bytes).
 	 */
@@ -72,6 +70,10 @@
 	#define USER_DS   (GDTE_SIZE*GDT_DATA_DPL3 + 3) /**< User data.   */
 	#define TSS       (GDTE_SIZE*GDT_TSS + 3)       /**< TSS.         */
 	/**@}*/
+
+#ifndef _ASM_FILE_
+
+	#include <nanvix/const.h>
 
 	/**
 	 * @brief Global descriptor table entry.
@@ -113,12 +115,17 @@
 			ljmp %1, $reload_cs;\
 			reload_cs:\
 			movw %1, %%ax;\
-			movw %%ax, %%ds;"
+			movw %%ax, %%ds;\
+			movw %%ax, %%es;\
+			movw %%ax, %%fs;\
+			movw %%ax, %%gs;"
 			:
 			: "r" (gdtptr), "N" (KERNEL_CS)
 			: "memory", "eax"
 		);
 	}
+
+#endif /* _ASM_FILE_ */
 
 /**@}*/
 

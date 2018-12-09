@@ -25,6 +25,7 @@
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
 #include <arch/i386/8259.h>
+#include <arch/i386/excp.h>
 #include <arch/i386/gdt.h>
 #include <arch/i386/idt.h>
 #include <arch/i386/int.h>
@@ -80,25 +81,27 @@ PUBLIC void idt_setup(void)
 	i386_pic_setup(0x20, 0x28);
 	
 	/* Set software interrupts (exceptions). */
-	set_idte(0, (unsigned)swint0, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(1, (unsigned)swint1, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(2, (unsigned)swint2, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(3, (unsigned)swint3, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(4, (unsigned)swint4, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(5, (unsigned)swint5, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(6, (unsigned)swint6, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(7, (unsigned)swint7, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(8, (unsigned)swint8, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(9, (unsigned)swint9, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(10, (unsigned)swint10, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(11, (unsigned)swint11, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(12, (unsigned)swint12, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(13, (unsigned)swint13, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(14, (unsigned)swint14, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(15, (unsigned)swint15, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(16, (unsigned)swint16, KERNEL_CS, 0x8, IDT_INT32);
-	for (int i = 17; i < 32; i++)
-		set_idte(i, (unsigned)swint17, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(0, (unsigned)excp0, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(1, (unsigned)excp1, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(2, (unsigned)excp2, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(3, (unsigned)excp3, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(4, (unsigned)excp4, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(5, (unsigned)excp5, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(6, (unsigned)excp6, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(7, (unsigned)excp7, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(8, (unsigned)excp8, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(9, (unsigned)excp9, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(10, (unsigned)excp10, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(11, (unsigned)excp11, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(12, (unsigned)excp12, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(13, (unsigned)excp13, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(14, (unsigned)excp14, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(15, (unsigned)excp15, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(16, (unsigned)excp16, KERNEL_CS, 0x8, IDT_INT32);
+	for (int i = 21; i < 30; i++)
+		set_idte(i, (unsigned)excp15, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(30, (unsigned)excp30, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(31, (unsigned)excp15, KERNEL_CS, 0x8, IDT_INT32);
 	 
 	/* Set hardware interrupts. */
 	set_idte(32, (unsigned)hwint0, KERNEL_CS, 0x8, IDT_INT32);
