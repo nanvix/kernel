@@ -28,7 +28,8 @@
 
 /**
  * The i386_clock_init() function initializes the clock driver in the
- * i386 architecture. The frequency of the device is set to @freq Hz.
+ * i386 architecture. The frequency of the device is set to @p freq
+ * Hz.
  */
 PUBLIC void i386_clock_init(unsigned freq)
 {

@@ -47,33 +47,7 @@
 	/**
 	 * @brief Number of hardware interrupts in the i386 architecture.
 	 */
-	#define I386_INT_NR 16
-
-	/* Software interrupt hooks. */
-	/**
-	 * @name Software Interrupt Hooks
-	 */
-	/**@{*/
-	EXTERN void swint0(void);
-	EXTERN void swint1(void);
-	EXTERN void swint2(void);
-	EXTERN void swint3(void);
-	EXTERN void swint4(void);
-	EXTERN void swint5(void);
-	EXTERN void swint6(void);
-	EXTERN void swint7(void);
-	EXTERN void swint8(void);
-	EXTERN void swint9(void);
-	EXTERN void swint10(void);
-	EXTERN void swint11(void);
-	EXTERN void swint12(void);
-	EXTERN void swint13(void);
-	EXTERN void swint14(void);
-	EXTERN void swint15(void);
-	EXTERN void swint16(void);
-	EXTERN void swint17(void);
-	EXTERN void swint19(void);
-	/**@}*/
+	#define I386_NUM_HWINT 16
 	
 	/**
 	 * @brief System Call Hook

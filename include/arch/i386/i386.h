@@ -39,6 +39,7 @@
 	#include <arch/i386/cache.h>
 	#include <arch/i386/core.h>
 	#include <arch/i386/cpu.h>
+	#include <arch/i386/excp.h>
 	#include <arch/i386/int.h>
 	#include <arch/i386/io.h>
 	#include <arch/i386/paging.h>

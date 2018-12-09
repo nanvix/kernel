@@ -26,26 +26,31 @@
 #define _ASM_FILE_
 
 #include <arch/i386/8259.h>
+#include <arch/i386/gdt.h>
 
 /* Exported symbols. */
-.globl swint0
-.globl swint1
-.globl swint2
-.globl swint3
-.globl swint4
-.globl swint5
-.globl swint6
-.globl swint7
-.globl swint8
-.globl swint9
-.globl swint10
-.globl swint11
-.globl swint12
-.globl swint13
-.globl swint14
-.globl swint15
-.globl swint16
-.globl swint17
+.globl excp0
+.globl excp1
+.globl excp2
+.globl excp3
+.globl excp4
+.globl excp5
+.globl excp6
+.globl excp7
+.globl excp8
+.globl excp9
+.globl excp10
+.globl excp11
+.globl excp12
+.globl excp13
+.globl excp14
+.globl excp15
+.globl excp16
+.globl excp17
+.globl excp18
+.globl excp19
+.globl excp20
+.globl excp30
 .globl syscall
 .globl hwint0
 .globl hwint1
@@ -80,9 +85,9 @@
 
 	/* General purpose registers. */
 	pushl %eax
+	pushl %ebx
 	pushl %ecx
 	pushl %edx
-	pushl %ebx
 	pushl %ebp
 	pushl %esi
 	pushl %edi
@@ -117,56 +122,118 @@ context_restore:
 	popl %edi
 	popl %esi
 	popl %ebp
-	popl %ebx
 	popl %edx
 	popl %ecx
+	popl %ebx
 	popl %eax
 
 	iret
 
-/*----------------------------------------------------------------------------*
- *                                  swint()                                   *
- *----------------------------------------------------------------------------*/
+/*============================================================================*
+ * excp()                                                                     *
+ *============================================================================*/
 
 /*
- * Software interrupt without error code.
+ * Exception without error code.
  */
-.macro swint_noerr_code, number, handler
-	swint\()\number:
-		iret
+.macro excp_noerr_code, number
+	excp\()\number:
+		pushl %eax
+		movl $0, %eax
+		pushl %ebx
+		xchg %ebx, 8(%esp)
+		pushl %ecx
+		movl $(\number), %ecx
+		jmp _excp
 .endm
 
 /*
- * Software interrupt with error code.
+ * Exception with error code.
  */
-.macro swint_err_code, number, handler
-	swint\()\number:
-		iret
+.macro excp_err_code, number
+	excp\()\number:
+		xchg %eax, (%esp)
+		pushl %ebx
+		xchg %ebx, 8(%esp)
+		pushl %ecx
+		movl $(\number), %ecx
+		jmp _excp
 .endm
 
-/* Software interrupt hooks. */
-swint_noerr_code  0 do_divide
-swint_noerr_code  1 do_debug
-swint_noerr_code  2 do_nmi
-swint_noerr_code  3 do_breakpoint
-swint_noerr_code  4 do_overflow
-swint_noerr_code  5 do_bounds
-swint_noerr_code  6 do_invalid_opcode
-swint_noerr_code  7 do_coprocessor_not_available
-swint_err_code    8 do_double_fault
-swint_noerr_code  9 do_coprocessor_segment_overrun
-swint_err_code   10 do_invalid_tss
-swint_err_code   11 do_segment_not_present
-swint_err_code   12 do_stack_exception
-swint_err_code   13 do_general_protection
-swint_err_code   14 _do_page_fault
-swint_noerr_code 15 do_reserved
-swint_noerr_code 16 do_coprocessor_error
-swint_noerr_code 17 do_reserved
+/*
+ * Exception with error code.
+ */
+.macro excp_err2_code, number
+	excp\()\number:
+		xchg %eax, (%esp)
+		pushl %ebx
+		movl %cr2, %ebx
+		pushl %ecx
+		movl $(\number), %ecx
+		jmp _excp
+.endm
 
-/*----------------------------------------------------------------------------*
- *                                 syscall()                                  *
- *----------------------------------------------------------------------------*/
+/* Exception hooks. */
+excp_noerr_code  0 /* Division-by-Zero Error      */
+excp_noerr_code  1 /* Debug Exception             */
+excp_noerr_code  2 /* Non-Maskable Interrupt      */
+excp_noerr_code  3 /* Breakpoint Exception        */
+excp_noerr_code  4 /* Overflow Exception          */
+excp_noerr_code  5 /* Bounds Check Exception      */
+excp_noerr_code  6 /* Invalid Opcode Exception    */
+excp_noerr_code  7 /* Coprocessor Not Available   */
+excp_err_code    8 /* Double Fault                */
+excp_noerr_code  9 /* Coprocessor Segment Overrun */
+excp_err_code   10 /* Invalid TSS                 */
+excp_err_code   11 /* Segment Not Present         */
+excp_err_code   12 /* Stack Segment Fault         */
+excp_err_code   13 /* General Protection Fault    */
+excp_err2_code  14 /* Page Fault                  */
+excp_noerr_code 15 /* Reserved                    */
+excp_noerr_code 16 /* Floating Point Exception    */
+excp_err_code   17 /* Alignment Check Exception   */
+excp_noerr_code 18 /* Machine Check Exception     */
+excp_noerr_code 19 /* SMID Unit Exception         */
+excp_noerr_code 20 /* Virtual Exception           */
+excp_err_code   30 /* Security Exception.         */
+
+/*
+ * Low-level exception handler dispatcher.
+ */
+_excp:
+	/* Save registers. */
+	pushl %edx
+	pushl %ebp
+	pushl %esi
+	pushl %edi
+	pushl %ds
+	pushl %es
+	pushl %fs
+	pushl %gs
+
+	movw $KERNEL_DS, %bx
+	movw %bx, %ds
+	movw %bx, %es
+	movw %bx, %fs
+	movw %bx, %gs
+
+	/* Retrieve stack pointer. */
+	movl %esp, %edx
+	addl 64, %edx
+
+	/* Call high-level exception handler. */
+	pushl %eax /* Error code.       */
+	pushl %ebx /* Address.          */
+	pushl %ecx /* Exception number. */
+	pushl %edx /* Context.          */
+	call do_excp
+	add $16, %esp
+
+    jmp context_restore
+
+/*============================================================================*
+ * syscall()                                                                  *
+ *============================================================================*/
 
 /*
  * System call hook.
@@ -174,9 +241,9 @@ swint_noerr_code 17 do_reserved
 syscall:
 	iret
 
-/*----------------------------------------------------------------------------*
- *                                   hwint()                                  *
- *----------------------------------------------------------------------------*/
+/*============================================================================*
+ * hwint()                                                                    *
+ *============================================================================*/
 
 /*
  * Master hardware interrupt.
