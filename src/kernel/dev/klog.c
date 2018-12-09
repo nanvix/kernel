@@ -71,8 +71,8 @@ PRIVATE void klog_flush(void)
 /**
  * @brief Writes to kernel log.
  * 
- * @param buffer Target buffer.
- * @param n      Number of characters to write.
+ * @param buf Target buffer.
+ * @param n   Number of characters to write.
  */
 PUBLIC void klog_write(const char *buf, size_t n)
 {
