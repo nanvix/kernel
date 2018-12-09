@@ -69,6 +69,11 @@
 	typedef mOS_exception_handler_t k1b_swint_handler_fn;
 
 	/**
+	 * @broef Exception handler.
+	 */
+	typedef mOS_exception_handler_t k1b_excp_handler_fn;
+
+	/**
 	 * @brief Hardware interrupt numbers.
 	 */
 	EXTERN const k1b_hwint_id_t hwints[K1B_NUM_HWINT];
@@ -78,8 +83,13 @@
 	 *
 	 * @param do_hwint Default hardware interrupt handler.
 	 * @param do_swint Default software interrupt handler.
+	 * @param do_swint Default exception handler.
 	 */
-	EXTERN void k1b_ivt_setup(k1b_hwint_handler_fn do_hwint, k1b_swint_handler_fn do_swint);
+	EXTERN void k1b_ivt_setup(
+			k1b_hwint_handler_fn do_hwint,
+			k1b_swint_handler_fn do_swint,
+			k1b_excp_handler_fn do_excp
+	);
 
 /**@}*/
 
