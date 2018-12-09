@@ -81,22 +81,24 @@
 	#error "hal_enable_interrupts() not defined?"
 	#endif
 
-#ifdef XXX
+	#ifndef __hal_interrupt_mask
+	#error "hal_interrupt_mask() not defined?"
+	#endif
+
+	#ifndef __hal_interrupt_unmask
+	#error "hal_interrupt_unmask() not defined?"
+	#endif
+
 	#ifndef __hal_interrupt_ack
 	#error "hal_interrupt_ack() not defined?"
 	#endif
-#endif
 
 	#ifndef __hal_interrupt_set_handler
 	#error "hal_interrupt_set_handler() not defined?"
 	#endif
 
-	#ifndef __hal_intlvl_raise
-	#error "hal_intlvl_raise() not defined?"
-	#endif
-
-	#ifndef __hal_intlvl_drop
-	#error "hal_intlvl_hal_drop() not defined?"
+	#ifndef __hal_intlvl_set
+	#error "hal_intlvl_set() not defined?"
 	#endif
 
 	#ifndef __hal_outputb

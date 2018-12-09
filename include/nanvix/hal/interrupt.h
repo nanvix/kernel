@@ -68,44 +68,37 @@
 	EXTERN void hal_interrupt_set_handler(int num, hal_interrupt_handler_t handler);
 
 	/**
-	 * @brief Raises an interrupt.
+	 * @brief Sets the interrupt level of the underlying core.
 	 *
-	 * @param num Number of the target interrupt.
+	 * @param newlevel New interrupt level.
 	 *
-	 * @returns Upon successful completion, zero is returned. Upon
-	 * failure, a negative error number is returned instead.
+	 * @returns The old interrupt level.
 	 */
-	EXTERN int hal_interrupt_raise(int num);
+	EXTERN int hal_intlvl_set(int newlevel);
 
 	/**
 	 * @brief Acknowledges an interrupt.
 	 *
-	 * @param num Number of the target interrupt.
-	 *
-	 * @returns Upon successful completion, zero is returned. Upon
-	 * failure, a negative error number is returned instead.
+	 * @param intnum Number of the target interrupt.
 	 */
-	EXTERN int hal_interrupt_ack(int num);
+	EXTERN void hal_interrupt_ack(int intnum);
 
 	/**
 	 * @brief Masks an interrupt.
 	 *
-	 * @param num number of the target interrupt.
-	 *
-	 * @returns Upon successful completion, zero is returned. Upon
-	 * failure, a negative error number is returned instead.
+	 * @param intnum Number of the target interrupt.
 	 */
-	EXTERN int hal_interrupt_mask(int num);
+	EXTERN void hal_interrupt_mask(int intnum);
 
 	/**
 	 * @brief Unmasks an interrupt.
 	 *
-	 * @param num Number of the target interrupt.
+	 * @param intnum Number of the target interrupt.
 	 *
 	 * @returns Upon successful completion, zero is returned. Upon
 	 * failure, a negative error number is returned instead.
 	 */
-	EXTERN int hal_interrupt_unmask(int num);
+	EXTERN void hal_interrupt_unmask(int intnum);
 
 	/**
 	 * @brief Registers an interrupt handler.
