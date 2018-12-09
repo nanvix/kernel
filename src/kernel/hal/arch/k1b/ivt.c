@@ -59,19 +59,19 @@ PUBLIC const k1b_hwint_id_t hwints[K1B_NUM_HWINT] = {
 /**
  * The k1b_ivt_setup() function initializes the interrupt vector table
  * in the k1b architecture. It traverses all entries of this table and
- * properly registers @p do_hwint and @p do_swint as default handlers
- * for hardware and software interrupts, respectively.
- *
- * @param do_hwint Default hardware interrupt handler.
- * @param do_swint Default software interrupt handler.
+ * properly registers @p do_hwintm @p do_swint and do_excp as default
+ * handlers for hardware interrupts, software interrupts and
+ * exceptions, respectively.
  */
 PUBLIC void k1b_ivt_setup(
 	k1b_hwint_handler_fn do_hwint,
-	k1b_swint_handler_fn do_swint)
+	k1b_swint_handler_fn do_swint,
+	k1b_excp_handler_fn do_excp)
 {
 	for (int i = 0; i < K1B_NUM_HWINT; i++)
 		bsp_register_it(do_hwint, hwints[i]);
 	mOS_register_scall_handler(do_swint); 
+	mOS_register_trap_handler(do_excp);
 
 	k1b_pic_setup();
 }

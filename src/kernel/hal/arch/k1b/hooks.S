@@ -38,13 +38,9 @@
 /**@}*/
 
 .global _syscall
-.global do_syscall
+.global _do_excp
 
 .section .text
-
-/*===========================================================================*
- * _syscall()                                                                *
- *===========================================================================*/
 
 /*
  * Allocates the red zone in the current stack frame.
@@ -59,6 +55,10 @@
 .macro redzone_free
 	add $sp = $sp, REDZONE_SIZE
 .endm
+
+/*===========================================================================*
+ * _syscall()                                                                *
+ *===========================================================================*/
 
 /*
  * System call hook.
@@ -88,6 +88,59 @@ _syscall:
 	;;
 
 	/* Restore system call context. */
+	lw $r8 = 4 [$sp]
+	;;
+	lw $bp = 0 [$sp]
+	;;
+	add $sp = $sp, 8
+	;;
+	set $ra = $r8
+	;;
+	scall MOS_VC_RFE
+	;;
+	ret
+	;;
+
+/*===========================================================================*
+ * _do_excp()                                                                *
+ *===========================================================================*/
+
+/*
+ * System call hook.
+ */
+.align 8
+_do_excp:
+	/* Save exception context. */
+	add $sp = $sp, -8
+	;;
+	get $r8 = $ra
+	;;
+	copy $bp = $r7
+	;;
+	sw 0 [$sp] = $bp
+	;;
+	sw 4 [$sp] = $r8
+	;;
+
+	/*
+	 * Get exception code.
+	 *
+	get $r1 = $ps
+	;;
+	srl $r0 = $r1, 28
+	;;
+
+	/*
+	 * Invoke exception dispatcher.
+	 */
+	redzone_alloc
+	;;
+	call do_excp
+	;;
+	redzone_free
+	;;
+
+	/* Restore exception context. */
 	lw $r8 = 4 [$sp]
 	;;
 	lw $bp = 0 [$sp]

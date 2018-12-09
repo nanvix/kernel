@@ -30,6 +30,7 @@
 #include <arch/k1b/core.h>
 #include <arch/k1b/cpu.h>
 #include <arch/k1b/elf.h>
+#include <arch/k1b/excp.h>
 #include <arch/k1b/int.h>
 #include <arch/k1b/ivt.h>
 #include <nanvix/const.h>
@@ -86,7 +87,8 @@ PRIVATE void core_setup(void)
 
 	k1b_ivt_setup(
 		(k1b_hwint_handler_fn) k1b_do_hwint,
-		(k1b_swint_handler_fn) _syscall
+		(k1b_swint_handler_fn) _syscall,
+		(k1b_excp_handler_fn) _do_excp
 	);
 }
 

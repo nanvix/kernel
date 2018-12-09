@@ -83,6 +83,11 @@
 	#define _HAL_INT_NR K1B_NUM_HWINT
 
 	/**
+	 * @brief Number of exceptions in the Kalray MPPA-256 target.
+	 */
+	#define _HAL_NUM_EXCEPTION K1B_NUM_EXCEPTION
+
+	/**
 	 * @name Hardware Interrupts
 	 */
 	/**@{*/
