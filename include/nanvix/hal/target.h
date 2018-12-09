@@ -33,20 +33,20 @@
 	#include <target/ibm/pc.h>
 	#endif
 
+/*============================================================================*
+ * Processor Interface                                                         *
+ *============================================================================*/
+
 	#ifndef _HAL_NUM_CORES
 	#error "_HAL_NUM_CORES not defined"
 	#endif
 
 	#ifndef __hal_cpu_get_num_cores
 	#error "hal_cpu_get_num_cores() not defined?"
-	#endif
 
-	#ifndef HAL_INT_CLOCK
-	#error "HAL_INT_CLOCK not defined"
-	#endif
-
-	#ifndef __hal_clock_init
-	#error "hal_clock_init() not defined?"
+/*============================================================================*
+ * Core Interface                                                             *
+ *============================================================================*/
 	#endif
 
 	#ifndef __hal_core_get_id
@@ -61,6 +61,22 @@
 	#error "hal_core_setup() not defined?"
 	#endif
 
+/*============================================================================*
+ * Clock Device Interface                                                     *
+ *============================================================================*/
+
+	#ifndef HAL_INT_CLOCK
+	#error "HAL_INT_CLOCK not defined"
+	#endif
+
+	#ifndef __hal_clock_init
+	#error "hal_clock_init() not defined?"
+	#endif
+
+/*============================================================================*
+ * Debug Interface                                                            *
+ *============================================================================*/
+
 	#ifndef __hal_stdout_init
 	#error "hal_stdout_init() not defined?"
 	#endif
@@ -68,6 +84,10 @@
 	#ifndef __hal_stdout_write
 	#error "hal_stdout_write() not defined?"
 	#endif
+
+/*============================================================================*
+ * Interrupt Interface                                                        *
+ *============================================================================*/
 
 	#ifndef _HAL_INT_NR
 	#error "_HAL_INT_NR not defined"
@@ -101,6 +121,22 @@
 	#error "hal_intlvl_set() not defined?"
 	#endif
 
+/*============================================================================*
+ * Exception Interface                                                        *
+ *============================================================================*/
+
+	#ifndef _HAL_NUM_EXCEPTION
+	#error "_HAL_NUM_EXCEPTION not defined"
+	#endif
+
+	#ifndef __hal_exception_set_handler
+	#error "hal_exception_set_handler() not defined?"
+	#endif
+
+/*============================================================================*
+ * Input/Output Interface                                                     *
+ *============================================================================*/
+
 	#ifndef __hal_outputb
 	#error "hal_outputb() not defined?"
 	#endif
@@ -108,6 +144,10 @@
 	#ifndef __hal_iowait
 	#error "hal_iowait() not defined?"
 	#endif
+
+/*============================================================================*
+ * Memory Cache Interface                                                     *
+ *============================================================================*/
 
 	#ifndef __hal_dcache_invalidate
 	#error "hal_dcache_invalidate() not defined?"

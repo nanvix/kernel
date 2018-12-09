@@ -57,6 +57,13 @@
 	 */
 	EXTERN void kputs(const char *str);
 
+	/**
+	 * @brief Panics the kernel.
+	 *
+	 * @param fmt Panic message.
+	 */
+	EXTERN void kpanic(const char *fmt, ...);
+
 	/* Forward definitions. */
 	EXTERN void kprintf(const char *, ...);
 	EXTERN int kvsprintf(char *, const char *, va_list);

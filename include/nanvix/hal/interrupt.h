@@ -106,7 +106,7 @@
 	 * @param num     Number of the interrupt.
 	 * @param handler Interrupt handler.
 	 *
-	 * @returns upon successful completion, zero is returned. Upon
+	 * @returns Upon successful completion, zero is returned. Upon
 	 * failure, a negative error code is returned instead.
 	 */
 	EXTERN int interrupt_register(int num, hal_interrupt_handler_t handler);

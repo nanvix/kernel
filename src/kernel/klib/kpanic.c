@@ -28,9 +28,10 @@
 #include <stdarg.h>
 
 /**
- * @brief Writes a message to the kernel's output device and panics the kernel.
- * 
- * @param fmt Formatted message to be written onto kernel's output device.
+ * The kpanic() function writes the formatted message pointed to by @p
+ * fmt to the standard output device and panics the kernel. In panic
+ * mode, all interrupts are disabled in the underlying core, and
+ * execution loops indefinitely.
  */
 PUBLIC void kpanic(const char *fmt, ...)
 {
@@ -44,8 +45,11 @@ PUBLIC void kpanic(const char *fmt, ...)
 	va_start(args, fmt);
 	len = kvsprintf(buffer + 7, fmt, args) + 7;
 	buffer[len++] = '\n';
+	buffer[len++] = '\0';
 	va_end(args);
-	
+
+	kputs(buffer);
+
 	/* I don't want to be troubled. */
 	hal_disable_interrupts();
 
