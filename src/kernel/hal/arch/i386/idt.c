@@ -77,7 +77,7 @@ PUBLIC void idt_setup(void)
 	kmemset(&idtptr, 0, IDTPTR_SIZE);
 
 	/* Re-initialize PIC. */
-	pic_setup(0x20, 0x28);
+	i386_pic_setup(0x20, 0x28);
 	
 	/* Set software interrupts (exceptions). */
 	set_idte(0, (unsigned)swint0, KERNEL_CS, 0x8, IDT_INT32);

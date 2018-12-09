@@ -27,31 +27,134 @@
 #include <arch/i386/io.h>
 #include <stdint.h>
 
+/**
+ * @brief Masks of interrupt levels.
+ *
+ * Lookup table for masks of interrupt levels.
+ */
+PRIVATE uint16_t intlvl_masks[I386_NUM_INTLVL] = {
+	I386_INTLVL_MASK_0,
+	I386_INTLVL_MASK_1,
+	I386_INTLVL_MASK_2,
+	I386_INTLVL_MASK_3,
+	I386_INTLVL_MASK_4,
+	I386_INTLVL_MASK_5,
+};
+
+/**
+ * @brief Current interrupt level.
+ *
+ * Current interrupt level of the underlying i386 core.
+ */
+PRIVATE int currlevel = I386_INTLVL_5;
+
+/**
+ * @brief Current interrupt mask.
+ *
+ * Current interrupt mask of the underlying i386 core.
+ */
+PRIVATE uint16_t currmask = I386_INTLVL_MASK_5;
+
 /*============================================================================*
- *                               pic_mask()                                   *
+ * i386_pic_mask()                                                            *
  *============================================================================*/
  
 /**
- * The pic_mask() function sets the interrupt mask to @p mask, thus
- * preventing related interrupt requested to be fired.
+ * The i386_pic_mask() function masks the interrupt request line in
+ * which the interrupt @p intnum is hooked up.
  */
-PUBLIC void pic_mask(uint16_t mask)
+PUBLIC void i386_pic_mask(int intnum)
 {
-	i386_outb(PIC_DATA_MASTER, mask & 0xff);
-	i386_outb(PIC_DATA_SLAVE, mask >> 8);
+	uint16_t port;
+	uint8_t value;
+	uint16_t newmask;
+
+	if (intnum < 8)
+	{
+		port = PIC_DATA_MASTER;
+		newmask = currmask | (1 << intnum);
+		value = newmask & 0xff;
+	}
+	else
+	{
+		port = PIC_DATA_SLAVE;
+		newmask = currmask | (1 << intnum);
+		value = (newmask >> 8) & 0xff;
+	}
+
+	currmask = newmask;
+
+	i386_outb(port, value);
 }
 
 /*============================================================================*
- *                               pic_setup()                                  *
+ * i386_pic_unmask()                                                          *
  *============================================================================*/
 
 /**
- * The pic_setup() function setups the PIC by effectively remapping
- * interrupt vectors. This is mandatory when operating in protected
- * mode, since the default hardware interrupt vectors conflicts with
- * CPU exception vectors.
+ * The i386_pic_unmask() function unmasks the interrupt request line
+ * in which the interrupt @p intnum is hooked up.
  */
-PUBLIC void pic_setup(uint8_t offset1, uint8_t offset2)
+PUBLIC void i386_pic_unmask(int intnum)
+{
+	uint16_t port;
+	uint8_t value;
+	uint16_t newmask;
+
+	if (intnum < 8)
+	{
+		port = PIC_DATA_MASTER;
+		newmask = currmask & ~(1 << intnum);
+		value = newmask & 0xff;
+	}
+	else
+	{
+		port = PIC_DATA_SLAVE;
+		newmask = currmask & ~(1 << intnum);
+		value = (newmask >> 8) & 0xff;
+	}
+
+	currmask = newmask;
+
+	i386_outb(port, value);
+}
+
+/*============================================================================*
+ * i386_pic_lvl_set()                                                         *
+ *============================================================================*/
+
+/**
+ * The i386_pic_set() function sets the interrupt level of the calling
+ * core to @p newlevel. The old interrupt level is returned.
+ */
+PUBLIC int i386_pic_lvl_set(int newlevel)
+{
+	int oldlevel;
+	uint16_t mask;
+
+	mask = intlvl_masks[newlevel];
+
+	i386_outb(PIC_DATA_MASTER, mask & 0xff);
+	i386_outb(PIC_DATA_SLAVE, mask >> 8);
+
+	currmask = mask;
+	oldlevel = currlevel;
+	currlevel = newlevel;
+
+	return (oldlevel);
+}
+
+/*============================================================================*
+ * i386_pic_setup()                                                           *
+ *============================================================================*/
+
+/**
+ *
+ * The i386_pic_setup() function initializes the programmble interrupt
+ * controler of the i386 core. Upon completion, it drops the interrupt
+ * level to the slowest ones, so that all interrupt lines are enabled.
+ */
+PUBLIC void i386_pic_setup(uint8_t offset1, uint8_t offset2)
 {
 	/*
 	 * Starts initialization sequence
@@ -85,5 +188,5 @@ PUBLIC void pic_setup(uint8_t offset1, uint8_t offset2)
 	i386_iowait();
 	
 	/* Clears interrupt mask. */
-	pic_mask(0x0000);
+	i386_pic_lvl_set(I386_INTLVL_0);
 }
