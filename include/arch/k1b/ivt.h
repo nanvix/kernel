@@ -26,7 +26,7 @@
 #define ARCH_K1B_IVT_H_
 
 /**
- * @addtogroup k1b-int IVT
+ * @addtogroup k1b-ivt IVT
  * @ingroup k1b
  *
  * @brief Interrupt Vector Table

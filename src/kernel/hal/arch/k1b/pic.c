@@ -44,5 +44,36 @@ PUBLIC uint32_t intlvl_masks[K1B_NUM_INTLVL] = {
 	K1B_INTLVL_MASK_12,
 	K1B_INTLVL_MASK_13,
 	K1B_INTLVL_MASK_14,
-	K1B_INTLVL_MASK_15,
+	K1B_INTLVL_MASK_15
 };
+
+/**
+ * Lookup table for interrupt request lines of hardware interrupts.
+ */
+PUBLIC k1b_irq_t k1b_irqs[K1B_NUM_IRQ] = {
+	K1B_IRQ_0,
+	K1B_IRQ_1,
+	K1B_IRQ_2,
+	K1B_IRQ_3,
+	K1B_IRQ_4,
+	K1B_IRQ_5,
+	K1B_IRQ_6,
+	K1B_IRQ_7,
+	K1B_IRQ_8,
+	K1B_IRQ_9,
+#ifdef __k1io__
+	K1B_IRQ_10,
+	K1B_IRQ_11,
+	K1B_IRQ_12
+#endif
+};
+
+/**
+ * Current interrupt mask of the underlying k1b core.
+ */
+PUBLIC uint32_t currmask = K1B_INTLVL_MASK_5;
+
+/**
+ * Current interrupt level of the underlying k1b core.
+ */
+PUBLIC int currlevel = K1B_INTLVL_0;

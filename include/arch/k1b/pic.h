@@ -34,6 +34,7 @@
 /**@{*/
 
 	#include <nanvix/const.h>
+	#include <nanvix/klib.h>
 	#include <mOS_vcore_u.h>
 	#include <stdint.h>
 
@@ -41,8 +42,40 @@
 	 * @name Provided Interface
 	 */
 	/**@{*/
-	#define __hal_intlvl_drop
-	#define __hal_intlvl_raise
+	#define __hal_intlvl_set
+	#define __hal_interrupt_ack
+	#define __hal_interrupt_mask
+	#define __hal_interrupt_unmask
+	/**@}*/
+
+	/**
+	 * @brief Number of interrupt request lines.
+	 */
+	#ifdef __k1io__
+		#define K1B_NUM_IRQ 13
+	#else
+		#define K1B_NUM_IRQ 10
+	#endif
+
+	/**
+	 * @name Interrupt Request Lines
+	 */
+	/**@{*/
+		#define K1B_IRQ_0 MOS_VC_IT_TIMER_0           /**< Timer 0           */
+		#define K1B_IRQ_1 MOS_VC_IT_TIMER_1           /**< Timer 1           */
+		#define K1B_IRQ_2 MOS_VC_IT_WATCHDOG          /**< Watchdog Timer    */
+		#define K1B_IRQ_3 MOS_VC_IT_MAILBOX           /**< C-NoC Mailbox     */
+		#define K1B_IRQ_4 MOS_VC_IT_DNOC_RX           /**< D-NoC RX          */
+		#define K1B_IRQ_5 MOS_VC_IT_UCORE             /**< U-Core            */
+		#define K1B_IRQ_6 MOS_VC_IT_NOCERR            /**< NoC Error         */
+		#define K1B_IRQ_7 MOS_VC_IT_USER_0            /**< Virtual Line      */
+		#define K1B_IRQ_8 MOS_VC_IT_WATCHDOG_OVERFLOW /**< Watchdog Overflow */
+		#define K1B_IRQ_9 MOS_VC_IT_DEBUG             /**< Debug             */
+	#ifdef __k1io__
+		#define K1B_IRQ_10 MOS_VC_IT_GIC_1            /**< GIC 1             */
+		#define K1B_IRQ_11 MOS_VC_IT_GIC_2            /**< GIC 2             */
+		#define K1B_IRQ_12 MOS_VC_IT_GIC_3            /**< GIC2              */
+	#endif
 	/**@}*/
 
 	/**
@@ -95,80 +128,147 @@
 	/**@}*/
 
 	/**
+	 * @brief Interrupt request line number.
+	 */
+	typedef mOS_vcore_it_lines_e k1b_irq_t;
+
+	/**
 	 * @brief Masks of interrupt levels.
 	 */
 	EXTERN uint32_t intlvl_masks[K1B_NUM_INTLVL];
 
 	/**
-	 * @brief Raises the interrupt level of the calling core.
-	 *
-	 * The k1b_pic_raise() function raises the interrupt level of the
-	 * calling core to @p newlevel. The old interrupt level is
-	 * returned.
+	 * @brief Interrupt request lines.
+	 */
+	EXTERN k1b_irq_t k1b_irqs[K1B_NUM_IRQ];
+
+	/**
+	 * @brief Current interrupt mask.
+	 */
+	EXTERN uint32_t currmask;
+
+	/**
+	 * @brief Current interrupt level.
+	 */
+	EXTERN int currlevel;
+
+	/**
+	 * @brief Sets the interrupt level of the underlying core.
 	 *
 	 * @param newlevel New interrupt level.
 	 *
 	 * @returns The old interrupt level.
 	 */
-	static inline int k1b_pic_raise(int newlevel)
+	static inline int k1b_pic_lvl_set(int newlevel)
 	{
 		uint32_t mask;
+		int oldlevel;
 
-		mask = mOS_set_it_level(intlvl_masks[newlevel]);
+		mOS_set_it_level(mask = intlvl_masks[newlevel]);
 
-		/* Query interrupt level. */
-		for (int i = 0; i < K1B_NUM_INTLVL; i++)
-		{
-			if (intlvl_masks[i] == mask)
-				return (i);
-		}
+		currmask = mask;
+		oldlevel = currlevel;
+		currlevel = newlevel;
 
-		return (0);
+		return (oldlevel);
 	}
 
 	/**
-	 * @see k1b_pic_drop()
+	 * @see k1b_pic_lvl_set()
 	 *
 	 * @cond k1b
 	 */
-	static inline int hal_intlvl_raise(int newlevel)
+	static inline int hal_intlvl_set(int newlevel)
 	{
-		return (k1b_pic_raise(newlevel));
+		return (k1b_pic_lvl_set(newlevel));
 	}
 	/**@endcond*/
 
 	/**
-	 * @brief Drops the interrupt level of the calling core.
+	 * @brief Acknowledges an interrupt.
 	 *
-	 * The k1b_pic_drop() function drops the interrupt level of the
-	 * calling core to @p newlevel.
+	 * The k1b_pic_ack() function acknowledges the end of interrupt to
+	 * the interrupt controller of the underlying k1b core.
+	 *
+	 * @param intnum Number of the target interrupt.
 	 */
-	static inline void k1b_pic_drop(int newlevel)
+	static inline void k1b_pic_ack(int intnum)
 	{
-		mOS_set_it_level(intlvl_masks[newlevel]);
+		UNUSED(intnum);
 	}
 
 	/**
-	 * @see k1b_pic_drop(int newlevel)
+	 * @see k1b_pic_ack()
 	 *
-	 * @cond
+	 * @cond k1b
 	 */
-	static inline void hal_intlvl_drop(int newlevel)
+	static inline void hal_interrupt_ack(int intnum)
 	{
-		k1b_pic_drop(newlevel);
+		k1b_pic_ack(intnum);
 	}
-	/**@}*/
+	/**@endcond*/
+
+	/**
+	 * @brief Masks an interrupt.
+	 *
+	 * The k1b_pic_mask() function masks the interrupt line in which
+	 * the interrupt @p intnum is hooked up in the underlying k1b
+	 * core.
+	 *
+	 * @param intnum Number of the target interrupt.
+	 */
+	static inline void k1b_pic_mask(int intnum)
+	{
+		mOS_it_enable_num(k1b_irqs[intnum]);
+	}
+
+	/**
+	 * @see k1b_pic_mask()
+	 *
+	 * @cond k1b
+	 */
+	static inline void hal_interrupt_mask(int intnum)
+	{
+		k1b_pic_mask(intnum);
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Masks an interrupt.
+	 *
+	 * The k1b_pic_unmask() function unmasks the interrupt line in which
+	 * the interrupt @p intnum is hooked up in the underlying k1b
+	 * core.
+	 *
+	 * @param intnum Number of the target interrupt.
+	 */
+	static inline void k1b_pic_unmask(int intnum)
+	{
+		mOS_it_disable_num(k1b_irqs[intnum]);
+	}
+
+	/**
+	 * @see k1b_pic_unmask()
+	 *
+	 * @cond k1b
+	 */
+	static inline void hal_interrupt_unmask(int intnum)
+	{
+		k1b_pic_unmask(intnum);
+	}
+	/**@endcond*/
 
 	/**
 	 * @brief Initializes the PIC.
 	 *
-	 * The k1b_pic_setup() initializes the PIC. Upon completion, it
-	 * drops the interrupt level to the slowest ones, so that all
-	 * interrupt lines are enabled.
+	 * The k1b_pic_setup() function initializes the programmble
+	 * interrupt controler of the k1b core. Upon completion, it drops
+	 * the interrupt level to the slowest ones, so that all interrupt
+	 * lines are enabled.
 	 */
 	static inline void k1b_pic_setup(void)
 	{
-		k1b_pic_drop(K1B_INTLVL_0);
+		k1b_pic_lvl_set(K1B_INTLVL_0);
 	}
 
 /**@}*/
