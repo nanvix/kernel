@@ -27,5 +27,4 @@ layout split
 target remote localhost:1234
 handle SIGSEGV nostop noprint nopass
 symbol-file bin/kernel
-continue
 
