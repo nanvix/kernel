@@ -27,4 +27,9 @@ layout split
 target remote localhost:1234
 handle SIGSEGV nostop noprint nopass
 symbol-file bin/kernel
-
+set confirm off
+define hook-stop
+	if $_isvoid ($_exitcode) != 1
+		quit
+	end
+end
