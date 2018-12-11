@@ -154,6 +154,122 @@
 	#endif
 
 /*============================================================================*
+ * MMU Interface                                                              *
+ *============================================================================*/
+
+	#ifndef __frame_t
+	#error "__frame_t not defined?"
+	#endif
+
+	#ifndef __paddr_t
+	#error "paddr_t not defined?"
+	#endif
+
+	#ifndef __vaddr_t
+	#error "vaddr_t not defined?"
+	#endif
+
+	#ifndef PAGE_SHIFT
+	#error "PAGE_SHIFT not defined"
+	#endif
+
+	#ifndef PGTAB_SHIFT
+	#error "PGTAB_SHIFT not defined"
+	#endif
+
+	#ifndef PAGE_SIZE
+	#error "PAGE_SIZE not defined"
+	#endif
+
+	#ifndef PGTAB_SIZE
+	#error "PGTAB_SIZE not defined"
+	#endif
+
+	#ifndef PTE_SIZE
+	#error "PTE_SIZE not defined"
+	#endif
+
+	#ifndef PDE_SIZE
+	#error "PDE_SIZE not defined"
+	#endif
+
+	#ifndef __pde_clear_fn
+	#error "ipde_clear() not defined?"
+	#endif
+
+	#ifndef __pde_frame_set_fn
+	#error "ipde_frame_set() not defined?"
+	#endif
+
+	#ifndef __pde_frame_get_fn
+	#error "ipde_frame_get() not defined?"
+	#endif
+
+	#ifndef __pde_get_fn
+	#error "pde_get() not defined?"
+	#endif
+
+	#ifndef __pde_is_present_fn
+	#error "pde_is_present() not defined?"
+	#endif
+
+	#ifndef __pde_is_user_fn
+	#error "pde_is_user() not defined?"
+	#endif
+
+	#ifndef __pde_is_write_fn
+	#error "pde_is_write() not defined?"
+	#endif
+
+	#ifndef __pde_present_set_fn
+	#error "pde_present_set() not defined?"
+	#endif
+
+	#ifndef __pde_user_set_fn
+	#error "pde_user_set() not defined?"
+	#endif
+
+	#ifndef __pde_write_set_fn
+	#error "pde_write_set() not defined?"
+	#endif
+
+	#ifndef __pte_clear_fn
+	#error "pte_clear() not defined?"
+	#endif
+
+	#ifndef __pte_frame_set_fn
+	#error "pte_frame_set() not defined?"
+	#endif
+
+	#ifndef __pte_get_fn
+	#error "pte_get() not defined?"
+	#endif
+
+	#ifndef __pte_is_present_fn
+	#error "pte_is_present() not defined?"
+	#endif
+
+	#ifndef __pte_is_user_fn
+	#error "pte_is_user() not defined?"
+	#endif
+
+	#ifndef __pte_is_write_fn
+	#error "pte_is_write() not defined?"
+	#endif
+
+	#ifndef __pte_present_set_fn
+	#error "pte_present_set() not defined?"
+	#endif
+
+	#ifndef __pte_user_set_fn
+	#error "pte_user_set() not defined?"
+	#endif
+
+	#ifndef __pte_write_set_fn
+	#error "pte_write_set() not defined?"
+	#endif
+
+/*============================================================================*
  * TLB Interface                                                              *
  *============================================================================*/
 
