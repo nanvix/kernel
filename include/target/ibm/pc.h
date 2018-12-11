@@ -79,6 +79,50 @@
 	#define _HAL_NUM_EXCEPTION I386_NUM_EXCEPTION
 
 /*============================================================================*
+ * Memory Interface                                                           *
+ *============================================================================*/
+
+	/**
+	 * @brief Kernel stack size (in bytes).
+	 */
+	#define _KSTACK_SIZE I386_PAGE_SIZE
+
+	/**
+	 * @brief Memory size (in bytes).
+	 */
+	#define _HAL_MEM_SIZE 0x01000000
+
+	/**
+	 * @name Virtual Memory Layout
+	 */
+	/**@{*/
+	#define _UBASE_VIRT  0x02000000 /**< User base.        */
+	#define _USTACK_ADDR 0xc0000000 /**< User stack.       */
+	#define _KBASE_VIRT  0xc0000000 /**< Kernel base.      */
+	#define _KPOOL_VIRT  0xc1000000 /**< Kernel page pool. */
+	#define _INITRD_VIRT 0xc2000000 /**< Initial RAM disk. */
+	/**@}*/
+
+	/**
+	 * @name Physical Memory Layout
+	 */
+	/**@{*/
+	#define _KBASE_PHYS 0x00000000 /**< Kernel base.      */
+	#define _KPOOL_PHYS 0x01000000 /**< Kernel page pool. */
+	#define _UBASE_PHYS 0x02000000 /**< User base.        */
+	/**@}*/
+
+	/**
+	 * @brief User memory size (in bytes).
+	 */
+	#define _UMEM_SIZE (16*1024*1024)
+
+	/**
+	 * @brief Kernel page pool size (in bytes).
+	 */
+	#define _KPOOL_SIZE 0x01000000
+
+/*============================================================================*
  * Clock Interface                                                            *
  *============================================================================*/
 
