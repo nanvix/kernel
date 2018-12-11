@@ -153,4 +153,12 @@
 	#error "hal_dcache_invalidate() not defined?"
 	#endif
 
+/*============================================================================*
+ * TLB Interface                                                              *
+ *============================================================================*/
+
+	#ifndef __tlb_flush_fn
+	#error "tlb_flush() not defined?"
+	#endif
+
 #endif /* NANVIX_HAL_TARGET_H_ */
