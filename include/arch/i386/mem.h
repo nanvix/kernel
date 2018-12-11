@@ -22,37 +22,19 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_I386_PAGING_H_
-#define ARCH_I386_PAGING_H_
+#ifndef ARCH_I386_MEM_H_
+#define ARCH_I386_MEM_H_
 
 /**
- * @addtogroup i386-mmu MMU
+ * @addtogroup i386-memory Memory System
  * @ingroup i386
- *
- * @brief Memory Management Unit
  */
 /**@{*/
 
-	/**
-	 * @name Page shifts and Masks
-	 */
-	/**@{*/
-	#define PAGE_SHIFT  12                  /**< Page shift.       */
-	#define PGTAB_SHIFT 22                  /**< Page table shift. */
-	#define PAGE_MASK   (~(PAGE_SIZE - 1))  /**< Page mask.        */
-	#define PGTAB_MASK  (~(PGTAB_SIZE - 1)) /**< Page table mask.  */
-	/**@}*/
-
-	/**
-	 * @name Size of Pages and Page Tables
-	 */
-	/**@{*/
-	#define PAGE_SIZE  (1 << PAGE_SHIFT)  /**< Page size.                 */
-	#define PGTAB_SIZE (1 << PGTAB_SHIFT) /**< Page table size.           */
-	#define PTE_SIZE   4                  /**< Page table entry size.     */
-	#define PDE_SIZE   4                  /**< Page directory entry size. */
-	/**@}*/
+	#include <arch/i386/cache.h>
+	#include <arch/i386/mmu.h>
+	#include <arch/i386/tlb.h>
 
 /**@}*/
 
-#endif /* ARCH_I386_PAGING_H_ */
+#endif /* ARCH_I386_MEM_H_ */

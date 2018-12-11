@@ -29,7 +29,7 @@
 
 #include <grub/mboot.h>
 #include <arch/i386/core.h>
-#include <arch/i386/paging.h>
+#include <arch/i386/mmu.h>
 
 /**
  * @brief Multiboot flags.
@@ -77,8 +77,8 @@ start:
 		movl $0x00000000 + 7, %eax
 		start.kernel.init.loop:
 			stosl
-			addl $PAGE_SIZE,   %eax
-			cmpl $kernel_pgtab + PAGE_SIZE, %edi
+			addl $I386_PAGE_SIZE, %eax
+			cmpl $kernel_pgtab + I386_PAGE_SIZE, %edi
 			jl start.kernel.init.loop
 
 	/* Build kernel pool tables. */
@@ -87,8 +87,8 @@ start:
 		movl $0x01000000 + 7, %eax
 		start.kpool.init.loop:
 			stosl
-			addl $PAGE_SIZE,    %eax
-			cmpl $kpool_pgtab + PAGE_SIZE, %edi
+			addl $I386_PAGE_SIZE, %eax
+			cmpl $kpool_pgtab + I386_PAGE_SIZE, %edi
 			jl start.kpool.init.loop
 
 	/*
@@ -98,9 +98,9 @@ start:
 	 *   - Kernel page pool at 0xc1000000
 	 */
 	start.kpgdir.init:
-		movl $kernel_pgtab + 3, idle_pgdir + PTE_SIZE*0
-		movl $kernel_pgtab + 3, idle_pgdir + PTE_SIZE*768
-		movl $kpool_pgtab + 3,  idle_pgdir + PTE_SIZE*772
+		movl $kernel_pgtab + 3, idle_pgdir + I386_PTE_SIZE*0
+		movl $kernel_pgtab + 3, idle_pgdir + I386_PTE_SIZE*768
+		movl $kpool_pgtab + 3,  idle_pgdir + I386_PTE_SIZE*772
 
 	/* Enable paging. */
 	start.paging.enable:
@@ -112,8 +112,8 @@ start:
 
 	/* Setup stack. */
 	start.kstack.setup:
-		movl $core0.kstack + PAGE_SIZE - DWORD_SIZE, %ebp
-		movl $core0.kstack + PAGE_SIZE - DWORD_SIZE, %esp
+		movl $core0.kstack + I386_PAGE_SIZE - DWORD_SIZE, %ebp
+		movl $core0.kstack + I386_PAGE_SIZE - DWORD_SIZE, %esp
 
 	call i386_core_setup
 
@@ -131,9 +131,9 @@ start:
 /**
  * @brief Page table for kernel code and data.
  */
-.align PAGE_SIZE
+.align I386_PAGE_SIZE
 kernel_pgtab:
-	.fill PAGE_SIZE/PTE_SIZE, PTE_SIZE, 0
+	.fill I386_PAGE_SIZE/I386_PTE_SIZE, I386_PTE_SIZE, 0
 
 /*----------------------------------------------------------------------------*
  * kpool_pgtab                                                                *
@@ -142,9 +142,9 @@ kernel_pgtab:
 /**
  * @brief Page table for kernel page pool.
  */
-.align PAGE_SIZE
+.align I386_PAGE_SIZE
 kpool_pgtab:
-	.fill PAGE_SIZE/PTE_SIZE, PTE_SIZE, 0
+	.fill I386_PAGE_SIZE/I386_PTE_SIZE, I386_PTE_SIZE, 0
 
 /*----------------------------------------------------------------------------*
  * idle_pgdir                                                                 *
@@ -153,9 +153,9 @@ kpool_pgtab:
 /**
  * @brief Page directory of idle process.
  */
-.align PAGE_SIZE
+.align I386_PAGE_SIZE
 idle_pgdir:
-	.fill PAGE_SIZE/PTE_SIZE, PTE_SIZE, 0
+	.fill I386_PAGE_SIZE/I386_PTE_SIZE, I386_PTE_SIZE, 0
 
 /*----------------------------------------------------------------------------*
  * core0.kstack                                                               *
@@ -164,6 +164,6 @@ idle_pgdir:
 /**
  * @brief Kernel stack for core 0.
  */
-.align PAGE_SIZE
+.align I386_PAGE_SIZE
 core0.kstack:
-	.fill PAGE_SIZE/PTE_SIZE, PTE_SIZE, 0
+	.fill I386_PAGE_SIZE/I386_PTE_SIZE, I386_PTE_SIZE, 0

@@ -22,25 +22,43 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_I386_I386_H_
-#define ARCH_I386_I386_H_
+#ifndef ARCH_I386_TLB_H_
+#define ARCH_I386_TLB_H_
 
-
-	#ifndef TARGET_IBM_PC_H_
-	#error "include <target/ibm/pc.h> instead"
-	#endif
+/**
+ * @addtogroup i386-tlb TLB
+ * @ingroup i386-memory
+ *
+ * @brief Translation Lookaside Buffer
+ */
+/**@{*/
 
 	/**
-	 * @defgroup i386 x86 Architecture
-	 * @ingroup i386-pc
+	 * @name Provided Interface
+	 *
+	 * @cond i386
 	 */
-	#include <arch/i386/8253.h>
-	#include <arch/i386/8259.h>
-	#include <arch/i386/core.h>
-	#include <arch/i386/cpu.h>
-	#include <arch/i386/excp.h>
-	#include <arch/i386/int.h>
-	#include <arch/i386/io.h>
-	#include <arch/i386/mem.h>
+	/**@{*/
+	#define __tlb_flush_fn /**< tlb_flush() */
+	/**@}*/
+	/**@endcond**/
 
-#endif /* ARCH_I386_I386_H_ */
+	/**
+	 * The tlb_flush() function flushes the TLB of the underlying i386
+	 * core.
+	 *
+	 * @cond i386
+	 */
+	static inline void tlb_flush(void)
+	{
+		__asm__ __volatile__ (
+			"movl %%cr3, %%eax;\
+			movl %%eax, %%cr3;"
+			:
+			: 
+			:
+		);
+	}
+	/**@endcond*/
+	
+#endif /* ARCH_I386_TLB_H_ */
