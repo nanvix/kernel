@@ -26,8 +26,8 @@
 #define ARCH_I386_CACHE_H_
 
 /**
- * @addtogroup i386-cache Memory Cache
- * @ingroup i386
+ * @addtogroup i386-cache Cache
+ * @ingroup i386-memory
  *
  * @brief Memory Cache
  */

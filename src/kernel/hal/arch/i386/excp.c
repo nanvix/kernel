@@ -90,9 +90,9 @@ PRIVATE void generic_excp_handler(int excpnum)
  *
  * @note This function is called from assembly code.
  */
-PUBLIC void do_excp(void *ctx, int excpnum, unsigned addr, int err)
+PUBLIC void do_excp(void *ctx, int excpnum, unsigned addr, int errcode)
 {
-	kprintf("%x %x %x %x", ctx, excpnum, addr, err);
+	kprintf("%x %x %x %x", ctx, excpnum, addr, errcode);
 
 	/* Nothing to do. */
 	if (i386_excp_handlers[excpnum] == NULL)
