@@ -36,12 +36,11 @@
 	 */
 	#include <arch/i386/8253.h>
 	#include <arch/i386/8259.h>
-	#include <arch/i386/cache.h>
 	#include <arch/i386/core.h>
 	#include <arch/i386/cpu.h>
 	#include <arch/i386/excp.h>
 	#include <arch/i386/int.h>
 	#include <arch/i386/io.h>
-	#include <arch/i386/paging.h>
+	#include <arch/i386/mem.h>
 
 #endif /* ARCH_I386_I386_H_ */
