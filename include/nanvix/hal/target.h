@@ -154,6 +154,50 @@
 	#endif
 
 /*============================================================================*
+ * Memory Interface                                                           *
+ *============================================================================*/
+
+	#ifndef _UBASE_VIRT
+	#error "_UBASE_VIRT not defined"
+	#endif
+
+	#ifndef _USTACK_ADDR
+	#error "_USTACK_ADDR not defined"
+	#endif
+
+	#ifndef _KBASE_VIRT
+	#error "_KBASE_VIRT not defined"
+	#endif
+
+	#ifndef _KPOOL_VIRT
+	#error "_KPOOL_VIRT not defined"
+	#endif
+
+	#ifndef _INITRD_VIRT
+	#error "_INITRD_VIRT not defined"
+	#endif
+
+	#ifndef _KBASE_PHYS
+	#error "_KBASE_PHYS not defined"
+	#endif
+
+	#ifndef _KPOOL_PHYS
+	#error "_KPOOL_PHYS not defined"
+	#endif
+
+	#ifndef _UBASE_PHYS
+	#error "_UBASE_PHYS not defined"
+	#endif
+
+	#ifndef _KPOOL_SIZE
+	#error "_KPOOL_SIZE not defined"
+	#endif
+
+	#ifndef _UMEM_SIZE
+	#error "_UMEM_SIZE not defined"
+	#endif
+
+/*============================================================================*
  * MMU Interface                                                              *
  *============================================================================*/
 
