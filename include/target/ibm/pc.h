@@ -120,7 +120,7 @@
 	/**
 	 * @brief Kernel page pool size (in bytes).
 	 */
-	#define _KPOOL_SIZE 0x01000000
+	#define _KPOOL_SIZE 0x400000
 
 /*============================================================================*
  * Clock Interface                                                            *
