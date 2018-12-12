@@ -41,7 +41,6 @@ case "$TARGET" in
 	"or1k")
 		qemu-system-or1k       \
 			-kernel bin/kernel \
-			-nographic         \
 			-serial stdio      \
 			-display none      \
 			-m 256M            \
