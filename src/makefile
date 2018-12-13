@@ -27,8 +27,8 @@
 #===============================================================================
 
 # Compiler Options.
-export CFLAGS  += -std=c99 -fno-builtin # -ansi
-export CFLAGS  += -Wall -Wextra -Werror -Wa,--warn # -pedantic-errors
+export CFLAGS  += -std=c99 -fno-builtin
+export CFLAGS  += -Wall -Wextra -Werror -Wa,--warn
 export CFLAGS  += -Winit-self -Wswitch-default -Wfloat-equal
 export CFLAGS  += -Wundef -Wshadow -Wuninitialized -Wlogical-op
 export CFLAGS  += -Wvla # -Wredundant-decls
