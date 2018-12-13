@@ -189,6 +189,14 @@
 	#error "_UBASE_PHYS not defined"
 	#endif
 
+	#ifndef _MEMORY_SIZE
+	#error "_MEMORY_SIZE not defined"
+	#endif
+
+	#ifndef _KMEM_SIZE
+	#error "_KMEM_SIZE not defined"
+	#endif
+
 	#ifndef _KPOOL_SIZE
 	#error "_KPOOL_SIZE not defined"
 	#endif
