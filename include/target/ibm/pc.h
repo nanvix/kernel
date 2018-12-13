@@ -113,14 +113,33 @@
 	/**@}*/
 
 	/**
-	 * @brief User memory size (in bytes).
+	 * @brief Memory size (in bytes).
+	 *
+	 * @cond i386-pc
 	 */
-	#define _UMEM_SIZE (16*1024*1024)
+	#define _MEMORY_SIZE (32*1024*1024)
+	/**@endcond*/
+
+	/**
+	 * @brief Kernel memory size (in bytes).
+	 */
+	#define _KMEM_SIZE (16*1024*1024)
 
 	/**
 	 * @brief Kernel page pool size (in bytes).
+	 *
+	 * @cond i386-pc
 	 */
-	#define _KPOOL_SIZE 0x400000
+	#define _KPOOL_SIZE (4*1024*1024)
+	/*@endcond*/
+
+	/**
+	 * @brief User memory size (in bytes).
+	 *
+	 * @cond i386-pc
+	 */
+	#define _UMEM_SIZE (_MEMORY_SIZE - _KMEM_SIZE - _KPOOL_SIZE)
+	/**@endcond*/
 
 /*============================================================================*
  * Clock Interface                                                            *
