@@ -393,23 +393,23 @@
 
 	/**
 	 * @brief Gets a page directory entry.
-	 * 
+	 *
 	 * @param pgdir Target page directory.
 	 * @param addr  Target virtual address.
-	 * 
+	 *
 	 * @returns The requested page directory entry.
 	 */
 	static inline struct pde *pde_get(struct pde *pgdir, vaddr_t vaddr)
 	{
-		return (&pgdir[pte_idx_get(vaddr)]);
+		return (&pgdir[pde_idx_get(vaddr)]);
 	}
 
 	/**
 	 * @brief Gets a page table entry.
-	 * 
+	 *
 	 * @param pgdir Target page directory.
 	 * @param addr  Target virtual address.
-	 * 
+	 *
 	 * @returns The requested page table entry.
 	 */
 	static inline struct pte *pte_get(struct pte *pgtab, vaddr_t vaddr)
