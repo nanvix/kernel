@@ -53,12 +53,13 @@
 	#define __pde_user_set_fn    /**< pde_user_set()    */
 	#define __pde_write_set_fn   /**< pde_write_set()   */
 	#define __pte_clear_fn       /**< pde_clear()       */
+	#define __pte_frame_get_fn   /**< pde_frame_get()   */
 	#define __pte_frame_set_fn   /**< pde_frame_set()   */
 	#define __pte_get_fn         /**< pde_get()         */
 	#define __pte_is_present_fn  /**< pde_is_present()  */
 	#define __pte_is_user_fn     /**< pte_is_user()     */
 	#define __pte_is_write_fn    /**< pte_is_write()    */
-	#define __pte_present_set_fn /**< pte_preset_set()  */
+	#define __pte_present_set_fn /**< pte_present_set() */
 	#define __pte_user_set_fn    /**< pte_user_set()    */
 	#define __pte_write_set_fn   /**< pte_write_set()   */
 	/**@}*/
@@ -145,7 +146,7 @@
 		unsigned          :  3; /**< Unused.            */
 		unsigned frame    : 20; /**< Frame number.      */
 	};
-	
+
 	/**
 	 * @brief Page table entry.
 	 */
@@ -313,6 +314,18 @@
 	}
 
 	/**
+	 * @brief Gets the frame linked to page.
+	 *
+	 * @param pte   Page table entry of target page.
+	 *
+	 * @returns Number of the frame that is linked to the target page.
+	 */
+	static inline frame_t pte_frame_get(struct pte *pte)
+	{
+		return (pte->frame);
+	}
+
+	/**
 	 * @brief Sets/clears the write bit of a page.
 	 *
 	 * @param pte Page table entry of target page.
@@ -364,7 +377,7 @@
 	 * DESCRIPTION;
 	 *   The PG() macro returns the page number where a given virtual address.
 	 */
-	
+
 	/**
 	 * @brief Gets the page table index of a page.
 	 *
@@ -377,7 +390,7 @@
 	{
 		return (((unsigned)(vaddr) & (I386_PGTAB_MASK^I386_PAGE_MASK)) >> I386_PAGE_SHIFT);
 	}
-	
+
 	/**
 	 * @brief Gets the page directory index of a page.
 	 *
