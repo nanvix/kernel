@@ -33,7 +33,12 @@ export CFLAGS  += -Winit-self -Wswitch-default -Wfloat-equal
 export CFLAGS  += -Wundef -Wshadow -Wuninitialized -Wlogical-op
 export CFLAGS  += -Wvla # -Wredundant-decls
 export CFLAGS  += -I $(INCDIR)
-export CFLAGS  += -O3 -g
+ifeq ($(RELEASE), true)
+	export CFLAGS  += -O3 -NDEBUG
+else
+	export CFLAGS  += -Og -g
+endif
+
 
 # Linker Options
 export LDFLAGS +=
