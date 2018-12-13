@@ -37,10 +37,8 @@
 #define MBOOT_FLAGS (MBOOT_PAGE_ALIGN | MBOOT_MEMORY_INFO)
 
 /* Exported symbols. */
-.globl kmain
-
-/* Exported symbols. */
 .globl start
+.globl idle_pgdir
 
 /*============================================================================*
  *                              bootstrap section                             *
