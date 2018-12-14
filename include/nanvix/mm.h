@@ -240,4 +240,158 @@
 
 /**@}*/
 
+/*============================================================================*
+ * Kernel Page Pool                                                           *
+ *============================================================================*/
+
+/**
+ * @addtogroup kernel-mm-kpool Kernel Pool
+ * @ingroup kernel-mm
+ *
+ * @brief Kernel Page Pool
+ *
+ * The Kernel Page Pool is a subsystem of the Memory Management (MM)
+ * system that maintains a pool of pages for kernel use. Overall, this
+ * subsystem exposes an interface for allocating and releasing kernel
+ * pages, thereby providing the bare-bones for dynamic memory
+ * allocation in kernel land.
+ *
+ * Page frames for the Kernel Page Pool are reserved at system
+ * startup. These frames are contiguously located in the physical
+ * memory area, but the actual location and the size of this area  is
+ * platform dependent, thus being safely accessed through the Hardware
+ * Abstraction Layer (HAL).
+ */
+/**@{*/
+
+	/**
+	 * @brief Number of pages for kernel use.
+	 */
+	#define NUM_KPAGES (KPOOL_SIZE/PAGE_SIZE)
+
+	/**
+	 * @brief Asserts a kernel page address.
+	 *
+	 * The kpool_is_kpage() function asserts whether or not the
+	 * virtual address @p vaddr refers to a kernel page.
+	 *
+	 * @returns If @p vaddr refers to a kernel page, non zero is
+	 * returned. Otherwise, zero is returned instead.
+	 *
+	 * @author Pedro Henrique Penna
+	 */
+	static inline int kpool_is_kpage(vaddr_t vaddr)
+	{
+		return ((vaddr >= KPOOL_VIRT) && (vaddr < KPOOL_VIRT + KPOOL_SIZE));
+	}
+
+	/**
+	 * @brief Translates a kernel page ID into a virtual address.
+	 *
+	 * The kpool_id_to_addr() function converts the kernel page ID @p
+	 * id into a virtual address.
+	 *
+	 * @param id ID of target kernel page.
+	 *
+	 * @returns The virtual address of the target kernel page.
+	 *
+	 * @note This function expects that @p is valid.
+	 *
+	 * @author Pedro Henrique Penna
+	 */
+	static inline vaddr_t kpool_id_to_addr(int id)
+	{
+		return (KPOOL_VIRT + (id << PAGE_SHIFT));
+	}
+
+	/**
+	 * @brief Translates a frame number into a virtual address.
+	 *
+	 * The kpool_frame_to_addr() function converts the frame number @p
+	 * frame into a virtual address.
+	 *
+	 * @param frame Target frame.
+	 *
+	 * @returns The virtual address of the target frame.
+	 *
+	 * @note This function expects that @p frame is valid.
+	 *
+	 * @author Pedro Henrique Penna
+	 */
+	static inline vaddr_t kpool_frame_to_addr(frame_t frame)
+	{
+		return (kpool_id_to_addr(frame - (KPOOL_PHYS >> PAGE_SHIFT)));
+	}
+
+	/**
+	 * @brief Translates a virtual address into a kernel page ID.
+	 *
+	 * The kpool_addr_to_id() function converts the virtual address @p
+	 * vaddr into a kernel page ID.
+	 *
+	 * @para vaddr Target virtual address.
+	 *
+	 * @returns The kernel page ID of the target virtual address.
+	 *
+	 * @note This function expects that @p vaddr is valid.
+	 *
+	 * @author Pedro Henrique Penna
+	 */
+	static inline int kpool_addr_to_id(vaddr_t vaddr)
+	{
+		return ((vaddr - KPOOL_VIRT) >> PAGE_SHIFT);
+	}
+
+	/**
+	 * @brief Translates a kernel page into a frame number.
+	 *
+	 * The kpool_addr_to_frame() function converts the virtual address
+	 * @p vaddr into a frame number.
+	 *
+	 * @param vaddr Target virtual address.
+	 *
+	 * @returns The frame number of a kernel page.
+	 *
+	 * @note This function expects that @p vaddr is valid.
+	 *
+	 * @author Pedro Henrique Penna
+	 */
+	static inline frame_t kpool_addr_to_frame(vaddr_t vaddr)
+	{
+		return (kpool_addr_to_id(vaddr) + (KPOOL_PHYS >> PAGE_SHIFT));
+	}
+
+	/**
+	 * @brief Allocates a kernel page.
+	 *
+	 * @param clean Should the page be cleaned?
+	 *
+	 * @returns Upon successful completion, a pointer to a kernel page
+	 * is returned. Upon failure, a @p NULL pointer is returned
+	 * instead.
+	 */
+	EXTERN void *kpage_get(int clean);
+
+	/**
+	 * @brief Releases kernel page.
+	 *
+	 * @param kpg Kernel page to be released.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 */
+	EXTERN int kpage_put(void *kpg);
+
+	/**
+	 * @brief Runs unit tests on the kernel page allocator.
+	 */
+	EXTERN void kpool_test_driver(void);
+
+	/**
+	 * @brief Initializes the kernel page pool.
+	 */
+	EXTERN void kpool_init(void);
+
+/**@}*/
+
 #endif /** NANVIX_MM_H_ */
