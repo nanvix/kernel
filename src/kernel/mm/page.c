@@ -37,7 +37,7 @@
  * @brief Maps a page table.
  *
  * The pgtab_map() function maps a page table in the page directory
- * pointed to by @pgdir at the virtual address @vaddr. The target
+ * pointed to by @p pgdir at the virtual address @p vaddr. The target
  * address should lie in user space.
  *
  * This function fails either if a page table is already mapped for
@@ -81,7 +81,7 @@ PRIVATE inline struct pde *pgtab_map(struct pde *pgdir, vaddr_t vaddr)
 	/* Busy page directory entry. */
 	if (pde_is_present(pde))
 	{
-		kprintf("mm: busy page table directory entry");
+		kprintf("[mm] busy page table directory entry");
 		return (NULL);
 	}
 
@@ -92,17 +92,17 @@ PRIVATE inline struct pde *pgtab_map(struct pde *pgdir, vaddr_t vaddr)
 	if ((pgtab = kpage_get(FALSE)) == NULL)
 		return (NULL);
 
-	/* Map kernel page. */
+	/*
+	 * Map kernel page.
+	 *
+	 * FIXME: in a multicore platform, we should
+	 * flush the TLB of each affected core core.
+	 */
 	frame = kpool_addr_to_frame(VADDR(pgtab));
 	pde_frame_set(pde, frame);
 	pde_present_set(pde, 1);
 	pde_user_set(pde, 1);
 	pde_write_set(pde, 1);
-
-	/*
-	 * FIXME: in a multicore platform, we should
-	 * flush the TLB of each affected core core.
-	 */
 	tlb_flush();
 
 	/*
@@ -182,7 +182,7 @@ PRIVATE int pgtab_unmap(struct pde *pgdir, vaddr_t vaddr)
 	/* Cannot release kernel page. */
 	if (kpage_put(pgtab) < 0)
 	{
-		kprintf("mm: kernel page leak");
+		kprintf("[mm] kernel page leak");
 		return (-EIO);
 	}
 
@@ -406,7 +406,7 @@ PUBLIC int upage_alloc(struct pde *pgdir, vaddr_t vaddr)
 	if ((err = upage_map(pgdir, vaddr, frame)) < 0)
 	{
 		if (frame_free(frame) < 0)
-			kprintf("mm: page frame leak");
+			kprintf("[mm] page frame leak");
 
 		return (err);
 	}
@@ -456,7 +456,7 @@ PUBLIC int upage_free(struct pde *pgdir, vaddr_t vaddr)
 	/* Release page frame. */
 	if (frame_free(frame) < 0)
 	{
-		kprintf("mm: page frame leak");
+		kprintf("[mm] page frame leak");
 
 		return (-EIO);
 	}
@@ -476,7 +476,7 @@ PUBLIC int upage_free(struct pde *pgdir, vaddr_t vaddr)
  */
 PUBLIC void upool_init(void)
 {
-	kprintf("initializing the user page allocator");
+	kprintf("[mm] initializing the user page allocator");
 
 #ifndef NDEBUG
 	upool_test_driver();

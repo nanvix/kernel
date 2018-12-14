@@ -42,6 +42,10 @@ PRIVATE int frames[NUM_UFRAMES] = {0, };
  * The frame_alloc() function searches sequentially, for a free frame
  * to be allocated. The first free frame is allocated (if any) and its
  * number is returned.
+ *
+ * @retval FRAME_NULL Cannot allocate another frame.
+ *
+ * @author Pedro Henrique Penna
  */
 PUBLIC frame_t frame_alloc(void)
 {
@@ -58,7 +62,7 @@ PUBLIC frame_t frame_alloc(void)
 		}
 	}
 
-	kprintf("mm: page frame overflow");
+	kprintf("[mm] page frame overflow");
 
 	return (FRAME_NULL);
 }
@@ -70,6 +74,11 @@ PUBLIC frame_t frame_alloc(void)
 /**
  * The frame_free() function frees a previously allocated page frame
  * whose number equals to @p frame.
+ *
+ * @retval -EINVAL Invalid frame number
+ * @retval -EFAULT Page frame not allocated
+ *
+ * @author Pedro Henrique Penna
  */
 PUBLIC int frame_free(frame_t frame)
 {
@@ -78,7 +87,7 @@ PUBLIC int frame_free(frame_t frame)
 
 	if (frames[frame_num_to_id(frame)] == 0)
 	{
-		kprintf("mm: double free on page frame");
+		kprintf("[mm] double free on page frame");
 		return (-EFAULT);
 	}
 
@@ -97,10 +106,12 @@ PUBLIC int frame_free(frame_t frame)
  * page frame allocator. Additionally, if the kernel is compiled
  * without the @p NDEBUG build option, unit tests on the page frame
  * allocator are launched once its initialization is completed.
+ *
+ * @author Pedro Henrique Penna
  */
 PUBLIC void frame_init(void)
 {
-	kprintf("initializing the page frame allocator");
+	kprintf("[mm] initializing the page frame allocator");
 
 #ifndef __NANVIX_FAST_BOOT
 	for (int i = 0; i < NUM_UFRAMES; i++)

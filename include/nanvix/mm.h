@@ -334,7 +334,7 @@
 	 * The kpool_addr_to_id() function converts the virtual address @p
 	 * vaddr into a kernel page ID.
 	 *
-	 * @para vaddr Target virtual address.
+	 * @param vaddr Target virtual address.
 	 *
 	 * @returns The kernel page ID of the target virtual address.
 	 *

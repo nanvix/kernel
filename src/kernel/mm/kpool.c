@@ -61,7 +61,7 @@ PUBLIC void *kpage_get(int clean)
 			goto found;
 	}
 
-	kprintf("mm: kernel page pool overflow");
+	kprintf("[mm] kernel page pool overflow");
 
 	return (NULL);
 
@@ -87,6 +87,11 @@ found:
  * The kpage_put() function releases the kernel page pointed to by @p
  * kpg. If the @p kpg does not point to a valid kernel page nor it
  * reffers to a page that is currently used, the call fails.
+ *
+ * @retval -EVAINL Invalid kernel page.
+ * @retval -EFAULT Target kernel page not allocated.
+ *
+ * @author Pedro Henrique Penna
  */
 PUBLIC int kpage_put(void *kpg)
 {
@@ -104,7 +109,7 @@ PUBLIC int kpage_put(void *kpg)
 	/* Double free. */
 	if (kpages[i] == 0)
 	{
-		kprintf("mm: double free on kernel page");
+		kprintf("[mm] double free on kernel page");
 		return (-EFAULT);
 	}
 
@@ -123,10 +128,12 @@ PUBLIC int kpage_put(void *kpg)
  * kernel page allocator. Additionally, if the kernel is compiled
  * without the @p NDEBUG build option, unit tests on the kernel page
  * allocator are launched once its initialization is completed.
+ *
+ * @author Pedro Henrique Penna
  */
 PUBLIC void kpool_init(void)
 {
-	kprintf("initializing the kernel page allocator");
+	kprintf("[mm] initializing the kernel page allocator");
 
 #ifndef __NANVIX_FAST_BOOT
 	for (int i = 0; i < NUM_KPAGES; i++)
