@@ -29,7 +29,8 @@ C_SRC = $(wildcard hal/arch/$(ARCH)/*.c) \
         $(wildcard klib/*.c)             \
         $(wildcard dev/*.c)              \
         $(wildcard dev/stdout/console.c) \
-        $(wildcard mm/*.c)               \
+        $(wildcard mm/*.c)
+
 
 # Asembly Source Files
 ASM_SRC = $(wildcard hal/arch/$(ARCH)/*.S)

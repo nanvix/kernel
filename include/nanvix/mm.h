@@ -87,6 +87,11 @@
 	#define VADDR(x) ((vaddr_t)(x))
 
 	/**
+	 * @brief Initializes the Memory Management (MM) system.
+	 */
+	EXTERN void mm_init(void);
+
+	/**
 	 * @brief Asserts a user virtual address.
 	 *
 	 * The mm_is_uaddr() function asserts whether or not the virtual
