@@ -116,4 +116,128 @@
 
 /**@}*/
 
+/*============================================================================*
+ * Page Frame Allocator                                                       *
+ *============================================================================*/
+
+/**
+ * @addtogroup kernel-mm-frame Frame Allocator
+ * @ingroup kernel-mm
+ *
+ * @brief Page Frame Allocator
+ */
+/**@{*/
+
+	/**
+	 * @brief Number of page frames for user use.
+	 */
+	#define NUM_UFRAMES (UMEM_SIZE/PAGE_SIZE)
+
+	/**
+	 * @param Null frame.
+	 */
+	#define FRAME_NULL ((frame_t) -1)
+
+	/**
+	 * @brief Asserts if a frame ID is valid.
+	 *
+	 * The frame_is_valid_id() function asserts whether or not the
+	 * frame @p ID is valid.
+	 *
+	 * @returns If @p id is valid, non zero is returned. Otherwise,
+	 * zero is returned instead.
+	 *
+	 * @author Pedro Henrique Penna
+	 */
+	static inline int frame_is_valid_id(int id)
+	{
+		return ((id >= 0) && (id < NUM_UFRAMES));
+	}
+
+	/**
+	 * @brief Converts an ID of a user page frame to a page frame number.
+	 *
+	 * @param id ID of target user page frame.
+	 *
+	 * @returns Frame number of target user page frame.
+	 *
+	 * @author Pedro Henrique Penna
+	 */
+	static inline frame_t frame_id_to_num(int id)
+	{
+		/* Invalid ID. */
+		if (!frame_is_valid_id(id))
+			return (FRAME_NULL);
+
+		return ((UBASE_PHYS >> PAGE_SHIFT) + id);
+	}
+
+	/**
+	 * @brief Asserts if a frame number is valid.
+	 *
+	 * The frame_is_valid_num() function asserts whether or not the
+	 * frame number @p frame is valid.
+	 *
+	 * @returns If @p frame is valid, non zero is returned. Otherwise,
+	 * zero is returned instead.
+	 *
+	 * @author Pedro Henrique Penna
+	 */
+	static inline int frame_is_valid_num(frame_t frame)
+	{
+		return (
+			(frame >= (UBASE_PHYS >> PAGE_SHIFT)) &&
+			(frame < ((UBASE_PHYS >> PAGE_SHIFT) + NUM_UFRAMES))
+		);
+	}
+
+	/**
+	 * @brief Converts a page frame number to an ID of a user page frame.
+	 *
+	 * @param frame Number of the target page frame.
+	 *
+	 * @returns ID of target user page frame.
+	 *
+	 * @author Pedro Henrique Penna
+	 */
+	static inline int frame_num_to_id(frame_t frame)
+	{
+		/* Invalid frame. */
+		if (!frame_is_valid_num(frame))
+			return (-1);
+
+		return (frame - (UBASE_PHYS >> PAGE_SHIFT));
+	}
+
+	/**
+	 * @brief Allocates a page frame.
+	 *
+	 * @returns Upon successful completion, the number of the
+	 * allocated page frame is returned. Upon failure, @p FRAME_NULL
+	 * is returned instead.
+	 */
+	EXTERN frame_t frame_alloc(void);
+
+	/**
+	 * @brief Frees a page frame.
+	 *
+	 * @param frame Number of the target page frame.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 */
+	EXTERN int frame_free(frame_t frame);
+
+	/**
+	 * @brief Runs unit tests on the frame allocator.
+	 */
+	EXTERN void frame_test_driver(void);
+
+	/**
+	 * @brief Initializes the frame allocator.
+	 */
+	EXTERN void frame_init(void);
+
+/**@}*/
+
 #endif /** NANVIX_MM_H_ */
