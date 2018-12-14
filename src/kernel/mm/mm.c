@@ -1,7 +1,8 @@
 /*
  * MIT License
  *
- * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ *              2015-2016 Davidson Francis     <davidsondfgl@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,70 +23,26 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hal/hal.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
 #include <nanvix/mm.h>
 
-EXTERN int main(int argc, const char *argv[], char **envp);
-EXTERN void dev_init(void);
-
-#ifdef __mppa256__
-
 /**
- * @brief Init thread.
+ * The mm_init() function initializes the Memory Management (MM)
+ * system. It first performs assertions on memory structures handled
+ * by the Hardware Abstraction Layer (HAL) and then initializes its
+ * internal subsystems: (i) the Page Frame Allocator; (ii) the Kernel
+ * Page Pool; and (iii) the User Page Pool.
+ *
+ * @see frame_init(), kpool_init and upool_init().
+ *
+ * @author Pedro Henrique Penna
  */
-PRIVATE void init(void)
+PUBLIC void mm_init(void)
 {
-	int status;
-	int argc = 1;
-	const char *argv[] = { "init", NULL };
-   
-	status = main(argc, argv, NULL);
-
-	UNUSED(status);
+	kprintf("[mm] initializing the memory system");
+	frame_init();
+	kpool_init();
+	upool_init();
 }
 
-#endif
-
-/**
- * @brief Initializes the kernel.
- */
-PUBLIC void kmain(int argc, const char *argv[])
-{
-	UNUSED(argc);
-	UNUSED(argv);
-
-#if defined(__mppa256__)
-
-	int coreid;
-
-	coreid = hal_core_get_id();
-
-	/* Slave core. */
-	if (coreid != 0)
-	{
-		{
-			core_halt();
-			kprintf("waking up core %d", coreid);
-			core_start();
-			kprintf("halting core %d", coreid);
-		} while(1);
-	}
-#endif
-
-	/* Master core. */
-
-	dev_init();
-	mm_init();
-
-	kprintf("enabling hardware interrupts");
-	hal_enable_interrupts();
-
-#if defined(__mppa256__)
-	init();
-#endif
-
-	while (TRUE)
-		noop();
-}
