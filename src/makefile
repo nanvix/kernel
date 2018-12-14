@@ -34,7 +34,7 @@ export CFLAGS  += -Wundef -Wshadow -Wuninitialized -Wlogical-op
 export CFLAGS  += -Wvla # -Wredundant-decls
 export CFLAGS  += -I $(INCDIR)
 ifeq ($(RELEASE), true)
-	export CFLAGS  += -O3 -NDEBUG
+	export CFLAGS  += -O3 -D NDEBUG
 else
 	export CFLAGS  += -Og -g
 endif
