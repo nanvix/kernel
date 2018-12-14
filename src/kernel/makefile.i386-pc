@@ -31,6 +31,10 @@ C_SRC = $(wildcard hal/arch/$(ARCH)/*.c) \
         $(wildcard dev/stdout/console.c) \
         $(wildcard mm/*.c)
 
+# Unit Tests for Kernel
+ifneq ($(RELEASE), true)
+C_SRC += $(wildcard test/*.c)
+endif
 
 # Asembly Source Files
 ASM_SRC = $(wildcard hal/arch/$(ARCH)/*.S)
