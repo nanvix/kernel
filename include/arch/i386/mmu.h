@@ -408,7 +408,7 @@
 	 * @brief Gets a page directory entry.
 	 *
 	 * @param pgdir Target page directory.
-	 * @param addr  Target virtual address.
+	 * @param vaddr  Target virtual address.
 	 *
 	 * @returns The requested page directory entry.
 	 */
@@ -420,8 +420,8 @@
 	/**
 	 * @brief Gets a page table entry.
 	 *
-	 * @param pgdir Target page directory.
-	 * @param addr  Target virtual address.
+	 * @param pgtab Target page table.
+	 * @param vaddr Target virtual address.
 	 *
 	 * @returns The requested page table entry.
 	 */

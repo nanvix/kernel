@@ -60,5 +60,7 @@
 		);
 	}
 	/**@endcond*/
+
+/**@}*/
 	
 #endif /* ARCH_I386_TLB_H_ */

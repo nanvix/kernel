@@ -26,7 +26,7 @@
 #define TARGET_IBM_PC_H_
 
 /**
- * @defgroup i386-pc IBM PC
+ * @defgroup i386pc IBM PC
  * @ingroup targets
  */
 /**@{*/
@@ -115,7 +115,7 @@
 	/**
 	 * @brief Memory size (in bytes).
 	 *
-	 * @cond i386-pc
+	 * @cond i386pc
 	 */
 	#define _MEMORY_SIZE (32*1024*1024)
 	/**@endcond*/
@@ -128,7 +128,7 @@
 	/**
 	 * @brief Kernel page pool size (in bytes).
 	 *
-	 * @cond i386-pc
+	 * @cond i386pc
 	 */
 	#define _KPOOL_SIZE (4*1024*1024)
 	/*@endcond*/
@@ -136,7 +136,7 @@
 	/**
 	 * @brief User memory size (in bytes).
 	 *
-	 * @cond i386-pc
+	 * @cond i386pc
 	 */
 	#define _UMEM_SIZE (_MEMORY_SIZE - _KMEM_SIZE - _KPOOL_SIZE)
 	/**@endcond*/

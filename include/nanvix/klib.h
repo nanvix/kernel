@@ -131,7 +131,7 @@
 	/**
 	 * @brief Kernel assert.
 	 *
-	 * The kassert() function asserts if @expr evaluates to non-zero. If
+	 * The kassert() function asserts if @p expr evaluates to non-zero. If
 	 * not, it panics the kernel with the @p msg.
 	 *
 	 * @see kpanic()
