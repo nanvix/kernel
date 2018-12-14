@@ -394,4 +394,108 @@
 
 /**@}*/
 
+/*============================================================================*
+ * User Page Allocator                                                        *
+ *============================================================================*/
+
+/**
+ * @addtogroup kernel-mm-upage Page Allocator
+ * @ingroup kernel-mm
+ *
+ * @brief User Page Allocator
+ */
+/**@{*/
+
+	/**
+	 * @brief Number of pages for user use
+	 */
+	#define NUM_UPAGES NUM_UFRAMES
+
+	/**
+	 * @brief Asserts an page address.
+	 *
+	 * The upool_is_upage() function asserts whether or not the
+	 * virtual address @p vaddr reffers to a user page.
+	 *
+	 * @returns If @p vaddr reffers to a user page, non zero is
+	 * returned. Otherwise, zero is returned instead.
+	 */
+	static inline int upool_is_upage(vaddr_t vaddr)
+	{
+		return ((vaddr >= UBASE_VIRT) && (vaddr < KBASE_VIRT));
+	}
+
+	/**
+	 * @brief Maps a page frame into a page.
+	 *
+	 * @param pgdir Target page directory.
+	 * @param vaddr Target virtual address.
+	 * @param frame Target page frame.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 *
+	 * @see upage_unmap().
+	 */
+	EXTERN int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame);
+
+	/**
+	 * @brief Unmaps a page frame.
+	 *
+	 * @param pgdir Target page directory.
+	 * @param vaddr Target virtual address.
+	 *
+	 * @returns Upon successful completion, the number of the frame
+	 * that was previously mapped to the target page is returned. Upon
+	 * failure, @p FRAME_NULL is returned instead.
+	 *
+	 * @see upage_map().
+	 */
+	EXTERN frame_t upage_unmap(struct pde *pgdir, vaddr_t vaddr);
+
+	/**
+	 * @brief Allocates a user page.
+	 *
+	 * @param pgdir Target page directory.
+	 * @param vaddr Target virtual address.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 *
+	 * @see upage_free().
+	 */
+	EXTERN int upage_alloc(struct pde *pgdir, vaddr_t vaddr);
+
+	/**
+	 * @brief Releases a user page.
+	 *
+	 * @param pgdir Target page directory.
+	 * @param vaddr Target virtual address.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 *
+	 * @see upage_alloc().
+	 */
+	EXTERN int upage_free(struct pde *pgdir, vaddr_t vaddr);
+
+	/**
+	 * @brief Runs unit tests on the user page allocator.
+	 */
+	EXTERN void upool_test_driver(void);
+
+	/**
+	 * @brief Initializes the user page allocator.
+	 */
+	EXTERN void upool_init(void);
+
+	/**
+	 * @brief Idle page directory.
+	 *
+	 * @todo This shall be moved to the Hardware Abstraction Layer (HAL).
+	 */
+	EXTERN struct pde idle_pgdir[];
+
+/**@}*/
+
 #endif /** NANVIX_MM_H_ */
