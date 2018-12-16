@@ -43,11 +43,10 @@
 	 * @name Virtual Memory Layout
 	 */
 	/**@{*/
-	#define UBASE_VIRT  _UBASE_VIRT  /**< User Base         */
-	#define USTACK_ADDR _USTACK_ADDR /**< User Stack        */
-	#define KBASE_VIRT  _KBASE_VIRT  /**< Kernel Base       */
-	#define KPOOL_VIRT  _KPOOL_VIRT  /**< Kernel Page Pool  */
-	#define INITRD_VIRT _INITRD_VIRT /**< Initial RAM disk. */
+	#define UBASE_VIRT  _UBASE_VIRT  /**< User Base        */
+	#define USTACK_ADDR _USTACK_ADDR /**< User Stack       */
+	#define KBASE_VIRT  _KBASE_VIRT  /**< Kernel Base      */
+	#define KPOOL_VIRT  _KPOOL_VIRT  /**< Kernel Page Pool */
 	/**@}*/
 
 	/**

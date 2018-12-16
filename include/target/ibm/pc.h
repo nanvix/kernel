@@ -100,7 +100,6 @@
 	#define _USTACK_ADDR 0xc0000000 /**< User stack.       */
 	#define _KBASE_VIRT  0xc0000000 /**< Kernel base.      */
 	#define _KPOOL_VIRT  0xc1000000 /**< Kernel page pool. */
-	#define _INITRD_VIRT 0xc2000000 /**< Initial RAM disk. */
 	/**@}*/
 
 	/**
