@@ -101,7 +101,7 @@
 	 */
 	static inline int mm_is_uaddr(vaddr_t vaddr)
 	{
-		return ((vaddr >= UBASE_VIRT) && (vaddr < KBASE_VIRT));
+		return ((vaddr >= UBASE_VIRT) && (vaddr < (UBASE_VIRT + UMEM_SIZE)));
 	}
 
 	/**
@@ -115,7 +115,10 @@
 	 */
 	static inline int mm_is_kaddr(vaddr_t vaddr)
 	{
-		return (vaddr >= KBASE_VIRT);
+		return (
+			((vaddr >= KBASE_VIRT) && (vaddr < (KBASE_VIRT + KMEM_SIZE)))  ||
+			((vaddr >= KPOOL_VIRT) && (vaddr < (KPOOL_VIRT + KPOOL_SIZE)))
+		);
 	}
 
 /**@}*/
@@ -426,7 +429,7 @@
 	 */
 	static inline int upool_is_upage(vaddr_t vaddr)
 	{
-		return ((vaddr >= UBASE_VIRT) && (vaddr < KBASE_VIRT));
+		return (mm_is_uaddr(vaddr));
 	}
 
 	/**
