@@ -124,7 +124,7 @@ _do_excp:
 
 	/*
 	 * Get exception code.
-	 *
+	 */
 	get $r1 = $ps
 	;;
 	srl $r0 = $r1, 28
