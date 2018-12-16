@@ -27,6 +27,40 @@
 #include <nanvix/klib.h>
 #include <nanvix/mm.h>
 
+/*
+ * User stack should be in the user virtual address space.
+ */
+#if (USTACK_ADDR < UBASE_VIRT) && (USTACK_ADDR > (UBASE_VIRT + UMEM_SIZE))
+	#error "user stack outside user address space"
+#endif
+
+/*
+ * Kernel page pool cannot not overlap with kernel.
+ */
+#if ((KPOOL_VIRT >= KBASE_VIRT) && (KPOOL_VIRT < (KBASE_VIRT + KMEM_SIZE)))
+	#error "kernel page pool overlaps with kernel"
+#elif (((KPOOL_VIRT + KPOOL_SIZE) >= KBASE_VIRT) && ((KPOOL_VIRT + KPOOL_SIZE) < (KBASE_VIRT + KMEM_SIZE)))
+	#error "kernel page pool overlaps with kernel"
+#endif
+
+/*
+ * User address space cannot overlap with kernel.
+ */
+#if ((UBASE_VIRT >= KBASE_VIRT) && (UBASE_VIRT < (KBASE_VIRT + KMEM_SIZE)))
+	#error "user address space overlaps with kernel"
+#elif (((UBASE_VIRT + UMEM_SIZE) >= KBASE_VIRT) && ((UBASE_VIRT + UMEM_SIZE) < (KBASE_VIRT + KMEM_SIZE)))
+	#error "user address space overlaps with kernel"
+#endif
+
+/*
+ * User address space cannot overlap with kernel page pool.
+ */
+#if ((UBASE_VIRT >= KPOOL_VIRT) && (UBASE_VIRT <= (KPOOL_VIRT + KPOOL_SIZE)))
+	#error "user address space overlaps with kernel page pool"
+#elif (((UBASE_VIRT + UMEM_SIZE) >= KPOOL_VIRT) && ((UBASE_VIRT + UMEM_SIZE) < (KPOOL_VIRT + KPOOL_SIZE)))
+	#error "user address space overlaps with kernel page pool"
+#endif
+
 /**
  * The mm_init() function initializes the Memory Management (MM)
  * system. It first performs assertions on memory structures handled
