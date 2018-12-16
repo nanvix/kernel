@@ -430,7 +430,7 @@
 	 */
 	static inline int upool_is_upage(vaddr_t vaddr)
 	{
-		return ((vaddr >= UBASE_VIRT) && (vaddr < KBASE_VIRT));
+		return (mm_is_uaddr(vaddr));
 	}
 
 	/**
