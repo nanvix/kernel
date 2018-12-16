@@ -173,10 +173,6 @@
 	#error "_KPOOL_VIRT not defined"
 	#endif
 
-	#ifndef _INITRD_VIRT
-	#error "_INITRD_VIRT not defined"
-	#endif
-
 	#ifndef _KBASE_PHYS
 	#error "_KBASE_PHYS not defined"
 	#endif
