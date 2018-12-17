@@ -273,6 +273,7 @@ PUBLIC int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame)
 	pte_write_set(pte, 0);
 	pte_frame_set(pte, frame);
 	hal_dcache_invalidate();
+	tlb_write(vaddr, frame << PAGE_SHIFT);
 	tlb_flush();
 
 	return (0);
@@ -353,6 +354,7 @@ PUBLIC frame_t upage_unmap(struct pde *pgdir, vaddr_t vaddr)
 	 */
 	frame = pte_frame_get(pte);
 	pte_present_set(pte, 0);
+	tlb_inval(vaddr);
 	tlb_flush();
 
 	/* Free underlying page tables. */
@@ -479,6 +481,7 @@ PUBLIC void upool_init(void)
 	kprintf("[mm] initializing the user page allocator");
 
 #ifndef NDEBUG
+	kprintf("[mm] running tests on the user page allocator");
 	upool_test_driver();
 #endif
 }
