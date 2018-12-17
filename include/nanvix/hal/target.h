@@ -157,8 +157,6 @@
  * Memory Interface                                                           *
  *============================================================================*/
 
-#ifdef XXX
-
 	#ifndef _UBASE_VIRT
 	#error "_UBASE_VIRT not defined"
 	#endif
@@ -203,8 +201,6 @@
 	#error "_UMEM_SIZE not defined"
 	#endif
 
-#endif
-
 /*============================================================================*
  * MMU Interface                                                              *
  *============================================================================*/
@@ -220,8 +216,6 @@
 	#ifndef __vaddr_t
 	#error "vaddr_t not defined?"
 	#endif
-
-#ifdef XXX
 
 	#ifndef PAGE_SHIFT
 	#error "PAGE_SHIFT not defined"
@@ -322,8 +316,6 @@
 	#ifndef __pte_write_set_fn
 	#error "pte_write_set() not defined?"
 	#endif
-
-#endif
 
 /*============================================================================*
  * TLB Interface                                                              *
