@@ -34,8 +34,14 @@
 /**@{*/
 
 /**
- * @cond i386
+ * @if i386
  */
+
+	/**
+	 * @brief Hardware-managed TLB.
+	 */
+	#define HAL_TLB_HARDWARE
+
 	/**
 	 * @name Provided Interface
 	 */
@@ -43,17 +49,19 @@
 	#define __tlb_flush_fn /**< tlb_flush() */
 	/**@}*/
 
-/**@endcond**/
-
-/**
- * @cond i386
- */
+/**@endif*/
 
 	/**
-	 * The tlb_flush() function flushes the TLB of the underlying i386
-	 * core.
+	 * @brief Flushes changes in the TLB.
+	 *
+	 * The i386_tlb_flush() function flushes the changes made to the
+	 * TLB of the underlying i386 core.
+	 *
+	 * @returns This function always returns zero.
+	 *
+	 * @todo We can improve this by using the invlpg instruction.
 	 */
-	static inline void tlb_flush(void)
+	static inline int i386_tlb_flush(void)
 	{
 		__asm__ __volatile__ (
 			"movl %%cr3, %%eax;\
@@ -62,8 +70,23 @@
 			: 
 			:
 		);
+
+		return (0);
 	}
-/**@endcond**/
+
+/**
+ * @if i386
+ */
+
+	/**
+	 * @see i386_tlb_flush().
+	 */
+	static inline int tlb_flush(void)
+	{
+		return (i386_tlb_flush());
+	}
+
+/**@endif*/
 
 /**@}*/
 	
