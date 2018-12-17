@@ -55,7 +55,7 @@
 /*
  * User address space cannot overlap with kernel page pool.
  */
-#if ((UBASE_VIRT >= KPOOL_VIRT) && (UBASE_VIRT <= (KPOOL_VIRT + KPOOL_SIZE)))
+#if ((UBASE_VIRT >= KPOOL_VIRT) && (UBASE_VIRT < (KPOOL_VIRT + KPOOL_SIZE)))
 	#error "user address space overlaps with kernel page pool"
 #elif (((UBASE_VIRT + UMEM_SIZE) >= KPOOL_VIRT) && ((UBASE_VIRT + UMEM_SIZE) < (KPOOL_VIRT + KPOOL_SIZE)))
 	#error "user address space overlaps with kernel page pool"
