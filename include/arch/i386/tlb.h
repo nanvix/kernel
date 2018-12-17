@@ -33,21 +33,25 @@
  */
 /**@{*/
 
+/**
+ * @cond i386
+ */
 	/**
 	 * @name Provided Interface
-	 *
-	 * @cond i386
 	 */
 	/**@{*/
 	#define __tlb_flush_fn /**< tlb_flush() */
 	/**@}*/
-	/**@endcond**/
+
+/**@endcond**/
+
+/**
+ * @cond i386
+ */
 
 	/**
 	 * The tlb_flush() function flushes the TLB of the underlying i386
 	 * core.
-	 *
-	 * @cond i386
 	 */
 	static inline void tlb_flush(void)
 	{
@@ -59,7 +63,7 @@
 			:
 		);
 	}
-	/**@endcond*/
+/**@endcond**/
 
 /**@}*/
 	

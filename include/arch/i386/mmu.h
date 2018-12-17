@@ -136,7 +136,7 @@
 	 */
 	struct pde
 	{
-		unsigned present  :  1; /*<< Present in memory? */
+		unsigned present  :  1; /**< Present in memory? */
 		unsigned writable :  1; /**< Writable page?     */
 		unsigned user     :  1; /**< User page?         */
 		unsigned          :  2; /**< Reserved.          */
@@ -372,11 +372,6 @@
 	{
 		return (pte->user);
 	}
-
-	/*
-	 * DESCRIPTION;
-	 *   The PG() macro returns the page number where a given virtual address.
-	 */
 
 	/**
 	 * @brief Gets the page table index of a page.
