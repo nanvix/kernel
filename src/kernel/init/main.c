@@ -25,7 +25,9 @@
 #include <nanvix/hal/hal.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
+#if !defined(__mppa256__)
 #include <nanvix/mm.h>
+#endif
 
 EXTERN int main(int argc, const char *argv[], char **envp);
 EXTERN void dev_init(void);
@@ -40,7 +42,7 @@ PRIVATE void init(void)
 	int status;
 	int argc = 1;
 	const char *argv[] = { "init", NULL };
-   
+
 	status = main(argc, argv, NULL);
 
 	UNUSED(status);
@@ -77,7 +79,9 @@ PUBLIC void kmain(int argc, const char *argv[])
 	/* Master core. */
 
 	dev_init();
+#if !defined(__mppa256__)
 	mm_init();
+#endif
 
 	kprintf("enabling hardware interrupts");
 	hal_enable_interrupts();

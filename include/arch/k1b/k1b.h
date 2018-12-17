@@ -40,6 +40,8 @@
 	#include <arch/k1b/excp.h>
 	#include <arch/k1b/int.h>
 	#include <arch/k1b/io.h>
+	#include <arch/k1b/mmu.h>
 	#include <arch/k1b/pic.h>
+	#include <arch/k1b/tlb.h>
 
 #endif /* ARCH_K1B_K1B_H_ */

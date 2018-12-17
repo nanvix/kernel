@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,62 +22,51 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_K1B_CACHE_H_
-#define ARCH_K1B_CACHE_H_
+#ifndef ARCH_K1B_MMU_H_
+#define ARCH_K1B_MMU_H_
 
 /**
- * @addtogroup k1b-cache Memory Cache
- * @ingroup k1b
+ * @addtogroup k1b-mmu MMU
+ * @ingroup k1b-memory
  *
- * @brief Memory Cache
+ * @brief Memory Management Unit
  */
 /**@{*/
+
+	#include <nanvix/klib.h>
+	#include <stdint.h>
+
+/**
+ * @cond k1b
+ */
 
 	/**
 	 * @name Provided Interface
 	 */
 	/**@{*/
-	#define __hal_dcache_invalidate
+	#define __frame_t            /**< Page Frame Number */
+	#define __paddr_t            /**< Physical Address  */
+	#define __vaddr_t            /**< Virtual Address   */
 	/**@}*/
 
 	/**
-	 * @brief Cache line size (in bytes).
-	 *
-	 * @todo Check if the following this is valid for cores in IO DDR
-	 * and Ethernet Clusters.
+	 * @brief Page Frame number.
 	 */
-	#if defined(__k1bdp__)
-		#define K1B_CACHE_LINE_SIZE 64
-	#else
-		#define K1B_CACHE_LINE_SIZE 64
-	#endif
+	typedef uint32_t frame_t;
 
 	/**
-	 * @brief Invalidates the data cache.
-	 *
-	 * The k1b_dcache_inval() function invalidates the data cache of
-	 * the underlying core. First, it purges the write buffer, then it
-	 * waits all pending write operations of other cores to complete,
-	 * and finally it performs a full invalidation in the data cache.
+	 * @brief Physical address.
 	 */
-	static inline void k1b_dcache_inval(void)
-	{
-		__builtin_k1_wpurge();
-		__builtin_k1_fence();
-		__builtin_k1_dinval();
-	}
+	typedef uint32_t paddr_t;
 
 	/**
-	 * @see k1b_dcache_inval()
-	 *
-	 * @cond k1b
+	 * @brief Virtual address.
 	 */
-	static inline void hal_dcache_invalidate(void)
-	{
-		k1b_dcache_inval();
-	}
-	/**@endcond*/
+	typedef uint32_t vaddr_t;
+
+/**@endcond*/
 
 /**@}*/
 
-#endif /* ARCH_K1B_CACHE_H_ */
+#endif /* ARCH_K1B_MMU_H_ */
+
