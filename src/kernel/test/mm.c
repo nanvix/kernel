@@ -81,7 +81,7 @@ PRIVATE void test_fault_frame_invalid_translation(void)
 PRIVATE void test_fault_frame_invalid_free(void)
 {
 	KASSERT(frame_free(0) == -EINVAL);
-	KASSERT(frame_free(NUM_UFRAMES) == -EINVAL);
+	KASSERT(frame_free((UBASE_VIRT + UMEM_SIZE) >> PAGE_SHIFT) == -EINVAL);
 }
 
 /**
@@ -92,6 +92,7 @@ PRIVATE void test_fault_frame_invalid_free(void)
 PRIVATE void test_fault_frame_bad_free(void)
 {
 	KASSERT(frame_free(frame_id_to_num(0)) == -EFAULT);
+	KASSERT(frame_free(frame_id_to_num(NUM_UFRAMES - 1)) == -EFAULT);
 }
 
 /**
