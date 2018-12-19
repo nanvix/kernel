@@ -22,28 +22,11 @@
 # SOFTWARE.
 #
 
-# Source Files
-SRC = $(wildcard *.c)
-
-# Object Files
-OBJ = $(SRC:.c=.o)
-
-# Builds object files for MPPA-256 target.
-mppa256: $(OBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC) -o $(BINDIR)/$(EXECBIN) -Wl,--whole-archive $(LIBS_OURS) -Wl,--no-whole-archive $(LIBS_THEIRS)
-
-# Builds object files for i386 target.
-i386-pc:
+#
+# Builds system image.
+#
+function build
+{
 	# Nothing to do.
-
-# Builds object files for or1k target.
-or1k-pc:
-	# Nothing to do.
-
-# Cleans all object files.
-clean:
-	rm -rf $(BINDIR)/$(EXECBIN) $(OBJ)
-
-# Builds a C source file.
-%.o: %.c
-	$(CC) $(CFLAGS) $< -c -o $@
+	echo ""
+}

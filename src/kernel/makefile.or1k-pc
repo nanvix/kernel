@@ -2,6 +2,7 @@
 # MIT License
 #
 # Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+#              2018 Davidson Francis     <davidsondfgl@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,28 +23,34 @@
 # SOFTWARE.
 #
 
-# Source Files
-SRC = $(wildcard *.c)
+# C Source Files
+C_SRC = $(wildcard hal/arch/$(ARCH)/*.c) \
+
+# Asembly Source Files
+ASM_SRC = $(wildcard hal/arch/$(ARCH)/*.S)
 
 # Object Files
-OBJ = $(SRC:.c=.o)
+OBJ = $(ASM_SRC:.S=.o) \
+	  $(C_SRC:.c=.o)
 
-# Builds object files for MPPA-256 target.
-mppa256: $(OBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC) -o $(BINDIR)/$(EXECBIN) -Wl,--whole-archive $(LIBS_OURS) -Wl,--no-whole-archive $(LIBS_THEIRS)
+# Executable file.
+EXEC = kernel
 
-# Builds object files for i386 target.
-i386-pc:
-	# Nothing to do.
+# Linker Configuration
+export LDFLAGS = -T hal/arch/$(ARCH)/link.ld
 
-# Builds object files for or1k target.
-or1k-pc:
-	# Nothing to do.
+# Builds All Object Files
+all: $(OBJ)
+	$(LD) $(LDFLAGS) $(OBJ) -o $(BINDIR)/$(EXEC)
 
-# Cleans all object files.
+# Cleans All Object Files
 clean:
-	rm -rf $(BINDIR)/$(EXECBIN) $(OBJ)
+	rm -rf $(BINDIR)/$(EXEC) $(OBJ)
 
-# Builds a C source file.
+# Builds a C Source file
 %.o: %.c
+	$(CC) $(CFLAGS) $< -c -o $@
+
+# Builds an ASM Source File
+%.o: %.S
 	$(CC) $(CFLAGS) $< -c -o $@
