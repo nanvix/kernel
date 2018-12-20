@@ -424,6 +424,61 @@
 	/**@}*/
 
 #ifndef _ASM_FILE_
+
+	#include <nanvix/const.h>
+	#include <stdint.h>
+
+	/**
+	 * @name Machine Types
+	 */
+	/**@{*/
+	typedef uint8_t byte_t;   /**< Byte.        */
+	typedef uint16_t word_t;  /**< Word.        */
+	typedef uint32_t dword_t; /**< Double word. */
+	/**@}*/
+
+	/**
+	 * @brief Gets the ID of the core.
+	 *
+	 * The or1k_core_get_id() returns the ID of the underlying core.
+	 *
+	 * @returns The ID of the underlying core.
+	 */
+	static inline int or1k_core_get_id(void)
+	{
+		return (0);
+	}
+
+	/**
+	 * @see or1k_core_get_id()
+	 *
+	 * @cond or1k
+	 */
+	static inline int hal_core_get_id(void)
+	{
+		return (or1k_core_get_id());
+	}
+	/*@endcond*/
+
+	/**
+	 * @brief Halts the processor.
+	 *
+	 * The or1k_hlt() function stops instruction execution in the the
+	 * underlying core and places it in a halt state. An enabled
+	 * hardware interrupt, NMI, or a reset resumes execution.
+	 */
+	static inline void or1k_hlt(void)
+	{
+	}
+
+	/**
+	 * @see or1k_hlt()
+	 */
+	static inline void hal_core_halt(void)
+	{
+		or1k_hlt();
+	}
+
 #endif /* _ASM_FILE_ */
 
 /**@}*/
