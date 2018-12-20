@@ -40,7 +40,7 @@
 	#include <errno.h>
 
 /**
- * @if k1b
+ * @cond k1b
  */
 
 	/**
@@ -62,7 +62,7 @@
 	#define __tlb_flush_fn        /**< tlb_flush()         */
 	/**@}*/
 
-/**@endif*/
+/**@endcond*/
 
 	/**
 	 * @brief Length of Locked TLB (number of entries).
@@ -116,6 +116,19 @@
 	/**@}*/
 
 	/**
+	 * @brief TLB Entry Protection Attributes
+	 *
+	 * @todo When running in bare-metal (without Hypervisor) we should
+	 * revise this.
+	 */
+	/**@{*/
+	#define K1B_TLBE_PROT_R     5 /**< Read-Only               */
+	#define K1B_TLBE_PROT_RW    9 /**< Read and Write          */
+	#define K1B_TLBE_PROT_RX   11 /**< Read and Execute        */
+	#define K1B_TLBE_PROT_RWX  13 /**< Read, Write and Execute */
+	/**@}*/
+
+	/**
 	 * @name TLB Entry Status
 	 */
 	/**@{*/
@@ -126,7 +139,7 @@
 	/**@}*/
 
 /**
- * @if k1b
+ * @cond k1b
  */
 
 	/**
@@ -146,7 +159,7 @@
 		unsigned page         : 20; /**< Page Number (PN)           */
 	} __attribute__((packed));
 
-/**@endif*/
+/**@endcond*/
 
 	/**
 	 * @brief Gets the virtual address of a page.
@@ -229,41 +242,36 @@
 
 	/**
 	 * @brief Writes a TLB entry.
+	 *
+	 * @param vaddr      Target virtual address.
+	 * @param paddr      Target physical address.
+	 * @param shift      Page shift.
+	 * @param way        Target set-associative way.
+	 * @param protection Protection attributes.
 	 */
-	static inline int k1b_tlb_write(vaddr_t vaddr, paddr_t paddr, unsigned shift)
-	{
-		struct tlbe tlbe;
-		__k1_tlb_entry_t _tlbe;
-
-		tlbe.addr_ext = 0;
-		tlbe.addrspace = 0;
-		tlbe.cache_policy = K1B_DTLBE_CACHE_POLICY_WRTHROUGH;
-		tlbe.frame = paddr >> shift;
-		tlbe.global = 1;
-		tlbe.page = vaddr >> shift;
-		tlbe.protection = 9;
-		tlbe.size = 1;
-		tlbe.status = K1B_TLBE_STATUS_AMODIFIED;
-
-		kmemcpy(&_tlbe, &tlbe, K1B_TLBE_SIZE);
-
-		return ((mOS_mem_write_jtlb(_tlbe, 1) == 0) ? 0 : -EAGAIN);
-	}
+	EXTERN int k1b_tlb_write(
+			vaddr_t vaddr,
+			paddr_t paddr,
+			unsigned shift,
+			unsigned way,
+			unsigned protection
+	);
 
 	/**
 	 * @brief Invalidates a TLB entry.
 	 *
-	 * The k1b_tlbe_inval() function invalidates the TLB entry that
-	 * encodes the virtual address @p vaddr.
-	 *
 	 * @param vaddr Target virtual address.
-	 *
-	 * @author Pedro Henrique Penna
+	 * @param shift Page shift.
+	 * @param way   Target set-associative way.
 	 */
-	static inline int k1b_tlb_inval(vaddr_t vaddr)
-	{
-		return ((mOS_mem_inval_address(vaddr) == 0) ? 0 : -EAGAIN);
-	}
+	EXTERN int k1b_tlb_inval(vaddr_t vaddr, unsigned shift, unsigned way);
+
+	/**
+	 * @brief Dumps a TLB entry.
+	 *
+	 * @param idx Index of target entry in the TLB.
+	 */
+	EXTERN void k1b_tlbe_dump(int idx);
 
 	/**
 	 * @brief Lookups a TLB entry by virtual address.
@@ -298,8 +306,19 @@
 	EXTERN void k1b_tlb_init(void);
 
 /**
- * @if k1b
+ * @cond k1b
  */
+
+	/**
+	 * @brief Length of TLB (number of entries).
+	 *
+	 * Number of entries in the architectural TLB exposed by the
+	 * hardware.
+	 *
+	 * @note The Hypervisor only exposes an interface for playing with
+	 * the JTLB, therefore this should not be @p K1B_TLB_SIZE.
+	 */
+	#define TLB_LENGTH K1B_JTLB_LENGTH
 
 	/**
 	 * @see k1b_tlbe_vaddr_get().
@@ -338,7 +357,7 @@
 	 */
 	static inline int tlb_write(vaddr_t vaddr, paddr_t paddr)
 	{
-		return (k1b_tlb_write(vaddr, paddr, 12));
+		return (k1b_tlb_write(vaddr, paddr, 12, 0, K1B_TLBE_PROT_RW));
 	}
 
 	/**
@@ -346,7 +365,7 @@
 	 */
 	static inline int tlb_inval(vaddr_t vaddr)
 	{
-		return (k1b_tlb_inval(vaddr));
+		return (k1b_tlb_inval(vaddr, 12, 0));
 	}
 
 	/**
@@ -357,7 +376,7 @@
 		return (k1b_tlb_flush());
 	}
 
-/**@endif*/
+/**@endcond*/
 
 /**@}*/
 

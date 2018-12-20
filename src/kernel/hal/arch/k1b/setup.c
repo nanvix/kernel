@@ -84,7 +84,7 @@ PRIVATE void core_setup(void)
 	tls_init();
 
 	coreid = k1b_core_get_id();
-	kprintf("booting up core %d", coreid);
+	kprintf("[hal] booting up core %d", coreid);
 
 	k1b_ivt_setup(
 		(k1b_hwint_handler_fn) k1b_do_hwint,
@@ -92,7 +92,7 @@ PRIVATE void core_setup(void)
 		(k1b_excp_handler_fn) _do_excp
 	);
 
-	k1b_tlb_init();
+	mmu_init();
 }
 
 /**
