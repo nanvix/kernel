@@ -23,51 +23,11 @@
  * SOFTWARE.
  */
 
-OUTPUT_FORMAT("elf32-or1k")
-ENTRY(start)
+#include <nanvix/const.h>
 
-SECTIONS 
+/**
+ * Initializes the core components for or1k.
+ */
+PUBLIC void or1k_core_setup(void)
 {
-	EXCEPTIONS = .;
-	
-	KSTART = .;
-
-	/* Bootstrap section. */
-	.bootstrap :
-	{
-		hal/arch/or1k/boot.o *(.bootstrap)
-		hal/arch/or1k/setup.o
-	}
-	
-	. += 0xc0000000;
-
-	/* Kernel code section. */
-	.text ALIGN(8192) : AT(ADDR(.text) - 0xc0000000)
-	{
-		*(.text)
-		*(.rodata)
-	}
-   
-	/* Initialized kernel data section. */
-   .data ALIGN(8192) : AT(ADDR(.data) - 0xc0000000)
-   {
-       *(.data)
-   }
-   
-   /* Uninitialized kernel data section. */
-   .bss : AT(ADDR(.bss) - 0xc0000000)
-   {
-       *(.bss)
-   }
-   
-   . =ALIGN(8192);
-	
-   KDATA_END = .;
-   
-   /* Discarded. */
-   /DISCARD/ :
-   {
-        *(.comment)
-        *(.note)
-   }
 }

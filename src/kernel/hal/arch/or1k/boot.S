@@ -170,10 +170,14 @@ start:
 	l.addi r1, r1,  OR1K_PAGE_SIZE
 	l.addi r1, r1, -DWORD_SIZE  /* Stack pointer. */
 	l.or   r2, r1,  r0          /* Frame pointer. */
-
+	
+	/* Setup or1k. */
+	LOAD_SYMBOL_2_GPR(r3, or1k_core_setup)
+	l.jalr r3
+	l.nop
+	
 	/*
 	 * TODO:
-	 * call or1k_core_setup
 	 * call kmain
 	 */
 	
