@@ -25,6 +25,8 @@
 
 # C Source Files
 C_SRC = $(wildcard hal/arch/$(ARCH)/*.c) \
+        $(wildcard init/*.c)             \
+
 
 # Asembly Source Files
 ASM_SRC = $(wildcard hal/arch/$(ARCH)/*.S)
