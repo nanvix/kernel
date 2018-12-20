@@ -154,6 +154,324 @@
 
 #ifndef _ASM_FILE_
 #define _ASM_FILE_
+
+	#include <nanvix/klib.h>
+
+	/**
+	 * @brief Virtual address.
+	 */
+	typedef uint32_t vaddr_t;
+
+	/**
+	 * @brief Physical address.
+	 */
+	typedef uint32_t paddr_t;
+
+	/**
+	 * @brief Frame number.
+	 */
+	typedef uint32_t frame_t;
+
+	/**
+	 * @brief Page directory entry.
+	 */
+	struct pde
+	{
+		unsigned frame      : 22; /* Frame number.          */
+		unsigned last       :  1; /* Last PTE.              */
+		unsigned ppi        :  3; /* Page protection index. */
+		unsigned dirty      :  1; /* Dirty?                 */
+		unsigned accessed   :  1; /* Accessed?              */
+		unsigned wom        :  1; /* Weakly-Ordered Memory. */
+		unsigned wbc        :  1; /* Write-Back Cache.      */
+		unsigned ci         :  1; /* Cache Inhibit.         */
+		unsigned cc         :  1; /* Cache Coherency.       */
+	};
+	
+	/**
+	 * @brief Page table entry.
+	 */
+	struct pte
+	{
+		unsigned frame      : 22; /* Frame number.          */
+		unsigned last       :  1; /* Last PTE.              */
+		unsigned ppi        :  3; /* Page protection index. */
+		unsigned dirty      :  1; /* Dirty?                 */
+		unsigned accessed   :  1; /* Accessed?              */
+		unsigned wom        :  1; /* Weakly-Ordered Memory. */
+		unsigned wbc        :  1; /* Write-Back Cache.      */
+		unsigned ci         :  1; /* Cache Inhibit.         */
+		unsigned cc         :  1; /* Cache Coherency.       */
+	};
+
+	/**
+	 * @brief Clears a page directory entry.
+	 *
+	 * @param pde Target page directory entry.
+	 */
+	static inline void pde_clear(struct pde *pde)
+	{
+		kmemset(pde, 0, PDE_SIZE);
+	}
+
+	/**
+	 * @brief Sets the frame of a page table.
+	 *
+	 * @param pde Page directory entry of target page table.
+	 * @param frame Frame number.
+	 */
+	static inline void pde_frame_set(struct pde *pde, frame_t frame)
+	{
+		pde->frame = frame;
+	}
+
+	/**
+	 * @brief Sets/clears the present bit of a page table.
+	 *
+	 * @param pde Page directory entry of target page table.
+	 * @param set Set bit?
+	 */
+	static inline void pde_present_set(struct pde *pde, int set)
+	{
+		((void)pde);
+		((void)set);
+	}
+
+	/**
+	 * @brief Asserts if the present bit of a page table is set.
+	 *
+	 * @param pde Page directory entry of target page table.
+	 *
+	 * @returns If the present bit of the target page table is set,
+	 * non zero is returned. Otherwise, zero is returned instead.
+	 */
+	static inline int pde_is_present(struct pde *pde)
+	{
+		((void)pde);
+		return (1);
+	}
+
+	/**
+	 * @brief Gets the frame number of a page directory entry.
+	 *
+	 * @param pde Target page directory entry.
+	 *
+	 * @returns The frame number of the target page directory entry.
+	 */
+	static inline frame_t pde_frame_get(struct pde *pde)
+	{
+		return (pde->frame);
+	}
+
+	/**
+	 * @brief Sets/clears the write bit of a page table.
+	 *
+	 * @param pde Page directory entry of target page table.
+	 * @param set Set bit?
+	 */
+	static inline void pde_write_set(struct pde *pde, int set)
+	{
+		pde->ppi = (set) ? (PT_PPI_USR_RDWR >> PT_PPI_OFFSET)
+			: (PT_PPI_USR_RD >> PT_PPI_OFFSET);
+	}
+
+	/**
+	 * @brief Asserts if the write bit of a page table is set.
+	 *
+	 * @param pde Page directory entry of target page table.
+	 *
+	 * @returns If the write bit of the target page table is set, non
+	 * zero is returned. Otherwise, zero is returned instead.
+	 */
+	static inline int pde_is_write(struct pde *pde)
+	{
+		return (pde->ppi == (PT_PPI_USR_RDWR >> PT_PPI_OFFSET));
+	}
+
+	/**
+	 * @brief Sets/clears the user bit of a page table.
+	 *
+	 * @param pde Page directory entry of target page table.
+	 * @param set Set bit?
+	 */
+	static inline void pde_user_set(struct pde *pde, int set)
+	{
+		pde->ppi = (set) ? (PT_PPI_USR_RD >> PT_PPI_OFFSET) : 0;
+	}
+
+	/**
+	 * @brief Asserts if the user bit of a page table is set.
+	 *
+	 * @param pde Page directory entry of target page table.
+	 *
+	 * @returns If the user bit of the target page table is set, non
+	 * zero is returned. Otherwise, zero is returned instead.
+	 */
+	static inline int pde_is_user(struct pde *pde)
+	{
+		return (pde->ppi & (PT_PPI_USR_RD >> PT_PPI_OFFSET));
+	}
+
+	/**
+	 * @brief Clears a page table entry.
+	 *
+	 * @param pte Target page table entry.
+	 */
+	static inline void pte_clear(struct pte *pte)
+	{
+		kmemset(pte, 0, PTE_SIZE);
+	}
+
+	/**
+	 * @brief Sets/clears the present bit of a page.
+	 *
+	 * @param pte Page table entry of target page.
+	 * @param set Set bit?
+	 */
+	static inline void pte_present_set(struct pte *pte, int set)
+	{
+		((void)pte);
+		((void)set);
+	}
+
+	/**
+	 * @brief Asserts if the present bit of a page.
+	 *
+	 * @param pte Page table entry of target page.
+	 *
+	 * @returns If the present bit of the target page, non zero is
+	 * returned. Otherwise, zero is returned instead.
+	 */
+	static inline int pte_is_present(struct pte *pte)
+	{
+		((void)pte);
+		return (1);
+	}
+
+	/**
+	 * @brief Sets the frame of a page.
+	 *
+	 * @param pte   Page table entry of target page.
+	 * @param frame Frame number.
+	 */
+	static inline void pte_frame_set(struct pte *pte, frame_t frame)
+	{
+		pte->frame = frame;
+	}
+
+	/**
+	 * @brief Gets the frame linked to page.
+	 *
+	 * @param pte   Page table entry of target page.
+	 *
+	 * @returns Number of the frame that is linked to the target page.
+	 */
+	static inline frame_t pte_frame_get(struct pte *pte)
+	{
+		return (pte->frame);
+	}
+
+	/**
+	 * @brief Sets/clears the write bit of a page.
+	 *
+	 * @param pte Page table entry of target page.
+	 * @param set Set bit?
+	 */
+	static inline void pte_write_set(struct pte *pte, int set)
+	{
+		pte->ppi = (set) ? (PT_PPI_USR_RDWR >> PT_PPI_OFFSET)
+			: (PT_PPI_USR_RD >> PT_PPI_OFFSET);
+	}
+
+	/**
+	 * @brief Asserts if the write bit of a page.
+	 *
+	 * @param pte Page table entry of target page.
+	 *
+	 * @returns If the write bit of the target page, non zero is
+	 * returned. Otherwise, zero is returned instead.
+	 */
+	static inline int pte_is_write(struct pte *pte)
+	{
+		return (pte->ppi == (PT_PPI_USR_RDWR >> PT_PPI_OFFSET));
+	}
+
+	/**
+	 * @brief Sets/clears the user bit of a page.
+	 *
+	 * @param pte Page table entry of target page.
+	 * @param set Set bit?
+	 */
+	static inline void pte_user_set(struct pte *pte, int set)
+	{
+		pte->ppi = (set) ? (PT_PPI_USR_RD >> PT_PPI_OFFSET) : 0;
+	}
+
+	/**
+	 * @brief Asserts if the user bit of a page.
+	 *
+	 * @param pte Page table entry of target page.
+	 *
+	 * @returns If the user bit of the target page, non zero is
+	 * returned. Otherwise, zero is returned instead.
+	 */
+	static inline int pte_is_user(struct pte *pte)
+	{
+		return (pte->ppi & (PT_PPI_USR_RD >> PT_PPI_OFFSET));
+	}
+
+	/**
+	 * @brief Gets the page table index of a page.
+	 *
+	 * @param vaddr Target virtual address.
+	 *
+	 * @returns Returns the page table index of the page that lies at
+	 * address @p vaddr.
+	 */
+	static inline unsigned pte_idx_get(vaddr_t vaddr)
+	{
+		return (((unsigned)(vaddr) & (OR1K_PGTAB_MASK^OR1K_PAGE_MASK)) >> OR1K_PAGE_SHIFT);
+	}
+
+	/**
+	 * @brief Gets the page directory index of a page.
+	 *
+	 * @param vaddr Target virtual address.
+	 *
+	 * @returns Returns the page directory index of the page that lies
+	 * at address @p vaddr.
+	 */
+	static inline unsigned pde_idx_get(vaddr_t vaddr)
+	{
+		return ((unsigned)(vaddr) >> OR1K_PGTAB_SHIFT);
+	}
+
+	/**
+	 * @brief Gets a page directory entry.
+	 *
+	 * @param pgdir Target page directory.
+	 * @param vaddr  Target virtual address.
+	 *
+	 * @returns The requested page directory entry.
+	 */
+	static inline struct pde *pde_get(struct pde *pgdir, vaddr_t vaddr)
+	{
+		return (&pgdir[pde_idx_get(vaddr)]);
+	}
+
+	/**
+	 * @brief Gets a page table entry.
+	 *
+	 * @param pgtab Target page table.
+	 * @param vaddr Target virtual address.
+	 *
+	 * @returns The requested page table entry.
+	 */
+	static inline struct pte *pte_get(struct pte *pgtab, vaddr_t vaddr)
+	{
+		return (&pgtab[pte_idx_get(vaddr)]);
+	}
+
 #endif
 
 /**@}*/
