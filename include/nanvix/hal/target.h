@@ -2,6 +2,7 @@
  * MIT License
  *
  * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ *              2018 Davidson Francis     <davidsondfgl@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +32,10 @@
 
 	#if (defined(__i386__) && (__pc__))
 	#include <target/ibm/pc.h>
+	#endif
+	
+	#if (defined(__or1k__) && (__pc__))
+	#include <target/or1k/pc.h>
 	#endif
 
 /*============================================================================*
