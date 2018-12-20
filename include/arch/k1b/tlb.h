@@ -242,64 +242,36 @@
 
 	/**
 	 * @brief Writes a TLB entry.
+	 *
+	 * @param vaddr      Target virtual address.
+	 * @param paddr      Target physical address.
+	 * @param shift      Page shift.
+	 * @param way        Target set-associative way.
+	 * @param protection Protection attributes.
 	 */
-	static inline int k1b_tlb_write(
+	EXTERN int k1b_tlb_write(
 			vaddr_t vaddr,
 			paddr_t paddr,
 			unsigned shift,
 			unsigned way,
 			unsigned protection
-	)
-	{
-		struct tlbe tlbe;
-		__k1_tlb_entry_t _tlbe;
-
-		tlbe.addr_ext = 0;
-		tlbe.addrspace = 0;
-		tlbe.cache_policy = K1B_DTLBE_CACHE_POLICY_WRTHROUGH;
-		tlbe.frame = paddr >> 12;
-		tlbe.global = 1;
-		tlbe.page = (vaddr >> 12) | (1 << (shift - 12 - 1));
-		tlbe.protection = protection;
-		tlbe.size = (shift == 12) ? 1 : 0;
-		tlbe.status = K1B_TLBE_STATUS_AMODIFIED;
-
-		kmemcpy(&_tlbe, &tlbe, K1B_TLBE_SIZE);
-
-		return ((mOS_mem_write_jtlb(_tlbe, way) == 0) ? 0 : -EAGAIN);
-	}
+	);
 
 	/**
 	 * @brief Invalidates a TLB entry.
 	 *
-	 * The k1b_tlbe_inval() function invalidates the TLB entry that
-	 * encodes the virtual address @p vaddr.
-	 *
 	 * @param vaddr Target virtual address.
 	 * @param shift Page shift.
 	 * @param way   Target set-associative way.
-	 *
-	 * @author Pedro Henrique Penna
 	 */
-	static inline int k1b_tlb_inval(vaddr_t vaddr, unsigned shift, unsigned way)
-	{
-		struct tlbe tlbe;
-		__k1_tlb_entry_t _tlbe;
+	EXTERN int k1b_tlb_inval(vaddr_t vaddr, unsigned shift, unsigned way);
 
-		tlbe.addr_ext = 0;
-		tlbe.addrspace = 0;
-		tlbe.cache_policy = 0;
-		tlbe.frame = 0;
-		tlbe.global = 0;
-		tlbe.page = (vaddr >> 12) | (1 << (shift - 12 - 1));
-		tlbe.protection = 0;
-		tlbe.size = (shift == 12) ? 1 : 0;
-		tlbe.status = K1B_TLBE_STATUS_INVALID;
-
-		kmemcpy(&_tlbe, &tlbe, K1B_TLBE_SIZE);
-
-		return ((mOS_mem_write_jtlb(_tlbe, way) == 0) ? 0 : -EAGAIN);
-	}
+	/**
+	 * @brief Dumps a TLB entry.
+	 *
+	 * @param idx Index of target entry in the TLB.
+	 */
+	EXTERN void k1b_tlbe_dump(int idx);
 
 	/**
 	 * @brief Lookups a TLB entry by virtual address.
@@ -336,6 +308,17 @@
 /**
  * @cond k1b
  */
+
+	/**
+	 * @brief Length of TLB (number of entries).
+	 *
+	 * Number of entries in the architectural TLB exposed by the
+	 * hardware.
+	 *
+	 * @note The Hypervisor only exposes an interface for playing with
+	 * the JTLB, therefore this should not be @p K1B_TLB_SIZE.
+	 */
+	#define TLB_LENGTH K1B_JTLB_LENGTH
 
 	/**
 	 * @see k1b_tlbe_vaddr_get().

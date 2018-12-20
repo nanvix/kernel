@@ -102,12 +102,8 @@ PRIVATE inline const struct tlbe *k1b_tlbe_get(int idx)
  *============================================================================*/
 
 /**
- * @brief Dumps a TLB entry.
- *
  * The k1b_tlbe_dump() function dumps information about the TLB entry
  * @p idx on the kernel output device.
- *
- * @param idx Index of target entry in the TLB.
  */
 PUBLIC void k1b_tlbe_dump(int idx)
 {
@@ -225,6 +221,81 @@ PUBLIC const struct tlbe *k1b_tlb_lookup_paddr(paddr_t paddr)
 	}
 
 	return (NULL);
+}
+
+/*============================================================================*
+ * k1b_tlb_write()                                                            *
+ *============================================================================*/
+
+/**
+ * THe k1b_tlb_write() function writes an entry into the architectural
+ * TLB. If the new entry conflicts to an old one, the old one is
+ * overwritten.
+ *
+ * @author Pedro Henrique Penna
+ */
+PUBLIC int k1b_tlb_write(
+		vaddr_t vaddr,
+		paddr_t paddr,
+		unsigned shift,
+		unsigned way,
+		unsigned protection
+)
+{
+	int coreid;
+	unsigned idx;
+	struct tlbe tlbe;
+	__k1_tlb_entry_t _tlbe;
+
+	tlbe.addr_ext = 0;
+	tlbe.addrspace = 0;
+	tlbe.cache_policy = K1B_DTLBE_CACHE_POLICY_WRTHROUGH;
+	tlbe.frame = paddr >> 12;
+	tlbe.global = 1;
+	tlbe.page = (vaddr >> 12) | (1 << (shift - 12 - 1));
+	tlbe.protection = protection;
+	tlbe.size = (shift == 12) ? 1 : 0;
+	tlbe.status = K1B_TLBE_STATUS_AMODIFIED;
+
+	coreid = k1b_core_get_id();
+	idx = 2*((vaddr >> shift) & 0x3f) + way;
+
+	kmemcpy(&_tlbe, &tlbe, K1B_TLBE_SIZE);
+	kmemcpy(&tlb[coreid].jtlb[idx], &tlbe, K1B_TLBE_SIZE);
+
+	return ((mOS_mem_write_jtlb(_tlbe, way) == 0) ? 0 : -EAGAIN);
+}
+
+/**
+ * The k1b_tlb_inval() function invalidates the TLB entry that
+ * encodes the virtual address @p vaddr.
+ *
+ * @author Pedro Henrique Penna
+ */
+PUBLIC int k1b_tlb_inval(vaddr_t vaddr, unsigned shift, unsigned way)
+{
+	int coreid;
+	unsigned idx;
+	struct tlbe tlbe;
+	__k1_tlb_entry_t _tlbe;
+
+	tlbe.addr_ext = 0;
+	tlbe.addrspace = 0;
+	tlbe.cache_policy = 0;
+	tlbe.frame = 0;
+	tlbe.global = 0;
+	tlbe.page = (vaddr >> 12) | (1 << (shift - 12 - 1));
+	tlbe.protection = 0;
+	tlbe.size = (shift == 12) ? 1 : 0;
+	tlbe.status = K1B_TLBE_STATUS_INVALID;
+
+	coreid = k1b_core_get_id();
+	idx = 2*((vaddr >> shift) & 0x3f) + way;
+
+	kmemcpy(&_tlbe, &tlbe, K1B_TLBE_SIZE);
+	kmemcpy(&tlb[coreid].jtlb[idx], &tlbe, K1B_TLBE_SIZE);
+
+	return ((mOS_mem_write_jtlb(_tlbe, way) == 0) ? 0 : -EAGAIN);
 }
 
 /*============================================================================*
