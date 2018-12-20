@@ -553,11 +553,18 @@ PRIVATE void test_stress_upage_allocation(void)
  */
 PRIVATE void test_stress_upage_write(void)
 {
+	unsigned num_upages;
 	unsigned *upg;
 	const unsigned magic = 0xdeadbeef;
 
+	#ifdef HAL_TLB_SOFTWARE
+	num_upages = NUM_UPAGES/TLB_LENGTH;
+	#else
+	num_upages = NUM_UPAGES;
+	#endif
+
 	/* Allocate pages. */
-	for (unsigned i = 0; i < NUM_UPAGES; i++)
+	for (unsigned i = 0; i < num_upages; i++)
 	{
 		upg = (void *)(UBASE_VIRT + i*PAGE_SIZE);
 
@@ -569,7 +576,7 @@ PRIVATE void test_stress_upage_write(void)
 	}
 
 	/* Release pages. */
-	for (unsigned i = 0; i < NUM_UPAGES; i++)
+	for (unsigned i = 0; i < num_upages; i++)
 	{
 		upg = (void *)(UBASE_VIRT + i*PAGE_SIZE);
 

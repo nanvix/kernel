@@ -41,6 +41,18 @@
 	/**@}*/
 
 	/**
+	 * @brief Cache line size (in bytes).
+	 *
+	 * @todo Check if the following this is valid for cores in IO DDR
+	 * and Ethernet Clusters.
+	 */
+	#if defined(__k1bdp__)
+		#define K1B_CACHE_LINE_SIZE 64
+	#else
+		#define K1B_CACHE_LINE_SIZE 64
+	#endif
+
+	/**
 	 * @brief Invalidates the data cache.
 	 *
 	 * The k1b_dcache_inval() function invalidates the data cache of

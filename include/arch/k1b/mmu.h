@@ -22,72 +22,51 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_I386_TLB_H_
-#define ARCH_I386_TLB_H_
+#ifndef ARCH_K1B_MMU_H_
+#define ARCH_K1B_MMU_H_
 
 /**
- * @addtogroup i386-tlb TLB
- * @ingroup i386-memory
+ * @addtogroup k1b-mmu MMU
+ * @ingroup k1b-memory
  *
- * @brief Translation Lookaside Buffer
+ * @brief Memory Management Unit
  */
 /**@{*/
 
-/**
- * @if i386
- */
+	#include <nanvix/klib.h>
+	#include <stdint.h>
 
-	/**
-	 * @brief Hardware-managed TLB.
-	 */
-	#define HAL_TLB_HARDWARE
+/**
+ * @cond k1b
+ */
 
 	/**
 	 * @name Provided Interface
 	 */
 	/**@{*/
-	#define __tlb_flush_fn /**< tlb_flush() */
+	#define __frame_t            /**< Page Frame Number */
+	#define __paddr_t            /**< Physical Address  */
+	#define __vaddr_t            /**< Virtual Address   */
 	/**@}*/
 
-/**@endif*/
+	/**
+	 * @brief Page Frame number.
+	 */
+	typedef uint32_t frame_t;
 
 	/**
-	 * @brief Flushes changes in the TLB.
-	 *
-	 * The i386_tlb_flush() function flushes the changes made to the
-	 * TLB of the underlying i386 core.
-	 *
-	 * @returns This function always returns zero.
-	 *
-	 * @todo We can improve this by using the invlpg instruction.
+	 * @brief Physical address.
 	 */
-	static inline int i386_tlb_flush(void)
-	{
-		__asm__ __volatile__ (
-			"movl %%cr3, %%eax;\
-			movl %%eax, %%cr3;"
-			:
-			: 
-			:
-		);
-
-		return (0);
-	}
-
-/**
- * @if i386
- */
+	typedef uint32_t paddr_t;
 
 	/**
-	 * @see i386_tlb_flush().
+	 * @brief Virtual address.
 	 */
-	static inline int tlb_flush(void)
-	{
-		return (i386_tlb_flush());
-	}
+	typedef uint32_t vaddr_t;
 
-/**@endif*/
+/**@endcond*/
 
 /**@}*/
-	
-#endif /* ARCH_I386_TLB_H_ */
+
+#endif /* ARCH_K1B_MMU_H_ */
+

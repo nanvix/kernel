@@ -141,6 +141,7 @@ PUBLIC void kpool_init(void)
 #endif
 
 #ifndef NDEBUG
+	kprintf("[mm] running tests on the kernel page allocator");
 	kpool_test_driver();
 #endif
 }

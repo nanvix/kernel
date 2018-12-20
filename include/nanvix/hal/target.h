@@ -157,6 +157,8 @@
  * Memory Interface                                                           *
  *============================================================================*/
 
+#ifdef XXX
+
 	#ifndef _UBASE_VIRT
 	#error "_UBASE_VIRT not defined"
 	#endif
@@ -201,6 +203,8 @@
 	#error "_UMEM_SIZE not defined"
 	#endif
 
+#endif
+
 /*============================================================================*
  * MMU Interface                                                              *
  *============================================================================*/
@@ -216,6 +220,8 @@
 	#ifndef __vaddr_t
 	#error "vaddr_t not defined?"
 	#endif
+
+#ifdef XXX
 
 	#ifndef PAGE_SHIFT
 	#error "PAGE_SHIFT not defined"
@@ -317,12 +323,56 @@
 	#error "pte_write_set() not defined?"
 	#endif
 
+#endif
+
 /*============================================================================*
  * TLB Interface                                                              *
  *============================================================================*/
 
+	#if (!defined(HAL_TLB_SOFTWARE) && !defined (HAL_TLB_HARDWARE))
+		#error "cannot determine whether or not TLB is managed by software"
+	#endif
+
+	/*
+	 * Required interface for software- and hardware-managed TLBs.
+	 */
 	#ifndef __tlb_flush_fn
-	#error "tlb_flush() not defined?"
+		#error "tlb_flush() not defined?"
+	#endif
+
+	/*
+	 * Required interface for software-managed TLBs.
+	 */
+	#ifdef HAL_TLB_SOFTWARE
+
+		#ifndef __tlbe_st
+			#error "struct tlbe not defined?"
+		#endif
+
+		#ifndef __tlbe_vaddr_get_fn
+			#error "tlb_vaddr_get() not defined?"
+		#endif
+
+		#ifndef __tlbe_paddr_get_fn
+			#error "tlb_paddr_get() not defined?"
+		#endif
+
+		#ifndef __tlb_lookup_vaddr_fn
+			#error "tlb_lookup_vaddr() not defined?"
+		#endif
+
+		#ifndef __tlb_lookup_paddr_fn
+			#error "tlb_lookup_paddr() not defined?"
+		#endif
+
+		#ifndef __tlb_write_fn
+			#error "tlb_write() not defined?"
+		#endif
+
+		#ifndef __tlb_inval_fn
+			#error "tlb_inval() not defined?"
+		#endif
+
 	#endif
 
 #endif /* NANVIX_HAL_TARGET_H_ */

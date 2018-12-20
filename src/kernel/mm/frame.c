@@ -87,7 +87,7 @@ PUBLIC int frame_free(frame_t frame)
 
 	if (frames[frame_num_to_id(frame)] == 0)
 	{
-		kprintf("[mm] double free on page frame");
+		kprintf("[mm] double free on page frame %x", frame);
 		return (-EFAULT);
 	}
 
@@ -119,6 +119,7 @@ PUBLIC void frame_init(void)
 #endif
 
 #ifndef NDEBUG
+	kprintf("[mm] running tests on the page frame allocator");
 	frame_test_driver();
 #endif
 }

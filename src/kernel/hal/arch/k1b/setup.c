@@ -33,6 +33,7 @@
 #include <arch/k1b/excp.h>
 #include <arch/k1b/int.h>
 #include <arch/k1b/ivt.h>
+#include <arch/k1b/tlb.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
 #include "mppa256.h"
@@ -90,6 +91,8 @@ PRIVATE void core_setup(void)
 		(k1b_swint_handler_fn) _syscall,
 		(k1b_excp_handler_fn) _do_excp
 	);
+
+	k1b_tlb_init();
 }
 
 /**
