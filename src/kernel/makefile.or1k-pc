@@ -26,6 +26,9 @@
 # C Source Files
 C_SRC = $(wildcard hal/arch/$(ARCH)/*.c) \
         $(wildcard init/*.c)             \
+        $(wildcard klib/*.c)             \
+        $(wildcard dev/*.c)              \
+        $(wildcard mm/*.c)
 
 
 # Asembly Source Files
