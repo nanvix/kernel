@@ -2,7 +2,7 @@
  * MIT License
  *
  * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
- *              2017-2018 Davidson Francis     <davidsondfgl@gmail.com>
+ *              2018-2018 Davidson Francis     <davidsondfgl@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,19 +23,32 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_OR1K_MEM_H_
-#define ARCH_OR1K_MEM_H_
+#ifndef ARCH_OR1K_CACHE_H_
+#define ARCH_OR1K_CACHE_H_
 
 /**
- * @addtogroup or1k-memory Memory System
- * @ingroup or1k
+ * @addtogroup or1k-cache Cache
+ * @ingroup or1k-memory
+ *
+ * @brief Memory Cache
  */
 /**@{*/
 
-	#include <arch/or1k/cache.h>
-	#include <arch/or1k/mmu.h>
-	#include <arch/or1k/tlb.h>
+	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_dcache_invalidate
+	/**@}*/
+
+	/**
+	 * @note The or1k target features cache coherency.
+	 */
+	static inline void hal_dcache_invalidate(void)
+	{
+		or1k_mtspr(OR1K_SPR_DCBIR, 0);
+	}
 
 /**@}*/
 
-#endif /* ARCH_OR1K_MEM_H_ */
+#endif /* ARCH_OR1K_CACHE_H_ */
