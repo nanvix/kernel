@@ -1,8 +1,8 @@
 /*
  * MIT License
  *
- * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
- *              2017-2018 Davidson Francis     <davidsondfgl@gmail.com>
+ * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ *              2018 Davidson Francis     <davidsondfgl@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,22 +23,28 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_OR1K_OR1K_H_
-#define ARCH_OR1K_OR1K_H_
+#include <nanvix/const.h>
+#include <arch/or1k/core.h>
+#include <arch/or1k/clock.h>
 
+/**
+ * The or1k_clock_init() function initializes the clock driver in the
+ * or1k architecture. The frequency of the device is set to @p freq
+ * Hz.
+ */
+PUBLIC void or1k_clock_init(unsigned freq)
+{
+	unsigned upr;  /* Unit Present Register. */
+	unsigned rate; /* Timer rate.            */
 
-	#ifndef TARGET_OR1K_PC_H_
-	#error "include <target/or1k/pc.h> instead"
-	#endif
+	upr = or1k_mfspr(OR1K_SPR_UPR);
+	if ( !(upr & OR1K_SPR_UPR_TTP) )
+		while (1);
 
-	/**
-	 * @defgroup or1k Architecture
-	 * @ingroup or1k-pc
-	 */
- 	#include <arch/or1k/clock.h>
-	#include <arch/or1k/core.h>
-	#include <arch/or1k/cpu.h>
-	#include <arch/or1k/int.h>
-	#include <arch/or1k/mem.h>
+	/* Clock rate. */
+	rate = (CPU_FREQUENCY << 2)/freq;
 
-#endif /* ARCH_OR1K_OR1K_H_ */
+	/* Ensures that the clock is disabled. */
+	or1k_mtspr(OR1K_SPR_TTCR, 0);
+	or1k_mtspr(OR1K_SPR_TTMR, OR1K_SPR_TTMR_CR | OR1K_SPR_TTMR_IE | rate);
+}

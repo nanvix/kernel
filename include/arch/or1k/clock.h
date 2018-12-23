@@ -1,8 +1,8 @@
 /*
  * MIT License
  *
- * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
- *              2017-2018 Davidson Francis     <davidsondfgl@gmail.com>
+ * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ *              2018 Davidson Francis     <davidsondfgl@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,22 +23,49 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_OR1K_OR1K_H_
-#define ARCH_OR1K_OR1K_H_
+#ifndef ARCH_OR1K_CLOCK_H_
+#define ARCH_OR1K_CLOCK_H_
 
+/**
+ * @addtogroup or1k-Tick Timer
+ * @ingroup or1k
+ *
+ * @brief Tick Timer
+ */
+/**@{*/
 
-	#ifndef TARGET_OR1K_PC_H_
-	#error "include <target/or1k/pc.h> instead"
-	#endif
+	#include <nanvix/const.h>
 
 	/**
-	 * @defgroup or1k Architecture
-	 * @ingroup or1k-pc
+	 * @name Provided Interface
 	 */
- 	#include <arch/or1k/clock.h>
-	#include <arch/or1k/core.h>
-	#include <arch/or1k/cpu.h>
-	#include <arch/or1k/int.h>
-	#include <arch/or1k/mem.h>
+	/**@{*/
+	#define __hal_clock_init
+	/**@}*/
 
-#endif /* ARCH_OR1K_OR1K_H_ */
+	/**
+	 * @brief Estimated CPU frequency (in Hz)
+	 */
+	#define CPU_FREQUENCY 20000000
+	
+	/**
+	 * @brief Initializes the clock driver in the or1k architecture.
+	 *
+	 * @param freq Target frequency for the clock device.
+	 */
+	EXTERN void or1k_clock_init(unsigned freq);
+
+	/**
+	 * @see or1k_clock_init()
+	 *
+	 * @cond or1k
+	 */
+	static inline void hal_clock_init(unsigned freq)
+	{
+		or1k_clock_init(freq);
+	}
+	/**@endcond*/
+
+/**@}*/
+
+#endif /* ARCH_OR1K_CLOCK */
