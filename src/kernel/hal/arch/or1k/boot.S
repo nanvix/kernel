@@ -43,6 +43,7 @@
 
 /* Exported symbols. */
 .globl start
+.globl idle_pgdir
 
 /**
  * Reset exception.
@@ -69,14 +70,14 @@ start:
 
 	/* Supervisor mode. */
 	l.ori	r1, r0, 0x1
-	l.mtspr	r0, r1, SPR_SR
+	l.mtspr	r0, r1, OR1K_SPR_SR
 
 	/* Build kernel and kernel pool page tables. */
-	LOAD_SYMBOL_2_GPR(r1, kpool_pgtab)
+	OR1K_LOAD_SYMBOL_2_GPR(r1, kpool_pgtab)
 	l.addi  r1, r1,  OR1K_PAGE_SIZE
 	l.addi  r1, r1, -DWORD_SIZE
 
-	LOAD_SYMBOL_2_GPR(r3, 0x003ffc00)
+	OR1K_LOAD_SYMBOL_2_GPR(r3, 0x003ffc00)
 	l.ori  r3, r3, PT_L | PT_PRESENT | PT_PPI_SPV_EX
 
 	start.loop1:
@@ -88,17 +89,17 @@ start:
 		l.nop
 
 	/* Build init page directory. */
-	LOAD_SYMBOL_2_GPR(r1, kernel_pgtab)
+	OR1K_LOAD_SYMBOL_2_GPR(r1, kernel_pgtab)
 	l.srli r1, r1, PAGE_SHIFT
 	l.slli r1, r1, OR1K_PT_SHIFT
 	l.ori  r1, r1, PT_PRESENT
 
-	LOAD_SYMBOL_2_GPR(r3, idle_pgdir)
+	OR1K_LOAD_SYMBOL_2_GPR(r3, idle_pgdir)
 	
 	l.sw  OR1K_PTE_SIZE*0(r3),   r1       /* Kernel code + data at 0x00000000 */
 	l.sw  OR1K_PTE_SIZE*192(r3), r1       /* Kernel code + data at 0xc0000000 */
 
-	LOAD_SYMBOL_2_GPR(r1, kpool_pgtab)    /* Kernel page pool at 0xc1000000   */
+	OR1K_LOAD_SYMBOL_2_GPR(r1, kpool_pgtab)  /* Kernel page pool at 0xc1000000   */
 	l.srli r1, r1, PAGE_SHIFT
 	l.slli r1, r1, OR1K_PT_SHIFT
 	l.ori  r1, r1, PT_PRESENT
@@ -109,26 +110,27 @@ start:
 	l.nop
 	
 	/* Fill the IMMU/DMMU with the first NSETS pages. */
-	LOAD_SYMBOL_2_GPR(r1, SPR_DTLBTR_BASE(0))
-	LOAD_SYMBOL_2_GPR(r3, SPR_ITLBTR_BASE(0))
-	LOAD_SYMBOL_2_GPR(r5, SPR_DTLBMR_BASE(0))
-	LOAD_SYMBOL_2_GPR(r7, SPR_ITLBMR_BASE(0))
-	LOAD_SYMBOL_2_GPR(r9,  dtlb_table)
-	LOAD_SYMBOL_2_GPR(r11, itlb_table)
+	OR1K_LOAD_SYMBOL_2_GPR(r1, OR1K_SPR_DTLBTR_BASE(0))
+	OR1K_LOAD_SYMBOL_2_GPR(r3, OR1K_SPR_ITLBTR_BASE(0))
+	OR1K_LOAD_SYMBOL_2_GPR(r5, OR1K_SPR_DTLBMR_BASE(0))
+	OR1K_LOAD_SYMBOL_2_GPR(r7, OR1K_SPR_ITLBMR_BASE(0))
+	OR1K_LOAD_SYMBOL_2_GPR(r9,  dtlb_table)
+	OR1K_LOAD_SYMBOL_2_GPR(r11, itlb_table)
 
 	/* Number of TLB sets, here I'm assuming that ITLB_NSET = DTLB_NSET. */
 	l.ori   r15, r0,  1
-	l.mfspr r13, r0,  SPR_DMMUCFGR
-	l.andi  r13, r13, SPR_DMMUCFGR_NTS
-	l.srli  r13, r13, SPR_DMMUCFGR_NTS_OFF
+	l.mfspr r13, r0,  OR1K_SPR_DMMUCFGR
+	l.andi  r13, r13, OR1K_SPR_DMMUCFGR_NTS
+	l.srli  r13, r13, OR1K_SPR_DMMUCFGR_NTS_OFF
 	l.sll   r13, r15, r13
 	
 	/* DTLBTR, Page 0 with Cache Coherency and Supervisor R/W. */
-	l.ori  r15, r0, (SPR_DTLBTR_CC  | SPR_DTLBTR_CI | SPR_DTLBTR_SRE |\
-		SPR_DTLBTR_SWE)
+	l.ori  r15, r0, (OR1K_SPR_DTLBTR_CC  | OR1K_SPR_DTLBTR_CI |\
+		OR1K_SPR_DTLBTR_SRE | OR1K_SPR_DTLBTR_SWE)
 
 	/* ITLBTR, Page 0 with Cache Coherency and Supervisor Execute. */
-	l.ori  r17, r0, (SPR_ITLBTR_CC  | SPR_ITLBTR_CI | SPR_ITLBTR_SXE)
+	l.ori  r17, r0, (OR1K_SPR_ITLBTR_CC  | OR1K_SPR_ITLBTR_CI |\
+		OR1K_SPR_ITLBTR_SXE)
 
 	/* xTLBMR, Page 0, Valid. */
 	l.ori  r19, r0, 1
@@ -166,13 +168,13 @@ start:
 	l.nop
 
 	/* Setup stack. */
-	LOAD_SYMBOL_2_GPR(r1, core0.kstack)
+	OR1K_LOAD_SYMBOL_2_GPR(r1, core0.kstack)
 	l.addi r1, r1,  OR1K_PAGE_SIZE
 	l.addi r1, r1, -DWORD_SIZE  /* Stack pointer. */
 	l.or   r2, r1,  r0          /* Frame pointer. */
 	
 	/* Setup or1k. */
-	LOAD_SYMBOL_2_GPR(r3, or1k_core_setup)
+	OR1K_LOAD_SYMBOL_2_GPR(r3, or1k_core_setup)
 	l.jalr r3
 	l.nop
 	
@@ -194,13 +196,13 @@ start:
  * @brief Flushes the TLB.
  */
 _boot_tlb_flush:
-	LOAD_SYMBOL_2_GPR(r1, SPR_DTLBMR_BASE(0))
-	LOAD_SYMBOL_2_GPR(r3, SPR_ITLBMR_BASE(0))
+	OR1K_LOAD_SYMBOL_2_GPR(r1, OR1K_SPR_DTLBMR_BASE(0))
+	OR1K_LOAD_SYMBOL_2_GPR(r3, OR1K_SPR_ITLBMR_BASE(0))
 	
 	l.ori   r7, r0,  1
-	l.mfspr r5, r0, SPR_DMMUCFGR
-	l.andi  r5, r5, SPR_DMMUCFGR_NTS
-	l.srli  r5, r5, SPR_DMMUCFGR_NTS_OFF
+	l.mfspr r5, r0, OR1K_SPR_DMMUCFGR
+	l.andi  r5, r5, OR1K_SPR_DMMUCFGR_NTS
+	l.srli  r5, r5, OR1K_SPR_DMMUCFGR_NTS_OFF
 	l.sll   r5, r7, r5
 	
 	.loop:
@@ -221,11 +223,11 @@ _boot_tlb_flush:
  *----------------------------------------------------------------------------*/
 
 _enable_mmu:
-	l.mfspr	r1, r0, SPR_SR
-	LOAD_SYMBOL_2_GPR(r3, SPR_SR_DME | SPR_SR_IME)
+	l.mfspr	r1, r0, OR1K_SPR_SR
+	OR1K_LOAD_SYMBOL_2_GPR(r3, OR1K_SPR_SR_DME | OR1K_SPR_SR_IME)
 
 	l.or	r1, r1, r3
-	l.mtspr	r0, r1, SPR_SR
+	l.mtspr	r0, r1, OR1K_SPR_SR
 	
 	l.jr r9
 	l.nop

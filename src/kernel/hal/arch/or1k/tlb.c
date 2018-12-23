@@ -45,11 +45,11 @@ PUBLIC int or1k_tlb_flush(void)
 	unsigned dtlbmr_base;
 	unsigned itlbmr_base;
 
-	nsets = (1 << ((or1k_mfspr(SPR_DMMUCFGR) & SPR_DMMUCFGR_NTS)
-			>> SPR_DMMUCFGR_NTS_OFF));
+	nsets = (1 << ((or1k_mfspr(OR1K_SPR_DMMUCFGR) & OR1K_SPR_DMMUCFGR_NTS)
+			>> OR1K_SPR_DMMUCFGR_NTS_OFF));
 		
-	dtlbmr_base = SPR_DTLBMR_BASE(0);
-	itlbmr_base = SPR_ITLBMR_BASE(0);
+	dtlbmr_base = OR1K_SPR_DTLBMR_BASE(0);
+	itlbmr_base = OR1K_SPR_ITLBMR_BASE(0);
 
 	for (unsigned i = 0; i < nsets; i++)
 	{
