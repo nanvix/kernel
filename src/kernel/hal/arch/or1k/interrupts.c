@@ -23,21 +23,37 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_OR1K_OR1K_H_
-#define ARCH_OR1K_OR1K_H_
+#include <nanvix/const.h>
+#include <nanvix/hal/interrupt.h>
 
+/**
+ * @brief Interrupt handlers.
+ */
+PRIVATE hal_interrupt_handler_t or1k_handlers[OR1K_NUM_HWINT] = 
+	{ NULL, NULL, NULL };
 
-	#ifndef TARGET_OR1K_PC_H_
-	#error "include <target/or1k/pc.h> instead"
-	#endif
+/**
+ * @brief Hardware interrupt dispatcher.
+ *
+ * @param irq Interrupt request.
+ *
+ * @note This function is called from assembly code.
+ */
+PUBLIC void do_hwint(int irq)
+{
+	/* Nothing to do. */
+	if (or1k_handlers[irq] == NULL)
+		return;
 
-	/**
-	 * @defgroup or1k Architecture
-	 * @ingroup or1k-pc
-	 */
-	#include <arch/or1k/core.h>
-	#include <arch/or1k/cpu.h>
-	#include <arch/or1k/int.h>
-	#include <arch/or1k/mem.h>
+	or1k_handlers[irq](irq);
+}
 
-#endif /* ARCH_OR1K_OR1K_H_ */
+/**
+ * The hal_interrupt_set_handler() function sets the function pointed
+ * to by @p handler as the handler for the hardware interrupt whose
+ * number is @p num.
+ */
+PUBLIC void hal_interrupt_set_handler(int num, hal_interrupt_handler_t handler)
+{
+	or1k_handlers[num] = handler;
+}
