@@ -22,28 +22,39 @@
  * SOFTWARE.
  */
 
-#ifndef NANVIX_HAL_H_
-#define NANVIX_HAL_H_
+#include <nanvix/const.h>
+#include <nanvix/klib.h>
 
-	#include <nanvix/const.h>
+#if defined(__i386__)
 
-	/**
-	 * @defgroup kernel-hal HAL
-	 * @ingroup kernel
-	 *
-	 * @brief Hardware Abstraction Layer
-	 */
-	#include <nanvix/hal/clock.h>
-	#include <nanvix/hal/cpu.h>
-	#include <nanvix/hal/core.h>
-	#include <nanvix/hal/debug.h>
-	#include <nanvix/hal/interrupt.h>
-	#include <nanvix/hal/io.h>
-	#include <nanvix/hal/memory.h>
+/**
+ * @brief Divides one number by another.
+ *
+ * @param a First operand.
+ * @param b Second operand.
+ *
+ * @returns The fist operand divided by the second one.
+ */
+PRIVATE unsigned divide(unsigned a, unsigned b)
+{
+	return (a/b);
+}
 
-	/**
-	 * @brief Runs unit tests on the HAL.
-	 */
-	EXTERN void hal_test_driver(void);
+#endif
 
-#endif /* NANVIX_HAL_H_ */
+/**
+ * The hal_test_driver() function runs API, fault injection and
+ * stress tests on the HAL.
+ *
+ * @author Pedro Henrique Penna
+ */
+PUBLIC void hal_test_driver(void)
+{
+	kprintf("[hal] running unit tests");
+
+#if defined(__i386__)
+	kprintf("[test][hal][api] divide by zero [%d]",
+		(divide(16, 0) == (unsigned)-1) ? "passed" : "FAILED"
+	);
+#endif
+}
