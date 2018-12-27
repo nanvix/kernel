@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <arch/i386/context.h>
 #include <arch/i386/excp.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
@@ -33,9 +34,9 @@
  */
 PRIVATE const struct
 {
-	int excpnum;        /**< ID             */
+	int num;            /**< Number.        */
 	const char *errmsg; /**< Error message. */
-} exceptions[I386_NUM_EXCEPTION] = {
+} exceptions[I386_NUM_EXCEPTIONS] = {
 	{ I386_EXCP_DIVIDE,                      "division-by-zero error"        },
 	{ I386_EXCP_DEBUG,                       "debug exception"               },
 	{ I386_EXCP_NMI,                         "non-maskable interrupt"        },
@@ -64,7 +65,7 @@ PRIVATE const struct
  *
  * Lookup table with registered exception handlers.
  */
-PRIVATE void (*i386_excp_handlers[I386_NUM_EXCEPTION])(int) = {
+PRIVATE void (*i386_excp_handlers[I386_NUM_EXCEPTIONS])(const struct exception *, const struct context *) = {
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL
@@ -73,42 +74,52 @@ PRIVATE void (*i386_excp_handlers[I386_NUM_EXCEPTION])(int) = {
 /**
  * @brief Generic exception handler.
  *
- * @param excpnum Exception number.
+ * @param excp Exception information.
+ * @param ctx  Interrupted context.
  */
-PRIVATE void generic_excp_handler(int excpnum)
+PRIVATE void generic_excp_handler(const struct exception *excp, const struct context *ctx)
 {
-	kpanic("%s", exceptions[excpnum].errmsg);
+	/* Dump execution context. */
+	kprintf("[i386] eax=%x ebx=%x ecx=%x edx=%x", ctx->eax, ctx->ebx, ctx->ecx, ctx->edx);
+	kprintf("[i386] esi=%x edi=%x ebp=%x esp=%x", ctx->esi, ctx->edi, ctx->ebp, ctx->useresp);
+	kprintf("[i386]  cs=%x  ds=%x  ss=%x", 0xff & ctx->cs, 0xff & ctx->ds, 0xff & ctx->ss);
+	kprintf("[i386]  es=%x  fs=%x  gs=%x", 0xff & ctx->es, 0xff & ctx->fs, 0xff & ctx->gs);
+	kprintf("[i386] eip=%x eflags=%x", ctx->eip, ctx->eflags);
+
+	/* Dump exception information. */
+	kpanic("%s", exceptions[excp->num].errmsg);
 }
 
 /**
- * @brief Exception dispatcher.
+ * @brief High-level exception dispatcher.
  *
- * @param ctx     Interrupted context.
- * @param excpnum Exception number.
- * @param addr    Exception address.
- * @param errcode Error code
+ * @param excp Exception information.
+ * @param ctx  Interrupted context.
  *
  * @note This function is called from assembly code.
  */
-PUBLIC void do_excp(void *ctx, int excpnum, unsigned addr, int errcode)
+PUBLIC void do_excp(const struct exception *excp, const struct context *ctx)
 {
-	kprintf("%x %x %x %x", ctx, excpnum, addr, errcode);
-
 	/* Nothing to do. */
-	if (i386_excp_handlers[excpnum] == NULL)
-		generic_excp_handler(excpnum);
+	if (i386_excp_handlers[excp->num] == NULL)
+		generic_excp_handler(excp, ctx);
 
-	i386_excp_handlers[excpnum](excpnum);
+	kprintf("forwarding exception");
+
+	i386_excp_handlers[excp->num](excp, ctx);
 }
 
 /**
  * The i386_excp_set_handler() function sets a handler function for
- * the exception @p excpnum.
+ * the exception @p num.
  *
- * @note This function does not check if a handler is already
- * set for the target hardware exception.
+ * @note This function does not check if a handler is already set for
+ * the target hardware exception.
  */
-PUBLIC void i386_excp_set_handler(int excpnum, void (*handler)(int))
+PUBLIC void i386_excp_set_handler(
+	int num,
+	void (*handler)(const struct exception *, const struct context *)
+)
 {
-	i386_excp_handlers[excpnum] = handler;
+	i386_excp_handlers[num] = handler;
 }

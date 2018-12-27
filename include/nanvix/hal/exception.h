@@ -64,39 +64,58 @@
 /**@{*/
 
 	#include <nanvix/hal/target.h>
+	#include <nanvix/hal/context.h>
 	#include <nanvix/const.h>
+
+	/**
+	 * @brief Exception information
+	 */
+	struct exception;
 
 	/**
 	 * @brief Number of exceptions.
 	 */
-	#define HAL_NUM_EXCEPTION _HAL_NUM_EXCEPTION
+	#define HAL_NUM_EXCEPTIONS _HAL_NUM_EXCEPTIONS
 
 	/**
 	 * @brief Exception handler
 	 */
-	typedef void (*hal_exception_handler_t)(int);
+	typedef void (*hal_exception_handler_t)(const struct exception *, const struct context *);
+
+	/**
+	 * @brief Gets the number of an exception.
+	 *
+	 * @param excp Target exception information structure.
+	 *
+	 * @returns The exception number stored in the exception
+	 * information structure pointed to by @p excp.
+	 */
+	EXTERN int hal_excp_get_num(const struct exception *excp);
+
+	/**
+	 * @brief Gets the address of an exception.
+	 *
+	 * The k1b_excp_get_num() function gets the exception address.
+	 * stored in the exception information structure pointed to by @p
+	 * excp.
+	 *
+	 * @param excp Target exception information structure.
+	 *
+	 * @returns The exception address stored in the exception
+	 * information structure pointed to by @p excp.
+	 */
+	EXTERN vaddr_t hal_excp_get_addr(const struct exception *excp);
 
 	/**
 	 * @brief Sets a handler for an exception.
 	 *
 	 * @param excpnum Number of the target exception.
-	 * @param handler Handler.
+	 * @param handler Exception handler.
 	 *
 	 * @note This function does not check if a handler is already
 	 * set for the target hardware exception.
 	 */
 	EXTERN void hal_exception_set_handler(int excpnum, hal_exception_handler_t handler);
-
-	/**
-	 * @brief Registers an exception handler.
-	 *
-	 * @param excpnum Number of the exception.
-	 * @param handler Interrupt handler.
-	 *
-	 * @returns Upon successful completion, zero is returned. Upon
-	 * failure, a negative error code is returned instead.
-	 */
-	EXTERN int hal_exception_register(int excpnum, hal_exception_handler_t handler);
 
 /**@}*/
 

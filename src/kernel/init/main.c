@@ -48,6 +48,7 @@ PRIVATE void init(void)
 
 #endif
 
+
 /**
  * @brief Initializes the kernel.
  */
@@ -81,6 +82,10 @@ PUBLIC void kmain(int argc, const char *argv[])
 
 	kprintf("enabling hardware interrupts");
 	hal_enable_interrupts();
+
+#ifndef NDEBUG
+	hal_test_driver();
+#endif
 
 #if defined(__mppa256__)
 	init();
