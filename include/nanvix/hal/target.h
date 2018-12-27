@@ -129,12 +129,38 @@
  * Exception Interface                                                        *
  *============================================================================*/
 
-	#ifndef _HAL_NUM_EXCEPTION
-	#error "_HAL_NUM_EXCEPTION not defined"
+	#ifndef _HAL_NUM_EXCEPTIONS
+	#error "_HAL_NUM_EXCEPTIONS not defined"
+	#endif
+
+	#ifndef EXCP_INVALID_OPCODE
+	#error "EXCP_INVALID_OPCODE not defined"
+	#endif
+
+	#ifndef EXCP_PAGE_FAULT
+	#error "EXCP_PAGE_FAULT not defined"
+	#endif
+
+	#ifndef EXCP_PAGE_PROTECTION
+	#error "EXCP_PAGE_PROTECTION not defined"
+	#endif
+
+	#ifdef HAL_TLB_SOFTWARE
+		#ifndef EXCP_TLB_FAULT
+		#error "EXCP_TLB_FAULT not defined"
+		#endif
+	#endif
+
+	#ifndef EXCP_GENERAL_PROTECTION
+	#error "EXCP_GENERAL_PROTECTION not defined"
 	#endif
 
 	#ifndef __hal_exception_set_handler
 	#error "hal_exception_set_handler() not defined?"
+	#endif
+
+	#ifndef __exception_struct
+	#error "struct exception not defined?"
 	#endif
 
 /*============================================================================*
