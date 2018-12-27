@@ -89,7 +89,7 @@
 	/**
 	 * @brief Number of exceptions in the Kalray MPPA-256 target.
 	 */
-	#define _HAL_NUM_EXCEPTION K1B_NUM_EXCEPTION
+	#define _HAL_NUM_EXCEPTIONS K1B_NUM_EXCEPTIONS
 
 
 /*============================================================================*

@@ -24,6 +24,8 @@
 
 #include <arch/k1b/excp.h>
 #include <arch/k1b/cache.h>
+#include <arch/k1b/mmu.h>
+#include <arch/k1b/tlb.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
 
@@ -36,7 +38,7 @@ PRIVATE const struct
 {
 	int code;           /**< Code.          */
 	const char *errmsg; /**< Error message. */
-} exceptions[K1B_NUM_EXCEPTION] = {
+} exceptions[K1B_NUM_EXCEPTIONS] = {
 	{ K1B_EXCP_RESET,           "reset exception"                              },
 	{ K1B_EXCP_OPCODE,          "bad instruction bundle"                       },
 	{ K1B_EXCP_PROTECTION,      "protection fault"                             },
@@ -60,7 +62,7 @@ PRIVATE const struct
  *
  * Lookup table with registered exception handlers.
  */
-PRIVATE void (*k1b_excp_handlers[K1B_NUM_EXCEPTION])(int) = {
+PRIVATE void (*k1b_excp_handlers[K1B_NUM_EXCEPTIONS])(const struct exception *, const struct context *) = {
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
@@ -68,21 +70,42 @@ PRIVATE void (*k1b_excp_handlers[K1B_NUM_EXCEPTION])(int) = {
 };
 
 /**
- * The do_excp() functin dispatches an exception to the registered
- * exception handler.
+ * @brief Handles an unhandled exception.
+ *
+ * @brief excp Exception information.
+ * @brief ctx  Saved execution context.
+ *
+ * The do_excp_bad() function handles the unhandled exception. It
+ * dumps as much information as possible about the state of the
+ * underlying core and then it panics the kernel.
+ *
+ * @author Pedro Henrique Penna
  */
-PUBLIC void do_excp(int excpnum)
+PRIVATE void do_excp_bad(const struct exception *excp, const struct context *ctx)
+{
+	UNUSED(ctx);
+
+	kpanic("unhandled %s exception at %x\n", exceptions[excp->num].errmsg, excp->ea);
+}
+
+/**
+ * The do_excp() function dispatches an exception to the registered
+ * exception handler.
+ *
+ * @author Pedro Henrique Penna
+ */
+PUBLIC void do_excp(const struct exception *excp, const struct context *ctx)
 {
 	/* Unknown exception. */
-	if ((excpnum < 0) || excpnum >= K1B_NUM_EXCEPTION)
-		kpanic("unknown exception %x\n", excpnum);
+	if (excp->num >= K1B_NUM_EXCEPTIONS)
+		kpanic("unknown exception %x\n", excp->num);
 
 	/* Unhandled exception. */
-	if (k1b_excp_handlers[excpnum] == NULL)
-		kpanic("unhandled exception %s\n", exceptions[excpnum].errmsg);
+	if (k1b_excp_handlers[excp->num] == NULL)
+		do_excp_bad(excp, ctx);
 
 	kprintf("forwarding exception");
-	k1b_excp_handlers[excpnum](excpnum);
+	k1b_excp_handlers[excp->num](excp, ctx);
 }
 
 /**
@@ -91,8 +114,13 @@ PUBLIC void do_excp(int excpnum)
  *
  * @note This function does not check if a handler is already
  * set for the target hardware exception.
+ *
+ * @author Pedro Henrique Penna
  */
-PUBLIC void k1b_excp_set_handler(int excpnum, void (*handler)(int))
+PUBLIC void k1b_excp_set_handler(
+	int excpnum,
+	void (*handler)(const struct exception *, const struct context *)
+)
 {
 	k1b_excp_handlers[excpnum] = handler;
 	k1b_dcache_inval();

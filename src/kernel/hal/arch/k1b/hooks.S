@@ -26,6 +26,7 @@
 #define _ASM_FILE_
 
 #include <arch/k1b/context.h>
+#include <arch/k1b/excp.h>
 #include <mOS_common_types_s_c.h>
 
 /**
@@ -37,8 +38,9 @@
  * @name Aliases for Registers
  */
 /**@{*/
-#define bp r10 /**< Base pointer. */
-#define sp r12 /**< Stack pointer */
+#define sp r12 /**< Stack Pointer Pointer              */
+#define bp r13 /**< Stack Base Pointer Register        */
+#define pi pcr /**< Processing Identification Register */
 /**@}*/
 
 .global _syscall
@@ -46,12 +48,20 @@
 
 .section .text
 
+/*============================================================================*
+ * k1b_redzone_alloc()                                                        *
+ *============================================================================*/
+
 /*
  * Allocates the red zone in the current stack frame.
  */
 .macro redzone_alloc
 	add $sp = $sp, -REDZONE_SIZE
 .endm
+
+/*============================================================================*
+ * k1b_redzone_free()                                                         *
+ *============================================================================*/
 
 /*
  * Frees the red zone in the current stack frame.
@@ -284,6 +294,7 @@
  */
 .align 8
 _syscall:
+
 	/* Save system call context. */
 	add $sp = $sp, -8
 	;;
@@ -324,33 +335,141 @@ _syscall:
  * _do_excp()                                                                *
  *===========================================================================*/
 
+.macro _do_prologue
+
+	/* Allocate a new stack frame. */
+	add $sp, $sp, -16
+	;;
+
+	/* Save scratch registers (r0 and r1). */
+	sd 8[$sp] = $p0
+	;;
+
+	/* Save return address and stack base pointer. */
+	get $r0 = $ra
+	;;
+	copy $r1 = $bp
+	;;
+	sd 0[$sp] = $p0
+	;;
+
+	/* Update stack base pointer. */
+	copy $bp = $sp
+	;;
+
+.endm
+
+.macro _do_epilogue
+
+	/* Save scratch registers (r0 and r1). */
+	sd 8[$sp] = $p0
+	;;
+
+	/* Save return address and stack base pointer. */
+	get $r0 = $ra
+	;;
+	copy $r1 = $bp
+	;;
+	sd 0[$sp] = $p0
+	;;
+
+	/* Update stack base pointer. */
+	copy $bp = $sp
+	;;
+
+
+	/* Free stack frame. */
+	add $sp, $sp, 16
+	;;
+.endm
+
 /*
- * System call hook.
+ * Gets the scoreboard of the underlying core.
+ */
+.macro _scoreboard_get s0 s1
+	/* Get core ID. */
+	get   \s1, $pi
+	;;
+	extfz \s1, \s1, 15, 11
+	;;
+
+	/* Get pointer to scoreboard. */
+	make \s0 = _scoreboard_start
+	;;
+	sll  \s1, \s1, MOS_SCOREBOARD_PER_CPU_ELEMENT_SHIFT
+	;;
+	add  \s0, \s0, \s1
+	;;
+.endm
+
+/*
+ * Exception hook.
  */
 .align 8
 _do_excp:
-	/* Save exception context. */
-	add $sp = $sp, -8
-	;;
-	get $r8 = $ra
-	;;
-	copy $bp = $r7
-	;;
-	sw 0 [$sp] = $bp
-	;;
-	sw 4 [$sp] = $r8
-	;;
+
+	_do_prologue
 
 	/*
-	 * Get exception code.
+	 * Save execution context
+	 * in the current stack.
 	 */
-	get $r1 = $ps
+	add $sp, $sp, -K1B_CONTEXT_SIZE
 	;;
-	srl $r0 = $r1, 28
+	k1b_context_save $sp
+	;;
+	ld  $p2 = 8[$bp]            /* r0 + r1 */
+	;;
+	sd  K1B_CONTEXT_R0[$sp], $p0
+	;;
+	ld  $p2 = 0[$bp]            /* ra + bp */
+	;;
+	sw  K1B_CONTEXT_RA[$sp], $r2
+	;;
+	sw  K1B_CONTEXT_R13[$sp], $r3
 	;;
 
 	/*
-	 * Invoke exception dispatcher.
+	 * Save a reference to execution context
+	 * into r1. The high-level exception handler
+	 * dispatcher will need it.
+	 */
+	copy $r1 = $sp
+	;;
+
+	_scoreboard_get $r2 $r3
+
+	/*
+	 * Save exception information
+	 * in the current stack.
+	 */
+	add  $sp, $sp, -K1B_EXCEPTION_SIZE
+	;;
+	lw  $r5 = MOS_VC_REG_PS[$r2]
+	;;
+	srl $r4 = $r5, 28                 /* Exception code. */
+	;;
+	sw  K1B_EXCEPTION_NUM[$sp], $r4
+	;;
+	lw  $r4 = MOS_VC_REG_EA[$r2]      /* Exception address. */
+	;;
+	sw K1B_EXCEPTION_EA[$sp], $r4
+	;;
+	lw  $r4 = MOS_VC_REG_SPC[$r2]     /* Instruction address. */
+	;;
+	sw K1B_EXCEPTION_SPC[$sp], $r4
+	;;
+
+	/*
+	 * Save a reference to exception information
+	 * into r0. The high-level exception handler
+	 * dispatcher will need it.
+	 */
+	copy $r0 = $sp
+	;;
+
+	/*
+	 * Call exception dispatcher.
 	 */
 	redzone_alloc
 	;;
@@ -359,15 +478,26 @@ _do_excp:
 	redzone_free
 	;;
 
+	/*
+	 * Wipe out exception information
+	 * from current stack.
+	 */
+	add $sp, $sp, K1B_EXCEPTION_SIZE
+	;;
+
+	/*
+	 * Restore saved execution context.
+	 */
+	k1b_context_restore $sp
+	;;
+	add $sp, $sp, K1B_CONTEXT_SIZE
+	;;
+
+	/* Wipe out prologue. */
+	add $sp, $sp, 16
+	;;
+
 	/* Restore exception context. */
-	lw $r8 = 4 [$sp]
-	;;
-	lw $bp = 0 [$sp]
-	;;
-	add $sp = $sp, 8
-	;;
-	set $ra = $r8
-	;;
 	scall MOS_VC_RFE
 	;;
 	ret
