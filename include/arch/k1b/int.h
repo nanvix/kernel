@@ -53,10 +53,8 @@
 	 *
 	 * @param hwintid ID of the hardware interrupt that was triggered.
 	 * @param ctx     Interrupted context.
-	 *
-	 * @note This function is called from mOS.
 	 */
-	EXTERN void k1b_do_hwint(k1b_hwint_id_t hwintid, struct k1b_context *ctx);
+	EXTERN void k1b_do_hwint(k1b_hwint_id_t hwintid, struct context *ctx);
 
 	/**
 	 * @brief Enables interrupts.

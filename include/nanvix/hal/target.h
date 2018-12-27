@@ -93,6 +93,10 @@
 	#error "_HAL_INT_NR not defined"
 	#endif
 
+	#ifndef __context_struct
+	#error "struct context not defined?"
+	#endif
+
 	#ifndef __hal_disable_interrupts
 	#error "hal_disable_interrupts() not defined?"
 	#endif

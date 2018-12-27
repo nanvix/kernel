@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,41 +22,12 @@
  * SOFTWARE.
  */
 
-#include <nanvix/const.h>
-#include <nanvix/hal/interrupt.h>
+#ifndef NANVIX_HAL_CONTEXT_H_
+#define NANVIX_HAL_CONTEXT_H_
 
-/**
- * @brief Interrupt handlers.
- */
-PRIVATE hal_interrupt_handler_t i386_handlers[I386_NUM_HWINT] = {
-	NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL
-};
+	/**
+	 * @brief Execution context.
+	 */
+	struct context;
 
-/**
- * @brief Hardware interrupt dispatcher.
- *
- * @param irq Interrupt request.
- *
- * @note This function is called from assembly code.
- */
-PUBLIC void do_hwint(int irq)
-{
-	/* Nothing to do. */
-	if (i386_handlers[irq] == NULL)
-		return;
-
-	i386_handlers[irq](irq);
-}
-
-/**
- * The hal_interrupt_set_handler() function sets the function pointed
- * to by @p handler as the handler for the hardware interrupt whose
- * number is @p num.
- */
-PUBLIC void hal_interrupt_set_handler(int num, hal_interrupt_handler_t handler)
-{
-	i386_handlers[num] = handler;
-}
+#endif /* NANVIX_HAL_CONTEXT_H_ */

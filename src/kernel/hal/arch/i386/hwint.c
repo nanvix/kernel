@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,20 +22,15 @@
  * SOFTWARE.
  */
 
-#include <arch/k1b/cache.h>
-#include <arch/k1b/context.h>
-#include <arch/k1b/int.h>
-#include <arch/k1b/ivt.h>
+#include <arch/i386/context.h>
+#include <arch/i386/int.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
-#include <errno.h>
 
 /**
  * @brief Interrupt handlers.
  */
-PRIVATE void (*k1b_handlers[K1B_NUM_HWINT])(int) = {
-	NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL,
+PRIVATE void (*i386_handlers[I386_NUM_HWINT])(int) = {
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
@@ -43,42 +38,35 @@ PRIVATE void (*k1b_handlers[K1B_NUM_HWINT])(int) = {
 };
 
 /**
- * The k1b_do_hwint() function dispatches a hardware interrupt that
- * was triggered to a specific hardware interrupt handler. The ID of
- * hardware interrupt is used to index the table of hardware interrupt
- * handlers, and the context and the interrupted context pointed to by
- * ctx is currently unsed.
+ * @brief High-level hardware interrupt dispatcher.
+ *
+ * The do_hwint() function dispatches a hardware interrupt request
+ * that was triggered to a previously-registered handler. If no
+ * function was previously registered to handle the triggered hardware
+ * interrupt request, this function returns immediately.
+ *
+ * @param num Interrupt request.
+ * @param ctx Interrupted execution context.
+ *
+ * @note This function is called from assembly code.
  */
-PUBLIC void k1b_do_hwint(k1b_hwint_id_t hwintid, struct context *ctx)
+PUBLIC void i386_do_hwint(int num, const struct context *ctx)
 {
-	int num = 0;
-
 	UNUSED(ctx);
+	
+	/* Nothing to do. */
+	if (i386_handlers[num] == NULL)
+		return;
 
-	/* Get interrupt number. */
-	for (int i = 0; i < K1B_NUM_HWINT; i++)
-	{
-		if (hwints[i] == hwintid)
-		{
-			num = i;
-			goto found;
-		}
-	}
-
-	return;
-
-found:
-
-	k1b_handlers[num](num);
+	i386_handlers[num](num);
 }
 
 /**
- * The k1b_hwint_handler_set() function sets the function pointed to
+ * The i386_hwint_handler_set() function sets the function pointed to
  * by @p handler as the handler for the hardware interrupt whose
  * number is @p num.
  */
-PUBLIC void k1b_hwint_handler_set(int num, void (*handler)(int))
+PUBLIC void i386_hwint_handler_set(int num, void (*handler)(int))
 {
-	k1b_handlers[num] = handler;
-	k1b_dcache_inval();
+	i386_handlers[num] = handler;
 }
