@@ -22,13 +22,15 @@
  * SOFTWARE.
  */
 
+#include <arch/i386/context.h>
+#include <arch/i386/int.h>
 #include <nanvix/const.h>
-#include <nanvix/hal/interrupt.h>
+#include <nanvix/klib.h>
 
 /**
  * @brief Interrupt handlers.
  */
-PRIVATE hal_interrupt_handler_t i386_handlers[I386_NUM_HWINT] = {
+PRIVATE void (*i386_handlers[I386_NUM_HWINT])(int) = {
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
@@ -36,27 +38,35 @@ PRIVATE hal_interrupt_handler_t i386_handlers[I386_NUM_HWINT] = {
 };
 
 /**
- * @brief Hardware interrupt dispatcher.
+ * @brief High-level hardware interrupt dispatcher.
  *
- * @param irq Interrupt request.
+ * The do_hwint() function dispatches a hardware interrupt request
+ * that was triggered to a previously-registered handler. If no
+ * function was previously registered to handle the triggered hardware
+ * interrupt request, this function returns immediately.
+ *
+ * @param num Interrupt request.
+ * @param ctx Interrupted execution context.
  *
  * @note This function is called from assembly code.
  */
-PUBLIC void do_hwint(int irq)
+PUBLIC void i386_do_hwint(int num, const struct context *ctx)
 {
+	UNUSED(ctx);
+	
 	/* Nothing to do. */
-	if (i386_handlers[irq] == NULL)
+	if (i386_handlers[num] == NULL)
 		return;
 
-	i386_handlers[irq](irq);
+	i386_handlers[num](num);
 }
 
 /**
- * The hal_interrupt_set_handler() function sets the function pointed
- * to by @p handler as the handler for the hardware interrupt whose
+ * The i386_hwint_handler_set() function sets the function pointed to
+ * by @p handler as the handler for the hardware interrupt whose
  * number is @p num.
  */
-PUBLIC void hal_interrupt_set_handler(int num, hal_interrupt_handler_t handler)
+PUBLIC void i386_hwint_handler_set(int num, void (*handler)(int))
 {
 	i386_handlers[num] = handler;
 }

@@ -36,6 +36,7 @@
 	 */
 	#include <arch/i386/8253.h>
 	#include <arch/i386/8259.h>
+	#include <arch/i386/context.h>
 	#include <arch/i386/core.h>
 	#include <arch/i386/cpu.h>
 	#include <arch/i386/excp.h>

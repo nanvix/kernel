@@ -32,39 +32,76 @@
  * @brief Execution Context
  */
 
+/**
+ * @cond i386
+ */
+
+	/**
+	 * @name Procided Interface
+	 */
+	/**@{*/
+	#define __context_struct /**< Exection Context Structure */
+	/**@}*/
+
+/**@endcund*/
+
+	/**
+	 * @brief Hardware-saved execution context size (in bytes).
+	 */
+	#define I386_CONTEXT_HW_SIZE 20
+
+	/**
+	 * @brief Software-saved execution context size (in bytes).
+	 */
+	#define I386_CONTEXT_SW_SIZE 44
+
+	/**
+	 * @brief Execution context size (in bytes).
+	 */
+	#define I386_CONTEXT_SIZE (I386_CONTEXT_HW_SIZE + I386_CONTEXT_SW_SIZE)
+
 	/**
 	 * @name Offsets to the Context Structure
 	 */
 	/**@{*/
-	#define GS       4
-	#define FS       8
-	#define ES      12
-	#define DS      16
-	#define EDI     20
-	#define ESI     24
-	#define EBP     28
-	#define EBX     32
-	#define EDX     36
-	#define ECX     40
-	#define EAX     44
-	#define EIP     48
-	#define CS      52
-	#define EFLAGS  56
-	#define USERESP 60
-	#define SS      64
+	#define I386_CONTEXT_GS       0 /**< Extra Data Segment #3 Register        */
+	#define I386_CONTEXT_FS       4 /**< Extra Data Segment #2 Register        */
+	#define I386_CONTEXT_ES       8 /**< Extra Data Segment #1 Register        */
+	#define I386_CONTEXT_DS      12 /**< Data Segment Register                 */
+	#define I386_CONTEXT_EDI     16 /**< Extended Destination Index Register   */
+	#define I386_CONTEXT_ESI     20 /**< Extended Source Index Register        */
+	#define I386_CONTEXT_EBP     24 /**< Extended Stack base Pointer Register  */
+	#define I386_CONTEXT_EDX     28 /**< Extended Accumulator #2 Register      */
+	#define I386_CONTEXT_ECX     32 /**< Extended Counter Register             */
+	#define I386_CONTEXT_EBX     36 /**< Extended Base Index Register          */
+	#define I386_CONTEXT_EAX     40 /**< Exntended Accumulator #1 Register     */
+	#define I386_CONTEXT_EIP     44 /**< Extended Instruction Pointer Register */
+	#define I386_CONTEXT_CS      48 /**< Code Segment Register                 */
+	#define I386_CONTEXT_EFLAGS  52 /**< Exended Flags Register                */
+	#define I386_CONTEXT_ESP     56 /**< Extended Stack Pointer Register       */
+	#define I386_CONTEXT_SS      60 /**< Stack Segment Register                */
 	/**@}*/
+
+#ifndef _ASM_FILE_
 
 	#include <arch/i386/core.h>
 
+/**
+ * @cond i386
+ */
+
 	/**
-	 * @brief Saved context during interrupt/exception switch.
+	 * Saved execution context upon interrupts and exceptions.
 	 */
 	struct context
-	{   
-		dword_t old_kesp;
-        dword_t gs, fs, es, ds;
-        dword_t edi, esi, ebp, ebx, edx, ecx, eax;
-        dword_t eip, cs, eflags, useresp, ss;	
-	};
+	{
+        dword_t gs, fs, es, ds;                    /**< Segment Registers         */
+        dword_t edi, esi, ebp, edx, ecx, ebx, eax; /**< General Purpose Registers */
+        dword_t eip, cs, eflags, useresp, ss;      /**< Special Registers         */
+	} __attribute__((packed));
 
-#endif /* ARCH_I386_H_ */
+/**@endcond*/
+
+#endif /* _ASM_FILE_ */
+
+#endif /* ARCH_I386_CONTEXT_H_ */

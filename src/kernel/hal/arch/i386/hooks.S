@@ -27,6 +27,7 @@
 
 #include <arch/i386/8259.h>
 #include <arch/i386/gdt.h>
+#include <arch/i386/context.h>
 
 /* Exported symbols. */
 .globl excp0
@@ -52,82 +53,95 @@
 .globl excp20
 .globl excp30
 .globl syscall
-.globl hwint0
-.globl hwint1
-.globl hwint2
-.globl hwint3
-.globl hwint4
-.globl hwint5
-.globl hwint6
-.globl hwint7
-.globl hwint8
-.globl hwint9
-.globl hwint10
-.globl hwint11
-.globl hwint12
-.globl hwint13
-.globl hwint14
-.globl hwint15
+.globl _do_hwint0
+.globl _do_hwint1
+.globl _do_hwint2
+.globl _do_hwint3
+.globl _do_hwint4
+.globl _do_hwint5
+.globl _do_hwint6
+.globl _do_hwint7
+.globl _do_hwint8
+.globl _do_hwint9
+.globl _do_hwint10
+.globl _do_hwint11
+.globl _do_hwint12
+.globl _do_hwint13
+.globl _do_hwint14
+.globl _do_hwint15
 
 /*============================================================================*
- * context_save()                                                             *
+ * i386_context_save()                                                        *
  *============================================================================*/
 
-/**
- * The context_save() function saves the content of general purpose
- * and segment registers in the stack of the caller.
+/*
+ * The i386_context_save() macro saves the content of general purpose
+ * and segment registers in the stack of the caller. A pointer to the
+ * saved execution context is saved into ret.
  *
- * @note It is up to the caller to save the content of stack, flags
- * and program counter registers, as well as switching the current stack
- * to elsewhere.
+ * Note that the extended instruction pointer register (eip), code
+ * segment register (cs), extended flags register (eflags), extended
+ * stack pointer register (esp) and stack segment register (ss) are
+ * not saved by this macro, because they are automatically saved by
+ * the hardware upon an exception/interrupt.
  */
-.macro context_save
+.macro i386_context_save, ret
 
-	/* General purpose registers. */
-	pushl %eax
-	pushl %ebx
-	pushl %ecx
-	pushl %edx
-	pushl %ebp
-	pushl %esi
-	pushl %edi
-	
-	/* Segment registers. */
-	pushl %ds
-	pushl %es
-	pushl %fs
-	pushl %gs
+	subl $I386_CONTEXT_SW_SIZE, %esp
+
+	/* Save general purpose registers. */
+	movl %eax, I386_CONTEXT_EAX(%esp)
+	movl %ebx, I386_CONTEXT_EBX(%esp)
+	movl %ecx, I386_CONTEXT_ECX(%esp)
+	movl %edx, I386_CONTEXT_EDX(%esp)
+	movl %ebp, I386_CONTEXT_EBP(%esp)
+	movl %esi, I386_CONTEXT_ESI(%esp)
+	movl %edi, I386_CONTEXT_EDI(%esp)
+
+	/* Save segment registers. */
+	movw %ds, I386_CONTEXT_DS(%esp)
+	movw %es, I386_CONTEXT_ES(%esp)
+	movw %fs, I386_CONTEXT_FS(%esp)
+	movw %gs, I386_CONTEXT_GS(%esp)
+
+	movl %esp, \ret
+
 .endm
 
 /*============================================================================*
- * context_restore()                                                          *
+ * i386_context_restore()                                                     *
  *============================================================================*/
 
 /**
- * The context_restore() function restores the content of general
+ * The i386_context_restore() function restores the content of general
  * purpose and segment registers from the stack of the caller.
  *
  * @note It is up to the caller to switch the current stack to the
  * target one.
  */
-context_restore:
+.macro i386_context_restore
 
-	/* Segment registers. */
-	popl %gs
-	popl %fs
-	popl %es
-	popl %ds
+	/* Restore general purpose registers. */
+	movl I386_CONTEXT_EAX(%esp), %eax
+	movl I386_CONTEXT_EBX(%esp), %ebx
+	movl I386_CONTEXT_ECX(%esp), %ecx
+	movl I386_CONTEXT_EDX(%esp), %edx
+	movl I386_CONTEXT_EBP(%esp), %ebp
+	movl I386_CONTEXT_ESI(%esp), %esi
+	movl I386_CONTEXT_EDI(%esp), %edi
 
-	/* General purpose registers. */
-	popl %edi
-	popl %esi
-	popl %ebp
-	popl %edx
-	popl %ecx
-	popl %ebx
-	popl %eax
+	/* Restore segment registers. */
+	movw I386_CONTEXT_DS(%esp), %ds
+	movw I386_CONTEXT_ES(%esp), %es
+	movw I386_CONTEXT_FS(%esp), %fs
+	movw I386_CONTEXT_GS(%esp), %gs
 
+	addl $I386_CONTEXT_SW_SIZE, %esp
+
+	/* Restore special registers. */
 	iret
+
+.endm
 
 /*============================================================================*
  * excp()                                                                     *
@@ -229,7 +243,7 @@ _excp:
 	call do_excp
 	add $16, %esp
 
-    jmp context_restore
+    i386_context_restore
 
 /*============================================================================*
  * syscall()                                                                  *
@@ -242,52 +256,76 @@ syscall:
 	iret
 
 /*============================================================================*
- * hwint()                                                                    *
+ * i386_pic_master_ack()                                                      *
  *============================================================================*/
 
 /*
- * Master hardware interrupt.
+ * Acknowledges an interrupt to the master PIC.
  */
-.macro hwint_master, num
-	hwint\()\num:
-		context_save
-		movb $0x20, %al
-		outb %al, $PIC_CTRL_MASTER /* Send reset signal to master. */
+.macro i386_pic_master_ack
+	movb $0x20, %al
+	outb %al, $PIC_CTRL_MASTER
+.endm
+
+/*============================================================================*
+ * i386_pic_slave_ack()                                                       *
+ *============================================================================*/
+
+/*
+ * Acknowledges an interrupt to the slave PIC.
+ */
+.macro i386_pic_slave_ack
+	movb $0x20, %al
+	outb %al, $PIC_CTRL_MASTER
+	outb %al, $PIC_CTRL_SLAVE
+.endm
+
+/*============================================================================*
+ * _do_hwint()                                                                *
+ *============================================================================*/
+
+/*
+ * Low-level hardware interrupt dispatcher.
+ */
+.macro _do_hwint_master, num
+	_do_hwint\()\num:
+		i386_context_save %ebx
+		i386_pic_master_ack
+		pushl %ebx
 		pushl $(\num)
-		call do_hwint
-		addl $4, %esp
-		jmp context_restore
+		call i386_do_hwint
+		addl $8, %esp
+		i386_context_restore
 .endm
 
 /*
- * Slave hardware interrupt.
+ * Low-level hardware interrupt dispatcher.
  */
-.macro hwint_slave, num
-	hwint\()\num:
-		context_save
-		movb $0x20, %al
-		outb %al, $PIC_CTRL_MASTER /* Send reset signal to master. */
-		outb %al, $PIC_CTRL_SLAVE  /* Send reset signal to slave.  */
+.macro _do_hwint_slave, num
+	_do_hwint\()\num:
+		i386_context_save %ebx
+		i386_pic_slave_ack
+		pushl %ebx
 		pushl $(\num)
-		call do_hwint
-		addl $4, %esp
-		jmp context_restore
+		call i386_do_hwint
+		addl $8, %esp
+		i386_context_restore
 .endm
 
 /* Hardware interrupt hooks. */
-hwint_master 0
-hwint_master 1
-hwint_master 2
-hwint_master 3
-hwint_master 4
-hwint_master 5
-hwint_master 6
-hwint_master 7
-hwint_slave  8
-hwint_slave  9
-hwint_slave 10
-hwint_slave 11
-hwint_slave 12
-hwint_slave 13
-hwint_slave 14
-hwint_slave 15
+_do_hwint_master  0
+_do_hwint_master  1
+_do_hwint_master  2
+_do_hwint_master  3
+_do_hwint_master  4
+_do_hwint_master  5
+_do_hwint_master  6
+_do_hwint_master  7
+_do_hwint_slave   8
+_do_hwint_slave   9
+_do_hwint_slave  10
+_do_hwint_slave  11
+_do_hwint_slave  12
+_do_hwint_slave  13
+_do_hwint_slave  14
+_do_hwint_slave  15

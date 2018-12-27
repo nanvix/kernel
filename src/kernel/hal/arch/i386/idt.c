@@ -104,22 +104,22 @@ PUBLIC void idt_setup(void)
 	set_idte(31, (unsigned)excp15, KERNEL_CS, 0x8, IDT_INT32);
 	 
 	/* Set hardware interrupts. */
-	set_idte(32, (unsigned)hwint0, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(33, (unsigned)hwint1, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(34, (unsigned)hwint2, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(35, (unsigned)hwint3, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(36, (unsigned)hwint4, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(37, (unsigned)hwint5, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(38, (unsigned)hwint6, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(39, (unsigned)hwint7, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(40, (unsigned)hwint8, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(41, (unsigned)hwint9, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(42, (unsigned)hwint10, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(43, (unsigned)hwint11, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(44, (unsigned)hwint12, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(45, (unsigned)hwint13, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(46, (unsigned)hwint14, KERNEL_CS, 0x8, IDT_INT32);
-	set_idte(47, (unsigned)hwint15, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(32, (unsigned)_do_hwint0, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(33, (unsigned)_do_hwint1, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(34, (unsigned)_do_hwint2, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(35, (unsigned)_do_hwint3, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(36, (unsigned)_do_hwint4, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(37, (unsigned)_do_hwint5, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(38, (unsigned)_do_hwint6, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(39, (unsigned)_do_hwint7, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(40, (unsigned)_do_hwint8, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(41, (unsigned)_do_hwint9, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(42, (unsigned)_do_hwint10, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(43, (unsigned)_do_hwint11, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(44, (unsigned)_do_hwint12, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(45, (unsigned)_do_hwint13, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(46, (unsigned)_do_hwint14, KERNEL_CS, 0x8, IDT_INT32);
+	set_idte(47, (unsigned)_do_hwint15, KERNEL_CS, 0x8, IDT_INT32);
 	 
 	/* Set system call interrupt. */
 	set_idte(128, (unsigned)syscall, KERNEL_CS, 0xe, IDT_INT32);
