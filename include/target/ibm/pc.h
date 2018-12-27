@@ -76,7 +76,7 @@
 	/**
 	 * @brief Number of exceptions in the IBM PC target.
 	 */
-	#define _HAL_NUM_EXCEPTION I386_NUM_EXCEPTION
+	#define _HAL_NUM_EXCEPTIONS I386_NUM_EXCEPTIONS
 
 /*============================================================================*
  * Memory Interface                                                           *

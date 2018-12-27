@@ -26,32 +26,34 @@
 #define _ASM_FILE_
 
 #include <arch/i386/8259.h>
-#include <arch/i386/gdt.h>
 #include <arch/i386/context.h>
+#include <arch/i386/core.h>
+#include <arch/i386/excp.h>
+#include <arch/i386/gdt.h>
 
 /* Exported symbols. */
-.globl excp0
-.globl excp1
-.globl excp2
-.globl excp3
-.globl excp4
-.globl excp5
-.globl excp6
-.globl excp7
-.globl excp8
-.globl excp9
-.globl excp10
-.globl excp11
-.globl excp12
-.globl excp13
-.globl excp14
-.globl excp15
-.globl excp16
-.globl excp17
-.globl excp18
-.globl excp19
-.globl excp20
-.globl excp30
+.globl _do_excp0
+.globl _do_excp1
+.globl _do_excp2
+.globl _do_excp3
+.globl _do_excp4
+.globl _do_excp5
+.globl _do_excp6
+.globl _do_excp7
+.globl _do_excp8
+.globl _do_excp9
+.globl _do_excp10
+.globl _do_excp11
+.globl _do_excp12
+.globl _do_excp13
+.globl _do_excp14
+.globl _do_excp15
+.globl _do_excp16
+.globl _do_excp17
+.globl _do_excp18
+.globl _do_excp19
+.globl _do_excp20
+.globl _do_excp30
 .globl syscall
 .globl _do_hwint0
 .globl _do_hwint1
@@ -144,104 +146,94 @@
 .endm
 
 /*============================================================================*
- * excp()                                                                     *
+ * _do_excp()                                                                 *
  *============================================================================*/
+
+/*
+ * Offset to exception structure.
+ */
+#define I386_EXCEPTION_SKIP -I386_CONTEXT_SW_SIZE - I386_EXCEPTION_SIZE + I386_EXCEPTION_ERR
 
 /*
  * Exception without error code.
  */
-.macro excp_noerr_code, number
-	excp\()\number:
-		pushl %eax
-		movl $0, %eax
-		pushl %ebx
-		xchg %ebx, 8(%esp)
-		pushl %ecx
-		movl $(\number), %ecx
-		jmp _excp
+.macro _do_excp_noerr_code, number
+	_do_excp\()\number:
+		i386_context_save %eax
+		movl $(\number), %ebx
+		movl $0, %ecx
+		jmp _do_excp
 .endm
 
 /*
  * Exception with error code.
  */
-.macro excp_err_code, number
-	excp\()\number:
+.macro _do_excp_err_code, number
+	_do_excp\()\number:
 		xchg %eax, (%esp)
-		pushl %ebx
-		xchg %ebx, 8(%esp)
-		pushl %ecx
-		movl $(\number), %ecx
-		jmp _excp
+		xchg %eax, I386_EXCEPTION_SKIP(%esp)
+		xchg %eax, (%esp)
+		i386_context_save %eax
+		movl $(\number), %ebx
+		movl $0, %ecx
+		jmp _do_excp
 .endm
 
 /*
  * Exception with error code.
  */
-.macro excp_err2_code, number
-	excp\()\number:
+.macro _do_excp_err2_code, number
+	_do_excp\()\number:
 		xchg %eax, (%esp)
-		pushl %ebx
-		movl %cr2, %ebx
-		pushl %ecx
-		movl $(\number), %ecx
-		jmp _excp
+		xchg %eax, I386_EXCEPTION_SKIP(%esp)
+		xchg %eax, (%esp)
+		i386_context_save %eax
+		movl $(\number), %ebx
+		movl %cr2, %ecx
+		jmp _do_excp
 .endm
 
 /* Exception hooks. */
-excp_noerr_code  0 /* Division-by-Zero Error      */
-excp_noerr_code  1 /* Debug Exception             */
-excp_noerr_code  2 /* Non-Maskable Interrupt      */
-excp_noerr_code  3 /* Breakpoint Exception        */
-excp_noerr_code  4 /* Overflow Exception          */
-excp_noerr_code  5 /* Bounds Check Exception      */
-excp_noerr_code  6 /* Invalid Opcode Exception    */
-excp_noerr_code  7 /* Coprocessor Not Available   */
-excp_err_code    8 /* Double Fault                */
-excp_noerr_code  9 /* Coprocessor Segment Overrun */
-excp_err_code   10 /* Invalid TSS                 */
-excp_err_code   11 /* Segment Not Present         */
-excp_err_code   12 /* Stack Segment Fault         */
-excp_err_code   13 /* General Protection Fault    */
-excp_err2_code  14 /* Page Fault                  */
-excp_noerr_code 15 /* Reserved                    */
-excp_noerr_code 16 /* Floating Point Exception    */
-excp_err_code   17 /* Alignment Check Exception   */
-excp_noerr_code 18 /* Machine Check Exception     */
-excp_noerr_code 19 /* SMID Unit Exception         */
-excp_noerr_code 20 /* Virtual Exception           */
-excp_err_code   30 /* Security Exception.         */
+_do_excp_noerr_code  0 /* Division-by-Zero Error      */
+_do_excp_noerr_code  1 /* Debug Exception             */
+_do_excp_noerr_code  2 /* Non-Maskable Interrupt      */
+_do_excp_noerr_code  3 /* Breakpoint Exception        */
+_do_excp_noerr_code  4 /* Overflow Exception          */
+_do_excp_noerr_code  5 /* Bounds Check Exception      */
+_do_excp_noerr_code  6 /* Invalid Opcode Exception    */
+_do_excp_noerr_code  7 /* Coprocessor Not Available   */
+_do_excp_err_code    8 /* Double Fault                */
+_do_excp_noerr_code  9 /* Coprocessor Segment Overrun */
+_do_excp_err_code   10 /* Invalid TSS                 */
+_do_excp_err_code   11 /* Segment Not Present         */
+_do_excp_err_code   12 /* Stack Segment Fault         */
+_do_excp_err_code   13 /* General Protection Fault    */
+_do_excp_err2_code  14 /* Page Fault                  */
+_do_excp_noerr_code 15 /* Reserved                    */
+_do_excp_noerr_code 16 /* Floating Point Exception    */
+_do_excp_err_code   17 /* Alignment Check Exception   */
+_do_excp_noerr_code 18 /* Machine Check Exception     */
+_do_excp_noerr_code 19 /* SMID Unit Exception         */
+_do_excp_noerr_code 20 /* Virtual Exception           */
+_do_excp_err_code   30 /* Security Exception.         */
 
 /*
  * Low-level exception handler dispatcher.
  */
-_excp:
-	/* Save registers. */
-	pushl %edx
-	pushl %ebp
-	pushl %esi
-	pushl %edi
-	pushl %ds
-	pushl %es
-	pushl %fs
-	pushl %gs
+_do_excp:
+	/* Save exception information. */
+	movl I386_CONTEXT_EIP(%eax), %edx
+	subl $I386_EXCEPTION_SIZE, %esp
+	movl %ebx, I386_EXCEPTION_NUM(%esp)
+	movl %ecx, I386_EXCEPTION_DATA(%esp)
+	movl %edx, I386_EXCEPTION_CODE(%esp)
+	movl %esp, %ebx
 
-	movw $KERNEL_DS, %bx
-	movw %bx, %ds
-	movw %bx, %es
-	movw %bx, %fs
-	movw %bx, %gs
-
-	/* Retrieve stack pointer. */
-	movl %esp, %edx
-	addl 64, %edx
-
-	/* Call high-level exception handler. */
-	pushl %eax /* Error code.       */
-	pushl %ebx /* Address.          */
-	pushl %ecx /* Exception number. */
-	pushl %edx /* Context.          */
-	call do_excp
-	add $16, %esp
+	/* Call high-level exception dispatcher. */
+	pushl %eax /* Execution context. */
+	pushl %ebx /* Exception context. */
+	call  do_excp
+	addl  $(2*DWORD_SIZE), %esp
 
     i386_context_restore
 
@@ -294,7 +286,7 @@ syscall:
 		pushl %ebx
 		pushl $(\num)
 		call i386_do_hwint
-		addl $8, %esp
+		addl $(2*DWORD_SIZE), %esp
 		i386_context_restore
 .endm
 
@@ -308,7 +300,7 @@ syscall:
 		pushl %ebx
 		pushl $(\num)
 		call i386_do_hwint
-		addl $8, %esp
+		addl $(2*DWORD_SIZE), %esp
 		i386_context_restore
 .endm
 
