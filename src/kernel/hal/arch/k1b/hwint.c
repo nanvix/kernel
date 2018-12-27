@@ -49,7 +49,7 @@ PRIVATE void (*k1b_handlers[K1B_NUM_HWINT])(int) = {
  * handlers, and the context and the interrupted context pointed to by
  * ctx is currently unsed.
  */
-PUBLIC void k1b_do_hwint(k1b_hwint_id_t hwintid, struct k1b_context *ctx)
+PUBLIC void k1b_do_hwint(k1b_hwint_id_t hwintid, struct context *ctx)
 {
 	int num = 0;
 
