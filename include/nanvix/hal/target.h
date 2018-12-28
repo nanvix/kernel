@@ -173,12 +173,24 @@
 	#error "EXCP_GENERAL_PROTECTION not defined"
 	#endif
 
-	#ifndef __hal_exception_set_handler
-	#error "hal_exception_set_handler() not defined?"
-	#endif
-
 	#ifndef __exception_struct
 	#error "struct exception not defined?"
+	#endif
+
+	#ifndef __exception_get_addr
+	#error "exception_get_addr() not defined?"
+	#endif
+
+	#ifndef __exception_get_instr
+	#error "exception_get_instr() not defined?"
+	#endif
+
+	#ifndef __exception_get_num
+	#error "exception_get_num() not defined?"
+	#endif
+
+	#ifndef __exception_set_handler
+	#error "exception_set_handler() not defined?"
 	#endif
 
 /*============================================================================*
