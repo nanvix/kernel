@@ -63,7 +63,7 @@ PRIVATE const struct
  *
  * Lookup table with registered exception handlers.
  */
-PRIVATE void (*k1b_excp_handlers[K1B_NUM_EXCEPTIONS + K1B_NUM_EXCEPTIONS_VIRT])(const struct exception *, const struct context *) = {
+PRIVATE exception_handler_fn k1b_excp_handlers[K1B_NUM_EXCEPTIONS + K1B_NUM_EXCEPTIONS_VIRT] = {
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
@@ -119,10 +119,7 @@ PUBLIC void do_excp(const struct exception *excp, const struct context *ctx)
  *
  * @author Pedro Henrique Penna
  */
-PUBLIC void k1b_excp_set_handler(
-	int num,
-	void (*handler)(const struct exception *, const struct context *)
-)
+PUBLIC void k1b_excp_set_handler(int num, exception_handler_fn handler)
 {
 	/* Invalid exception. */
 	if ((num < 0) || (num > (K1B_NUM_EXCEPTIONS + K1B_NUM_EXCEPTIONS_VIRT)))

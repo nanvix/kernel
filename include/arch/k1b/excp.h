@@ -113,6 +113,14 @@
 	} __attribute__((packed));
 
 	/**
+	 * @brief Exception handler.
+	 *
+	 * @cond k1b
+	 */
+	typedef void (*exception_handler_fn)(const struct exception *, const struct context *);
+	/**@endcond*/
+
+	/**
 	 * @brief Gets the number of an exception.
 	 *
 	 * The k1b_excp_get_num() function gets the exception number
@@ -173,16 +181,13 @@
 	 * @brief Sets a handler for an exception.
 	 *
 	 * @param num     Number of the target exception.
-	 * @param handler Handler.
+	 * @param handler Exception handler.
 	 *
 	 * @note This function does not check if a handler is already
 	 * set for the target hardware exception.
 	 *
 	 */
-	EXTERN void k1b_excp_set_handler(
-		int num,
-		void (*handler)(const struct exception *, const struct context *)
-	);
+	EXTERN void k1b_excp_set_handler(int num, exception_handler_fn handler);
 
 	/**
 	 * @brief Low-level exception dispatcher.
@@ -241,10 +246,7 @@
 	/**
 	 * @see k1b_excp_set_handler()
 	 */
-	static inline void hal_exception_set_handler(
-		int num,
-		void (*handler)(const struct exception *, const struct context *)
-	)
+	static inline void hal_exception_set_handler(int num, exception_handler_fn handler)
 	{
 		k1b_excp_set_handler(num, handler);
 	}
