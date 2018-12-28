@@ -111,6 +111,7 @@
 
 	#include <nanvix/const.h>
 	#include <arch/i386/context.h>
+	#include <arch/i386/mmu.h>
 	#include <stdint.h>
 
 	/**
@@ -180,6 +181,36 @@
 	)
 	{
 		i386_excp_set_handler(num, handler);
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Gets the address of an exception.
+	 *
+	 * The i386_excp_get_addr() function gets the exception address
+	 * stored in the exception information structure pointed to by @p
+	 * excp.
+	 *
+	 * @param excp Target exception information structure.
+	 *
+	 * @returns The exception address stored in the exception
+	 * information structure pointed to by @p excp.
+	 *
+	 * @author Pedro Henrique Penna
+	 */
+	static inline vaddr_t i386_excp_get_addr(const struct exception *excp)
+	{
+		return (excp->addr);
+	}
+
+	/**
+	 * @see i386_excp_get_addr().
+	 *
+	 * @cond i386
+	 */
+	static inline int hal_exception_get_addr(const struct exception *excp)
+	{
+		return (i386_excp_get_addr(excp));
 	}
 	/**@endcond*/
 
