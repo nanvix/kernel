@@ -45,6 +45,11 @@
 #define ARCH_OR1K_REGS_H_
 
 	/**
+	 * @brief Shadow register address.
+	 */
+	#define OR1K_SPR_SHADOW_GPR(x) ((x) + OR1K_SPR_GPR_BASE + 32)
+
+	/**
 	 * @brief Loads a symbol into a register.
 	 */
 	#define OR1K_LOAD_SYMBOL_2_GPR(gpr,symbol) \
@@ -109,12 +114,12 @@
 	/**
 	 * Data MMU group
 	 */
-	#define OR1K_SPR_DMMUCR  (OR1K_SPRGROUP_SYS + 0)
-	#define OR1K_SPR_DTLBEIR (OR1K_SPRGROUP_SYS + 2)
-	#define OR1K_SPR_DTLBMR_BASE(WAY) (OR1K_SPRGROUP_SYS + 0x200 + (WAY) * 0x100)
-	#define OR1K_SPR_DTLBMR_LAST(WAY) (OR1K_SPRGROUP_SYS + 0x27f + (WAY) * 0x100)
-	#define OR1K_SPR_DTLBTR_BASE(WAY) (OR1K_SPRGROUP_SYS + 0x280 + (WAY) * 0x100)
-	#define OR1K_SPR_DTLBTR_LAST(WAY) (OR1K_SPRGROUP_SYS + 0x2ff + (WAY) * 0x100)
+	#define OR1K_SPR_DMMUCR  (OR1K_SPRGROUP_DMMU + 0)
+	#define OR1K_SPR_DTLBEIR (OR1K_SPRGROUP_DMMU + 2)
+	#define OR1K_SPR_DTLBMR_BASE(WAY) (OR1K_SPRGROUP_DMMU + 0x200 + (WAY) * 0x100)
+	#define OR1K_SPR_DTLBMR_LAST(WAY) (OR1K_SPRGROUP_DMMU + 0x27f + (WAY) * 0x100)
+	#define OR1K_SPR_DTLBTR_BASE(WAY) (OR1K_SPRGROUP_DMMU + 0x280 + (WAY) * 0x100)
+	#define OR1K_SPR_DTLBTR_LAST(WAY) (OR1K_SPRGROUP_DMMU + 0x2ff + (WAY) * 0x100)
 
 	/**
 	 * Instruction MMU group
