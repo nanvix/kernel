@@ -26,18 +26,26 @@
 #define ARCH_K1B_EXCP_H_
 
 /**
- * @cond k1b
+ * @addtogroup k1b-exception Exception
+ * @ingroup k1b
+ *
+ * @brief Exceptions
  */
+/**@{*/
 
 	/**
 	 * @name Provided Interface
+	 *
+	 * @cond k1b
 	 */
 	/**@{*/
-	#define __exception_struct          /**< Exception Information       */
-	#define __hal_exception_set_handler /**< hal_exception_set_handler() */
+	#define __exception_struct      /**< @ref exception               */
+	#define __exception_get_addr    /**< @ref exception_get_addr()    */
+	#define __exception_get_instr   /**< @ref exception_get_instr()   */
+	#define __exception_get_num     /**< @ref exception_get_num()     */
+	#define __exception_set_handler /**< @ref exception_set_handler() */
 	/**@}*/
-
-/**@endcond*/
+	/**@endcond*/
 
 	/**
 	 * @brief Exception information size (in bytes).
@@ -114,11 +122,8 @@
 
 	/**
 	 * @brief Exception handler.
-	 *
-	 * @cond k1b
 	 */
-	typedef void (*exception_handler_fn)(const struct exception *, const struct context *);
-	/**@endcond*/
+	typedef void (*k1b_exception_handler_fn)(const struct exception *, const struct context *);
 
 	/**
 	 * @brief Gets the number of an exception.
@@ -140,9 +145,20 @@
 	}
 
 	/**
+	 * @see k1b_excp_get_num().
+	 *
+	 * @cond k1b
+	 */
+	static inline int exception_get_num(const struct exception *excp)
+	{
+		return (k1b_excp_get_num(excp));
+	}
+	/**@endcond*/
+
+	/**
 	 * @brief Gets the address of an exception.
 	 *
-	 * The k1b_excp_get_num() function gets the exception address
+	 * The k1b_excp_get_addr() function gets the exception address
 	 * stored in the exception information structure pointed to by @p
 	 * excp.
 	 *
@@ -157,6 +173,17 @@
 	{
 		return (excp->ea);
 	}
+
+	/**
+	 * @see k1b_excp_get_addr().
+	 *
+	 * @cond k1b
+	 */
+	static inline int exception_get_addr(const struct exception *excp)
+	{
+		return (k1b_excp_get_addr(excp));
+	}
+	/**@endcond*/
 
 	/**
 	 * @brief Gets the program counter at an exception.
@@ -178,6 +205,17 @@
 	}
 
 	/**
+	 * @see k1b_excp_get_spc().
+	 *
+	 * @cond k1b
+	 */
+	static inline int exception_get_instr(const struct exception *excp)
+	{
+		return (k1b_excp_get_spc(excp));
+	}
+	/**@endcond*/
+
+	/**
 	 * @brief Sets a handler for an exception.
 	 *
 	 * @param num     Number of the target exception.
@@ -187,7 +225,18 @@
 	 * set for the target hardware exception.
 	 *
 	 */
-	EXTERN void k1b_excp_set_handler(int num, exception_handler_fn handler);
+	EXTERN void k1b_excp_set_handler(int num, k1b_exception_handler_fn handler);
+
+	/**
+	 * @see k1b_excp_set_handler()
+	 *
+	 * @cond k1b
+	 */
+	static inline void exception_set_handler(int num, k1b_exception_handler_fn handler)
+	{
+		k1b_excp_set_handler(num, handler);
+	}
+	/**@endcond*/
 
 	/**
 	 * @brief Low-level exception dispatcher.
@@ -219,40 +268,10 @@
 	#define EXCP_GENERAL_PROTECTION  K1B_EXCP_PROTECTION      /**< General Protection */
 	/**@}*/
 
-	/**
-	 * @see k1b_excp_get_num().
-	 */
-	static inline int hal_exception_get_num(const struct exception *excp)
-	{
-		return (k1b_excp_get_num(excp));
-	}
-
-	/**
-	 * @see k1b_excp_get_addr().
-	 */
-	static inline int hal_exception_get_addr(const struct exception *excp)
-	{
-		return (k1b_excp_get_addr(excp));
-	}
-
-	/**
-	 * @see k1b_excp_get_spc().
-	 */
-	static inline int hal_exception_get_pc(const struct exception *excp)
-	{
-		return (k1b_excp_get_spc(excp));
-	}
-
-	/**
-	 * @see k1b_excp_set_handler()
-	 */
-	static inline void hal_exception_set_handler(int num, exception_handler_fn handler)
-	{
-		k1b_excp_set_handler(num, handler);
-	}
-
 /**@endcond*/
 
 #endif /* _ASM_FILE_ */
+
+/**@}*/
 
 #endif /* ARCH_K1B_EXCP_H_ */
