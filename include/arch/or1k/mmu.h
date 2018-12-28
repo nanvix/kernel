@@ -116,41 +116,41 @@
 	/**
 	 * Page table entry constants.
 	 */
-	#define PT_CC  0x1         /* Cache Coherency.       */
-	#define PT_CI  0x2         /* Cache Inhibit.         */
-	#define PT_WBC 0x4         /* Write-Back Cache.      */
-	#define PT_WOM 0x8         /* Weakly-Ordered Memory. */
-	#define PT_A   0x10        /* Accesed.               */
-	#define PT_D   0x20        /* Dirty.                 */
-	#define PT_PPI 0x1C0       /* Page Protection Index. */
-	#define PT_L   0x200       /* Last.                  */
-	#define PT_PPN 0xFFFFFC00  /* Physical Page Number.  */
+	#define OR1K_PT_CC  0x1         /* Cache Coherency.       */
+	#define OR1K_PT_CI  0x2         /* Cache Inhibit.         */
+	#define OR1K_PT_WBC 0x4         /* Write-Back Cache.      */
+	#define OR1K_PT_WOM 0x8         /* Weakly-Ordered Memory. */
+	#define OR1K_PT_A   0x10        /* Accesed.               */
+	#define OR1K_PT_D   0x20        /* Dirty.                 */
+	#define OR1K_PT_PPI 0x1C0       /* Page Protection Index. */
+	#define OR1K_PT_L   0x200       /* Last.                  */
+	#define OR1K_PT_PPN 0xFFFFFC00  /* Physical Page Number.  */
 
 	/**
 	 * Page table new fields.
 	 */
-	#define PT_COW     PT_CC   /* Copy on write.     */
-	#define PT_ZERO    PT_CI   /* Demand zero.       */
-	#define PT_FILL    PT_WBC  /* Demand fill.       */
-	#define PT_PRESENT PT_WOM  /* Present in memory. */
+	#define OR1K_PT_COW     OR1K_PT_CC   /* Copy on write.     */
+	#define OR1K_PT_ZERO    OR1K_PT_CI   /* Demand zero.       */
+	#define OR1K_PT_FILL    OR1K_PT_WBC  /* Demand fill.       */
+	#define OR1K_PT_PRESENT OR1K_PT_WOM  /* Present in memory. */
 
 	/**
 	 * Page Protection Index, offset.
 	 */
-	#define PT_PPI_OFFSET   0x6   /* PPI offset. */
+	#define OR1K_PT_PPI_OFFSET   0x6   /* PPI offset. */
 	
 	/**
 	 * Page Protection Index, data.
 	 */
-	#define PT_PPI_USR_RD   0x40  /* Supervisor Read/Write, User: Read.       */
-	#define PT_PPI_USR_WR   0x80  /* Supervisor Read/Write, User: Write.      */
-	#define PT_PPI_USR_RDWR 0xC0  /* Supervisor Read/Write, User: Read/Write. */
+	#define OR1K_PT_PPI_USR_RD   0x40  /* Supervisor Read/Write, User: Read.       */
+	#define OR1K_PT_PPI_USR_WR   0x80  /* Supervisor Read/Write, User: Write.      */
+	#define OR1K_PT_PPI_USR_RDWR 0xC0  /* Supervisor Read/Write, User: Read/Write. */
 
 	/**
 	 * Page Protection Index, instruction.
 	 */
-	#define PT_PPI_USR_EX   0x80  /* User Execute.       */
-	#define PT_PPI_SPV_EX   0x40  /* Supervisor Execute. */
+	#define OR1K_PT_PPI_USR_EX   0x80  /* User Execute.       */
+	#define OR1K_PT_PPI_SPV_EX   0x40  /* Supervisor Execute. */
 
 #ifndef _ASM_FILE_
 #define _ASM_FILE_
@@ -271,8 +271,8 @@
 	 */
 	static inline void pde_write_set(struct pde *pde, int set)
 	{
-		pde->ppi = (set) ? (PT_PPI_USR_RDWR >> PT_PPI_OFFSET)
-			: (PT_PPI_USR_RD >> PT_PPI_OFFSET);
+		pde->ppi = (set) ? (OR1K_PT_PPI_USR_RDWR >> OR1K_PT_PPI_OFFSET)
+			: (OR1K_PT_PPI_USR_RD >> OR1K_PT_PPI_OFFSET);
 	}
 
 	/**
@@ -285,7 +285,7 @@
 	 */
 	static inline int pde_is_write(struct pde *pde)
 	{
-		return (pde->ppi == (PT_PPI_USR_RDWR >> PT_PPI_OFFSET));
+		return (pde->ppi == (OR1K_PT_PPI_USR_RDWR >> OR1K_PT_PPI_OFFSET));
 	}
 
 	/**
@@ -296,7 +296,7 @@
 	 */
 	static inline void pde_user_set(struct pde *pde, int set)
 	{
-		pde->ppi = (set) ? (PT_PPI_USR_RD >> PT_PPI_OFFSET) : 0;
+		pde->ppi = (set) ? (OR1K_PT_PPI_USR_RD >> OR1K_PT_PPI_OFFSET) : 0;
 	}
 
 	/**
@@ -309,7 +309,7 @@
 	 */
 	static inline int pde_is_user(struct pde *pde)
 	{
-		return (pde->ppi & (PT_PPI_USR_RD >> PT_PPI_OFFSET));
+		return (pde->ppi & (OR1K_PT_PPI_USR_RD >> OR1K_PT_PPI_OFFSET));
 	}
 
 	/**
@@ -379,8 +379,8 @@
 	 */
 	static inline void pte_write_set(struct pte *pte, int set)
 	{
-		pte->ppi = (set) ? (PT_PPI_USR_RDWR >> PT_PPI_OFFSET)
-			: (PT_PPI_USR_RD >> PT_PPI_OFFSET);
+		pte->ppi = (set) ? (OR1K_PT_PPI_USR_RDWR >> OR1K_PT_PPI_OFFSET)
+			: (OR1K_PT_PPI_USR_RD >> OR1K_PT_PPI_OFFSET);
 	}
 
 	/**
@@ -393,7 +393,7 @@
 	 */
 	static inline int pte_is_write(struct pte *pte)
 	{
-		return (pte->ppi == (PT_PPI_USR_RDWR >> PT_PPI_OFFSET));
+		return (pte->ppi == (OR1K_PT_PPI_USR_RDWR >> OR1K_PT_PPI_OFFSET));
 	}
 
 	/**
@@ -404,7 +404,7 @@
 	 */
 	static inline void pte_user_set(struct pte *pte, int set)
 	{
-		pte->ppi = (set) ? (PT_PPI_USR_RD >> PT_PPI_OFFSET) : 0;
+		pte->ppi = (set) ? (OR1K_PT_PPI_USR_RD >> OR1K_PT_PPI_OFFSET) : 0;
 	}
 
 	/**
@@ -417,7 +417,7 @@
 	 */
 	static inline int pte_is_user(struct pte *pte)
 	{
-		return (pte->ppi & (PT_PPI_USR_RD >> PT_PPI_OFFSET));
+		return (pte->ppi & (OR1K_PT_PPI_USR_RD >> OR1K_PT_PPI_OFFSET));
 	}
 
 	/**
