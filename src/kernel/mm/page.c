@@ -154,9 +154,8 @@ PRIVATE int pgtab_unmap(struct pde *pgdir, vaddr_t vaddr)
 	/* Nothing to do. */
 	if (!pde_is_present(pde))
 		return (0);
-	/*
-	 * Retrieve page table.
-	 */
+
+	/* Retrieve page table. */
 	frame = pde_frame_get(pde);
 	pgtab = (struct pte *) kpool_frame_to_addr(frame);
 
@@ -447,7 +446,7 @@ PUBLIC int upage_free(struct pde *pgdir, vaddr_t vaddr)
 	frame_t frame;
 
 	/*
-	 * We handle argument checking
+	 * We forward argument checking
 	 * to upage_unmap().
 	 */
 
@@ -467,6 +466,121 @@ PUBLIC int upage_free(struct pde *pgdir, vaddr_t vaddr)
 }
 
 /*============================================================================*
+ * do_page_protection()                                                       *
+ *============================================================================*/
+
+/**
+ * @brief Handles a page protection.
+ *
+ * The do_page_protection() function is currently a dummy handler for
+ * a page protection. It prints the faulting address and panics the
+ * kernel.
+ *
+ * @param excp Exception information.
+ * @param ctx  Interrupted execution context.
+ *
+ * @todo Implement a rich handler.
+ */
+PRIVATE void do_page_protection(
+	const struct exception *excp,
+	const struct context *ctx
+)
+{
+	UNUSED(ctx);
+
+	kpanic("[mm] page protection at %x", hal_exception_get_addr(excp));
+}
+
+/*============================================================================*
+ * do_page_fault()                                                            *
+ *============================================================================*/
+
+/**
+ * @brief Handles a page fault.
+ *
+ * The do_page_fault() function is currently a dummy handler for a
+ * page fault. It prints the faulting address and panics the kernel.
+ *
+ * @param excp Exception information.
+ * @param ctx  Interrupted execution context.
+ *
+ * @todo Implement a rich handler.
+ */
+PRIVATE void do_page_fault(
+	const struct exception *excp,
+	const struct context *ctx
+)
+{
+	UNUSED(ctx);
+
+	kpanic("[mm] page fault at %x", hal_exception_get_addr(excp));
+}
+
+/*============================================================================*
+ * do_tlb_fault()                                                             *
+ *============================================================================*/
+
+#ifdef HAL_TLB_SOFTWARE
+
+/**
+ * @brief Handles a TLB fault.
+ *
+ * The do_tlb_fault() function handles a TLB fault. It checks the
+ * current page directory for a virtual-to-physical address mapping,
+ * and if it finds one, it writes this mapping to the TLB. If the
+ * faulting address is not currently mapped in the current page
+ * directory, this exception is forwarded to the page fault handler.
+ *
+ * @param excp Exception information.
+ * @param ctx  Interrupted execution context.
+ *
+ * @author Pedro Henrique Penna
+ */
+PRIVATE void do_tlb_fault(
+	const struct exception *excp,
+	const struct context *ctx
+)
+{
+	paddr_t paddr;     /* Physical address.               */
+	vaddr_t vaddr;     /* Faulting address.               */
+	struct pte *pte;   /* Working page table table entry. */
+	struct pde *pde;   /* Working page directory entry.   */
+	struct pte *pgtab; /* Working page table.             */
+
+	UNUSED(ctx);
+
+	/* Get page address of faulting address. */
+	vaddr = hal_exception_get_addr(excp);
+	vaddr &= PAGE_MASK;
+
+	/*
+	 * The faulting address lies in kernel
+	 * land and this is unlikely to happen.
+	 * So, it's better to get some warning.
+	 */
+	if (!mm_is_uaddr(vaddr))
+		kprintf("[mm] tlb fault in kernel land");
+
+	/* Lookup PDE. */
+	pde = pde_get(idle_pgdir, vaddr);
+	if (!pde_is_present(pde))
+		do_page_fault(excp, ctx);
+
+	/* Lookup PTE. */
+	pgtab = (struct pte *)(kpool_frame_to_addr(pde_frame_get(pde)));
+	pte = pte_get(pgtab, vaddr);
+	if (!pte_is_present(pte))
+		do_page_fault(excp, ctx);
+
+	/* Writing mapping to TLB. */
+	paddr = pte_frame_get(pte) << PAGE_SHIFT;
+	if (tlb_write(vaddr, paddr) < 0)
+		kpanic("cannot write to tlb");
+}
+
+#endif
+
+/*============================================================================*
  * upool_init()                                                               *
  *============================================================================*/
 
@@ -479,6 +593,13 @@ PUBLIC int upage_free(struct pde *pgdir, vaddr_t vaddr)
 PUBLIC void upool_init(void)
 {
 	kprintf("[mm] initializing the user page allocator");
+
+	/* Register handlers. */
+	hal_exception_set_handler(EXCP_PAGE_PROTECTION, do_page_protection);
+	hal_exception_set_handler(EXCP_PAGE_FAULT, do_page_fault);
+#ifdef HAL_TLB_SOFTWARE
+	hal_exception_set_handler(EXCP_TLB_FAULT, do_tlb_fault);
+#endif
 
 #ifndef NDEBUG
 	kprintf("[mm] running tests on the user page allocator");
