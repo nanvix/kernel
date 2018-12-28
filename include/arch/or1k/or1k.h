@@ -38,6 +38,7 @@
  	#include <arch/or1k/clock.h>
 	#include <arch/or1k/core.h>
 	#include <arch/or1k/cpu.h>
+	#include <arch/or1k/excp.h>
 	#include <arch/or1k/int.h>
 	#include <arch/or1k/io.h>	
 	#include <arch/or1k/mem.h>
