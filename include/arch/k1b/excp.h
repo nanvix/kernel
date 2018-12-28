@@ -172,7 +172,7 @@
 	/**
 	 * @brief Sets a handler for an exception.
 	 *
-	 * @param excpnum Number of the target exception.
+	 * @param num     Number of the target exception.
 	 * @param handler Handler.
 	 *
 	 * @note This function does not check if a handler is already
@@ -180,7 +180,7 @@
 	 *
 	 */
 	EXTERN void k1b_excp_set_handler(
-		int excpnum,
+		int num,
 		void (*handler)(const struct exception *, const struct context *)
 	);
 
@@ -242,11 +242,11 @@
 	 * @see k1b_excp_set_handler()
 	 */
 	static inline void hal_exception_set_handler(
-		int excpnum,
+		int num,
 		void (*handler)(const struct exception *, const struct context *)
 	)
 	{
-		k1b_excp_set_handler(excpnum, handler);
+		k1b_excp_set_handler(num, handler);
 	}
 
 /**@endcond*/

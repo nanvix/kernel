@@ -112,7 +112,7 @@ PUBLIC void do_excp(const struct exception *excp, const struct context *ctx)
 
 /**
  * The k1b_excp_set_handler() function sets a handler function for
- * the exception @p excpnum.
+ * the exception @p num.
  *
  * @note This function does not check if a handler is already
  * set for the target hardware exception.
@@ -120,10 +120,14 @@ PUBLIC void do_excp(const struct exception *excp, const struct context *ctx)
  * @author Pedro Henrique Penna
  */
 PUBLIC void k1b_excp_set_handler(
-	int excpnum,
+	int num,
 	void (*handler)(const struct exception *, const struct context *)
 )
 {
-	k1b_excp_handlers[excpnum] = handler;
+	/* Invalid exception. */
+	if ((num < 0) || (num > (K1B_NUM_EXCEPTIONS + K1B_NUM_EXCEPTIONS_VIRT)))
+		kpanic("[k1b] invalid exception number");
+
+	k1b_excp_handlers[num] = handler;
 	k1b_dcache_inval();
 }
