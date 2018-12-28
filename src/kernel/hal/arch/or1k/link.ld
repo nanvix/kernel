@@ -35,8 +35,8 @@ SECTIONS
 	/* Bootstrap section. */
 	.bootstrap :
 	{
+		hal/arch/or1k/hooks.o
 		hal/arch/or1k/boot.o *(.bootstrap)
-		hal/arch/or1k/setup.o
 	}
 	
 	. += 0xc0000000;
