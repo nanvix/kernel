@@ -45,13 +45,6 @@
 .globl start
 .globl idle_pgdir
 
-/**
- * Reset exception.
- */
-.org 0x100
-l.j start
-l.nop
-
 /*============================================================================*
  *                              bootstrap section                             *
  *============================================================================*/
@@ -62,7 +55,6 @@ l.nop
  * start()                                                                    *
  *----------------------------------------------------------------------------*/
 
-.org 0x2000
 /*
  * Kernel entry point.
  */
@@ -78,7 +70,7 @@ start:
 	l.addi  r1, r1, -DWORD_SIZE
 
 	OR1K_LOAD_SYMBOL_2_GPR(r3, 0x003ffc00)
-	l.ori  r3, r3, PT_L | PT_PRESENT | PT_PPI_SPV_EX
+	l.ori  r3, r3, OR1K_PT_L | OR1K_PT_PRESENT | OR1K_PT_PPI_SPV_EX
 
 	start.loop1:
 		l.sw   0(r1), r3
@@ -92,7 +84,7 @@ start:
 	OR1K_LOAD_SYMBOL_2_GPR(r1, kernel_pgtab)
 	l.srli r1, r1, PAGE_SHIFT
 	l.slli r1, r1, OR1K_PT_SHIFT
-	l.ori  r1, r1, PT_PRESENT
+	l.ori  r1, r1, OR1K_PT_PRESENT
 
 	OR1K_LOAD_SYMBOL_2_GPR(r3, idle_pgdir)
 	
@@ -102,67 +94,13 @@ start:
 	OR1K_LOAD_SYMBOL_2_GPR(r1, kpool_pgtab)  /* Kernel page pool at 0xc1000000   */
 	l.srli r1, r1, PAGE_SHIFT
 	l.slli r1, r1, OR1K_PT_SHIFT
-	l.ori  r1, r1, PT_PRESENT
+	l.ori  r1, r1, OR1K_PT_PRESENT
 	l.sw  OR1K_PTE_SIZE*193(r3), r1
 
 	/* Flush TLB. */
 	l.jal _boot_tlb_flush
 	l.nop
-	
-	/* Fill the IMMU/DMMU with the first NSETS pages. */
-	OR1K_LOAD_SYMBOL_2_GPR(r1, OR1K_SPR_DTLBTR_BASE(0))
-	OR1K_LOAD_SYMBOL_2_GPR(r3, OR1K_SPR_ITLBTR_BASE(0))
-	OR1K_LOAD_SYMBOL_2_GPR(r5, OR1K_SPR_DTLBMR_BASE(0))
-	OR1K_LOAD_SYMBOL_2_GPR(r7, OR1K_SPR_ITLBMR_BASE(0))
-	OR1K_LOAD_SYMBOL_2_GPR(r9,  dtlb_table)
-	OR1K_LOAD_SYMBOL_2_GPR(r11, itlb_table)
 
-	/* Number of TLB sets, here I'm assuming that ITLB_NSET = DTLB_NSET. */
-	l.ori   r15, r0,  1
-	l.mfspr r13, r0,  OR1K_SPR_DMMUCFGR
-	l.andi  r13, r13, OR1K_SPR_DMMUCFGR_NTS
-	l.srli  r13, r13, OR1K_SPR_DMMUCFGR_NTS_OFF
-	l.sll   r13, r15, r13
-	
-	/* DTLBTR, Page 0 with Cache Coherency and Supervisor R/W. */
-	l.ori  r15, r0, (OR1K_SPR_DTLBTR_CC  | OR1K_SPR_DTLBTR_CI |\
-		OR1K_SPR_DTLBTR_SRE | OR1K_SPR_DTLBTR_SWE)
-
-	/* ITLBTR, Page 0 with Cache Coherency and Supervisor Execute. */
-	l.ori  r17, r0, (OR1K_SPR_ITLBTR_CC  | OR1K_SPR_ITLBTR_CI |\
-		OR1K_SPR_ITLBTR_SXE)
-
-	/* xTLBMR, Page 0, Valid. */
-	l.ori  r19, r0, 1
-
-	start.filltlb:
-		
-		/* Data TLB. */
-		l.mtspr r1, r15, 0x0
-		l.mtspr r5, r19, 0x0
-		l.addi  r15, r15, (1 << PAGE_SHIFT)
-		
-		/* Instruction TLB. */
-		l.mtspr r3, r17, 0x0
-		l.mtspr r7, r19, 0x0
-		l.addi  r17, r17, (1 << PAGE_SHIFT)
-		
-		l.sw 0(r9),  r19
-		l.sw 0(r11), r19
-		l.addi r19,  r19, (1 << PAGE_SHIFT)
-
-		l.addi r1, r1, 1
-		l.addi r3, r3, 1
-		l.addi r5, r5, 1
-		l.addi r7, r7, 1
-
-		l.addi r9,  r9,  DWORD_SIZE
-		l.addi r11, r11, DWORD_SIZE
-
-		l.sfeq	r13, r0
-		l.bnf	start.filltlb
-		l.addi	r13, r13, -1
-		
 	/* Enabling IMMU/DMMU */
 	l.jal _enable_mmu
 	l.nop
@@ -178,10 +116,10 @@ start:
 	l.jalr r3
 	l.nop
 	
-	/*
-	 * TODO:
-	 * call kmain
-	 */
+	/* kmain. */
+	OR1K_LOAD_SYMBOL_2_GPR(r3, kmain)
+	l.jalr r3
+	l.nop
 	
 	/* Halt execution. */
 	start.halt:
