@@ -42,10 +42,12 @@
 	 * @cond k1b
 	 */
 	/**@{*/
-	#define __hal_core_setup  /**< core_setup()  */
-	#define __hal_core_halt   /**< core_halt()   */
-	#define __hal_core_get_id /**< core_get_id() */
-	#define __core_sleep()    /**< core_sleep()  */
+	#define __core_get_id   /**< core_get_id()   */
+	#define __core_halt     /**< core_halt()     */
+	#define __core_shutdown /**< core_shutdown() */
+	#define __core_sleep    /**< core_sleep()    */
+	#define __core_start    /**< core_start()    */
+	#define __core_wakeup   /**< core_wakeup()   */
 	/**@}*/
 	/**@endcond*/
 
@@ -75,7 +77,7 @@
 	 *
 	 * @cond k1b
 	 */
-	static inline int hal_core_get_id(void)
+	static inline int core_get_id(void)
 	{
 		return (k1b_core_get_id());
 	}
@@ -98,7 +100,7 @@
 	 *
 	 * @cond k1b
 	 */
-	static inline void hal_core_halt(void)
+	static inline void core_halt(void)
 	{
 		k1b_await();
 	}

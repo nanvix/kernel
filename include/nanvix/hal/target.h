@@ -43,22 +43,40 @@
 
 	#ifndef __hal_cpu_get_num_cores
 	#error "hal_cpu_get_num_cores() not defined?"
+	#endif
+
+	#if (_HAL_NUM_CORES > 1)
+	#define HAL_SMP
+	#endif
 
 /*============================================================================*
  * Core Interface                                                             *
  *============================================================================*/
+
+	#ifndef __core_get_id
+	#error "core_get_id() not defined?"
 	#endif
 
-	#ifndef __hal_core_get_id
-	#error "hal_core_get_id() not defined?"
+	#ifndef __core_halt
+	#error "core_halt() not defined?"
 	#endif
 
-	#ifndef __hal_core_halt
-	#error "hal_core_halt() not defined?"
+	#ifndef __core_shutdown
+	#error "core_shutdown() not defined?"
 	#endif
 
-	#ifndef __hal_core_setup
-	#error "hal_core_setup() not defined?"
+	#ifdef HAL_SMP
+		#ifndef __core_sleep
+		#error "core_sleep() not defined?"
+		#endif
+
+		#ifndef __core_start
+		#error "core_start() not defined?"
+		#endif
+
+		#ifndef __core_wakeup
+		#error "core_wakeup() not defined?"
+		#endif
 	#endif
 
 /*============================================================================*

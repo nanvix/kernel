@@ -77,7 +77,7 @@ PRIVATE void klog_flush(void)
 PUBLIC void klog_write(const char *buf, size_t n)
 {
 	/* Copy data to ring buffer. */
-	if (hal_core_get_id() == 0)
+	if (core_get_id() == 0)
 	{
 		for (size_t i = 0; i < n; i++)
 		{

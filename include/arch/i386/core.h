@@ -37,9 +37,9 @@
 	 * @name Provided Interface
 	 */
 	/**@{*/
-	#define __hal_core_setup
-	#define __hal_core_halt
-	#define __hal_core_get_id
+	#define __core_get_id   /**< core_get_id()   */
+	#define __core_halt     /**< core_halt()     */
+	#define __core_shutdown /**< core_shutdown() */
 	/**@}*/
 
 	/**
@@ -93,7 +93,7 @@
 	 *
 	 * @cond i386
 	 */
-	static inline int hal_core_get_id(void)
+	static inline int core_get_id(void)
 	{
 		return (i386_core_get_id());
 	}
@@ -114,7 +114,7 @@
 	/**
 	 * @see i386_hlt()
 	 */
-	static inline void hal_core_halt(void)
+	static inline void core_halt(void)
 	{
 		i386_hlt();
 	}
