@@ -53,8 +53,11 @@ PUBLIC void hal_test_driver(void)
 	kprintf("[hal] running unit tests");
 
 #if defined(__i386__)
-	kprintf("[test][hal][api] divide by zero [%d]",
-		(divide(16, 0) == (unsigned)-1) ? "passed" : "FAILED"
-	);
+	if (0)
+	{
+		kprintf("[test][hal][api] divide by zero [%d]",
+			(divide(16, 0) == (unsigned)-1) ? "passed" : "FAILED"
+		);
+	}
 #endif
 }
