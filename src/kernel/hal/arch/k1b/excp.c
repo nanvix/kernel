@@ -38,7 +38,7 @@ PRIVATE const struct
 {
 	int code;           /**< Code.          */
 	const char *errmsg; /**< Error message. */
-} exceptions[K1B_NUM_EXCEPTIONS] = {
+} exceptions[K1B_NUM_EXCEPTIONS + K1B_NUM_EXCEPTIONS_VIRT] = {
 	{ K1B_EXCP_RESET,           "reset exception"                              },
 	{ K1B_EXCP_OPCODE,          "bad instruction bundle"                       },
 	{ K1B_EXCP_PROTECTION,      "protection fault"                             },
@@ -51,10 +51,11 @@ PRIVATE const struct
 	{ K1B_EXCP_PARITY_DATA,     "parity error on out of range data"            },
 	{ K1B_EXCP_SINGLE_ECC_CODE, "single ecc fault on out of range instruction" },
 	{ K1B_EXCP_SINGLE_ECC_DATA, "single ecc fault on out of range data"        },
-	{ K1B_EXCP_PAGE_FAULT,      "page fault"                                   },
+	{ K1B_EXCP_TLB_FAULT,       "tlb fault"                                    },
 	{ K1B_EXCP_PAGE_PROTECTION, "page protection"                              },
 	{ K1B_EXCP_WRITE_CLEAN ,    "write to clean exception"                     },
-	{ K1B_EXCP_ATOMIC_CLEAN,    "atomic to clean exception"                    }
+	{ K1B_EXCP_ATOMIC_CLEAN,    "atomic to clean exception"                    },
+	{ K1B_EXCP_VIRT_PAGE_FAULT, "page fault"                                   }
 };
 
 /**
@@ -62,11 +63,12 @@ PRIVATE const struct
  *
  * Lookup table with registered exception handlers.
  */
-PRIVATE void (*k1b_excp_handlers[K1B_NUM_EXCEPTIONS])(const struct exception *, const struct context *) = {
+PRIVATE void (*k1b_excp_handlers[K1B_NUM_EXCEPTIONS + K1B_NUM_EXCEPTIONS_VIRT])(const struct exception *, const struct context *) = {
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL
+	NULL, NULL, NULL, NULL,
+	NULL
 };
 
 /**

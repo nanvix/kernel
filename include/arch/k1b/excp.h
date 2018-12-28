@@ -61,11 +61,20 @@
 
 	/**
 	 * @brief Number of exceptions.
+	 *
+	 * Number of exceptions natively supported by the hardware.
 	 */
 	#define K1B_NUM_EXCEPTIONS 16
 
 	/**
-	 * @name Exceptions
+	 * @brief Number of virtual exceptions.
+	 *
+	 * Number of exceptions virtualized in software.
+	 */
+	#define K1B_NUM_EXCEPTIONS_VIRT 1
+
+	/**
+	 * @name Hardware Exceptions
 	 */
 	/**@{*/
 	#define K1B_EXCP_RESET            0 /**< Reset Exception                               */
@@ -80,10 +89,17 @@
 	#define K1B_EXCP_PARITY_DATA      9 /**< Parity Error on Out of Range Data             */
 	#define K1B_EXCP_SINGLE_ECC_CODE 10 /**< Single ECC Fault on Out of Range Instruction  */
 	#define K1B_EXCP_SINGLE_ECC_DATA 11 /**< Single ECC Fault on Out of Range Data         */
-	#define K1B_EXCP_PAGE_FAULT      12 /**< Page Fault                                    */
+	#define K1B_EXCP_TLB_FAULT       12 /**< TLB Fault                                     */
 	#define K1B_EXCP_PAGE_PROTECTION 13 /**< Page Protection                               */
 	#define K1B_EXCP_WRITE_CLEAN     14 /**< Write to Clean Exception                      */
 	#define K1B_EXCP_ATOMIC_CLEAN    15 /**< Atomic to Clean Exception                     */
+	/**@}*/
+
+	/**
+	 * @name Virtual Exceptions
+	 */
+	/**@{*/
+	#define K1B_EXCP_VIRT_PAGE_FAULT 16 /**< Page Fault (Virtual Exception) */
 	/**@}*/
 
 	/**
@@ -192,9 +208,9 @@
 	 */
 	/**@*/
 	#define EXCP_INVALID_OPCODE      K1B_EXCP_OPCODE          /**< Invalid Opcode     */
-	#define EXCP_PAGE_FAULT          K1B_EXCP_PAGE_FAULT      /**< Page Fault         */
+	#define EXCP_PAGE_FAULT          K1B_EXCP_VIRT_PAGE_FAULT /**< Page Fault         */
 	#define EXCP_PAGE_PROTECTION     K1B_EXCP_PAGE_PROTECTION /**< Page Protection    */
-	#define EXCP_TLB_FAULT           K1B_EXCP_PAGE_FAULT      /**< TLB Fault          */
+	#define EXCP_TLB_FAULT           K1B_EXCP_TLB_FAULT       /**< TLB Fault          */
 	#define EXCP_GENERAL_PROTECTION  K1B_EXCP_PROTECTION      /**< General Protection */
 	/**@}*/
 
