@@ -488,7 +488,7 @@ PRIVATE void do_page_protection(
 {
 	UNUSED(ctx);
 
-	kpanic("[mm] page protection at %x", hal_exception_get_addr(excp));
+	kpanic("[mm] page protection at %x", exception_get_addr(excp));
 }
 
 /*============================================================================*
@@ -513,7 +513,7 @@ PRIVATE void do_page_fault(
 {
 	UNUSED(ctx);
 
-	kpanic("[mm] page fault at %x", hal_exception_get_addr(excp));
+	kpanic("[mm] page fault at %x", exception_get_addr(excp));
 }
 
 /*============================================================================*
@@ -550,7 +550,7 @@ PRIVATE void do_tlb_fault(
 	UNUSED(ctx);
 
 	/* Get page address of faulting address. */
-	vaddr = hal_exception_get_addr(excp);
+	vaddr = exception_get_addr(excp);
 	vaddr &= PAGE_MASK;
 
 	/*
@@ -595,10 +595,10 @@ PUBLIC void upool_init(void)
 	kprintf("[mm] initializing the user page allocator");
 
 	/* Register handlers. */
-	hal_exception_set_handler(EXCP_PAGE_PROTECTION, do_page_protection);
-	hal_exception_set_handler(EXCP_PAGE_FAULT, do_page_fault);
+	exception_set_handler(EXCP_PAGE_PROTECTION, do_page_protection);
+	exception_set_handler(EXCP_PAGE_FAULT, do_page_fault);
 #ifdef HAL_TLB_SOFTWARE
-	hal_exception_set_handler(EXCP_TLB_FAULT, do_tlb_fault);
+	exception_set_handler(EXCP_TLB_FAULT, do_tlb_fault);
 #endif
 
 #ifndef NDEBUG

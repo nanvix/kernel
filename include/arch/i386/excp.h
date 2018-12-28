@@ -24,6 +24,7 @@
 
 #ifndef ARCH_I386_EXCEPTION_H_
 #define ARCH_I386_EXCEPTION_H_
+
 /**
  * @addtogroup i386-exception Exception
  * @ingroup i386
@@ -38,8 +39,11 @@
 	 * @cond i386
 	 */
 	/**@{*/
-	#define __exception_struct          /**< @ref exception              */
-	#define __hal_exception_set_handler /**< hal_exception_set_handler() */
+	#define __exception_struct      /**< @ref exception               */
+	#define __exception_get_addr    /**< @ref exception_get_addr()    */
+	#define __exception_get_instr   /**< @ref exception_get_instr()   */
+	#define __exception_get_num     /**< @ref exception_get_num()     */
+	#define __exception_set_handler /**< @ref exception_set_handler() */
 	/**@}*/
 	/**@endcond*/
 
@@ -129,6 +133,11 @@
 	/**@endcond*/
 
 	/**
+	 * @brief Exception handler.
+	 */
+	typedef void (*i386_exception_handler_fn)(const struct exception *, const struct context *);
+
+	/**
 	 * @name Software Interrupt Hooks
 	 */
 	/**@{*/
@@ -157,30 +166,32 @@
 	/**@}*/
 
 	/**
-	 * @brief Sets a handler for an exception.
+	 * @brief Gets the number of an exception.
 	 *
-	 * @param num     Number of the target exception.
-	 * @param handler Handler.
+	 * The i386_excp_get_num() function gets the exception number
+	 * stored in the exception information structure pointed to by @p
+	 * excp.
 	 *
-	 * @note This function does not check if a handler is already
-	 * set for the target hardware exception.
+	 * @param excp Target exception information structure.
+	 *
+	 * @returns The exception number stored in the exception
+	 * information structure pointed to by @p excp.
+	 *
+	 * @author Pedro Henrique Penna
 	 */
-	EXTERN void i386_excp_set_handler(
-		int num,
-		void (*handler)(const struct exception *, const struct context *)
-	);
+	static inline int i386_excp_get_num(const struct exception *excp)
+	{
+		return (excp->num);
+	}
 
 	/**
-	 * @see i386_excp_set_handler()
+	 * @see i386_excp_get_num().
 	 *
 	 * @cond i386
 	 */
-	static inline void hal_exception_set_handler(
-		int num,
-		void (*handler)(const struct exception *, const struct context *)
-	)
+	static inline int exception_get_num(const struct exception *excp)
 	{
-		i386_excp_set_handler(num, handler);
+		return (i386_excp_get_num(excp));
 	}
 	/**@endcond*/
 
@@ -208,9 +219,62 @@
 	 *
 	 * @cond i386
 	 */
-	static inline int hal_exception_get_addr(const struct exception *excp)
+	static inline int exception_get_addr(const struct exception *excp)
 	{
 		return (i386_excp_get_addr(excp));
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Gets the program counter at an exception.
+	 *
+	 * The i386_excp_get_num() function gets the program counter
+	 * stored in the exception information structure pointed to by @p
+	 * excp.
+	 *
+	 * @param excp Target exception information structure.
+	 *
+	 * @returns The program counter stored in the exception
+	 * information structure pointed to by @p excp.
+	 *
+	 * @author Pedro Henrique Penna
+	 */
+	static inline vaddr_t i386_excp_get_instr(const struct exception *excp)
+	{
+		return (excp->instruction);
+	}
+
+	/**
+	 * @see i386_excp_get_code().
+	 *
+	 * @cond i386
+	 */
+	static inline int exception_get_instr(const struct exception *excp)
+	{
+		return (i386_excp_get_instr(excp));
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Sets a handler for an exception.
+	 *
+	 * @param num     Number of the target exception.
+	 * @param handler Exception handler.
+	 *
+	 * @note This function does not check if a handler is already
+	 * set for the target hardware exception.
+	 *
+	 */
+	EXTERN void i386_excp_set_handler(int num, i386_exception_handler_fn handler);
+
+	/**
+	 * @see i386_excp_set_handler()
+	 *
+	 * @cond i386
+	 */
+	static inline void exception_set_handler(int num, i386_exception_handler_fn handler)
+	{
+		i386_excp_set_handler(num, handler);
 	}
 	/**@endcond*/
 
