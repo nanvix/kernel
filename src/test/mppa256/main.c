@@ -131,7 +131,7 @@ int main(int argc, const char *argv[])
 
 	TEST_ASSERT(!nosyscall());
 
-	puts(strings[hal_core_get_id()]);
+	puts(strings[core_get_id()]);
 
 	for(int i = 1; i < NTHREADS; i++)
 	{

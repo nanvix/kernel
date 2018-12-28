@@ -57,22 +57,15 @@ PUBLIC void kmain(int argc, const char *argv[])
 	UNUSED(argc);
 	UNUSED(argv);
 
-#if defined(__mppa256__)
-
-	int coreid;
-
-	coreid = hal_core_get_id();
-
+#ifdef HAL_SMP
 	/* Slave core. */
-	if (coreid != 0)
+	if (core_get_id() != 0)
 	{
-		do
+		while (TRUE)
 		{
 			core_sleep();
-			kprintf("waking up core %d", coreid);
 			core_start();
-			kprintf("halting core %d", coreid);
-		} while(1);
+		}
 	}
 #endif
 
