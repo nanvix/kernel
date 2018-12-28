@@ -38,7 +38,7 @@ PRIVATE const struct
 {
 	int code;           /**< Code.          */
 	const char *errmsg; /**< Error message. */
-} exceptions[K1B_NUM_EXCEPTIONS] = {
+} exceptions[K1B_NUM_EXCEPTIONS + K1B_NUM_EXCEPTIONS_VIRT] = {
 	{ K1B_EXCP_RESET,           "reset exception"                              },
 	{ K1B_EXCP_OPCODE,          "bad instruction bundle"                       },
 	{ K1B_EXCP_PROTECTION,      "protection fault"                             },
@@ -51,10 +51,11 @@ PRIVATE const struct
 	{ K1B_EXCP_PARITY_DATA,     "parity error on out of range data"            },
 	{ K1B_EXCP_SINGLE_ECC_CODE, "single ecc fault on out of range instruction" },
 	{ K1B_EXCP_SINGLE_ECC_DATA, "single ecc fault on out of range data"        },
-	{ K1B_EXCP_PAGE_FAULT,      "page fault"                                   },
+	{ K1B_EXCP_TLB_FAULT,       "tlb fault"                                    },
 	{ K1B_EXCP_PAGE_PROTECTION, "page protection"                              },
 	{ K1B_EXCP_WRITE_CLEAN ,    "write to clean exception"                     },
-	{ K1B_EXCP_ATOMIC_CLEAN,    "atomic to clean exception"                    }
+	{ K1B_EXCP_ATOMIC_CLEAN,    "atomic to clean exception"                    },
+	{ K1B_EXCP_VIRT_PAGE_FAULT, "page fault"                                   }
 };
 
 /**
@@ -62,11 +63,12 @@ PRIVATE const struct
  *
  * Lookup table with registered exception handlers.
  */
-PRIVATE void (*k1b_excp_handlers[K1B_NUM_EXCEPTIONS])(const struct exception *, const struct context *) = {
+PRIVATE exception_handler_fn k1b_excp_handlers[K1B_NUM_EXCEPTIONS + K1B_NUM_EXCEPTIONS_VIRT] = {
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL
+	NULL, NULL, NULL, NULL,
+	NULL
 };
 
 /**
@@ -110,18 +112,19 @@ PUBLIC void do_excp(const struct exception *excp, const struct context *ctx)
 
 /**
  * The k1b_excp_set_handler() function sets a handler function for
- * the exception @p excpnum.
+ * the exception @p num.
  *
  * @note This function does not check if a handler is already
  * set for the target hardware exception.
  *
  * @author Pedro Henrique Penna
  */
-PUBLIC void k1b_excp_set_handler(
-	int excpnum,
-	void (*handler)(const struct exception *, const struct context *)
-)
+PUBLIC void k1b_excp_set_handler(int num, exception_handler_fn handler)
 {
-	k1b_excp_handlers[excpnum] = handler;
+	/* Invalid exception. */
+	if ((num < 0) || (num > (K1B_NUM_EXCEPTIONS + K1B_NUM_EXCEPTIONS_VIRT)))
+		kpanic("[k1b] invalid exception number");
+
+	k1b_excp_handlers[num] = handler;
 	k1b_dcache_inval();
 }
