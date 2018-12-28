@@ -1,19 +1,19 @@
 /*
  * Copyright(C) 2011-2018 Pedro H. Penna   <pedrohenriquepenna@gmail.com>
  *              2017-2018 Davidson Francis <davidsondfgl@gmail.com>
- * 
+ *
  * This file is part of Nanvix.
- * 
+ *
  * Nanvix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * Nanvix is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with Nanvix. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -87,7 +87,7 @@ start:
 	l.ori  r1, r1, OR1K_PT_PRESENT
 
 	OR1K_LOAD_SYMBOL_2_GPR(r3, idle_pgdir)
-	
+
 	l.sw  OR1K_PTE_SIZE*0(r3),   r1       /* Kernel code + data at 0x00000000 */
 	l.sw  OR1K_PTE_SIZE*192(r3), r1       /* Kernel code + data at 0xc0000000 */
 
@@ -110,17 +110,17 @@ start:
 	l.addi r1, r1,  OR1K_PAGE_SIZE
 	l.addi r1, r1, -DWORD_SIZE  /* Stack pointer. */
 	l.or   r2, r1,  r0          /* Frame pointer. */
-	
+
 	/* Setup or1k. */
 	OR1K_LOAD_SYMBOL_2_GPR(r3, or1k_core_setup)
 	l.jalr r3
 	l.nop
-	
+
 	/* kmain. */
 	OR1K_LOAD_SYMBOL_2_GPR(r3, kmain)
 	l.jalr r3
 	l.nop
-	
+
 	/* Halt execution. */
 	start.halt:
 		l.j start.halt
@@ -136,13 +136,13 @@ start:
 _boot_tlb_flush:
 	OR1K_LOAD_SYMBOL_2_GPR(r1, OR1K_SPR_DTLBMR_BASE(0))
 	OR1K_LOAD_SYMBOL_2_GPR(r3, OR1K_SPR_ITLBMR_BASE(0))
-	
+
 	l.ori   r7, r0,  1
 	l.mfspr r5, r0, OR1K_SPR_DMMUCFGR
 	l.andi  r5, r5, OR1K_SPR_DMMUCFGR_NTS
 	l.srli  r5, r5, OR1K_SPR_DMMUCFGR_NTS_OFF
 	l.sll   r5, r7, r5
-	
+
 	.loop:
 		l.mtspr	r1, r0, 0x0
 		l.mtspr	r3, r0, 0x0
@@ -166,7 +166,7 @@ _enable_mmu:
 
 	l.or	r1, r1, r3
 	l.mtspr	r0, r1, OR1K_SPR_SR
-	
+
 	l.jr r9
 	l.nop
 
