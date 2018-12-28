@@ -66,8 +66,9 @@ PUBLIC void kmain(int argc, const char *argv[])
 	/* Slave core. */
 	if (coreid != 0)
 	{
+		do
 		{
-			core_halt();
+			core_sleep();
 			kprintf("waking up core %d", coreid);
 			core_start();
 			kprintf("halting core %d", coreid);

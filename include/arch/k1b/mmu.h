@@ -457,7 +457,7 @@
 	/**
 	 * @brief Initializes the MMU.
 	 */
-	EXTERN void mmu_init(void);
+	EXTERN void k1b_mmu_setup(void);
 
 /**@}*/
 

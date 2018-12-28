@@ -38,11 +38,24 @@
 
 	/**
 	 * @name Provided Interface
+	 *
+	 * @cond k1b
 	 */
 	/**@{*/
-	#define __hal_core_setup
-	#define __hal_core_halt
-	#define __hal_core_get_id
+	#define __hal_core_setup  /**< core_setup()  */
+	#define __hal_core_halt   /**< core_halt()   */
+	#define __hal_core_get_id /**< core_get_id() */
+	#define __core_sleep()    /**< core_sleep()  */
+	/**@}*/
+	/**@endcond*/
+
+	/**
+	 * @name States of a Core
+	 */
+	/**@{*/
+	#define K1B_CORE_SLEEPING 0 /**< Sleeping    */
+	#define K1B_CORE_RUNNING  1 /**< Running     */
+	#define K1B_CORE_OFFLINE  2 /**< Powered Off */
 	/**@}*/
 
 	/**
@@ -91,11 +104,79 @@
 	}
 	/*@endcond*/
 
-	/* Forward definitions. */
-	EXTERN void core_wakeup(int, void (*)(void));
-	EXTERN void core_start(void);
-	EXTERN void core_halt(void);
-	EXTERN void shutdown(int);
+	/**
+	 * @brief Stops the underling core.
+	 */
+	EXTERN void k1b_core_sleep(void);
+
+	/**
+	 * @see k1b_core_sleep().
+	 *
+	 * @cond k1b
+	 */
+	static inline void core_sleep(void)
+	{
+		k1b_core_sleep();
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Wakes up a core.
+	 *
+	 * @param coreid ID of the target core.
+	 * @param start  Starting routine to execute.
+	 */
+	EXTERN void k1b_core_wakeup(int coreid, void (*start)(void));
+
+	/**
+	 * @see k1b_core_wakeup().
+	 *
+	 * @cond k1b
+	 */
+	static inline void core_wakeup(int coreid, void (*start)(void))
+	{
+		k1b_core_wakeup(coreid, start);
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Starts a core.
+	 */
+	EXTERN void k1b_core_start(void);
+
+	/**
+	 * @see k1b_core_start()
+	 *
+	 * @cond k1b
+	 */
+	static inline void core_start(void)
+	{
+		k1b_core_start();
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Shutdowns the underlying core.
+	 *
+	 * @param status Shutdown status.
+	 */
+	EXTERN void k1b_core_shutdown(int status);
+
+	/**
+	 * @see k1b_core_shutdown().
+	 *
+	 * @cond k1b
+	 */
+	static inline void shutdown(int status)
+	{
+		k1b_core_shutdown(status);
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Initializes the underlying core.
+	 */
+	EXTERN void k1b_core_setup(void);
 
 /**@}*/
 

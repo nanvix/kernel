@@ -206,10 +206,10 @@ PRIVATE void mmu_warmup(void)
 }
 
 /**
- * The mmu_setup() function initializes the Memory Management Unit
+ * The k1b_mmu_setup() function initializes the Memory Management Unit
  * (MMU) of the underlying k1b core.
  */
-PUBLIC void mmu_init(void)
+PUBLIC void k1b_mmu_setup(void)
 {
 	int coreid;
 
