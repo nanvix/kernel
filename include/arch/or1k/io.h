@@ -1,8 +1,8 @@
 /*
  * MIT License
  *
- * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
- *              2017-2018 Davidson Francis     <davidsondfgl@gmail.com>
+ * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ *              2018 Davidson Francis     <davidsondfgl@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,23 +23,48 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_OR1K_OR1K_H_
-#define ARCH_OR1K_OR1K_H_
+#ifndef ARCH_OR1K_IO_H_
+#define ARCH_OR1K_IO_H_
 
+/**
+ * @addtogroup or1k-io I/O
+ * @ingroup or1k
+ *
+ * @brief Input/Output
+ */
+/**@{*/
 
-	#ifndef TARGET_OR1K_PC_H_
-	#error "include <target/or1k/pc.h> instead"
-	#endif
+	#include <nanvix/const.h>
+	#include <nanvix/klib.h>
+	#include <stdint.h>
 
 	/**
-	 * @defgroup or1k Architecture
-	 * @ingroup or1k-pc
+	 * @name Provided Interface
 	 */
- 	#include <arch/or1k/clock.h>
-	#include <arch/or1k/core.h>
-	#include <arch/or1k/cpu.h>
-	#include <arch/or1k/int.h>
-	#include <arch/or1k/io.h>	
-	#include <arch/or1k/mem.h>
+	/**@{*/
+	#define __hal_outputb
+	#define __hal_iowait
+	/**@}*/
 
-#endif /* ARCH_OR1K_OR1K_H_ */
+	/**
+	 * The hal_outputb() function is a dummy function. In the or1k
+	 * architecture, there are not I/O ports.
+	 */
+	static inline void hal_outputb(uint16_t port, uint8_t byte)
+	{
+		UNUSED(port);
+		UNUSED(byte);
+	}
+
+	/**
+	 * The hal_iowait() function is a dummy function. In the or1k
+	 * architecture, there are not I/O ports.
+	 */
+	static inline void hal_iowait(void)
+	{
+		noop();
+	}
+
+/**@}*/
+
+#endif /* ARCH_OR1K_IO_H_ */
