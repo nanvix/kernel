@@ -65,7 +65,7 @@ PRIVATE const struct
  *
  * Lookup table with registered exception handlers.
  */
-PRIVATE void (*i386_excp_handlers[I386_NUM_EXCEPTIONS])(const struct exception *, const struct context *) = {
+PRIVATE i386_exception_handler_fn i386_excp_handlers[I386_NUM_EXCEPTIONS] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL
@@ -116,10 +116,7 @@ PUBLIC void do_excp(const struct exception *excp, const struct context *ctx)
  * @note This function does not check if a handler is already set for
  * the target hardware exception.
  */
-PUBLIC void i386_excp_set_handler(
-	int num,
-	void (*handler)(const struct exception *, const struct context *)
-)
+PUBLIC void i386_excp_set_handler(int num, i386_exception_handler_fn handler)
 {
 	i386_excp_handlers[num] = handler;
 }
