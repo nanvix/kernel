@@ -1,8 +1,8 @@
 /*
  * MIT License
  *
- * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
- *              2017-2018 Davidson Francis     <davidsondfgl@gmail.com>
+ * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ *              2018 Davidson Francis     <davidsondfgl@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,25 +23,29 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_OR1K_OR1K_H_
-#define ARCH_OR1K_OR1K_H_
+#include <arch/or1k/pic.h>
+#include <nanvix/const.h>
 
+/**
+ * @brief Masks of interrupt levels.
+ *
+ * Lookup table for masks of interrupt levels.
+ */
+PUBLIC uint32_t intlvl_masks[OR1K_NUM_INTLVL] = {
+	OR1K_INTLVL_MASK_0,
+	OR1K_INTLVL_MASK_1,
+	OR1K_INTLVL_MASK_2,
+	OR1K_INTLVL_MASK_3,
+	OR1K_INTLVL_MASK_4,
+	OR1K_INTLVL_MASK_5
+};
 
-	#ifndef TARGET_OR1K_PC_H_
-	#error "include <target/or1k/pc.h> instead"
-	#endif
+/**
+ * Current interrupt mask of the underlying or1k core.
+ */
+PUBLIC uint32_t currmask = OR1K_INTLVL_MASK_5;
 
-	/**
-	 * @defgroup or1k Architecture
-	 * @ingroup or1k-pc
-	 */
- 	#include <arch/or1k/clock.h>
-	#include <arch/or1k/core.h>
-	#include <arch/or1k/cpu.h>
-	#include <arch/or1k/excp.h>
-	#include <arch/or1k/int.h>
-	#include <arch/or1k/io.h>	
-	#include <arch/or1k/mem.h>
-	#include <arch/or1k/pic.h>	
-
-#endif /* ARCH_OR1K_OR1K_H_ */
+/**
+ * Current interrupt level of the underlying or1k core.
+ */
+PUBLIC int currlevel = OR1K_INTLVL_0;
