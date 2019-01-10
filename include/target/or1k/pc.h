@@ -64,7 +64,7 @@
 	/**
 	 * @brief Number of exceptions in the OR1K PC target.
 	 */
-	#define _HAL_NUM_EXCEPTION OR1K_NUM_EXCEPTION
+	#define _HAL_NUM_EXCEPTIONS OR1K_NUM_EXCEPTIONS
 
 /*============================================================================*
  * Memory Interface                                                           *
