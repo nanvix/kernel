@@ -35,6 +35,7 @@
 /**@{*/
 
 	#include <nanvix/const.h>
+	#include <arch/or1k/context.h>
 
 	/**
 	 * @name Provided Interface

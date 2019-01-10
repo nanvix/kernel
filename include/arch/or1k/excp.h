@@ -74,14 +74,218 @@
 	 * @cond or1k
 	 */
 	/**@{*/
-	#define __exception_struct          /**< @ref exception              */
-	#define __hal_exception_set_handler /**< hal_exception_set_handler() */
+	#define __exception_struct      /**< @ref exception               */
+	#define __exception_get_addr    /**< @ref exception_get_addr()    */
+	#define __exception_get_instr   /**< @ref exception_get_instr()   */
+	#define __exception_get_num     /**< @ref exception_get_num()     */
+	#define __exception_set_handler /**< @ref exception_set_handler() */
+	/**@}*/
+	/**@endcond*/
+
+	/**
+	 * @brief Exception information size (in bytes).
+	 */
+	#define OR1K_EXCEPTION_SIZE 12
+
+	/**
+	 * @name Offsets to the Exception Information structure.
+	 *
+	 * @see exception
+	 */
+	/**@{*/
+	#define OR1K_EXCEPTION_NUM   0 /**< Exception Number      */
+	#define OR1K_EXCEPTION_EEAR  4 /**< Exception Address     */
+	#define OR1K_EXCEPTION_EEPC  8 /**< Saved Program Counter */
+	/**@}*/
+
+	/**
+	 * @brief Number of exceptions in the or1k core.
+	 */
+	#define OR1K_NUM_EXCEPTIONS 9
+
+	/**
+	 * @name or1k Exception Codes
+	 */
+	/**@{*/
+	#define OR1K_EXCP_RESET                 0 /**@< Reset exception          */
+	#define OR1K_EXCP_BUSERROR              1 /**@< Bus Error Exception      */
+	#define OR1K_EXCP_PAGE_FAULT            2 /**@< Page fault Exception     */
+	#define OR1K_EXCP_ALIGNMENT             3 /**@< Alignment Exception      */
+	#define OR1K_EXCP_ILLEGAL_INSTRUCTION   4 /**@< Illegal Instruction      */
+	#define OR1K_EXCP_TLB_FAULT             5 /**@< Invalid Opcode Exception */
+	#define OR1K_EXCP_RANGE                 6 /**@< TLB Fault                */
+	#define OR1K_EXCP_FLOAT_POINT           7 /**@< Floating Point Exception */
+	#define OR1K_EXCP_TRAP                  8 /**@< Trap Exception           */
+	/**@}*/
+
+	/**
+	 * @brief Exception Codes
+	 *
+	 * @cond or1k
+	 */
+	/**@*/
+	#define EXCP_INVALID_OPCODE      OR1K_EXCP_ILLEGAL_INSTRUCTION  /**< Invalid Opcode     */
+	#define EXCP_PAGE_FAULT          OR1K_EXCP_PAGE_FAULT           /**< Page Fault         */
+	#define EXCP_PAGE_PROTECTION     OR1K_EXCP_PAGE_FAULT           /**< Page Protection    */
+	#define EXCP_GENERAL_PROTECTION  OR1K_EXCP_RESET                /**< General Protection */
 	/**@}*/
 	/**@endcond*/
 
 /**@endcond*/
 
 #ifndef _ASM_FILE_
+
+	#include <nanvix/const.h>
+	#include <arch/or1k/context.h>
+	#include <arch/or1k/mmu.h>
+	#include <stdint.h>
+
+	/**
+	 * @brief Exception information.
+	 *
+	 * @cond or1k
+	 */
+	struct exception
+	{
+		uint32_t num;    /**< Exception number.      */
+		uint32_t eear;   /**< Exception address.     */
+		uint32_t epcr;   /**< Saved program counter. */
+	} __attribute__((packed));
+	/**@endcond*/
+
+	/**
+	 * @brief Exception handler.
+	 */
+	typedef void (*or1k_exception_handler_fn)(const struct exception *, const struct context *);
+
+	/**
+	 * @brief Gets the number of an exception.
+	 *
+	 * The or1k_excp_get_num() function gets the exception number
+	 * stored in the exception information structure pointed to by @p
+	 * excp.
+	 *
+	 * @param excp Target exception information structure.
+	 *
+	 * @returns The exception number stored in the exception
+	 * information structure pointed to by @p excp.
+	 *
+	 * @author Davidson Francis
+	 */
+	static inline int or1k_excp_get_num(const struct exception *excp)
+	{
+		return (excp->num);
+	}
+
+	/**
+	 * @see or1k_excp_get_num().
+	 *
+	 * @cond or1k
+	 */
+	static inline int exception_get_num(const struct exception *excp)
+	{
+		return (or1k_excp_get_num(excp));
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Gets the address of an exception.
+	 *
+	 * The or1k_excp_get_addr() function gets the exception address
+	 * stored in the exception information structure pointed to by @p
+	 * excp.
+	 *
+	 * @param excp Target exception information structure.
+	 *
+	 * @returns The exception address stored in the exception
+	 * information structure pointed to by @p excp.
+	 *
+	 * @author Davidson Francis
+	 */
+	static inline vaddr_t or1k_excp_get_addr(const struct exception *excp)
+	{
+		return (excp->eear);
+	}
+
+	/**
+	 * @see or1k_excp_get_addr().
+	 *
+	 * @cond or1k
+	 */
+	static inline int exception_get_addr(const struct exception *excp)
+	{
+		return (or1k_excp_get_addr(excp));
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Gets the program counter at an exception.
+	 *
+	 * The or1k_excp_get_num() function gets the program counter
+	 * stored in the exception information structure pointed to by @p
+	 * excp.
+	 *
+	 * @param excp Target exception information structure.
+	 *
+	 * @returns The program counter stored in the exception
+	 * information structure pointed to by @p excp.
+	 *
+	 * @author Davidson Francis
+	 */
+	static inline vaddr_t or1k_excp_get_epcr(const struct exception *excp)
+	{
+		return (excp->epcr);
+	}
+
+	/**
+	 * @see or1k_excp_get_epcr().
+	 *
+	 * @cond or1k
+	 */
+	static inline int exception_get_instr(const struct exception *excp)
+	{
+		return (or1k_excp_get_epcr(excp));
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Sets a handler for an exception.
+	 *
+	 * @param num     Number of the target exception.
+	 * @param handler Exception handler.
+	 *
+	 * @note This function does not check if a handler is already
+	 * set for the target hardware exception.
+	 *
+	 */
+	EXTERN void or1k_excp_set_handler(int num, or1k_exception_handler_fn handler);
+
+	/**
+	 * @see or1k_excp_set_handler()
+	 *
+	 * @cond or1k
+	 */
+	static inline void exception_set_handler(int num, or1k_exception_handler_fn handler)
+	{
+		or1k_excp_set_handler(num, handler);
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Low-level exception dispatcher.
+	 */
+	EXTERN void _do_excp(void);
+
+	/**
+	 * @brief High-level exception dispatcher.
+	 *
+	 * @brief excp Exception information.
+	 * @brief ctx  Saved execution context.
+	 *
+	 * @note This function is called from assembly code.
+	 */
+	EXTERN void do_excp(const struct exception *excp, const struct context *ctx);
+
 #endif /* _ASM_FILE_ */
 
 /**@}*/
