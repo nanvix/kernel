@@ -66,27 +66,14 @@
 	/**@}*/
 
 	/**
-	 * @brief Disables hardware interrupts.
+	 * @brief High-level hardware interrupt dispatcher.
 	 *
-	 * The or1k_cli() function disables all hardware interrupts in the
-	 * underlying or1k core.
-	 */
-	static inline void or1k_cli(void)
-	{
-		 or1k_mtspr(OR1K_SPR_SR, or1k_mfspr(OR1K_SPR_SR) & ~(OR1K_SPR_SR_IEE
-		 	| OR1K_SPR_SR_TEE));
-	}
-
-	/**
-	 * @see or1k_cli()
+	 * @param num Number of triggered hardware interrupt.
+	 * @param ctx Interrupted execution context.
 	 *
-	 * @cond or1k
+	 * @note This function is called from assembly code.
 	 */
-	static inline void hal_disable_interrupts(void)
-	{
-		or1k_cli();
-	}
-	/**@endcond*/
+	EXTERN void or1k_do_hwint(int num, const struct context *ctx);
 
 	/**
 	 * @brief Enables hardware interrupts.
@@ -94,7 +81,7 @@
 	 * The or1k_sti() function enables all hardware interrupts in the
 	 * underlying or1k core.
 	 */
-	static inline void or1k_sti(void)
+	static inline void or1k_hwint_enable(void)
 	{
 		or1k_mtspr(OR1K_SPR_SR, or1k_mfspr(OR1K_SPR_SR) | OR1K_SPR_SR_IEE
 			| OR1K_SPR_SR_TEE);
@@ -107,7 +94,49 @@
 	 */
 	static inline void hal_enable_interrupts(void)
 	{
-		or1k_sti();
+		or1k_hwint_enable();
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Disables hardware interrupts.
+	 *
+	 * The or1k_cli() function disables all hardware interrupts in the
+	 * underlying or1k core.
+	 */
+	static inline void or1k_hwint_disable(void)
+	{
+		 or1k_mtspr(OR1K_SPR_SR, or1k_mfspr(OR1K_SPR_SR) & ~(OR1K_SPR_SR_IEE
+		 	| OR1K_SPR_SR_TEE));
+	}
+
+	/**
+	 * @see or1k_cli()
+	 *
+	 * @cond or1k
+	 */
+	static inline void hal_disable_interrupts(void)
+	{
+		or1k_hwint_disable();
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Sets a handler for a hardware interrupt.
+	 *
+	 * @param num     Number of the target hardware interrupt.
+	 * @param handler Hardware interrupt handler.
+	 */
+	EXTERN void or1k_hwint_handler_set(int num, void (*handler)(int));
+
+	/**
+	 * @see or1k_hwint_handler_set()
+	 *
+	 * @cond or1k
+	 */
+	static inline void hal_interrupt_set_handler(int num, void (*handler)(int))
+	{
+		or1k_hwint_handler_set(num, handler);
 	}
 	/**@endcond*/
 

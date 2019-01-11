@@ -23,37 +23,48 @@
  * SOFTWARE.
  */
 
+#include <arch/or1k/context.h>
+#include <arch/or1k/int.h>
 #include <nanvix/const.h>
-#include <nanvix/hal/interrupt.h>
+#include <nanvix/klib.h>
 
 /**
  * @brief Interrupt handlers.
  */
-PRIVATE hal_interrupt_handler_t or1k_handlers[OR1K_NUM_HWINT] = 
-	{ NULL, NULL, NULL };
+PRIVATE void (*or1k_handlers[OR1K_NUM_HWINT])(int) = {
+	NULL, NULL, NULL
+};
 
 /**
- * @brief Hardware interrupt dispatcher.
+ * @brief High-level hardware interrupt dispatcher.
  *
- * @param irq Interrupt request.
+ * The do_hwint() function dispatches a hardware interrupt request
+ * that was triggered to a previously-registered handler. If no
+ * function was previously registered to handle the triggered hardware
+ * interrupt request, this function returns immediately.
+ *
+ * @param num Interrupt request.
+ * @param ctx Interrupted execution context.
  *
  * @note This function is called from assembly code.
  */
-PUBLIC void do_hwint(int irq)
+PUBLIC void or1k_do_hwint(int num, const struct context *ctx)
 {
+	UNUSED(ctx);
+	
 	/* Nothing to do. */
-	if (or1k_handlers[irq] == NULL)
+	if (or1k_handlers[num] == NULL)
 		return;
 
-	or1k_handlers[irq](irq);
+	or1k_handlers[num](num);
 }
 
 /**
- * The hal_interrupt_set_handler() function sets the function pointed
- * to by @p handler as the handler for the hardware interrupt whose
+ * The or1k_hwint_handler_set() function sets the function pointed to
+ * by @p handler as the handler for the hardware interrupt whose
  * number is @p num.
  */
-PUBLIC void hal_interrupt_set_handler(int num, hal_interrupt_handler_t handler)
+PUBLIC void or1k_hwint_handler_set(int num, void (*handler)(int))
 {
 	or1k_handlers[num] = handler;
 }
