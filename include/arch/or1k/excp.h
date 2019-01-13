@@ -45,27 +45,31 @@
 	 * handler.
 	 */
 #ifdef OR1K_HAVE_SHADOW_GPRS
-	#define OR1K_EXCEPTION_STORE_GPR2  l.mtspr r0, r2, OR1K_SPR_SHADOW_GPR(2)
-	#define OR1K_EXCEPTION_LOAD_GPR2   l.mfspr r2, r0, OR1K_SPR_SHADOW_GPR(2)
-	#define OR1K_EXCEPTION_STORE_GPR3  l.mtspr r0, r3, OR1K_SPR_SHADOW_GPR(3)
-	#define OR1K_EXCEPTION_LOAD_GPR3   l.mfspr r3, r0, OR1K_SPR_SHADOW_GPR(3)
-	#define OR1K_EXCEPTION_STORE_GPR4  l.mtspr r0, r4, OR1K_SPR_SHADOW_GPR(4)
-	#define OR1K_EXCEPTION_LOAD_GPR4   l.mfspr r4, r0, OR1K_SPR_SHADOW_GPR(4)
-	#define OR1K_EXCEPTION_STORE_GPR5  l.mtspr r0, r5, OR1K_SPR_SHADOW_GPR(5)
-	#define OR1K_EXCEPTION_LOAD_GPR5   l.mfspr r5, r0, OR1K_SPR_SHADOW_GPR(5)
-	#define OR1K_EXCEPTION_STORE_GPR6  l.mtspr r0, r6, OR1K_SPR_SHADOW_GPR(6)
-	#define OR1K_EXCEPTION_LOAD_GPR6   l.mfspr r6, r0, OR1K_SPR_SHADOW_GPR(6)
+	#define OR1K_EXCEPTION_STORE_SP        l.mtspr r0,  r1, OR1K_SPR_SHADOW_GPR(1)
+	#define OR1K_EXCEPTION_LOAD_SP(reg)    l.mfspr reg, r0, OR1K_SPR_SHADOW_GPR(1)
+	#define OR1K_EXCEPTION_STORE_GPR2      l.mtspr r0,  r2, OR1K_SPR_SHADOW_GPR(2)
+	#define OR1K_EXCEPTION_LOAD_GPR2(reg)  l.mfspr reg, r0, OR1K_SPR_SHADOW_GPR(2)
+	#define OR1K_EXCEPTION_STORE_GPR3      l.mtspr r0,  r3, OR1K_SPR_SHADOW_GPR(3)
+	#define OR1K_EXCEPTION_LOAD_GPR3(reg)  l.mfspr reg, r0, OR1K_SPR_SHADOW_GPR(3)
+	#define OR1K_EXCEPTION_STORE_GPR4      l.mtspr r0,  r4, OR1K_SPR_SHADOW_GPR(4)
+	#define OR1K_EXCEPTION_LOAD_GPR4(reg)  l.mfspr reg, r0, OR1K_SPR_SHADOW_GPR(4)
+	#define OR1K_EXCEPTION_STORE_GPR5      l.mtspr r0,  r5, OR1K_SPR_SHADOW_GPR(5)
+	#define OR1K_EXCEPTION_LOAD_GPR5(reg)  l.mfspr reg, r0, OR1K_SPR_SHADOW_GPR(5)
+	#define OR1K_EXCEPTION_STORE_GPR6      l.mtspr r0,  r6, OR1K_SPR_SHADOW_GPR(6)
+	#define OR1K_EXCEPTION_LOAD_GPR6(reg)  l.mfspr reg, r0, OR1K_SPR_SHADOW_GPR(6)
 #else
-	#define OR1K_EXCEPTION_STORE_GPR2  l.sw 0x64(r0), r2
-	#define OR1K_EXCEPTION_LOAD_GPR2   l.lwz r2, 0x64(r0)
-	#define OR1K_EXCEPTION_STORE_GPR3  l.sw  0x68(r0), r3
-	#define OR1K_EXCEPTION_LOAD_GPR3   l.lwz r3, 0x68(r0)
-	#define OR1K_EXCEPTION_STORE_GPR4  l.sw  0x6c(r0), r4
-	#define OR1K_EXCEPTION_LOAD_GPR4   l.lwz r4, 0x6c(r0)
-	#define OR1K_EXCEPTION_STORE_GPR5  l.sw  0x70(r0), r5
-	#define OR1K_EXCEPTION_LOAD_GPR5   l.lwz r5, 0x70(r0)
-	#define OR1K_EXCEPTION_STORE_GPR6  l.sw  0x74(r0), r6
-	#define OR1K_EXCEPTION_LOAD_GPR6   l.lwz r6, 0x74(r0)
+	#define OR1K_EXCEPTION_STORE_SP        l.sw 0x80(r0), r1
+	#define OR1K_EXCEPTION_LOAD_SP(reg)    l.lwz reg, 0x80(r0)
+	#define OR1K_EXCEPTION_STORE_GPR2      l.sw 0x64(r0), r2
+	#define OR1K_EXCEPTION_LOAD_GPR2(reg)  l.lwz reg, 0x64(r0)
+	#define OR1K_EXCEPTION_STORE_GPR3      l.sw  0x68(r0), r3
+	#define OR1K_EXCEPTION_LOAD_GPR3(reg)  l.lwz reg, 0x68(r0)
+	#define OR1K_EXCEPTION_STORE_GPR4      l.sw  0x6c(r0), r4
+	#define OR1K_EXCEPTION_LOAD_GPR4(reg)  l.lwz reg, 0x6c(r0)
+	#define OR1K_EXCEPTION_STORE_GPR5      l.sw  0x70(r0), r5
+	#define OR1K_EXCEPTION_LOAD_GPR5(reg)  l.lwz reg, 0x70(r0)
+	#define OR1K_EXCEPTION_STORE_GPR6      l.sw  0x74(r0), r6
+	#define OR1K_EXCEPTION_LOAD_GPR6(reg)  l.lwz reg, 0x74(r0)
 #endif
 
 	/**
@@ -95,7 +99,7 @@
 	/**@{*/
 	#define OR1K_EXCEPTION_NUM   0 /**< Exception Number      */
 	#define OR1K_EXCEPTION_EEAR  4 /**< Exception Address     */
-	#define OR1K_EXCEPTION_EEPC  8 /**< Saved Program Counter */
+	#define OR1K_EXCEPTION_EPCR  8 /**< Saved Program Counter */
 	/**@}*/
 
 	/**

@@ -26,10 +26,10 @@
 OUTPUT_FORMAT("elf32-or1k")
 ENTRY(start)
 
-SECTIONS 
+SECTIONS
 {
 	EXCEPTIONS = .;
-	
+
 	KSTART = .;
 
 	/* Bootstrap section. */
@@ -38,36 +38,34 @@ SECTIONS
 		hal/arch/or1k/hooks.o
 		hal/arch/or1k/boot.o *(.bootstrap)
 	}
-	
-	. += 0xc0000000;
 
 	/* Kernel code section. */
-	.text ALIGN(8192) : AT(ADDR(.text) - 0xc0000000)
+	.text ALIGN(8192) : AT(ADDR(.text))
 	{
 		*(.text)
 		*(.rodata)
 	}
-   
+
 	/* Initialized kernel data section. */
-   .data ALIGN(8192) : AT(ADDR(.data) - 0xc0000000)
-   {
-       *(.data)
-   }
-   
-   /* Uninitialized kernel data section. */
-   .bss : AT(ADDR(.bss) - 0xc0000000)
-   {
-       *(.bss)
-   }
-   
-   . =ALIGN(8192);
-	
-   KDATA_END = .;
-   
-   /* Discarded. */
-   /DISCARD/ :
-   {
-        *(.comment)
-        *(.note)
-   }
+	.data ALIGN(8192) : AT(ADDR(.data))
+	{
+		*(.data)
+	}
+
+	/* Uninitialized kernel data section. */
+	.bss : AT(ADDR(.bss))
+	{
+		*(.bss)
+	}
+
+	. =ALIGN(8192);
+
+	KDATA_END = .;
+
+	/* Discarded. */
+	/DISCARD/ :
+	{
+		*(.comment)
+		*(.note)
+	}
 }

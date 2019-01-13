@@ -38,12 +38,211 @@
 /* Must come first. */
 #define _ASM_FILE_
 
+#include <arch/or1k/context.h>
 #include <arch/or1k/core.h>
 #include <arch/or1k/mmu.h>
 #include <arch/or1k/regs.h>
 #include <arch/or1k/excp.h>
 
-/* Exported symbols. */
+/**
+ * @brief Size of red zone (in bytes).
+ */
+#define REDZONE_SIZE 128
+
+/**
+ * @name Aliases for Registers
+ */
+/**@{*/
+#define sp r1 /**< Stack Pointer Pointer        */
+#define bp r2 /**< Stack Base Pointer Register  */
+/**@}*/
+
+.section .text
+
+/*============================================================================*
+ * or1k_redzone_alloc()                                                       *
+ *============================================================================*/
+
+/*
+ * Allocates the red zone in the current stack frame.
+ */
+.macro redzone_alloc
+	l.addi sp, sp, -REDZONE_SIZE
+.endm
+
+/*============================================================================*
+ * or1k_redzone_free()                                                        *
+ *============================================================================*/
+
+/*
+ * Frees the red zone in the current stack frame.
+ */
+.macro redzone_free
+	l.addi sp, sp, REDZONE_SIZE
+.endm
+
+/*============================================================================*
+ * or1k_context_save()                                                        *
+ *============================================================================*/
+
+/*
+ * Saves the current execution context.
+ */
+.macro or1k_context_save dest
+	
+	/* Save GPRs, except SP, BP and scratch registers r3 ... r6. */
+	l.sw OR1K_CONTEXT_R0(\dest),   r0
+	l.sw OR1K_CONTEXT_R7(\dest),   r7
+	l.sw OR1K_CONTEXT_R8(\dest),   r8
+	l.sw OR1K_CONTEXT_R9(\dest),   r9
+	l.sw OR1K_CONTEXT_R10(\dest), r10
+	l.sw OR1K_CONTEXT_R11(\dest), r11
+	l.sw OR1K_CONTEXT_R12(\dest), r12
+	l.sw OR1K_CONTEXT_R13(\dest), r13
+	l.sw OR1K_CONTEXT_R14(\dest), r14
+	l.sw OR1K_CONTEXT_R15(\dest), r15
+	l.sw OR1K_CONTEXT_R16(\dest), r16
+	l.sw OR1K_CONTEXT_R17(\dest), r17
+	l.sw OR1K_CONTEXT_R18(\dest), r18
+	l.sw OR1K_CONTEXT_R19(\dest), r19
+	l.sw OR1K_CONTEXT_R20(\dest), r20
+	l.sw OR1K_CONTEXT_R21(\dest), r21
+	l.sw OR1K_CONTEXT_R22(\dest), r22
+	l.sw OR1K_CONTEXT_R23(\dest), r23
+	l.sw OR1K_CONTEXT_R24(\dest), r24
+	l.sw OR1K_CONTEXT_R25(\dest), r25
+	l.sw OR1K_CONTEXT_R26(\dest), r26
+	l.sw OR1K_CONTEXT_R27(\dest), r27
+	l.sw OR1K_CONTEXT_R28(\dest), r28
+	l.sw OR1K_CONTEXT_R29(\dest), r29
+	l.sw OR1K_CONTEXT_R30(\dest), r30
+	l.sw OR1K_CONTEXT_R31(\dest), r31
+
+	/* Stack Pointer, r1. */
+	OR1K_EXCEPTION_LOAD_SP(r3)
+	l.sw OR1K_CONTEXT_R1(\dest),   r3
+
+	/* Frame pointer. */
+	OR1K_EXCEPTION_LOAD_GPR2(r3)
+	l.sw OR1K_CONTEXT_R2(\dest),   r3
+
+	/* EPCR. */
+	l.mfspr r3, r0, OR1K_SPR_EPCR_BASE
+	l.sw OR1K_CONTEXT_EPCR(\dest), r3
+
+	/* EEAR. */
+	l.mfspr r3, r0, OR1K_SPR_EEAR_BASE
+	l.sw OR1K_CONTEXT_EEAR(\dest), r3
+
+	/* ESR. */
+	l.mfspr r3, r0, OR1K_SPR_ESR_BASE
+	l.sw OR1K_CONTEXT_ESR(\dest),  r3
+
+	/* Scratch registers: r3 ... r6. */
+	OR1K_EXCEPTION_LOAD_GPR3(r3)
+	l.sw OR1K_CONTEXT_R3(\dest), r3
+	
+	OR1K_EXCEPTION_LOAD_GPR4(r3)
+	l.sw OR1K_CONTEXT_R4(\dest), r3
+
+	OR1K_EXCEPTION_LOAD_GPR5(r3)
+	l.sw OR1K_CONTEXT_R5(\dest), r3
+
+	OR1K_EXCEPTION_LOAD_GPR6(r3)
+	l.sw OR1K_CONTEXT_R6(\dest), r3
+
+.endm
+
+/*============================================================================*
+ * or1k_context_restore()                                                     *
+ *============================================================================*/
+
+/*
+ * Restores an execution context.
+ */
+.macro or1k_context_restore src
+
+	/* Load GPRs. */
+	l.lwz bp,  OR1K_CONTEXT_R2(\src)
+	l.lwz r4,  OR1K_CONTEXT_R4(\src)
+	l.lwz r5,  OR1K_CONTEXT_R5(\src)
+	l.lwz r6,  OR1K_CONTEXT_R6(\src)
+	l.lwz r7,  OR1K_CONTEXT_R7(\src)
+	l.lwz r8,  OR1K_CONTEXT_R8(\src)
+	l.lwz r9,  OR1K_CONTEXT_R9(\src)
+	l.lwz r10, OR1K_CONTEXT_R10(\src)
+	l.lwz r11, OR1K_CONTEXT_R11(\src)
+	l.lwz r12, OR1K_CONTEXT_R12(\src)
+	l.lwz r13, OR1K_CONTEXT_R13(\src)
+	l.lwz r14, OR1K_CONTEXT_R14(\src)
+	l.lwz r15, OR1K_CONTEXT_R15(\src)
+	l.lwz r16, OR1K_CONTEXT_R16(\src)
+	l.lwz r17, OR1K_CONTEXT_R17(\src)
+	l.lwz r18, OR1K_CONTEXT_R18(\src)
+	l.lwz r19, OR1K_CONTEXT_R19(\src)
+	l.lwz r20, OR1K_CONTEXT_R20(\src)
+	l.lwz r21, OR1K_CONTEXT_R21(\src)
+	l.lwz r22, OR1K_CONTEXT_R22(\src)
+	l.lwz r23, OR1K_CONTEXT_R23(\src)
+	l.lwz r24, OR1K_CONTEXT_R24(\src)
+	l.lwz r25, OR1K_CONTEXT_R25(\src)
+	l.lwz r26, OR1K_CONTEXT_R26(\src)
+	l.lwz r27, OR1K_CONTEXT_R27(\src)
+	l.lwz r28, OR1K_CONTEXT_R28(\src)
+	l.lwz r29, OR1K_CONTEXT_R29(\src)
+	l.lwz r30, OR1K_CONTEXT_R30(\src)
+	l.lwz r31, OR1K_CONTEXT_R31(\src)
+
+	/* Special Purpose Registers: EPCR, EEAR and ESR. */
+	l.lwz   r3, OR1K_CONTEXT_EPCR(\src)
+	l.mtspr r0, r3, OR1K_SPR_EPCR_BASE
+
+	l.lwz   r3, OR1K_CONTEXT_EEAR(\src)
+	l.mtspr r0, r3, OR1K_SPR_EEAR_BASE
+
+	l.lwz   r3, OR1K_CONTEXT_ESR(\src)
+	l.mtspr r0, r3, OR1K_SPR_ESR_BASE
+
+	/* Last scratch register, r3. */
+	l.lwz r3, OR1K_CONTEXT_R3(\src)
+
+	/* Stack Pointer, r1. */
+	l.lwz sp, OR1K_CONTEXT_R1(\src)
+
+.endm
+
+/*===========================================================================*
+ * _do_excp() macros                                                         *
+ *===========================================================================*/
+
+.macro _call_do_excp excp_number
+
+	/* Backup scratch registers. */
+	OR1K_EXCEPTION_STORE_GPR3
+	OR1K_EXCEPTION_STORE_GPR4
+	OR1K_EXCEPTION_STORE_GPR5
+	OR1K_EXCEPTION_STORE_GPR6
+
+	/* Save exception number. */
+	l.ori r6, r0, \excp_number
+
+	/* Jump into _do_excp. */
+	l.j _do_excp
+	l.nop
+
+.endm
+
+.macro _do_prologue
+
+	/* Save stack and base pointer. */
+	OR1K_EXCEPTION_STORE_SP
+	OR1K_EXCEPTION_STORE_GPR2
+
+.endm
+
+.macro _do_epilogue
+
+.endm
 
 /*============================================================================*
  * hardcoded hw exceptions                                                    *
@@ -65,22 +264,19 @@
  * Bus error
  */
 .org 0x200
-	l.nop
-	l.nop
+	_call_do_excp OR1K_EXCP_BUSERROR
 
 /*
  * Data page fault
  */
 .org 0x300
-	l.nop
-	l.nop
+	_call_do_excp OR1K_EXCP_PAGE_FAULT
 
 /*
  * Instruction page fault
  */
 .org 0x400
-	l.nop
-	l.nop
+	_call_do_excp OR1K_EXCP_PAGE_FAULT
 
 /*
  * Tick Timer
@@ -93,15 +289,13 @@
  * Alignment
  */
 .org 0x600
-	l.nop
-	l.nop
+	_call_do_excp OR1K_EXCP_ALIGNMENT
 
 /*
  * Illegal Instruction
  */
 .org 0x700
-	l.nop
-	l.nop
+	_call_do_excp OR1K_EXCP_ILLEGAL_INSTRUCTION
 
 /*
  * External interrupt
@@ -128,8 +322,7 @@
  * Range
  */
 .org 0xb00
-	l.nop
-	l.nop
+	_call_do_excp OR1K_EXCP_RANGE
 
 /*
  * System call
@@ -142,14 +335,86 @@
  * Floating point
  */
 .org 0xd00
-	l.nop
-	l.nop
+	_call_do_excp OR1K_EXCP_FLOAT_POINT
 
 /*
  * Trap
  */
 .org 0xe00
+	_call_do_excp OR1K_EXCP_TRAP
+
+/*===========================================================================*
+ * _do_excp()                                                                *
+ *===========================================================================*/
+
+/*
+ * Exception hook.
+ */
+_do_excp:
+	_do_prologue
+
+	/*
+	 * Save execution context
+	 * in the current stack.
+	 */
+	l.addi sp, sp, -OR1K_CONTEXT_SIZE
+	or1k_context_save sp
+
+	/*
+	 * Save a reference to execution context
+	 * into r4 (second parameter). The high-level
+	 * exception handler dispatcher will need it.
+	 *
+	 * r4 should not be used as a scratch register
+	 * from this point, until do_excp.
+	 */
+	l.ori  r4, sp, 0
+
+	/*
+	 * Save exception information
+	 * in the current stack.
+	 */
+	l.addi sp, sp, -OR1K_EXCEPTION_SIZE
+	l.sw OR1K_EXCEPTION_NUM (sp), r6
+
+	l.mfspr r3, r0, OR1K_SPR_EEAR_BASE
+	l.sw OR1K_EXCEPTION_EEAR(sp), r3
+	
+	l.mfspr r3, r0, OR1K_SPR_EPCR_BASE
+	l.sw OR1K_EXCEPTION_EPCR(sp), r3
+
+	/*
+	 * Save a reference to exception information
+	 * into r3 (first parameter). The high-level
+	 * exception handler dispatcher will need it.
+	 * 
+	 * r3 should not be used as a scratch register
+	 * from this point, until do_excp.
+	 */
+	l.ori  r3, sp, 0
+
+	/*
+	 * Call exception dispatcher.
+	 */
+	redzone_alloc
+	l.jal do_excp
 	l.nop
+	redzone_free
+
+	/*
+	 * Wipe out exception information
+	 * from current stack.
+	 */
+	l.addi sp, sp, OR1K_EXCEPTION_SIZE
+
+	/*
+	 * Restore saved execution context.
+	 */
+	or1k_context_restore sp
+
+	_do_epilogue
+
+	l.rfe
 	l.nop
 
 /*============================================================================*
@@ -235,11 +500,11 @@ boot_dtlb_miss_handler:
 
 d_not_pde:
 d_not_pte:
-	OR1K_EXCEPTION_LOAD_GPR2
-	OR1K_EXCEPTION_LOAD_GPR3
-	OR1K_EXCEPTION_LOAD_GPR4
-	OR1K_EXCEPTION_LOAD_GPR5
-	OR1K_EXCEPTION_LOAD_GPR6
+	OR1K_EXCEPTION_LOAD_GPR2(r2)
+	OR1K_EXCEPTION_LOAD_GPR3(r3)
+	OR1K_EXCEPTION_LOAD_GPR4(r4)
+	OR1K_EXCEPTION_LOAD_GPR5(r5)
+	OR1K_EXCEPTION_LOAD_GPR6(r6)
 	l.rfe
 	l.nop
 
@@ -325,10 +590,10 @@ boot_itlb_miss_handler:
 
 i_not_pde:
 i_not_pte:
-	OR1K_EXCEPTION_LOAD_GPR2
-	OR1K_EXCEPTION_LOAD_GPR3
-	OR1K_EXCEPTION_LOAD_GPR4
-	OR1K_EXCEPTION_LOAD_GPR5
-	OR1K_EXCEPTION_LOAD_GPR6
+	OR1K_EXCEPTION_LOAD_GPR2(r2)
+	OR1K_EXCEPTION_LOAD_GPR3(r3)
+	OR1K_EXCEPTION_LOAD_GPR4(r4)
+	OR1K_EXCEPTION_LOAD_GPR5(r5)
+	OR1K_EXCEPTION_LOAD_GPR6(r6)
 	l.rfe
 	l.nop
