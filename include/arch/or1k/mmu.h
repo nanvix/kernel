@@ -153,7 +153,6 @@
 	#define OR1K_PT_PPI_SPV_EX   0x40  /* Supervisor Execute. */
 
 #ifndef _ASM_FILE_
-#define _ASM_FILE_
 
 	#include <nanvix/klib.h>
 
