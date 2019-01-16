@@ -76,6 +76,7 @@
 #ifndef _ASM_FILE_
 
 	#include <arch/or1k/core.h>
+	#include <target/or1k/pc.h>
 	#include <nanvix/const.h>
 	#include <stdint.h>
 
@@ -140,7 +141,10 @@
 	 */
 	static inline void or1k_pic_ack(int intnum)
 	{
-		or1k_mtspr(OR1K_SPR_PICSR, (1UL << intnum));
+		if (intnum == OR1K_PC_INT_CLOCK)
+			or1k_mtspr(OR1K_SPR_TTMR, or1k_mfspr(OR1K_SPR_TTMR) & ~OR1K_SPR_TTMR_IP);
+		else
+			or1k_mtspr(OR1K_SPR_PICSR, (1UL << intnum));
 	}
 
 	/**
@@ -161,7 +165,10 @@
 	 */
 	static inline void or1k_pic_mask(int intnum)
 	{
-		or1k_mtspr(OR1K_SPR_PICMR, or1k_mfspr(OR1K_SPR_PICMR) & ~(1 << intnum));
+		if (intnum == OR1K_PC_INT_CLOCK)
+			or1k_mtspr(OR1K_SPR_SR, or1k_mfspr(OR1K_SPR_SR) & ~OR1K_SPR_SR_TEE);
+		else
+			or1k_mtspr(OR1K_SPR_PICMR, or1k_mfspr(OR1K_SPR_PICMR) & ~(1 << intnum));
 	}
 
 	/**

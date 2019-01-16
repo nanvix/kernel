@@ -25,6 +25,7 @@
 
 #include <arch/or1k/context.h>
 #include <arch/or1k/int.h>
+#include <arch/or1k/pic.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
 
@@ -34,6 +35,30 @@
 PRIVATE void (*or1k_handlers[OR1K_NUM_HWINT])(int) = {
 	NULL, NULL, NULL
 };
+
+/**
+ * @brief Gets the next irq pending to be served.
+ *
+ * @returns Returns the irq number available or 0
+ * if there's no one irq pending.
+ */
+PRIVATE int or1k_next_irq()
+{
+	unsigned picsr;
+	int bit;
+
+	bit   = 0;
+	picsr = or1k_mfspr(OR1K_SPR_PICSR);
+
+	while (!(picsr & 1) && bit < 32)
+	{
+		picsr >>= 1;	
+		bit++;
+	}
+
+	return ( (!picsr) ? 0 : bit );
+}
+
 
 /**
  * @brief High-level hardware interrupt dispatcher.
@@ -50,13 +75,43 @@ PRIVATE void (*or1k_handlers[OR1K_NUM_HWINT])(int) = {
  */
 PUBLIC void or1k_do_hwint(int num, const struct context *ctx)
 {
+	int interrupt;
 	UNUSED(ctx);
 	
-	/* Nothing to do. */
-	if (or1k_handlers[num] == NULL)
-		return;
+	/* 
+	 * If clock, lets handle immediately.
+	 *
+	 * Since clock interrupts do not use the PIC,
+	 * we cannnot use the approach below to find
+	 * a clock int.
+	 */
+	if (num == OR1K_PC_INT_CLOCK)
+	{
+		/* ack. */
+		or1k_pic_ack(num);
 
-	or1k_handlers[num](num);
+		/* Nothing to do. */
+		if (or1k_handlers[num] == NULL)
+			return;
+
+		or1k_handlers[num](num);
+	}
+	
+	/*
+	 * Lets also check for external interrupt, if
+	 * there's any pending, handle.
+	 */
+	while ((interrupt = or1k_next_irq()) != 0)
+	{
+		/* ack. */
+		or1k_pic_ack(interrupt);
+		
+		/* Nothing to do. */
+		if (or1k_handlers[interrupt] == NULL)
+			return;
+
+		or1k_handlers[interrupt](interrupt);
+	}
 }
 
 /**

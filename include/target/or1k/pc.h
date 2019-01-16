@@ -40,8 +40,6 @@
 	#define __hal_stdout_write
 	/**@}*/
 
-	#include <arch/or1k/or1k.h>
-
 /*============================================================================*
  * Interrupt and Exception Interfaces                                         *
  *============================================================================*/
@@ -152,6 +150,7 @@
  * Debug Interface                                                            *
  *============================================================================*/
 
+#ifndef _ASM_FILE_
 	/**
 	 * @see console_init()
 	 */
@@ -167,6 +166,12 @@
 		((void)buf);
 		((void)n);
 	}
+#endif
+
+/* Architecture interfaces. */
+#ifndef _ASM_FILE_
+	#include <arch/or1k/or1k.h>
+#endif
 
 /**@}*/
 

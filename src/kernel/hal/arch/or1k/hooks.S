@@ -43,6 +43,7 @@
 #include <arch/or1k/mmu.h>
 #include <arch/or1k/regs.h>
 #include <arch/or1k/excp.h>
+#include <target/or1k/pc.h>
 
 /**
  * @brief Size of red zone (in bytes).
@@ -212,10 +213,12 @@
 .endm
 
 /*===========================================================================*
- * _do_excp() macros                                                         *
+ * _do_handler() macros                                                      *
  *===========================================================================*/
 
-.macro _call_do_excp excp_number
+.macro _do_handler address handler handler_number
+
+.org \address
 
 	/* Backup scratch registers. */
 	OR1K_EXCEPTION_STORE_GPR3
@@ -223,11 +226,11 @@
 	OR1K_EXCEPTION_STORE_GPR5
 	OR1K_EXCEPTION_STORE_GPR6
 
-	/* Save exception number. */
-	l.ori r6, r0, \excp_number
+	/* Save handler number. */
+	l.ori r6, r0, \handler_number
 
-	/* Jump into _do_excp. */
-	l.j _do_excp
+	/* Jump into \handler. */
+	l.j \handler
 	l.nop
 
 .endm
@@ -253,56 +256,14 @@
  * specific addresses.
  */
 
-/*
- * Reset
- */
-.org 0x100
-	l.j start
-	l.nop
-
-/*
- * Bus error
- */
-.org 0x200
-	_call_do_excp OR1K_EXCP_BUSERROR
-
-/*
- * Data page fault
- */
-.org 0x300
-	_call_do_excp OR1K_EXCP_PAGE_FAULT
-
-/*
- * Instruction page fault
- */
-.org 0x400
-	_call_do_excp OR1K_EXCP_PAGE_FAULT
-
-/*
- * Tick Timer
- */
-.org 0x500
-	l.nop
-	l.nop
-
-/*
- * Alignment
- */
-.org 0x600
-	_call_do_excp OR1K_EXCP_ALIGNMENT
-
-/*
- * Illegal Instruction
- */
-.org 0x700
-	_call_do_excp OR1K_EXCP_ILLEGAL_INSTRUCTION
-
-/*
- * External interrupt
- */
-.org 0x800
-	l.nop
-	l.nop
+_do_handler 0x100, _do_start, OR1K_EXCP_RESET               /* Reset.                  */
+_do_handler 0x200, _do_excp,  OR1K_EXCP_BUSERROR            /* Bus error.              */
+_do_handler 0x300, _do_excp,  OR1K_EXCP_PAGE_FAULT          /* Data page fault.        */
+_do_handler 0x400, _do_excp,  OR1K_EXCP_PAGE_FAULT          /* Instruction page fault. */
+_do_handler 0x500, _do_hwint, OR1K_PC_INT_CLOCK             /* Tick timer.             */
+_do_handler 0x600, _do_excp,  OR1K_EXCP_ALIGNMENT           /* Alignment.              */
+_do_handler 0x700, _do_excp,  OR1K_EXCP_ILLEGAL_INSTRUCTION /* Illegal Instruction.    */
+_do_handler 0x800, _do_hwint, OR1K_PC_INT_EXTERNAL          /* External Interrupt.     */
 
 /*
  * DTLB-miss
@@ -318,30 +279,11 @@
 	l.j boot_itlb_miss_handler
 	l.nop
 
-/*
- * Range
- */
-.org 0xb00
-	_call_do_excp OR1K_EXCP_RANGE
 
-/*
- * System call
- */
-.org 0xc00
-	l.nop
-	l.nop
-
-/*
- * Floating point
- */
-.org 0xd00
-	_call_do_excp OR1K_EXCP_FLOAT_POINT
-
-/*
- * Trap
- */
-.org 0xe00
-	_call_do_excp OR1K_EXCP_TRAP
+_do_handler 0xb00, _do_excp, OR1K_EXCP_RANGE                /* Range.                  */
+_do_handler 0xc00, _syscall, 0                              /* Syscall.                */
+_do_handler 0xd00, _do_excp, OR1K_EXCP_FLOAT_POINT          /* Floating point.         */
+_do_handler 0xe00, _do_excp, OR1K_EXCP_TRAP                 /* Trap.                   */
 
 /*===========================================================================*
  * _do_excp()                                                                *
@@ -415,6 +357,95 @@ _do_excp:
 	_do_epilogue
 
 	l.rfe
+	l.nop
+
+/*===========================================================================*
+ * _do_hwint()                                                               *
+ *===========================================================================*/
+
+/*
+ * Interrupt hook.
+ */
+_do_hwint:
+	_do_prologue
+
+	/*
+	 * Save execution context
+	 * in the current stack.
+	 */
+	l.addi sp, sp, -OR1K_CONTEXT_SIZE
+	or1k_context_save sp
+
+	/*
+	 * Save a reference to execution context
+	 * into r4 (second parameter). The high-level
+	 * interrupt handler will need it.
+	 *
+	 * r4 should not be used as a scratch register
+	 * from this point, until do_hwint.
+	 */
+	l.ori r4, sp, 0
+
+	/*
+	 * Save a reference to interrupt information
+	 * into r3 (first parameter). The high-level
+	 * interrupt handler will need it.
+	 * 
+	 * r3 should not be used as a scratch register
+	 * from this point, until do_hwint.
+	 */
+	l.or r3, r0, r6
+
+	/*
+	 * Call interrupt handler.
+	 */
+	redzone_alloc
+	l.jal or1k_do_hwint
+	l.nop
+	redzone_free
+
+	/*
+	 * Restore saved execution context.
+	 */
+	or1k_context_restore sp
+
+	_do_epilogue
+
+	l.rfe
+	l.nop
+
+/*===========================================================================*
+ * _syscall()                                                                *
+ *===========================================================================*/
+
+/*
+ * System call hook.
+ */
+_syscall:
+	l.nop
+	l.nop
+
+/*===========================================================================*
+ * _do_start()                                                               *
+ *===========================================================================*/
+
+/*
+ * The very initial beggining of the OpenRISC processor is here, so it's
+ * important to leave the registers in an initial state before the
+ * start() is called.
+ */
+
+_do_start:
+	l.ori r1, r0,  0; l.ori r2,  r0, 0; l.ori r3,  r0, 0; l.ori r4,  r0, 0;
+	l.ori r5, r0,  0; l.ori r6,  r0, 0; l.ori r7,  r0, 0; l.ori r8,  r0, 0;
+	l.ori r9, r0,  0; l.ori r10, r0, 0; l.ori r11, r0, 0; l.ori r12, r0, 0;
+	l.ori r13, r0, 0; l.ori r14, r0, 0; l.ori r15, r0, 0; l.ori r16, r0, 0;
+	l.ori r17, r0, 0; l.ori r18, r0, 0; l.ori r19, r0, 0; l.ori r20, r0, 0;
+	l.ori r21, r0, 0; l.ori r22, r0, 0; l.ori r23, r0, 0; l.ori r24, r0, 0;
+	l.ori r25, r0, 0; l.ori r26, r0, 0; l.ori r27, r0, 0; l.ori r28, r0, 0;
+	l.ori r29, r0, 0; l.ori r30, r0, 0; l.ori r31, r0, 0;
+
+	l.jal start
 	l.nop
 
 /*============================================================================*
