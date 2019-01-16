@@ -42,9 +42,9 @@ PUBLIC void or1k_clock_init(unsigned freq)
 		while (1);
 
 	/* Clock rate. */
-	rate = (CPU_FREQUENCY << 2)/freq;
+	rate = (CPU_FREQUENCY)/freq;
 
 	/* Ensures that the clock is disabled. */
 	or1k_mtspr(OR1K_SPR_TTCR, 0);
-	or1k_mtspr(OR1K_SPR_TTMR, OR1K_SPR_TTMR_CR | OR1K_SPR_TTMR_IE | rate);
+	or1k_mtspr(OR1K_SPR_TTMR, OR1K_SPR_TTMR_RT | OR1K_SPR_TTMR_IE | rate);
 }
