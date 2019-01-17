@@ -129,12 +129,16 @@
 	 */
 	static inline unsigned or1k_mfspr(unsigned reg)
 	{
-		unsigned ret;
+		register unsigned ret
+			__asm__("r3") = (unsigned) 0;
+		register unsigned r5
+			__asm__("r5") = (unsigned) reg;
+	
 		__asm__ __volatile__
 		(
-			"l.mfspr %0, r0, %1\n"
+			"l.mfspr r3, r5, 0"
 			: "=r" (ret)
-			: "K" (reg)
+			: "r" (r5)
 		);
 		return (ret);
 	}
