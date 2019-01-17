@@ -112,7 +112,7 @@
 	#define PDE_SIZE   OR1K_PDE_SIZE   /**< Page Directory Entry Size */
 	/**@}*/
 	/**@endcond*/
-	
+
 	/**
 	 * Page table entry constants.
 	 */
@@ -129,16 +129,13 @@
 	/**
 	 * Page table new fields.
 	 */
-	#define OR1K_PT_COW     OR1K_PT_CC   /* Copy on write.     */
-	#define OR1K_PT_ZERO    OR1K_PT_CI   /* Demand zero.       */
-	#define OR1K_PT_FILL    OR1K_PT_WBC  /* Demand fill.       */
-	#define OR1K_PT_PRESENT OR1K_PT_WOM  /* Present in memory. */
+	#define OR1K_PT_PRESENT OR1K_PT_CI  /* Present in memory. */
 
 	/**
 	 * Page Protection Index, offset.
 	 */
 	#define OR1K_PT_PPI_OFFSET   0x6   /* PPI offset. */
-	
+
 	/**
 	 * Page Protection Index, data.
 	 */
@@ -183,10 +180,10 @@
 		unsigned accessed   :  1; /* Accessed?              */
 		unsigned wom        :  1; /* Weakly-Ordered Memory. */
 		unsigned wbc        :  1; /* Write-Back Cache.      */
-		unsigned ci         :  1; /* Cache Inhibit.         */
+		unsigned present    :  1; /* Present in memory.     */
 		unsigned cc         :  1; /* Cache Coherency.       */
 	};
-	
+
 	/**
 	 * @brief Page table entry.
 	 */
@@ -199,7 +196,7 @@
 		unsigned accessed   :  1; /* Accessed?              */
 		unsigned wom        :  1; /* Weakly-Ordered Memory. */
 		unsigned wbc        :  1; /* Write-Back Cache.      */
-		unsigned ci         :  1; /* Cache Inhibit.         */
+		unsigned present    :  1; /* Present in memory.     */
 		unsigned cc         :  1; /* Cache Coherency.       */
 	};
 
@@ -232,8 +229,7 @@
 	 */
 	static inline void pde_present_set(struct pde *pde, int set)
 	{
-		((void)pde);
-		((void)set);
+		pde->present = (set) ? 1 : 0;
 	}
 
 	/**
@@ -246,8 +242,7 @@
 	 */
 	static inline int pde_is_present(struct pde *pde)
 	{
-		((void)pde);
-		return (1);
+		return (pde->present);
 	}
 
 	/**
@@ -329,8 +324,7 @@
 	 */
 	static inline void pte_present_set(struct pte *pte, int set)
 	{
-		((void)pte);
-		((void)set);
+		pte->present = (set) ? 1 : 0;
 	}
 
 	/**
@@ -343,8 +337,7 @@
 	 */
 	static inline int pte_is_present(struct pte *pte)
 	{
-		((void)pte);
-		return (1);
+		return (pte->present);
 	}
 
 	/**
