@@ -36,7 +36,7 @@ SECTIONS
 	.bootstrap :
 	{
 		hal/arch/or1k/hooks.o
-		hal/arch/or1k/boot.o
+		hal/arch/or1k/boot_code.o
 	}
 
 	/* Kernel code section. */
