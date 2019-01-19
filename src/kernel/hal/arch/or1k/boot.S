@@ -43,7 +43,12 @@
 
 /* Exported symbols. */
 .globl start
+.globl kernel_pgtab
+.globl kpool_pgtab
 .globl idle_pgdir
+.globl dtlb_table
+.globl itlb_table
+.globl core0.kstack
 
 /*============================================================================*
  *                              bootstrap section                             *
@@ -169,69 +174,3 @@ _enable_mmu:
 
 	l.jr r9
 	l.nop
-
-/*----------------------------------------------------------------------------*
- * kernel_pgtab                                                               *
- *----------------------------------------------------------------------------*/
-
-/**
- * @brief Page table for kernel code and data.
- */
-.align OR1K_PAGE_SIZE
-kernel_pgtab:
-	.fill OR1K_PAGE_SIZE/OR1K_PTE_SIZE, OR1K_PTE_SIZE, 0
-
-/*----------------------------------------------------------------------------*
- * kpool_pgtab                                                                *
- *----------------------------------------------------------------------------*/
-
-/**
- * @brief Page table for kernel page pool.
- */
-.align OR1K_PAGE_SIZE
-kpool_pgtab:
-	.fill OR1K_PAGE_SIZE/OR1K_PTE_SIZE, OR1K_PTE_SIZE, 0
-
-/*----------------------------------------------------------------------------*
- * idle_pgdir                                                                 *
- *----------------------------------------------------------------------------*/
-
-/**
- * @brief Page directory of idle process.
- */
-.align OR1K_PAGE_SIZE
-idle_pgdir:
-	.fill 256, OR1K_PTE_SIZE, 0
-
-/*----------------------------------------------------------------------------*
- * dtlb                                                                       *
- *----------------------------------------------------------------------------*/
-
-/**
- * @brief dtlb entries
- */
-.align OR1K_PAGE_SIZE
-dtlb_table:
-	.fill 64, DWORD_SIZE, 0
-
-/*----------------------------------------------------------------------------*
- * itlb                                                                       *
- *----------------------------------------------------------------------------*/
-
-/**
- * @brief itlb entries
- */
-.align OR1K_PAGE_SIZE
-itlb_table:
-	.fill 64, DWORD_SIZE, 0
-
-/*----------------------------------------------------------------------------*
- * core0.kstack                                                               *
- *----------------------------------------------------------------------------*/
-
-/**
- * @brief Kernel stack for core 0.
- */
-.align OR1K_PAGE_SIZE
-core0.kstack:
-	.fill OR1K_PAGE_SIZE/OR1K_PTE_SIZE, OR1K_PTE_SIZE, 0

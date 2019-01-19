@@ -54,6 +54,12 @@
 /**@endif**/
 
 	/**
+	 * Kernel code and data addresses.
+	 */
+	EXTERN const unsigned KSTART_CODE;
+	EXTERN const unsigned KSTART_DATA;
+
+	/**
 	 * @brief Flushes the TLB.
 	 */
 	EXTERN int or1k_tlb_flush(void);

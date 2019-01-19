@@ -30,13 +30,13 @@ SECTIONS
 {
 	EXCEPTIONS = .;
 
-	KSTART = .;
+	KSTART_CODE = .;
 
 	/* Bootstrap section. */
 	.bootstrap :
 	{
 		hal/arch/or1k/hooks.o
-		hal/arch/or1k/boot.o *(.bootstrap)
+		hal/arch/or1k/boot.o
 	}
 
 	/* Kernel code section. */
@@ -46,9 +46,12 @@ SECTIONS
 		*(.rodata)
 	}
 
+	KSTART_DATA = ALIGN(8192);
+
 	/* Initialized kernel data section. */
 	.data ALIGN(8192) : AT(ADDR(.data))
 	{
+		hal/arch/or1k/boot_data.o
 		*(.data)
 	}
 
