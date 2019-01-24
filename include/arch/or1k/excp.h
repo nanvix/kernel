@@ -131,6 +131,7 @@
 	#define EXCP_INVALID_OPCODE      OR1K_EXCP_ILLEGAL_INSTRUCTION  /**< Invalid Opcode     */
 	#define EXCP_PAGE_FAULT          OR1K_EXCP_PAGE_FAULT           /**< Page Fault         */
 	#define EXCP_PAGE_PROTECTION     OR1K_EXCP_PAGE_FAULT           /**< Page Protection    */
+	#define EXCP_TLB_FAULT           OR1K_EXCP_TLB_FAULT            /**< TLB Fault          */
 	#define EXCP_GENERAL_PROTECTION  OR1K_EXCP_RESET                /**< General Protection */
 	/**@}*/
 	/**@endcond*/

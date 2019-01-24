@@ -23,6 +23,7 @@
  * SOFTWARE.
  */
 
+#include <arch/or1k/tlb.h>
 #include <nanvix/const.h>
 
 /**
@@ -30,4 +31,5 @@
  */
 PUBLIC void or1k_core_setup(void)
 {
+	or1k_tlb_init();
 }

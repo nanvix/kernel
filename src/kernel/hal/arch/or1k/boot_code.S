@@ -102,23 +102,23 @@ start:
 	l.ori  r1, r1, OR1K_PT_PRESENT
 	l.sw  OR1K_PTE_SIZE*193(r3), r1
 
-	/* Flush TLB. */
-	l.jal _boot_tlb_flush
-	l.nop
-
-	/* Enabling IMMU/DMMU */
-	l.jal _enable_mmu
-	l.nop
-
 	/* Setup stack. */
 	OR1K_LOAD_SYMBOL_2_GPR(r1, core0.kstack)
 	l.addi r1, r1,  OR1K_PAGE_SIZE
 	l.addi r1, r1, -DWORD_SIZE  /* Stack pointer. */
 	l.or   r2, r1,  r0          /* Frame pointer. */
 
+	/* Flush TLB. */
+	l.jal _boot_tlb_flush
+	l.nop
+
 	/* Setup or1k. */
 	OR1K_LOAD_SYMBOL_2_GPR(r3, or1k_core_setup)
 	l.jalr r3
+	l.nop
+
+	/* Enabling IMMU/DMMU */
+	l.jal _enable_mmu
 	l.nop
 
 	/* kmain. */
