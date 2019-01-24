@@ -244,7 +244,7 @@ PUBLIC int or1k_tlb_write(vaddr_t vaddr, paddr_t paddr)
 	 * Check if the virtual address belongs to
 	 * kernel or user.
 	 */
-	if (mm_is_kaddr(vaddr))
+	if (vaddr >= KSTART_CODE && vaddr < KMEM_SIZE)
 		user = 0;
 
 	kmemset(&tlbe, 0, OR1K_TLBE_SIZE);
