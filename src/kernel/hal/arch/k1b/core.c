@@ -87,13 +87,7 @@ PUBLIC void k1b_core_sleep(void)
 
 	/* Wait for the master core to wakeup this core. */
 	while (cores[coreid].state == K1B_CORE_SLEEPING)
-	{
-		mOS_it_disable_num(MOS_VC_IT_USER_0);
-		k1b_await();
-		k1b_dcache_inval();
-		mOS_it_clear_num(MOS_VC_IT_USER_0);
-		mOS_it_enable_num(MOS_VC_IT_USER_0);
-	}
+		k1b_cpu_wait();
 }
 
 /*============================================================================*
@@ -116,8 +110,8 @@ PUBLIC void k1b_core_wakeup(int coreid, void (*start)(void))
 	cores[coreid].state = K1B_CORE_RUNNING;
 	cores[coreid].start = start;
 	k1b_dcache_inval();
-	
-	bsp_inter_pe_event_notify(1 << coreid, BSP_IT_LINE);
+
+	k1b_cpu_notify(coreid);
 }
 
 /*============================================================================*

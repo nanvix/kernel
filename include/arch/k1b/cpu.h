@@ -43,8 +43,13 @@
 	#define __spinlock_lock_fn    /**< spinlock_lock()    */
 	#define __spinlock_trylock_fn /**< spinlock_trylock() */
 	#define __spinlock_unlock_fn  /**< spinlock_unlock()  */
+	#define __cpu_wait_fn         /**< cpu_wait()         */
+	#define __cpu_notify_fn       /**< cpu_notify()       */
 	/**@}*/
 
+	#include <HAL/hal/hal_ext.h>
+	#include <arch/k1b/core.h>
+	#include <arch/k1b/cache.h>
 	#include <nanvix/const.h>
 
 	/**
@@ -88,10 +93,70 @@
 	EXTERN int hal_cpu_get_num_cores(void);
 
 /*============================================================================*
- *                                 Spinlocks                                  *
+ *                        Inter-Processor Interrupts                          *
  *============================================================================*/
 
-	#include <HAL/hal/hal_ext.h>
+	/**
+	 * @brief Waits for an inter-processor interrupt.
+	 *
+	 * The k1b_cpu_wait() function puts the underlying core in
+	 * low-power consumption mode and waits for a inter-processor
+	 * interrupt (IPI) to be triggered.
+	 *
+	 * @bug For some unknown reason, we have to flush the cache here.
+	 */
+	static inline void k1b_cpu_wait(void)
+	{
+		k1b_await();
+		k1b_dcache_inval();
+		mOS_it_disable_num(MOS_VC_IT_USER_0);
+		mOS_it_clear_num(MOS_VC_IT_USER_0);
+		mOS_it_enable_num(MOS_VC_IT_USER_0);
+	}
+
+	/**
+	 * @see k1b_cpu_wait()
+	 *
+	 * @cond k1b
+	 */
+	static inline void cpu_wait(void)
+	{
+		k1b_cpu_wait();
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Sends an inter-processor interrupt.
+	 *
+	 * The k1b_cpu_notify() function sends an inter-processor
+	 * interrupt (IPI) to the core whose ID equals to @p coreid.
+	 *
+	 * @param coreid ID of the target core.
+	 *
+	 * @todo Check whether or not @p coreid is valid.
+	 * @bug No sanity check is performed in @p coreid.
+	 *
+	 * @author Pedro Henrique Penna
+	 */
+	static inline void k1b_cpu_notify(int coreid)
+	{
+		mOS_pe_notify(1 << coreid, 0, 1, 0);
+	}
+
+	/**
+	 * @see k1b_cpu_notify()
+	 *
+	 * @cond k1b
+	 */
+	static inline void cpu_notify(int coreid)
+	{
+		k1b_cpu_notify(coreid);
+	}
+	/**@endcond*/
+
+/*============================================================================*
+ *                                 Spinlocks                                  *
+ *============================================================================*/
 
 	/**
 	 * @brief Spinlock.
