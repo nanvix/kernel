@@ -43,7 +43,6 @@ SECTIONS
 	.text ALIGN(8192) : AT(ADDR(.text))
 	{
 		*(.text)
-		*(.rodata)
 	}
 
 	KSTART_DATA = ALIGN(8192);
@@ -52,6 +51,7 @@ SECTIONS
 	.data ALIGN(8192) : AT(ADDR(.data))
 	{
 		hal/arch/or1k/boot_data.o
+		*(.rodata)
 		*(.data)
 	}
 

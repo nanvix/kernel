@@ -50,7 +50,7 @@ PRIVATE struct
 
 /**
  * @brief TLB Entry Value
- * 
+ *
  * Converts between a structure value and a single value
  * writable into xTLBMR and xTLBTR.
  */
@@ -60,7 +60,7 @@ struct tlbe_value
 	{
 		/* TLB Entry. */
 		struct tlbe tlbe;
-		
+
 		/* TLB Value. */
 		uint64_t value;
 	} u;
@@ -93,10 +93,16 @@ struct tlbe_value
  */
 PRIVATE int or1k_tlb_check_inst(vaddr_t vaddr)
 {
+	vaddr_t kcode; /* Kernel text start address. */
+	vaddr_t kdata; /* Kernel data start address. */
+
+	kcode = (vaddr_t)&KSTART_CODE;
+	kdata = (vaddr_t)&KSTART_DATA;
+
 	/* Kernel address. */
-	if (vaddr >= KSTART_CODE && vaddr < KMEM_SIZE)
+	if (vaddr >= kcode && vaddr < KMEM_SIZE)
 	{
-		if (vaddr >= KSTART_CODE && vaddr < KSTART_DATA)
+		if (vaddr >= kcode && vaddr < kdata)
 			return (1);
 	}
 
@@ -130,7 +136,7 @@ PUBLIC const struct tlbe *or1k_tlb_lookup_vaddr(vaddr_t vaddr)
 {
 	const struct tlbe *tlbe; /* TLB Entry Pointer. */
 	vaddr_t addr;            /* Aligned address.   */
-	
+
 	addr = vaddr & PAGE_MASK;
 
 	/* Search in ITLB. */
@@ -191,7 +197,7 @@ PUBLIC const struct tlbe *or1k_tlb_lookup_paddr(paddr_t paddr)
 	const struct tlbe *tlbe_i;  /* ITLB Entry Pointer. */
 	const struct tlbe *tlbe_d;  /* DTLB Entry Pointer. */
 	vaddr_t addr;               /* Aligned address.   */
-	
+
 	addr = paddr & PAGE_MASK;
 
 	/* Search in TLB. */
@@ -238,18 +244,20 @@ PUBLIC int or1k_tlb_write(vaddr_t vaddr, paddr_t paddr)
 	unsigned idx;            /* TLB Index.         */
 	unsigned user;           /* User address flag. */
 	unsigned inst;           /* Instruction flag.  */
+	vaddr_t kcode;           /* Kernel start code. */
 
+	kcode = (vaddr_t)&KSTART_CODE;
 	user = 1;
 	/*
 	 * Check if the virtual address belongs to
 	 * kernel or user.
 	 */
-	if (vaddr >= KSTART_CODE && vaddr < KMEM_SIZE)
+	if (vaddr >= kcode && vaddr < KMEM_SIZE)
 		user = 0;
 
 	kmemset(&tlbe, 0, OR1K_TLBE_SIZE);
 
-	/* 
+	/*
 	 * Check if the virtual address belongs to
 	 * instruction or data.
 	 */
@@ -283,7 +291,7 @@ PUBLIC int or1k_tlb_write(vaddr_t vaddr, paddr_t paddr)
 	tlbe.ppn = paddr >> PAGE_SHIFT;
 	tlbe.dirty = !OR1K_TLBE_DIRTY;
 	tlbe.accessed = !OR1K_TLBE_ACCESSED;
-	tlbe.wom = OR1K_TLBE_MEMORY_MODEL_STRONG; 
+	tlbe.wom = OR1K_TLBE_MEMORY_MODEL_STRONG;
 	tlbe.wbc = OR1K_TLBE_CACHE_POLICY_WRBACK;
 	tlbe.ci = !OR1K_TLBE_CACHE_INHIBIT;
 	tlbe.cc = OR1K_TLBE_CACHE_COHERENCY;
@@ -291,7 +299,7 @@ PUBLIC int or1k_tlb_write(vaddr_t vaddr, paddr_t paddr)
 	/* TLB index. */
 	idx = (vaddr >> PAGE_SHIFT) & (OR1K_TLB_LENGTH - 1);
 	tlbev.u.tlbe = tlbe;
-	
+
 	if (inst)
 	{
 		/* Copy to the in-memory TLB copy. */
@@ -368,7 +376,7 @@ PUBLIC int or1k_tlb_flush(void)
 
 	nsets = (1 << ((or1k_mfspr(OR1K_SPR_DMMUCFGR) & OR1K_SPR_DMMUCFGR_NTS)
 			>> OR1K_SPR_DMMUCFGR_NTS_OFF));
-		
+
 	dtlbmr_base = OR1K_SPR_DTLBMR_BASE(0);
 	itlbmr_base = OR1K_SPR_ITLBMR_BASE(0);
 
@@ -399,7 +407,7 @@ PUBLIC void or1k_tlb_init(void)
 
 	dtlbtr = (OR1K_SPR_DTLBTR_CC | OR1K_SPR_DTLBTR_WBC | OR1K_SPR_DTLBTR_SRE
 			| OR1K_SPR_DTLBTR_SWE);
-	
+
 	itlbtr = (OR1K_SPR_ITLBTR_CC | OR1K_SPR_ITLBTR_WBC | OR1K_SPR_ITLBTR_SXE);
 	xtlbmr = 1;
 

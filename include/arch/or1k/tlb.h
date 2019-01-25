@@ -172,8 +172,8 @@
 	/**
 	 * Kernel code and data addresses.
 	 */
-	EXTERN const unsigned KSTART_CODE;
-	EXTERN const unsigned KSTART_DATA;
+	EXTERN unsigned KSTART_CODE;
+	EXTERN unsigned KSTART_DATA;
 
 	/**
 	 * @brief Gets the virtual address of a page.
