@@ -53,6 +53,11 @@
 	#endif
 
 	/**
+	 * @see K1B_CACHE_LINE_SIZE
+	 */
+	#define CACHE_LINE_SIZE K1B_CACHE_LINE_SIZE
+
+	/**
 	 * @brief Invalidates the data cache.
 	 *
 	 * The k1b_dcache_inval() function invalidates the data cache of
