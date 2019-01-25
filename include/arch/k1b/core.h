@@ -87,7 +87,7 @@
 	 * @brief Puts the processor in idle mode 1.
 	 *
 	 * The k1b_await() function puts the processor in idle mode 1, in
-	 * which intruction execution is stopped until any event or
+	 * which instruction execution is stopped until any event or
 	 * interrupt is triggered.
 	 */
 	static inline void k1b_await(void)

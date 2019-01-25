@@ -69,6 +69,14 @@
 		#ifndef __spinlock_unlock_fn
 		#error "spinlock_unlock() not defined?"
 		#endif
+
+		#ifndef __cpu_wait_fn
+		#error "cpu_wait() not defined?"
+		#endif
+
+		#ifndef __cpu_notify_fn
+		#error "cpu_notify() not defined?"
+		#endif
 	#endif
 
 /*============================================================================*
