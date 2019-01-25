@@ -47,9 +47,6 @@ PRIVATE void do_clock(int num)
 	{
 		ticks++;
 		hal_dcache_invalidate();
-
-		if ((ticks%25) == 0)
-			kprintf("tick %d!", ticks);
 	}
 }
 

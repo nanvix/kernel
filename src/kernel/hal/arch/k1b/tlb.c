@@ -321,11 +321,4 @@ PUBLIC void k1b_tlb_init(void)
 	/* Read LTLB into memory. */
 	for (int i = 0; i < K1B_LTLB_LENGTH; i++)
 		k1b_tlbe_read(&tlb[coreid].ltlb[i], K1B_LTLB_OFFSET + i);
-
-	if (coreid == 0)
-	{
-		/* Walk through TLB. */
-		for (int i = 0; i < K1B_TLB_LENGTH; i++)
-			k1b_tlbe_dump(i);
-	}
 }
