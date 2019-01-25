@@ -280,6 +280,7 @@ _do_handler 0xe00, _do_excp,  OR1K_EXCP_TRAP                /* Trap.            
  */
 _do_excp:
 	_do_prologue
+	redzone_alloc
 
 	/*
 	 * Save execution context
@@ -324,10 +325,8 @@ _do_excp:
 	/*
 	 * Call exception dispatcher.
 	 */
-	redzone_alloc
 	l.jal do_excp
 	l.nop
-	redzone_free
 
 	/*
 	 * Wipe out exception information
