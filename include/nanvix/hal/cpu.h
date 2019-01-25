@@ -60,6 +60,8 @@
 	 */
 	EXTERN void cpu_notify(int coreid);
 
+#ifdef HAL_SMP
+
 	/**
 	 * @brief Initializes a spinlock.
 	 *
@@ -92,6 +94,8 @@
 	 * @param lock Target spinlock.
 	 */
 	EXTERN void spinlock_unlock(spinlock_t *lock);
+
+#endif
 
 /**@}*/
 
