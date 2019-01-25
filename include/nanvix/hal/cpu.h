@@ -49,6 +49,18 @@
 	EXTERN int hal_cpu_get_num_cores(void);
 
 	/**
+	 * @brief Waits for an inter-processor interrupt.
+	 */
+	EXTERN void cpu_wait(void);
+
+	/**
+	 * @brief Sends an inter-processor interrupt.
+	 *
+	 * @param coreid ID of the target core.
+	 */
+	EXTERN void cpu_notify(int coreid);
+
+	/**
 	 * @brief Initializes a spinlock.
 	 *
 	 * @param lock Target spinlock.
