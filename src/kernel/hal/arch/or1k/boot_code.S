@@ -139,24 +139,24 @@ start:
  * @brief Flushes the TLB.
  */
 _boot_tlb_flush:
-	OR1K_LOAD_SYMBOL_2_GPR(r1, OR1K_SPR_DTLBMR_BASE(0))
-	OR1K_LOAD_SYMBOL_2_GPR(r3, OR1K_SPR_ITLBMR_BASE(0))
+	OR1K_LOAD_SYMBOL_2_GPR(r3, OR1K_SPR_DTLBMR_BASE(0))
+	OR1K_LOAD_SYMBOL_2_GPR(r5, OR1K_SPR_ITLBMR_BASE(0))
 
-	l.ori   r7, r0,  1
-	l.mfspr r5, r0, OR1K_SPR_DMMUCFGR
-	l.andi  r5, r5, OR1K_SPR_DMMUCFGR_NTS
-	l.srli  r5, r5, OR1K_SPR_DMMUCFGR_NTS_OFF
-	l.sll   r5, r7, r5
+	l.ori   r11, r0,  1
+	l.mfspr r7,  r0,  OR1K_SPR_DMMUCFGR
+	l.andi  r7,  r7,  OR1K_SPR_DMMUCFGR_NTS
+	l.srli  r7,  r7,  OR1K_SPR_DMMUCFGR_NTS_OFF
+	l.sll   r7,  r11, r7
 
 	.loop:
-		l.mtspr	r1, r0, 0x0
 		l.mtspr	r3, r0, 0x0
+		l.mtspr	r5, r0, 0x0
 
-		l.addi	r1, r1, 1
 		l.addi	r3, r3, 1
-		l.sfeq	r5, r0
+		l.addi	r5, r5, 1
+		l.sfeq	r7, r0
 		l.bnf	.loop
-		l.addi	r5, r5, -1
+		l.addi	r7, r7, -1
 
 	l.jr r9
 	l.nop
@@ -166,11 +166,11 @@ _boot_tlb_flush:
  *----------------------------------------------------------------------------*/
 
 _enable_mmu:
-	l.mfspr	r1, r0, OR1K_SPR_SR
-	OR1K_LOAD_SYMBOL_2_GPR(r3, OR1K_SPR_SR_DME | OR1K_SPR_SR_IME)
+	l.mfspr	r3, r0, OR1K_SPR_SR
+	OR1K_LOAD_SYMBOL_2_GPR(r5, OR1K_SPR_SR_DME | OR1K_SPR_SR_IME)
 
-	l.or	r1, r1, r3
-	l.mtspr	r0, r1, OR1K_SPR_SR
+	l.or	r3, r3, r5
+	l.mtspr	r0, r3, OR1K_SPR_SR
 
 	l.jr r9
 	l.nop
