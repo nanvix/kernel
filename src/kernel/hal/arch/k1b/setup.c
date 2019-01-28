@@ -117,7 +117,11 @@ PRIVATE NORETURN void k1b_slave_setup(void)
 {
 	k1b_stack_setup();
 
-	kmain(0, NULL);
+	while (TRUE)
+	{
+		k1b_core_sleep();
+		k1b_core_start();
+	}
 }
 
 /*============================================================================*
