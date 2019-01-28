@@ -43,23 +43,24 @@ PRIVATE struct
 	int initialized;        /**< Initialized core? */
 	int state;              /**< State.            */
 	void (*start)(void);    /**< Starting routine. */
+	spinlock_t lock;        /**< Lock.             */
 } __attribute__((aligned(K1B_CACHE_LINE_SIZE))) cores[K1B_NUM_CORES] = {
-	{ TRUE,  K1B_CORE_RUNNING,  NULL }, /* Master Core   */
-	{ FALSE, K1B_CORE_SLEEPING, NULL }, /* Slave Core 1  */
-	{ FALSE, K1B_CORE_SLEEPING, NULL }, /* Slave Core 2  */
-	{ FALSE, K1B_CORE_SLEEPING, NULL }, /* Slave Core 3  */
-	{ FALSE, K1B_CORE_SLEEPING, NULL }, /* Slave Core 4  */
-	{ FALSE, K1B_CORE_SLEEPING, NULL }, /* Slave Core 5  */
-	{ FALSE, K1B_CORE_SLEEPING, NULL }, /* Slave Core 6  */
-	{ FALSE, K1B_CORE_SLEEPING, NULL }, /* Slave Core 7  */
-	{ FALSE, K1B_CORE_SLEEPING, NULL }, /* Slave Core 8  */
-	{ FALSE, K1B_CORE_SLEEPING, NULL }, /* Slave Core 9  */
-	{ FALSE, K1B_CORE_SLEEPING, NULL }, /* Slave Core 10 */
-	{ FALSE, K1B_CORE_SLEEPING, NULL }, /* Slave Core 11 */
-	{ FALSE, K1B_CORE_SLEEPING, NULL }, /* Slave Core 12 */
-	{ FALSE, K1B_CORE_SLEEPING, NULL }, /* Slave Core 13 */
-	{ FALSE, K1B_CORE_SLEEPING, NULL }, /* Slave Core 14 */
-	{ FALSE, K1B_CORE_SLEEPING, NULL }, /* Slave Core 15 */
+	{ TRUE,  K1B_CORE_RUNNING,  NULL, K1B_SPINLOCK_UNLOCKED }, /* Master Core   */
+	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 1  */
+	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 2  */
+	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 3  */
+	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 4  */
+	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 5  */
+	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 6  */
+	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 7  */
+	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 8  */
+	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 9  */
+	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 10 */
+	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 11 */
+	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 12 */
+	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 13 */
+	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 14 */
+	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 15 */
 };
 
 /*============================================================================*
@@ -68,13 +69,8 @@ PRIVATE struct
 
 /**
  * The k1b_core_sleep() function stops instruction execution in the
- * the underlying slave core and places it in a low-power state. An
- * enabled interrupt resumes execution.
- *
- * @note This function must be called from a slave core.
- *
- * @todo Check if the calling core is indeed a slave core.
- * @bug Race condition between the master and slave core.
+ * the underlying core and places it in a low-power state. An wakeup
+ * notification resumes execution.
  *
  * @author Pedro Henrique Penna
  */
@@ -82,12 +78,17 @@ PUBLIC void k1b_core_sleep(void)
 {
 	int coreid = k1b_core_get_id();
 
-	cores[coreid].state = K1B_CORE_SLEEPING;
-	k1b_dcache_inval();
+	k1b_spinlock_lock(&cores[coreid].lock);
 
-	/* Wait for the master core to wakeup this core. */
-	while (cores[coreid].state == K1B_CORE_SLEEPING)
+		cores[coreid].state = K1B_CORE_SLEEPING;
+
+	k1b_dcache_inval();
+	k1b_spinlock_unlock(&cores[coreid].lock);
+
+	/* Wait for wakeup. */
+	do
 		k1b_cpu_wait();
+	while (cores[coreid].state == K1B_CORE_SLEEPING);
 }
 
 /*============================================================================*
@@ -95,11 +96,9 @@ PUBLIC void k1b_core_sleep(void)
  *============================================================================*/
 
 /**
- * The k1b_core_wakeup() function sets the starting routine of the
- * target slave core @p coreid to @p start and wakes up this core.
- *
- * @note This function mus be called from a core other than the target one.
- * @note This function is not thread safe.
+ * The k1b_core_wakeup() function sends a wakeup notification to the
+ * sleeping core whose ID equals @coreid and sets the starting routine
+ * of this target core to @p start.
  *
  * @todo Check if the calling core is not the target core.
  *
@@ -107,9 +106,18 @@ PUBLIC void k1b_core_sleep(void)
  */
 PUBLIC void k1b_core_wakeup(int coreid, void (*start)(void))
 {
-	cores[coreid].state = K1B_CORE_RUNNING;
-	cores[coreid].start = start;
+	k1b_spinlock_lock(&cores[coreid].lock);
 	k1b_dcache_inval();
+
+		/* Wakeup core. */
+		if (cores[coreid].state == K1B_CORE_SLEEPING)
+		{
+			cores[coreid].state = K1B_CORE_RUNNING;
+			cores[coreid].start = start;
+			k1b_dcache_inval();
+		}
+
+	k1b_spinlock_unlock(&cores[coreid].lock);
 
 	k1b_cpu_notify(coreid);
 }
@@ -119,13 +127,11 @@ PUBLIC void k1b_core_wakeup(int coreid, void (*start)(void))
  *============================================================================*/
 
 /**
- * The k1b_core_start() function starts the underlying slave core by
- * calling the starting routine previously set by a call to
- * k1b_core_wakeup(), made by the master core. Furthermore, upon the
- * first call made to k1b_core_start(), architectural structures of
- * the slave core are initialized.
- *
- * @todo Check if the calling core is a slave core.
+ * The k1b_core_start() function starts the underlying core by calling
+ * the starting routine previously set by a call to k1b_core_wakeup(),
+ * made by the master core. Furthermore, in the first call ever made
+ * to k1b_core_start(), architectural structures of the slave core are
+ * initialized.
  *
  * @author Pedro Henrique Penna
  */
@@ -133,13 +139,18 @@ PUBLIC void k1b_core_start(void)
 {
 	int coreid = k1b_core_get_id();
 
-	/* Initialize core. */
-	if (!cores[coreid].initialized)
-	{
-		k1b_core_setup();
-		cores[coreid].initialized = TRUE;
-		k1b_dcache_inval();
-	}
+	k1b_spinlock_lock(&cores[coreid].lock);
+	k1b_dcache_inval();
+
+		/* Initialize core. */
+		if (!cores[coreid].initialized)
+		{
+			k1b_core_setup();
+			cores[coreid].initialized = TRUE;
+			k1b_dcache_inval();
+		}
+
+	k1b_spinlock_unlock(&cores[coreid].lock);
 	
 	cores[coreid].start();
 }
@@ -158,8 +169,12 @@ PUBLIC void k1b_core_shutdown(int status)
 {
 	int coreid = k1b_core_get_id();
 
-	cores[coreid].state = K1B_CORE_OFFLINE;
+	k1b_spinlock_lock(&cores[coreid].lock);
+
+		cores[coreid].state = K1B_CORE_OFFLINE;
+
 	k1b_dcache_inval();
+	k1b_spinlock_unlock(&cores[coreid].lock);
 
 	mOS_exit(__k1_spawn_type() != __MPPA_MPPA_SPAWN, status);
 }
