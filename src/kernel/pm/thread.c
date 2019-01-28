@@ -27,26 +27,6 @@
 #include <errno.h>
 
 /**
- * @brief Thread states.
- */
-enum thread_states
-{
-	THREAD_NOT_STARTED, /**< Not started. */
-	THREAD_RUNNING,     /**< Running.     */
-	THREAD_TERMINATED   /**< Terminated.  */
-};
-
-/**
- * @brief Thread.
- */
-struct thread
-{
-	enum thread_states state; /**< State.            */
-	void *arg;                /**< Argument.         */
-	void *(*start)(void*);    /**<Starting routine.  */
-};
-
-/**
  * @brief Number of running threads.
  */
 PRIVATE int nthreads = 1;
@@ -79,6 +59,9 @@ PRIVATE void thread_start(void)
 	int coreid;
 
 	coreid = core_get_id();
+	threads[coreid].coreid = coreid;
+	hal_dcache_invalidate();
+
 	threads[coreid].start(threads[coreid].arg);
 
 	thread_exit();
@@ -111,4 +94,43 @@ PUBLIC int thread_create(tid_t *tid, void*(*start)(void*), void *arg)
 	*tid = nthreads++;
 
 	return (0);
+}
+
+/**
+ * @brief Atomically puts the calling thread to sleep.
+ *
+ * @param queue Target sleeping queue.
+ * @param lock  Spinlock o release.
+ *
+ * @note This function is not thread safe.
+ */
+PUBLIC void thread_asleep(struct thread **queue, spinlock_t *lock)
+{
+	int coreid;
+	struct thread *curr_thread;
+
+	coreid = core_get_id();
+
+	curr_thread = &threads[coreid];
+
+	/* Enqueue calling thread. */
+	curr_thread->next = *queue;
+	*queue = curr_thread;
+	hal_dcache_invalidate();
+
+	/* Put thread to sleep. */
+	spinlock_unlock(lock);
+	core_sleep();
+}
+
+/**
+ * @brief Wakes all threads in a sleeping queue.
+ *
+ * @brief This function is not thread safe.
+ */
+PUBLIC void thread_wakeup(struct thread **queue)
+{
+	/* Wakeup all threads in the queue. */
+	for (struct thread *t = *queue; t != NULL; t = t->next)
+		core_wakeup(t->coreid, NULL);
 }

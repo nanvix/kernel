@@ -50,6 +50,14 @@
 	#endif
 
 	#ifdef HAL_SMP
+		#ifndef SPINLOCK_LOCKED
+		#error "SPINLOCK_LOCKED not defined"
+		#endif
+
+		#ifndef SPINLOCK_UNLOCKED
+		#error "SPINLOCK_UNLOCKED not defined"
+		#endif
+
 		#ifndef __spinlock_t
 		#error "spinlock_t not defined?"
 		#endif
