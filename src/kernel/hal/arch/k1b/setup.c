@@ -37,7 +37,7 @@
 
 /* Import definitions. */
 EXTERN NORETURN void kmain(int, const char *[]);
-EXTERN void _syscall(int, int, int, int, int, int, int, int);
+EXTERN void _do_syscall(int, int, int, int, int, int, int, int);
 
 /*============================================================================*
  * k1b_stack_setup()                                                          *
@@ -88,7 +88,7 @@ PUBLIC void k1b_core_setup(void)
 
 	k1b_ivt_setup(
 		(k1b_hwint_handler_fn) k1b_do_hwint,
-		(k1b_swint_handler_fn) _syscall,
+		(k1b_swint_handler_fn) _do_syscall,
 		(k1b_excp_handler_fn) _do_excp
 	);
 
@@ -117,7 +117,11 @@ PRIVATE NORETURN void k1b_slave_setup(void)
 {
 	k1b_stack_setup();
 
-	kmain(0, NULL);
+	while (TRUE)
+	{
+		k1b_core_sleep();
+		k1b_core_start();
+	}
 }
 
 /*============================================================================*

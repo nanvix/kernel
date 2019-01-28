@@ -24,50 +24,49 @@
 
 #include <nanvix/hal/hal.h>
 #include <nanvix/const.h>
+#include <nanvix/dev.h>
 #include <nanvix/klib.h>
 #include <nanvix/mm.h>
+#include <nanvix/thread.h>
 
+EXTERN void do_syscall2(void);
 EXTERN int main(int argc, const char *argv[], char **envp);
-EXTERN void dev_init(void);
 
-#ifdef __mppa256__
+#ifdef HAL_SMP
 
 /**
  * @brief Init thread.
  */
-PRIVATE void init(void)
+PRIVATE void *init(void *arg)
 {
 	int status;
 	int argc = 1;
 	const char *argv[] = { "init", NULL };
 
+	UNUSED(arg);
+
 	status = main(argc, argv, NULL);
 
 	UNUSED(status);
+
+	kprintf("broadcasting shutdown signal");
+
+	return (NULL);
 }
 
 #endif
-
 
 /**
  * @brief Initializes the kernel.
  */
 PUBLIC void kmain(int argc, const char *argv[])
 {
+#ifdef HAL_SMP
+	tid_t tid;
+#endif
+
 	UNUSED(argc);
 	UNUSED(argv);
-
-#ifdef HAL_SMP
-	/* Slave core. */
-	if (core_get_id() != 0)
-	{
-		while (TRUE)
-		{
-			core_sleep();
-			core_start();
-		}
-	}
-#endif
 
 	/* Master core. */
 
@@ -81,10 +80,16 @@ PUBLIC void kmain(int argc, const char *argv[])
 	hal_test_driver();
 #endif
 
-#if defined(__mppa256__)
-	init();
+#ifdef HAL_SMP
+	thread_create(&tid, init, NULL);
 #endif
 
 	while (TRUE)
+	{
+#ifdef HAL_SMP
+		do_syscall2();
+#else
 		noop();
+#endif
+	}
 }

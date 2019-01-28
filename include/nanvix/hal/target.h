@@ -251,6 +251,10 @@
 	#error "hal_dcache_invalidate() not defined?"
 	#endif
 
+	#ifndef CACHE_LINE_SIZE
+	#error "CACHE_LINE_SIZE not defined"
+	#endif
+
 /*============================================================================*
  * Memory Interface                                                           *
  *============================================================================*/

@@ -41,6 +41,18 @@
 	/**@}*/
 
 	/**
+	 * @brief Cache line size (in bytes).
+	 *
+	 * @bug The cache line size of i386 may change.
+	 */
+	#define I386_CACHE_LINE_SIZE 64
+
+	/**
+	 * @see K1B_CACHE_LINE_SIZE
+	 */
+	#define CACHE_LINE_SIZE I386_CACHE_LINE_SIZE
+
+	/**
 	 * @note The i386 target features cache coherency.
 	 */
 	static inline void hal_dcache_invalidate(void)
