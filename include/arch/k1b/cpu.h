@@ -51,6 +51,7 @@
 	#include <arch/k1b/core.h>
 	#include <arch/k1b/cache.h>
 	#include <nanvix/const.h>
+	#include <stdint.h>
 
 	/**
 	 * @brief Number of cores in the k1b processor.
@@ -159,9 +160,17 @@
  *============================================================================*/
 
 	/**
+	 * @name Spinlock State
+	 */
+	/**@{*/
+	#define K1B_SPINLOCK_UNLOCKED 0 /**< Unlocked */
+	#define K1B_SPINLOCK_LOCKED   1 /**< Locked   */
+	/**@}*/
+
+	/**
 	 * @brief Spinlock.
 	 */
-	typedef __k1_fspinlock_t spinlock_t;
+	typedef uint64_t spinlock_t;
 
 	/**
 	 * @brief Initializes a spinlock.
@@ -170,7 +179,7 @@
 	 */
 	static inline void k1b_spinlock_init(spinlock_t *lock)
 	{
-		__k1_fspinlock_init(lock);
+		__builtin_k1_sdu(lock,  K1B_SPINLOCK_UNLOCKED);
 	}
 
 	/**
@@ -181,27 +190,6 @@
 	static inline void spinlock_init(spinlock_t *lock)
 	{
 		k1b_spinlock_init(lock);
-	}
-	/**@endcond*/
-
-	/**
-	 * @brief Locks a spinlock.
-	 *
-	 * @param lock Target spinlock.
-	 */
-	static inline void k1b_spinlock_lock(spinlock_t *lock)
-	{
-		__k1_fspinlock_lock(lock);
-	}
-
-	/**
-	 * @see k1b_spinlock_lock()
-	 *
-	 * @cond k1b
-	 */
-	static inline void spinlock_lock(spinlock_t *lock)
-	{
-		k1b_spinlock_lock(lock);
 	}
 	/**@endcond*/
 
@@ -217,7 +205,7 @@
 	 */
 	static inline int k1b_spinlock_trylock(spinlock_t *lock)
 	{
-		return (__k1_fspinlock_trylock(lock));
+		return (__builtin_k1_ldc(lock) == K1B_SPINLOCK_UNLOCKED);
 	}
 
 	/**
@@ -232,13 +220,35 @@
 	/**@endcond*/
 
 	/**
+	 * @brief Locks a spinlock.
+	 *
+	 * @param lock Target spinlock.
+	 */
+	static inline void k1b_spinlock_lock(spinlock_t *lock)
+	{
+		while (!k1b_spinlock_trylock(lock))
+			/* noop */;
+	}
+
+	/**
+	 * @see k1b_spinlock_lock()
+	 *
+	 * @cond k1b
+	 */
+	static inline void spinlock_lock(spinlock_t *lock)
+	{
+		k1b_spinlock_lock(lock);
+	}
+	/**@endcond*/
+
+	/**
 	 * @brief Unlocks a spinlock.
 	 *
 	 * @param lock Target spinlock.
 	 */
 	static inline void k1b_spinlock_unlock(spinlock_t *lock)
 	{
-		__k1_fspinlock_unlock(lock);
+		__builtin_k1_sdu(lock, K1B_SPINLOCK_UNLOCKED);
 	}
 
 	/**
