@@ -25,7 +25,7 @@
 #ifndef NANVIX_THREAD_H_
 #define NANVIX_THREAD_H_
 
-	#include <nanvix/hal/cpu.h>
+	#include <nanvix/hal/hal.h>
 	#include <nanvix/const.h>
 
 	/**
@@ -34,11 +34,48 @@
 	#define THREAD_MAX HAL_NUM_CORES
 
 	/**
+	 * @brief Thread states.
+	 */
+	enum thread_states
+	{
+		THREAD_NOT_STARTED, /**< Not started. */
+		THREAD_RUNNING,     /**< Running.     */
+		THREAD_TERMINATED   /**< Terminated.  */
+	};
+
+	/**
+	 * @brief Thread.
+	 */
+	struct thread
+	{
+		int coreid;               /**< Core ID.                */
+		enum thread_states state; /**< State.                  */
+		void *arg;                /**< Argument.               */
+		void *(*start)(void*);    /**< Starting routine.       */
+		struct thread *next;      /**< Next thread in a queue. */
+	};
+
+	/**
 	 * @brief Thread ID.
 	 */
 	typedef int tid_t;
 
 	/* Forward definitions. */
 	EXTERN int thread_create(tid_t *, void*(*)(void*), void *);
+
+	/**
+	 * @brief Atomically puts the calling thread to sleep.
+	 *
+	 * @param queue Target sleeping queue.
+	 * @param lock  Spinlock o release.
+	 *
+	 * @note This function is not thread safe.
+	 */
+	EXTERN void thread_asleep(struct thread **queue, spinlock_t *lock);
+
+	/**
+	 * @brief Wakes all threads in a sleeping queue.
+	 */
+	EXTERN void thread_wakeup(struct thread **queue);
 
 #endif /* NANVIX_THREAD_H_ */
