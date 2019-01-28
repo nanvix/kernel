@@ -25,28 +25,14 @@
 #include <nanvix/thread.h>
 #include <nanvix/syscall.h>
 #include <stddef.h>
-#include <vbsp.h>
-
-/**
- * @brief Test assertation.
- */
-#define TEST_ASSERT(x) if (!(x)) { return (-1); }
 
 /**
  * @brief Number of threads in the program.
  */
 #define NTHREADS 16
 
-/**
- * @brief Number of threads that reached the barrier.
- */
-static int nreached = 1;
-
 /* Import definitions. */
-extern int nosyscall(void);
-extern void cache_flush(void);
 extern ssize_t write(int, const char *, size_t);
-extern void exit(int);
 
 /**
  * @brief Returns the length of a string.
@@ -105,19 +91,8 @@ static const char *strings[NTHREADS] = {
  */
 void *task(void *arg)
 {
-	unsigned int again;           /* Again?           */
-	__k1_swap_value_t atomic_var; /* Atomic variable. */
-
 	puts(arg);
-	
-	do 
-	{
-		hal_dcache_invalidate();
-		atomic_var.old_value  = __builtin_k1_lwu(&nreached);
-		atomic_var.new_value  = atomic_var.old_value + 1;
-		again = __k1_try_swap_values((uint32_t*)  &nreached, atomic_var);
-	} while (again);
-		
+
 	return (NULL);
 }
 
@@ -129,20 +104,13 @@ int main(int argc, const char *argv[])
 	((void) argc);
 	((void) argv);
 
-	TEST_ASSERT(!nosyscall());
-
 	puts(strings[core_get_id()]);
 
-	for(int i = 1; i < NTHREADS; i++)
+	for (int i = 2; i < NTHREADS; i++)
 	{
 		tid_t tid;
 		thread_create(&tid, task, (void *) strings[i]);
 	}	   
-
-	/* Wait until all threads have completed (incremented the thread 
-	 * counter) 
-	 */
-	while (__builtin_k1_lwu(&nreached) < NTHREADS);
 
 	return (0);
 }

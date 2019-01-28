@@ -29,6 +29,7 @@
 #include <nanvix/mm.h>
 #include <nanvix/thread.h>
 
+EXTERN void do_syscall2(void);
 EXTERN int main(int argc, const char *argv[], char **envp);
 
 #ifdef HAL_SMP
@@ -84,5 +85,11 @@ PUBLIC void kmain(int argc, const char *argv[])
 #endif
 
 	while (TRUE)
+	{
+#ifdef HAL_SMP
+		do_syscall2();
+#else
 		noop();
+#endif
+	}
 }

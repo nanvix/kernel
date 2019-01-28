@@ -43,7 +43,7 @@
 #define pi pcr /**< Processing Identification Register */
 /**@}*/
 
-.global _syscall
+.global _do_syscall
 .global _do_excp
 
 .section .text
@@ -286,14 +286,14 @@
 
 
 /*===========================================================================*
- * _syscall()                                                                *
+ * _do_syscall()                                                             *
  *===========================================================================*/
 
 /*
  * System call hook.
  */
 .align 8
-_syscall:
+_do_syscall:
 
 	/* Save system call context. */
 	add $sp = $sp, -8
@@ -312,7 +312,7 @@ _syscall:
 	 */
 	redzone_alloc
 	;;
-	call do_syscall
+	call do_syscall1
 	;;
 	redzone_free
 	;;
