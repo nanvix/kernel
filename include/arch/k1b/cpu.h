@@ -168,6 +168,22 @@
 	/**@}*/
 
 	/**
+	 * @see K1B_SPINLOCK_UNLOCKED
+	 *
+	 * @cond k1b
+	 */
+	#define SPINLOCK_UNLOCKED K1B_SPINLOCK_UNLOCKED
+	/**@endcond*/
+
+	/**
+	 * @see K1B_SPINLOCK_LOCKED
+	 *
+	 * @cond k1b
+	 */
+	#define SPINLOCK_LOCKED K1B_SPINLOCK_LOCKED
+	/**@endcond*/
+
+	/**
 	 * @brief Spinlock.
 	 */
 	typedef uint64_t spinlock_t;
