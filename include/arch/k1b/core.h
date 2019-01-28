@@ -108,6 +108,8 @@
 
 	/**
 	 * @brief Stops the underling core.
+	 *
+	 * @see k1b_core_wakeup()
 	 */
 	EXTERN void k1b_core_sleep(void);
 
