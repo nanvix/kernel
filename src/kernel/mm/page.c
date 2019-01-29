@@ -96,7 +96,7 @@ PRIVATE inline struct pde *pgtab_map(struct pde *pgdir, vaddr_t vaddr)
 	 * Map kernel page.
 	 *
 	 * FIXME: in a multicore platform, we should
-	 * flush the TLB of each affected core core.
+	 * flush the TLB of each affected core.
 	 */
 	frame = kpool_addr_to_frame(VADDR(pgtab));
 	pde_frame_set(pde, frame);
@@ -142,6 +142,10 @@ PRIVATE inline struct pde *pgtab_map(struct pde *pgdir, vaddr_t vaddr)
  * @retval -EIO    Cannot release underlying kernel page.
  *
  * @see upage_unmap() and pgtab_map().
+ *
+ * @bug Properly flush TLB in multicores.
+ *
+ * @author Pedro Henrique Penna
  */
 PRIVATE int pgtab_unmap(struct pde *pgdir, vaddr_t vaddr)
 {
@@ -172,7 +176,7 @@ PRIVATE int pgtab_unmap(struct pde *pgdir, vaddr_t vaddr)
 	 * kernel page, because we may fail bellow.
 	 *
 	 * FIXME: in a multicore platform, we should
-	 * flush the TLB of each affected core core.
+	 * flush the TLB of each affected core.
 	 */
 	pde_present_set(pde, 0);
 	hal_dcache_invalidate();

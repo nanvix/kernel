@@ -65,7 +65,7 @@ PRIVATE void *init(void *arg)
 PUBLIC void kmain(int argc, const char *argv[])
 {
 #ifdef HAL_SMP
-	tid_t tid;
+	int tid;
 #endif
 
 	UNUSED(argc);

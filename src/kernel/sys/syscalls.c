@@ -80,7 +80,6 @@ PUBLIC void do_syscall2(void)
 		goto out;
 	}
 
-
 	/* Parse system call number. */
 	switch (sysboard[coreid].syscall_nr)
 	{
