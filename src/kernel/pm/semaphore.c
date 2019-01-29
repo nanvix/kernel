@@ -23,7 +23,6 @@
  */
 
 #include <nanvix/const.h>
-#include <nanvix/hal/hal.h>
 #include <nanvix/thread.h>
 
 /**
@@ -40,7 +39,6 @@ PUBLIC void semaphore_down(struct semaphore *sem)
 	while (TRUE)
 	{
 		spinlock_lock(&sem->lock);
-		hal_dcache_invalidate();
 
 			if (sem->count > 0)
 				break;
@@ -49,7 +47,6 @@ PUBLIC void semaphore_down(struct semaphore *sem)
 	}
 
 	sem->count--;
-	hal_dcache_invalidate();
 	spinlock_unlock(&sem->lock);
 }
 
@@ -63,7 +60,6 @@ PUBLIC void semaphore_up(struct semaphore *sem)
 {
 	spinlock_lock(&sem->lock);
 		sem->count++;
-		hal_dcache_invalidate();
 		thread_wakeup(&sem->queue);
 	spinlock_unlock(&sem->lock);
 }
