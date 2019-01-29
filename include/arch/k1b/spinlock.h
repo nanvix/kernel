@@ -152,6 +152,9 @@
 	/**
 	 * @see k1b_spinlock_trylock()
 	 *
+	 * @note This operation performs a full data-cache flush in non-cache
+	 * coherent processors.
+	 *
 	 * @cond k1b
 	 */
 	static inline int spinlock_trylock(spinlock_t *lock)
@@ -165,6 +168,9 @@
 	/**
 	 * @see k1b_spinlock_lock()
 	 *
+	 * @note This operation performs a full data-cache flush in non-cache
+	 * coherent processors.
+	 *
 	 * @cond k1b
 	 */
 	static inline void spinlock_lock(spinlock_t *lock)
@@ -175,6 +181,9 @@
 
 	/**
 	 * @see k1b_spinlock_unlock()
+	 *
+	 * @note This operation performs a full data-cache flush in non-cache
+	 * coherent processors.
 	 *
 	 * @cond k1b
 	 */

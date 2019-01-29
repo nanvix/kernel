@@ -22,11 +22,22 @@
  * SOFTWARE.
  */
 
+/**
+ * @defgroup kernel- Thread System
+ * @ingroup kernel
+ *
+ * @brief Thread System
+ */
+
 #ifndef NANVIX_THREAD_H_
 #define NANVIX_THREAD_H_
 
 	#include <nanvix/hal/hal.h>
 	#include <nanvix/const.h>
+
+/*============================================================================*
+ *                                Thread System                               *
+ *============================================================================*/
 
 	/**
 	 * @brief Maximum number of threads.
@@ -79,7 +90,7 @@
 	EXTERN void thread_wakeup(struct thread **queue);
 
 /*============================================================================*
- *                                 Semaphores                                 *
+ *                            Semaphores Facility                             *
  *============================================================================*/
 
 	/**
@@ -87,9 +98,9 @@
 	 */
 	struct semaphore
 	{
-		int count;            /**< Semaphore value. */
-		spinlock_t lock;      /**< Semaphore lock.  */
-		struct thread *queue; /**< Sleeping queue.  */
+		int count;            /**< Semaphore counter. */
+		spinlock_t lock;      /**< Semaphore lock.    */
+		struct thread *queue; /**< Sleeping queue.    */
 	};
 
 	/**
@@ -120,6 +131,9 @@
 	 */
 	static inline void semaphore_init(struct semaphore *sem, int x)
 	{
+		KASSERT(x >= 0);
+		KASSERT(sem != NULL);
+
 		sem->count = x;
 		sem->lock = SPINLOCK_UNLOCKED;
 		sem->queue = NULL;
@@ -129,8 +143,6 @@
 	 * @brief Performs a down operation in a semaphore.
 	 *
 	 * @param sem Target semaphore.
-	 *
-	 * @see SEMAPHORE_INIT(), semaphore_up()
 	 */
 	EXTERN void semaphore_down(struct semaphore *sem);
 
@@ -138,9 +150,9 @@
 	 * @brief Performs an up operation in a semaphore.
 	 *
 	 * @param sem target semaphore.
-	 *
-	 * @see SEMAPHORE_INIT(), semaphore_down()
 	 */
 	EXTERN void semaphore_up(struct semaphore *sem);
 
 #endif /* NANVIX_THREAD_H_ */
+
+/**@}*/

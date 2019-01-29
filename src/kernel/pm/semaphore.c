@@ -23,19 +23,28 @@
  */
 
 #include <nanvix/const.h>
+#include <nanvix/klib.h>
 #include <nanvix/thread.h>
+
+/*============================================================================*
+ * semaphore_down()                                                           *
+ *============================================================================*/
 
 /**
  * The semaphore_down() function performs a down operation in the
  * semaphore pointed to by @p sem. It atomically checks the current
- * value of @p sem. If it is greater than one, it decrements the this
- * value by one and the calling thread continue its execution flow.
- * Otherwise, the calling thread sleep until anothre thread performs a
- * semaphore_up() on this semaphore, and this value becomes greater
- * than one.
+ * value of @p sem. If it is greater than one, it decrements the
+ * semaphore counter by one and the calling thread continue its
+ * execution, flow as usual.  Otherwise, the calling thread sleeps
+ * until another thread performs a call to semaphore_up() on this
+ * semaphore.
+ *
+ * @see SEMAPHORE_INIT(), semaphore_up()
  */
 PUBLIC void semaphore_down(struct semaphore *sem)
 {
+	KASSERT(sem != NULL);
+
 	while (TRUE)
 	{
 		spinlock_lock(&sem->lock);
@@ -50,14 +59,22 @@ PUBLIC void semaphore_down(struct semaphore *sem)
 	spinlock_unlock(&sem->lock);
 }
 
+/*============================================================================*
+ * semaphore_up()                                                             *
+ *============================================================================*/
+
 /**
  * The semaphore_up() function performs an up operation in a semaphore
  * pointed to by @p sem. It atomically increments the current value of
  * @p and wakes up all threads that were sleeping in this semaphore,
  * waiting for a semaphore_up() operation.
+ *
+ * @see SEMAPHORE_INIT(), semaphore_down()
  */
 PUBLIC void semaphore_up(struct semaphore *sem)
 {
+	KASSERT(sem != NULL);
+
 	spinlock_lock(&sem->lock);
 		sem->count++;
 		thread_wakeup(&sem->queue);

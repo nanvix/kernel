@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <nanvix/hal/hal.h>
 #include <nanvix/const.h>
 #include <nanvix/thread.h>
 #include <errno.h>
