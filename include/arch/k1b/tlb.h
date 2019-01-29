@@ -84,7 +84,7 @@
 	#define K1B_JTLB_OFFSET 0
 
 	/**
-	 * @brirf Offset of LTLB in the TLB (number of entries).
+	 * @brief Offset of LTLB in the TLB (number of entries).
 	 */
 	#define K1B_LTLB_OFFSET 256
 

@@ -46,7 +46,6 @@
 
 /**@endcond*/
 
-
 	/**
 	 * @brief Execution context size (in bytes).
 	 */
@@ -55,6 +54,7 @@
 	/**
 	 * @name Offsets to the Context Structure
 	 */
+	/**@{*/
 	#define K1B_CONTEXT_R0    0 /**< General Purpose Register  0       */
 	#define K1B_CONTEXT_R1    4 /**< General Purpose Register  1       */
 	#define K1B_CONTEXT_R2    8 /**< General Purpose Register  2       */
@@ -127,7 +127,7 @@
 	#define K1B_CONTEXT_LC  280 /**< Loop Count Register               */
 	#define K1B_CONTEXT_LS  284 /**< Loop Start Register               */
 	#define K1B_CONTEXT_LE  288 /**< Loop Exit Register                */
-	/**@{*/
+	/**@}*/
 
 #ifndef _ASM_FILE_
 

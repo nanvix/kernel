@@ -33,23 +33,13 @@
  */
 /**@{*/
 
+	/* External dependencies. */
 	#include <nanvix/const.h>
 	#include <mOS_vcore_u.h>
 
-	/**
-	 * @name Provided Interface
-	 *
-	 * @cond k1b
-	 */
-	/**@{*/
-	#define __core_get_id   /**< core_get_id()   */
-	#define __core_halt     /**< core_halt()     */
-	#define __core_shutdown /**< core_shutdown() */
-	#define __core_sleep    /**< core_sleep()    */
-	#define __core_start    /**< core_start()    */
-	#define __core_wakeup   /**< core_wakeup()   */
-	/**@}*/
-	/**@endcond*/
+/*============================================================================*
+ *                               Core Interface                               *
+ *============================================================================*/
 
 	/**
 	 * @name States of a Core
@@ -73,6 +63,78 @@
 	}
 
 	/**
+	 * @brief Puts the underlyig core in idle mode 1.
+	 *
+	 * The k1b_await() function puts the processor in idle mode 1. In
+	 * this mode, instruction execution is suspended until an
+	 * interrupt is triggered, be it eligible or not. Events that are
+	 * not mapped on interrupts and are triggered during the idle
+	 * period do not wakeup cores in compute clusters.
+	 *
+	 * @author Pedro Henrique Penna
+	 */
+	static inline void k1b_await(void)
+	{
+		mOS_idle1();
+	}
+
+	/**
+	 * @brief Initializes the underlying core.
+	 */
+	EXTERN void k1b_core_setup(void);
+
+	/**
+	 * @brief Resumes instruction execution in the underlying core.
+	 */
+	EXTERN void k1b_core_run(void);
+
+	/**
+	 * @brief Starts a core.
+	 *
+	 * @param coreid ID of the target core.
+	 * @param start  Starting routine to execute.
+	 */
+	EXTERN void k1b_core_start(int coreid, void (*start)(void));
+
+	/**
+	 * @brief Wakes up a core.
+	 *
+	 * @param coreid ID of the target core.
+	 */
+	EXTERN void k1b_core_wakeup(int coreid);
+
+	/**
+	 * @brief Suspends instruction execution in the underling core.
+	 */
+	EXTERN void k1b_core_sleep(void);
+
+	/**
+	 * @brief Shutdowns the underlying core.
+	 *
+	 * @param status Shutdown status.
+	 */
+	EXTERN void k1b_core_shutdown(int status);
+
+/*============================================================================*
+ *                              Exported Interface                            *
+ *============================================================================*/
+
+	/**
+	 * @name Provided Interface
+	 *
+	 * @cond k1b
+	 */
+	/**@{*/
+	#define __core_get_id   /**< core_get_id()   */
+	#define __core_halt     /**< core_halt()     */
+	#define __core_shutdown /**< core_shutdown() */
+	#define __core_sleep    /**< core_sleep()    */
+	#define __core_wakeup   /**< core_wakeup()   */
+	#define __core_start    /**< core_start()    */
+	/**@}*/
+	/**@endcond*/
+
+	/**
 	 * @see k1b_core_get_id()
 	 *
 	 * @cond k1b
@@ -82,18 +144,6 @@
 		return (k1b_core_get_id());
 	}
 	/*@endcond*/
-
-	/**
-	 * @brief Puts the processor in idle mode 1.
-	 *
-	 * The k1b_await() function puts the processor in idle mode 1, in
-	 * which instruction execution is stopped until any event or
-	 * interrupt is triggered.
-	 */
-	static inline void k1b_await(void)
-	{
-		mOS_idle1();
-	}
 
 	/**
 	 * @see k1b_await()
@@ -107,13 +157,6 @@
 	/*@endcond*/
 
 	/**
-	 * @brief Stops the underling core.
-	 *
-	 * @see k1b_core_wakeup()
-	 */
-	EXTERN void k1b_core_sleep(void);
-
-	/**
 	 * @see k1b_core_sleep().
 	 *
 	 * @cond k1b
@@ -125,46 +168,26 @@
 	/**@endcond*/
 
 	/**
-	 * @brief Wakes up a core.
-	 *
-	 * @param coreid ID of the target core.
-	 * @param start  Starting routine to execute.
-	 */
-	EXTERN void k1b_core_wakeup(int coreid, void (*start)(void));
-
-	/**
 	 * @see k1b_core_wakeup().
 	 *
 	 * @cond k1b
 	 */
-	static inline void core_wakeup(int coreid, void (*start)(void))
+	static inline void core_wakeup(int coreid)
 	{
-		k1b_core_wakeup(coreid, start);
+		k1b_core_wakeup(coreid);
 	}
 	/**@endcond*/
 
 	/**
-	 * @brief Starts a core.
-	 */
-	EXTERN void k1b_core_start(void);
-
-	/**
-	 * @see k1b_core_start()
+	 * @see k1b_core_start().
 	 *
 	 * @cond k1b
 	 */
-	static inline void core_start(void)
+	static inline void core_start(int coreid, void (*start)(void))
 	{
-		k1b_core_start();
+		k1b_core_start(coreid, start);
 	}
 	/**@endcond*/
-
-	/**
-	 * @brief Shutdowns the underlying core.
-	 *
-	 * @param status Shutdown status.
-	 */
-	EXTERN void k1b_core_shutdown(int status);
 
 	/**
 	 * @see k1b_core_shutdown().
@@ -176,11 +199,6 @@
 		k1b_core_shutdown(status);
 	}
 	/**@endcond*/
-
-	/**
-	 * @brief Initializes the underlying core.
-	 */
-	EXTERN void k1b_core_setup(void);
 
 /**@}*/
 
