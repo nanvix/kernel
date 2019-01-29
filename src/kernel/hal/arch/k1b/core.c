@@ -27,20 +27,21 @@
 
 #include <arch/k1b/cache.h>
 #include <arch/k1b/core.h>
-#include <arch/k1b/cpu.h>
-#include <arch/k1b/excp.h>
-#include <arch/k1b/int.h>
-#include <arch/k1b/ivt.h>
-#include <arch/k1b/tlb.h>
 #include <nanvix/const.h>
-#include <nanvix/klib.h>
+#include <arch/k1b/cpu.h>
+#include <arch/k1b/spinlock.h>
 
 /**
- * @brief Cores.
+ * @brief Event line used for signals.
+ */
+#define K1B_EVENT_LINE 0
+
+/**
+ * @brief Cores table.
  */
 PRIVATE struct
 {
-	int initialized;        /**< Initialized core? */
+	int initialized;        /**< Initialized?      */
 	int state;              /**< State.            */
 	void (*start)(void);    /**< Starting routine. */
 	spinlock_t lock;        /**< Lock.             */
@@ -64,13 +65,63 @@ PRIVATE struct
 };
 
 /*============================================================================*
+ *                        Inter-Processor Interrupts                          *
+ *============================================================================*/
+
+/**
+ * @brief Waits for a signal.
+ *
+ * The k1b_core_wait() function suspends instruction execution in the
+ * underlying core, until a signal is received.
+ *
+ * @bug For some unknown reason, we have to flush the cache here.
+ *
+ * @author Pedro Henrique Penna
+ */
+PRIVATE inline void k1b_core_wait(void)
+{
+	mOS_pe_event_clear(K1B_EVENT_LINE);
+	mOS_pe_event_waitclear(K1B_EVENT_LINE);
+	k1b_dcache_inval();
+}
+
+/*============================================================================*
+ *                        Inter-Processor Interrupts                          *
+ *============================================================================*/
+
+/**
+ * @brief Sends a signal.
+ *
+ * The k1b_core_notify() function sends a signal to the core whose ID
+ * equals to @p coreid.
+ *
+ * @param coreid ID of the target core.
+ *
+ * @bug No sanity check is performed in @p coreid.
+ *
+ * @author Pedro Henrique Penna
+ */
+PRIVATE inline void k1b_core_notify(int coreid)
+{
+	mOS_pe_notify(
+		1 << coreid,    /* Target cores.                            */
+		K1B_EVENT_LINE, /* Event line.                              */
+		1,              /* Notify an event? (I/O clusters only)     */
+		0               /* Notify an interrupt? (I/O clusters only) */
+	);
+}
+
+/*============================================================================*
  * k1b_core_sleep()                                                           *
  *============================================================================*/
 
 /**
- * The k1b_core_sleep() function stops instruction execution in the
- * the underlying core and places it in a low-power state. An wakeup
- * notification resumes execution.
+ * The k1b_core_sleep() function suspends instruction execution in the
+ * the underlying core until an wakeup signal is received. While is
+ * suspended mode, the undelying core is placed in a low-power state
+ * to save energy.
+ *
+ * @see k1b_core_wakeup()
  *
  * @author Pedro Henrique Penna
  */
@@ -85,9 +136,9 @@ PUBLIC void k1b_core_sleep(void)
 	k1b_dcache_inval();
 	k1b_spinlock_unlock(&cores[coreid].lock);
 
-	/* Wait for wakeup. */
+	/* Wait for wakeup signal. */
 	do
-		k1b_cpu_wait();
+		k1b_core_wait();
 	while (cores[coreid].state == K1B_CORE_SLEEPING);
 }
 
@@ -96,20 +147,53 @@ PUBLIC void k1b_core_sleep(void)
  *============================================================================*/
 
 /**
- * The k1b_core_wakeup() function sends a wakeup notification to the
- * sleeping core whose ID equals @coreid and sets the starting routine
- * of this target core to @p start.
+ * The k1b_core_wakeup() function sends a wakeup signal to the
+ * sleeping core whose ID equals to @p coreid.
+ *
+ * @see k1b_core_start(), k1b_core_sleep(), k1b_core_run().
  *
  * @todo Check if the calling core is not the target core.
  *
  * @author Pedro Henrique Penna
  */
-PUBLIC void k1b_core_wakeup(int coreid, void (*start)(void))
+PUBLIC void k1b_core_wakeup(int coreid)
 {
 	k1b_spinlock_lock(&cores[coreid].lock);
 	k1b_dcache_inval();
 
-		/* Wakeup core. */
+		/* Wakeup target core. */
+		if (cores[coreid].state == K1B_CORE_SLEEPING)
+		{
+			cores[coreid].state = K1B_CORE_RUNNING;
+			k1b_dcache_inval();
+		}
+
+	k1b_spinlock_unlock(&cores[coreid].lock);
+
+	k1b_core_notify(coreid);
+}
+
+/*============================================================================*
+ * k1b_core_start()                                                          *
+ *============================================================================*/
+
+/**
+ * The k1b_core_start() function sets the starting routine of the
+ * sleeping core whose ID equals to @p coreid to @p start and sends a
+ * wakeup signal to this core.
+ *
+ * @see k1b_core_wakeup(), k1b_core_sleep(), k1b_core_run().
+ *
+ * @todo Check if the calling core is not the target core.
+ *
+ * @author Pedro Henrique Penna
+ */
+PUBLIC void k1b_core_start(int coreid, void (*start)(void))
+{
+	k1b_spinlock_lock(&cores[coreid].lock);
+	k1b_dcache_inval();
+
+		/* Wakeup target core. */
 		if (cores[coreid].state == K1B_CORE_SLEEPING)
 		{
 			cores[coreid].state = K1B_CORE_RUNNING;
@@ -119,23 +203,25 @@ PUBLIC void k1b_core_wakeup(int coreid, void (*start)(void))
 
 	k1b_spinlock_unlock(&cores[coreid].lock);
 
-	k1b_cpu_notify(coreid);
+	k1b_core_notify(coreid);
 }
 
 /*============================================================================*
- * k1b_core_start()                                                           *
+ * k1b_core_run()                                                             *
  *============================================================================*/
 
 /**
- * The k1b_core_start() function starts the underlying core by calling
- * the starting routine previously set by a call to k1b_core_wakeup(),
- * made by the master core. Furthermore, in the first call ever made
- * to k1b_core_start(), architectural structures of the slave core are
- * initialized.
+ * The k1b_core_run() function resumes instruction execution in the
+ * underlying core, by calling the starting routine which was
+ * previously registered with k1b_core_wakeup(). Furthermore, in the
+ * first call ever made to k1b_core_run(), architectural structures of
+ * the underlying core are initialized.
+ *
+ * @see k1b_core_wakeup()
  *
  * @author Pedro Henrique Penna
  */
-PUBLIC void k1b_core_start(void)
+PUBLIC void k1b_core_run(void)
 {
 	int coreid = k1b_core_get_id();
 
@@ -160,8 +246,10 @@ PUBLIC void k1b_core_start(void)
  *============================================================================*/
 
 /**
- * The k1b_core_shutdown() function powers off the underlying core
- * with status @p status.
+ * The k1b_core_shutdown() function powers off the underlying core.
+ * Afeter powering off a core, instruction execution cannot be
+ * resumed. The status code @p status is handled to the remote spawner
+ * device.
  *
  * @author Pedro Henrique Penna
  */

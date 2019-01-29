@@ -41,5 +41,6 @@
 	#include <arch/k1b/io.h>
 	#include <arch/k1b/mem.h>
 	#include <arch/k1b/pic.h>
+	#include <arch/k1b/spinlock.h>
 
 #endif /* ARCH_K1B_K1B_H_ */

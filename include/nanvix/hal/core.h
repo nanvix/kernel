@@ -44,7 +44,7 @@
 	EXTERN int core_get_id(void);
 
 	/**
-	 * @brief Halts the underyling core.
+	 * @brief Halts instruction execution in the underlying core.
 	 */
 	EXTERN void core_halt(void);
 
@@ -58,22 +58,24 @@
 #ifdef HAL_SMP
 
 	/**
-	 * @brief Stops the underling core.
+	 * @brief Suspends instruction execution in the underling core.
 	 */
 	EXTERN void core_sleep(void);
-
-	/**
-	 * @brief Starts a core.
-	 */
-	EXTERN void core_start(void);
 
 	/**
 	 * @brief Wakes up a core.
 	 *
 	 * @param coreid ID of the target core.
+	 */
+	EXTERN void core_wakeup(int coreid);
+
+	/**
+	 * @brief Starts a core.
+	 *
+	 * @param coreid ID of the target core.
 	 * @param start  Starting routine to execute.
 	 */
-	EXTERN void core_wakeup(int coreid, void (*start)(void));
+	EXTERN void core_start(int coreid, void (*start)(void));
 
 #endif /* HAL_SMP */
 

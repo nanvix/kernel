@@ -120,7 +120,7 @@ PRIVATE NORETURN void k1b_slave_setup(void)
 	while (TRUE)
 	{
 		k1b_core_sleep();
-		k1b_core_start();
+		k1b_core_run();
 	}
 }
 

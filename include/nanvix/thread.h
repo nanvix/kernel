@@ -115,7 +115,8 @@
 	 * fields of the semaphore pointed to by @p sem. The initial value
 	 * of the semaphore is set to @p x in the initialization.
 	 *
-	 * @param x Initial semaphore value.
+	 * @param sem Target semaphore.
+	 * @param x   Initial semaphore value.
 	 */
 	static inline void semaphore_init(struct semaphore *sem, int x)
 	{

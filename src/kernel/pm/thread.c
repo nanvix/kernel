@@ -89,7 +89,7 @@ PUBLIC int thread_create(tid_t *tid, void*(*start)(void*), void *arg)
 	threads[nthreads].state = THREAD_RUNNING;
 	hal_dcache_invalidate();
 
-	core_wakeup(nthreads, thread_start);
+	core_start(nthreads, thread_start);
 
 	*tid = nthreads++;
 
@@ -132,5 +132,5 @@ PUBLIC void thread_wakeup(struct thread **queue)
 {
 	/* Wakeup all threads in the queue. */
 	for (struct thread *t = *queue; t != NULL; t = t->next)
-		core_wakeup(t->coreid, NULL);
+		core_wakeup(t->coreid);
 }
