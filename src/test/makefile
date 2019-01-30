@@ -30,7 +30,7 @@ OBJ = $(SRC:.c=.o)
 
 # Builds object files for MPPA-256 target.
 mppa256: $(OBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC) -o $(BINDIR)/$(EXECBIN) $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC) -o $(BINDIR)/$(EXECBIN) -Wl,--whole-archive $(LIBS_OURS) -Wl,--no-whole-archive $(LIBS_THEIRS)
 
 # Builds object files for i386 target.
 i386-pc:
