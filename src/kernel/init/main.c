@@ -49,7 +49,10 @@ PRIVATE void *init(void *arg)
 
 	UNUSED(status);
 
-	kprintf("broadcasting shutdown signal");
+	/* Halt. */
+	kprintf("halting...");
+	while (TRUE)
+		noop();
 
 	return (NULL);
 }
