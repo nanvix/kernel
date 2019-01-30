@@ -130,7 +130,9 @@ PUBLIC void thread_asleep(struct thread **queue, spinlock_t *lock)
  */
 PUBLIC void thread_wakeup(struct thread **queue)
 {
-	/* Wakeup all threads in the queue. */
-	for (struct thread *t = *queue; t != NULL; t = t->next)
-		core_wakeup(t->coreid);
+	while (*queue != NULL)
+	{
+		core_wakeup((*queue)->coreid);
+		*queue = (*queue)->next;
+	}
 }
