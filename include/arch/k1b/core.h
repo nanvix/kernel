@@ -115,6 +115,23 @@
 	 */
 	EXTERN void k1b_core_shutdown(int status);
 
+	/**
+	 * @brief Resets the underlying core.
+	 *
+	 * The k1b_core_reset() function resets execution instruction in
+	 * the underlying core by reseting the kernel stack to its initial
+	 * location and relaunching the k1b_slave_setup() function.
+	 *
+	 * @note This function does not return.
+	 * @note For the implementation of this function check out
+	 * assembly source files.
+	 *
+	 * @see k1b_slave_setup()
+	 *
+	 * @author Pedro Henrique Penna
+	 */
+	EXTERN void k1b_core_reset(void);
+
 /*============================================================================*
  *                              Exported Interface                            *
  *============================================================================*/
@@ -197,6 +214,17 @@
 	static inline void shutdown(int status)
 	{
 		k1b_core_shutdown(status);
+	}
+	/**@endcond*/
+
+	/**
+	 * @see k1b_core_reset().
+	 *
+	 * @cond k1b
+	 */
+	static inline void core_reset(void)
+	{
+		k1b_core_reset();
 	}
 	/**@endcond*/
 
