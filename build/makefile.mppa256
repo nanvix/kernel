@@ -42,6 +42,8 @@ export CFLAGS  += -mos=$(SYSTEM) -mcluster=$(CLUSTER) -march=$(ARCH) -mboard=$(B
 export LDFLAGS  = -Tlink.ld
 
 # Libraries
-export LIBKERNEL = libkernel-$(ARCH).a
-export LIBNANVIX = libnanvix-$(ARCH).a
-export LIBS += $(LIBDIR)/$(LIBNANVIX) $(LIBDIR)/$(LIBKERNEL) -lvbsp -mhypervisor
+export LIBKERNEL    = libkernel-$(ARCH).a
+export LIBNANVIX    = libnanvix-$(ARCH).a
+export LIBS_OURS    = $(LIBDIR)/$(LIBNANVIX) $(LIBDIR)/$(LIBKERNEL)
+export LIBS_THEIRS  = -lvbsp -mhypervisor
+export LIBS        += $(LIBS_OURS) $(LIBS_THEIRS)
