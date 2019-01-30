@@ -22,69 +22,45 @@
  * SOFTWARE.
  */
 
-#ifndef NANVIX_HAL_CORE_H_
-#define NANVIX_HAL_CORE_H_
+/* Must come first. */
+#define _ASM_FILE_
 
-/**
- * @addtogroup kernel-hal-core Core
- * @ingroup kernel-hal-cpu
- *
- * @brief Core Interface
+#include <arch/k1b/regs.h>
+#include <target/kalray/mppa256.h>
+
+.global k1b_core_reset
+
+.section .text
+
+/*===========================================================================*
+ * k1b_core_reset()                                                          *
+ *===========================================================================*/
+
+/*
+ * Resets the underlying core.
  */
-/**@{*/
+.align 8
+k1b_core_reset:
+	/* Get core id. */
+	get   $r2, $pi
+	;;
+	extfz $r1, $r2, 15, 11
+	;;
 
-	#include <nanvix/const.h>
-	#include <nanvix/hal/target.h>
+	/* Setup kernel stack. */
+	mulwdl $r0 = $r1, K1B_KSTACK_SIZE
+	;;
+	make   $r1 = MPPA256_KSTACK_BASE_VIRT - 8
+	;;
+	sbf    $sp = $r0, $r1
+	;;
 
-	/**
-	 * @brief Gets the ID of the underlying core.
-	 *
-	 * @returns The ID of the underlying core.
-	 */
-	EXTERN int core_get_id(void);
+	/* Restart core. */
+	redzone_alloc
+	;;
+	call k1b_slave_setup
+	;;
 
-	/**
-	 * @brief Halts instruction execution in the underlying core.
-	 */
-	EXTERN void core_halt(void);
-
-	/**
-	 * @brief Shutdowns the underlying core.
-	 *
-	 * @param status Shutdown status.
-	 */
-	EXTERN void core_shutdown(int status);
-
-#ifdef HAL_SMP
-
-	/**
-	 * @brief Suspends instruction execution in the underling core.
-	 */
-	EXTERN void core_sleep(void);
-
-	/**
-	 * @brief Wakes up a core.
-	 *
-	 * @param coreid ID of the target core.
-	 */
-	EXTERN void core_wakeup(int coreid);
-
-	/**
-	 * @brief Starts a core.
-	 *
-	 * @param coreid ID of the target core.
-	 * @param start  Starting routine to execute.
-	 */
-	EXTERN void core_start(int coreid, void (*start)(void));
-
-	/**
-	 * @brief Reset the underlying core.
-	 */
-	EXTERN void core_reset(void);
-
-#endif /* HAL_SMP */
-
-/**@}*/
-
-#endif /* NANVIX_HAL_CORE_H_ */
-
+	/* Never gets here. */
+	k1b_core_reset.halt:
+		goto k1b_core_reset.halt

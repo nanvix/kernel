@@ -113,7 +113,7 @@ PUBLIC void k1b_core_setup(void)
  *
  * @author Pedro Henrique Penna
  */
-PRIVATE NORETURN void k1b_slave_setup(void)
+PUBLIC NORETURN void k1b_slave_setup(void)
 {
 	k1b_stack_setup();
 

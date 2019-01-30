@@ -31,6 +31,8 @@
  */
 /**@{*/
 
+#ifndef _ASM_FILE_
+
 	#ifndef NANVIX_HAL_TARGET_H_
 	#error "include <nanvix/hal/target.h> instead"
 	#endif
@@ -39,6 +41,7 @@
 
 	#include <driver/jtag.h>
 
+#endif
 	/**
 	 * @name Provided Interface
 	 */
@@ -112,6 +115,16 @@
 	#define K1B_IOETH_MEM_SIZE (4*1024*1024)
 
 	/**
+	 * @brief Log2 of kernel stack size.
+	 */
+	#define K1B_KSTACK_SIZE_LOG2 (11)
+
+	/**
+	 * @brief Kernel stack size (in bytes).
+	 */
+	#define K1B_KSTACK_SIZE (1 << K1B_KSTACK_SIZE_LOG2)
+
+	/**
 	 * @name Physical Memory Layout
 	 *
 	 * @todo Check if this layout is valid for IO Clusters.
@@ -120,6 +133,7 @@
 	#if defined(__ioddr__) || defined(__ioeth__)
 		#define MPPA256_HYPER_LOW_BASE_PHYS  0x00000000 /**< Low Hypervisor Base  */
 		#define MPPA256_KERNEL_BASE_PHYS     0x00008000 /**< Kernel Base          */
+		#define MPPA256_KSTACK_BASE_PHYS     0x0001f000 /**< Kernel Stack Base    */
 		#define MPPA256_KERNEL_END_PHYS      0x00048000 /**< Kernel End           */
 		#define MPPA256_KPOOL_BASE_PHYS      0x00048000 /**< Kernel Pool Base     */
 		#define MPPA256_KPOOL_END_PHYS       0x00078000 /**< Kernel Pool End      */
@@ -129,6 +143,7 @@
 	#elif defined(__node__)
 		#define MPPA256_HYPER_LOW_BASE_PHYS  0x00000000 /**< Low Hypervisor Base  */
 		#define MPPA256_KERNEL_BASE_PHYS     0x00008000 /**< Kernel Base          */
+		#define MPPA256_KSTACK_BASE_PHYS     0x0001f000 /**< Kernel Stack Base    */
 		#define MPPA256_KERNEL_END_PHYS      0x00048000 /**< Kernel End           */
 		#define MPPA256_KPOOL_BASE_PHYS      0x00048000 /**< Kernel Pool Base     */
 		#define MPPA256_KPOOL_END_PHYS       0x00078000 /**< Kernel Pool End      */
@@ -147,6 +162,7 @@
 	#if defined(__ioddr__) || defined(__ioeth__)
 		#define MPPA256_HYPER_LOW_BASE_VIRT  0x00000000 /**< Low Hypervisor Base  */
 		#define MPPA256_KERNEL_BASE_VIRT     0x00008000 /**< Kernel Base          */
+		#define MPPA256_KSTACK_BASE_VIRT     0x0001f000 /**< Kernel Stack Base    */
 		#define MPPA256_KERNEL_END_VIRT      0x00048000 /**< Kernel End           */
 		#define MPPA256_KPOOL_BASE_VIRT      0x00048000 /**< Kernel Pool Base     */
 		#define MPPA256_KPOOL_END_VIRT       0x00078000 /**< Kernel Pool End      */
@@ -156,6 +172,7 @@
 	#elif defined(__node__)
 		#define MPPA256_HYPER_LOW_BASE_VIRT  0x00000000 /**< Low Hypervisor Base  */
 		#define MPPA256_KERNEL_BASE_VIRT     0x00008000 /**< Kernel Base          */
+		#define MPPA256_KSTACK_BASE_VIRT     0x0001f000 /**< Kernel Stack Base    */
 		#define MPPA256_KERNEL_END_VIRT      0x00048000 /**< Kernel End           */
 		#define MPPA256_KPOOL_BASE_VIRT      0x00048000 /**< Kernel Pool Base     */
 		#define MPPA256_KPOOL_END_VIRT       0x00078000 /**< Kernel Pool End      */
@@ -245,6 +262,8 @@
  * Debug Interface                                                            *
  *============================================================================*/
 
+#ifndef _ASM_FILE_
+
 	/**
 	 * @see jtag_init()
 	 *
@@ -266,6 +285,8 @@
 		jtag_write(buf, n);
 	}
 	/**@endcond*/
+
+#endif
 
 /**@}*/
 

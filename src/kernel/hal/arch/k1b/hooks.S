@@ -27,49 +27,13 @@
 
 #include <arch/k1b/context.h>
 #include <arch/k1b/excp.h>
+#include <arch/k1b/regs.h>
 #include <mOS_common_types_s_c.h>
-
-/**
- * @brief Size of red zone (in bytes).
- */
-#define REDZONE_SIZE 16
-
-/**
- * @name Aliases for Registers
- */
-/**@{*/
-#define sp r12 /**< Stack Pointer Pointer              */
-#define bp r13 /**< Stack Base Pointer Register        */
-#define pi pcr /**< Processing Identification Register */
-/**@}*/
 
 .global _do_syscall
 .global _do_excp
 
 .section .text
-
-/*============================================================================*
- * k1b_redzone_alloc()                                                        *
- *============================================================================*/
-
-/*
- * Allocates the red zone in the current stack frame.
- */
-.macro redzone_alloc
-	add $sp = $sp, -REDZONE_SIZE
-.endm
-
-/*============================================================================*
- * k1b_redzone_free()                                                         *
- *============================================================================*/
-
-/*
- * Frees the red zone in the current stack frame.
- */
-.macro redzone_free
-	add $sp = $sp, REDZONE_SIZE
-.endm
-
 
 /*============================================================================*
  * k1b_context_save()                                                         *

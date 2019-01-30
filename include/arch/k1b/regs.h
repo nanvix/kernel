@@ -22,69 +22,48 @@
  * SOFTWARE.
  */
 
-#ifndef NANVIX_HAL_CORE_H_
-#define NANVIX_HAL_CORE_H_
+#ifndef ARCH_K1B_REGS_H_
+#define ARCH_K1B_REGS_H_
 
-/**
- * @addtogroup kernel-hal-core Core
- * @ingroup kernel-hal-cpu
- *
- * @brief Core Interface
- */
-/**@{*/
-
-	#include <nanvix/const.h>
-	#include <nanvix/hal/target.h>
+	#ifndef _ASM_FILE_
+	#error "do not include this in C source files"
+	#endif
 
 	/**
-	 * @brief Gets the ID of the underlying core.
-	 *
-	 * @returns The ID of the underlying core.
+	 * @brief Size of red zone (in bytes).
 	 */
-	EXTERN int core_get_id(void);
+	#define REDZONE_SIZE 16
 
 	/**
-	 * @brief Halts instruction execution in the underlying core.
+	 * @name Aliases for Registers
 	 */
-	EXTERN void core_halt(void);
+	/**@{*/
+	#define sp r12 /**< Stack Pointer Pointer              */
+	#define bp r13 /**< Stack Base Pointer Register        */
+	#define pi pcr /**< Processing Identification Register */
+	/**@}*/
 
-	/**
-	 * @brief Shutdowns the underlying core.
-	 *
-	 * @param status Shutdown status.
+/*============================================================================*
+ * k1b_redzone_alloc()                                                        *
+ *============================================================================*/
+
+	/*
+	 * Allocates the red zone in the current stack frame.
 	 */
-	EXTERN void core_shutdown(int status);
+	.macro redzone_alloc
+		add $sp = $sp, -REDZONE_SIZE
+	.endm
 
-#ifdef HAL_SMP
+/*============================================================================*
+ * k1b_redzone_free()                                                         *
+ *============================================================================*/
 
-	/**
-	 * @brief Suspends instruction execution in the underling core.
+	/*
+	 * Frees the red zone in the current stack frame.
 	 */
-	EXTERN void core_sleep(void);
+	.macro redzone_free
+		add $sp = $sp, REDZONE_SIZE
+	.endm
+	
 
-	/**
-	 * @brief Wakes up a core.
-	 *
-	 * @param coreid ID of the target core.
-	 */
-	EXTERN void core_wakeup(int coreid);
-
-	/**
-	 * @brief Starts a core.
-	 *
-	 * @param coreid ID of the target core.
-	 * @param start  Starting routine to execute.
-	 */
-	EXTERN void core_start(int coreid, void (*start)(void));
-
-	/**
-	 * @brief Reset the underlying core.
-	 */
-	EXTERN void core_reset(void);
-
-#endif /* HAL_SMP */
-
-/**@}*/
-
-#endif /* NANVIX_HAL_CORE_H_ */
-
+#endif /* ARCH_K1B_REGS_H_ */
