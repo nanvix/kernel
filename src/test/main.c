@@ -22,14 +22,8 @@
  * SOFTWARE.
  */
 
-#include <nanvix/thread.h>
-#include <nanvix/syscall.h>
+#include <sys/types.h>
 #include <stddef.h>
-
-/**
- * @brief Number of threads in the program.
- */
-#define NTHREADS 16
 
 /* Import definitions. */
 extern ssize_t write(int, const char *, size_t);
@@ -65,52 +59,14 @@ void puts(const char *str)
 }
 
 /**
- * @brief Thread strings.
- */
-static const char *strings[NTHREADS] = {
-	"hello from core 0\n",
-	"hello from core 1\n",
-	"hello from core 2\n",
-	"hello from core 3\n",
-	"hello from core 4\n",
-	"hello from core 5\n",
-	"hello from core 6\n",
-	"hello from core 7\n",
-	"hello from core 8\n",
-	"hello from core 9\n",
-	"hello from core 10\n",
-	"hello from core 11\n",
-	"hello from core 12\n",
-	"hello from core 13\n",
-	"hello from core 14\n",
-	"hello from core 15\n"
-};
-
-/**
- * @brief Prints a string and syncs.
- */
-void *task(void *arg)
-{
-	puts(arg);
-
-	return (NULL);
-}
-
-/**
- * @brief A simple hello world application.
+ * @brief Says hello to the world.
  */
 int main(int argc, const char *argv[])
 {
 	((void) argc);
 	((void) argv);
 
-	puts(strings[core_get_id()]);
-
-	for (int i = 2; i < NTHREADS; i++)
-	{
-		tid_t tid;
-		thread_create(&tid, task, (void *) strings[i]);
-	}	   
+	puts("hello world!\n");
 
 	return (0);
 }

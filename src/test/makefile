@@ -23,7 +23,7 @@
 #
 
 # Source Files
-SRC = $(wildcard $(TARGET)/*.c)
+SRC = $(wildcard *.c)
 
 # Object Files
 OBJ = $(SRC:.c=.o)
