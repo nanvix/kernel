@@ -42,7 +42,7 @@
 	 *
 	 * @note This should be set to the highest system call number.
 	 */
-	#define NR_SYSCALLS 4
+	#define NR_SYSCALLS 5
 
 	/**
 	 * @name Magic Numbers for nosyscall()
@@ -56,10 +56,11 @@
 	 * @name System Call Numbers
 	 */
 	/**@{*/
-	#define NR_nosyscall    0 /**< nosyscall()   */
-	#define NR_cache_flush  1 /**< cache_flush() */
-	#define NR__exit        2 /**< _exit()       */
-	#define NR_write        3 /**< write()       */
+	#define NR_nosyscall     0 /**< nosyscall()     */
+	#define NR_cache_flush   1 /**< cache_flush()   */
+	#define NR__exit         2 /**< _exit()         */
+	#define NR_write         3 /**< write()         */
+	#define NR_thread_get_id 4 /**< thread_get_id() */
 	/**@}*/
 
 	/**
@@ -70,6 +71,7 @@
 	EXTERN int sys_cache_flush(void);
 	EXTERN void sys_exit(int);
 	EXTERN ssize_t sys_write(int, const char *, size_t);
+	EXTERN int sys_thread_get_id(void);
 	/**@}*/
 
 /**@}*/

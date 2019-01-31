@@ -141,27 +141,42 @@ PUBLIC int do_syscall1(
 	int arg6,
 	int syscall_nr)
 {
-	int coreid;
+	int ret = -EINVAL;
 
-	coreid = core_get_id();
+	/* Parse system call number. */
+	switch (syscall_nr)
+	{
+		case NR_thread_get_id:
+			ret = sys_thread_get_id();
+			break;
 
-	/* Fillup system call scoreboard. */
-	sysboard[coreid].arg0 = arg0;
-	sysboard[coreid].arg1 = arg1;
-	sysboard[coreid].arg2 = arg2;
-	sysboard[coreid].arg3 = arg3;
-	sysboard[coreid].arg4 = arg4;
-	sysboard[coreid].arg5 = arg5;
-	sysboard[coreid].arg6 = arg6;
-	sysboard[coreid].syscall_nr = syscall_nr;
-	sysboard[coreid].pending = 1;
-	semaphore_init(&sysboard[coreid].syssem, 0);
-	hal_dcache_invalidate();
+		/* Forward system call. */
+		default:
+		{
+			int coreid;
 
-	semaphore_up(&syssem);
-	semaphore_down(&sysboard[coreid].syssem);
+			coreid = core_get_id();
 
-	hal_dcache_invalidate();
+			/* Fillup system call board. */
+			sysboard[coreid].arg0 = arg0;
+			sysboard[coreid].arg1 = arg1;
+			sysboard[coreid].arg2 = arg2;
+			sysboard[coreid].arg3 = arg3;
+			sysboard[coreid].arg4 = arg4;
+			sysboard[coreid].arg5 = arg5;
+			sysboard[coreid].arg6 = arg6;
+			sysboard[coreid].syscall_nr = syscall_nr;
+			sysboard[coreid].pending = 1;
+			semaphore_init(&sysboard[coreid].syssem, 0);
+			hal_dcache_invalidate();
 
-	return (sysboard[coreid].ret);
+			semaphore_up(&syssem);
+			semaphore_down(&sysboard[coreid].syssem);
+			hal_dcache_invalidate();
+
+			ret = sysboard[coreid].ret;
+		} break;
+	}
+
+	return (ret);
 }

@@ -1,10 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
- *              2015-2017 Davidson Francis     <davidsondfgl@gmail.com>
- *              2016-2016 Subhra S. Sarkar     <rurtle.coder@gmail.com>
- *              2017-2017 Romane Gallier       <romanegallier@gmail.com>
+ * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,26 +22,13 @@
  * SOFTWARE.
  */
 
+#include <nanvix/const.h>
+#include <nanvix/thread.h>
+
 /**
- * @addtogroup nanvix Nanvix System
+ * @see thread_get_id().
  */
-/**@{*/
-
-#ifndef NANVIX_H_
-#define NANVIX_H_
-
-	#include <nanvix/syscall.h>
-	#include <sys/types.h>
-
-	/**
-	 * @brief Thread ID.
-	 */
-	typedef int nanvix_tid_t;
-
-	/* System calls. */
-	extern ssize_t nanvix_write(int, const char *, size_t);
-	extern nanvix_tid_t nanvix_thread_get_id(void);
-
-#endif /* NANVIX_H_ */
-
-/**@}*/
+PUBLIC int sys_thread_get_id(void)
+{
+	return (thread_get_id(thread_get()));
+}
