@@ -22,11 +22,9 @@
  * SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <stddef.h>
+#include <nanvix.h>
 
 /* Import definitions. */
-extern ssize_t write(int, const char *, size_t);
 
 /**
  * @brief Returns the length of a string.
@@ -55,7 +53,7 @@ void puts(const char *str)
 
 	len = strlen(str);
 
-	write(0, str, len);
+	nanvix_write(0, str, len);
 }
 
 /**

@@ -25,54 +25,20 @@
  * SOFTWARE.
  */
 
-#ifndef NANVIX_SYSCALL_H_
-#define NANVIX_SYSCALL_H_
-
-	#include <nanvix/const.h>
-	#include <sys/types.h>
-
 /**
- * @addtogroup kernel-syscalls System Calls
- * @ingroup kernel
+ * @addtogroup nanvix Nanvix System
  */
 /**@{*/
 
-	/**
-	 * @brief Number of system calls.
-	 *
-	 * @note This should be set to the highest system call number.
-	 */
-	#define NR_SYSCALLS 4
+#ifndef NANVIX_H_
+#define NANVIX_H_
 
-	/**
-	 * @name Magic Numbers for nosyscall()
-	 */
-	/**@{*/
-	#define NOSYSCALL_MAGIC_ARG 0x001f00d  /**< Magic number for argument.     */
-	#define NOSYSCALL_MAGIC_RET 0xdeadca11 /**< Magic number for return value. */
-	/**@}*/
+	#include <nanvix/syscall.h>
+	#include <sys/types.h>
 
-	/**
-	 * @name System Call Numbers
-	 */
-	/**@{*/
-	#define NR_nosyscall    0 /**< nosyscall()   */
-	#define NR_cache_flush  1 /**< cache_flush() */
-	#define NR__exit        2 /**< _exit()       */
-	#define NR_write        3 /**< write()       */
-	/**@}*/
+	/* System calls. */
+	extern ssize_t nanvix_write(int, const char *, size_t);
 
-	/**
-	 * @name System Calls
-	 */
-	/**@{*/
-	EXTERN int sys_nosyscall(unsigned);
-	EXTERN int sys_cache_flush(void);
-	EXTERN void sys_exit(int);
-	EXTERN ssize_t sys_write(int, const char *, size_t);
-	/**@}*/
+#endif /* NANVIX_H_ */
 
 /**@}*/
-	
-#endif /* NANVIX_SYSCALL_H_ */
-
