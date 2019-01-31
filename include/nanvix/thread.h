@@ -133,6 +133,13 @@
 	EXTERN int thread_create(int *tid, void*(*start)(void*), void *arg);
 
 	/**
+	 * @brief Terminates the calling thread.
+	 *
+	 * @param retval Return value.
+	 */
+	EXTERN NORETURN void thread_exit(void *retval);
+
+	/**
 	 * @brief Atomically puts the calling thread to sleep.
 	 *
 	 * @param queue Target sleeping queue.

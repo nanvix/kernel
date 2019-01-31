@@ -121,19 +121,23 @@ PRIVATE void thread_free(struct thread *t)
  *============================================================================*/
 
 /**
- * @brief Terminates the current thread.
- *
- * The thread_exit() function terminates the current thread. It first
+ * The thread_exit() function terminates the calling thread. It first
  * releases all underlying kernel resources that are linked to the
- * thread and then resets the underlying core.
+ * thread and then resets the underlying core. The return value of the
+ * thread, which is pointed to by @p retval, is made available for a
+ * thread that joins this one.
  *
  * @note This function does not return.
  *
+ * @note This function is thread-safe.
+ *
  * @author Pedro Henrique Penna
  */
-PRIVATE NORETURN void thread_exit(void)
+PUBLIC NORETURN void thread_exit(void *retval)
 {
 	struct thread *curr_thread;
+
+	UNUSED(retval);
 
 	curr_thread = thread_get();
 	curr_thread->state = THREAD_TERMINATED;
@@ -167,13 +171,14 @@ PRIVATE NORETURN void thread_exit(void)
  */
 PRIVATE NORETURN void thread_start(void)
 {
-	struct thread *curr_thread;
+	void *retval;               /* Return value.   */
+	struct thread *curr_thread; /* Current thread. */
 
 	curr_thread = thread_get();
 
-	curr_thread->start(curr_thread->arg);
+	retval = curr_thread->start(curr_thread->arg);
 
-	thread_exit();
+	thread_exit(retval);
 
 	/* Never gets here. */
 	while (TRUE)

@@ -158,6 +158,10 @@ PUBLIC int do_syscall1(
 			ret = sys_thread_get_id();
 			break;
 
+		case NR_thread_exit:
+			sys_thread_exit((void *) arg0);
+			break;
+
 		/* Forward system call. */
 		default:
 		{

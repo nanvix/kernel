@@ -67,3 +67,14 @@ nanvix_tid_t nanvix_thread_create(
 
 	return (ret);
 }
+
+/*
+ * @see sys_thread_exit().
+ */
+void nanvix_thread_exit(void *retval)
+{
+	__k1_club_syscall1(
+		NR_thread_exit,
+		(unsigned) retval
+	);
+}

@@ -40,3 +40,11 @@ PUBLIC int sys_thread_create(int *tid, void*(*start)(void*), void *arg)
 {
 	return (thread_create(tid, start, arg));
 }
+
+/**
+ * @see thread_exit().
+ */
+PUBLIC int sys_thread_exit(void *retval)
+{
+	thread_exit(retval);
+}
