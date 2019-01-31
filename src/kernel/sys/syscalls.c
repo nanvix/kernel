@@ -103,6 +103,14 @@ PUBLIC void do_syscall2(void)
 			);
 			break;
 
+		case NR_thread_create:
+			ret = sys_thread_create(
+				(int *) sysboard[coreid].arg0,
+				(void *(*)(void *)) sysboard[coreid].arg1,
+				(void *) sysboard[coreid].arg2
+			);
+			break;
+
 		default:
 			break;
 	}

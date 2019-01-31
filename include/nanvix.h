@@ -44,6 +44,7 @@
 	/* System calls. */
 	extern ssize_t nanvix_write(int, const char *, size_t);
 	extern nanvix_tid_t nanvix_thread_get_id(void);
+	extern int nanvix_thread_create(nanvix_tid_t *, void*(*)(void*), void *);
 
 #endif /* NANVIX_H_ */
 

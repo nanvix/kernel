@@ -32,3 +32,11 @@ PUBLIC int sys_thread_get_id(void)
 {
 	return (thread_get_id(thread_get()));
 }
+
+/**
+ * @see thread_create().
+ */
+PUBLIC int sys_thread_create(int *tid, void*(*start)(void*), void *arg)
+{
+	return (thread_create(tid, start, arg));
+}

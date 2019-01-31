@@ -40,3 +40,30 @@ nanvix_tid_t nanvix_thread_get_id(void)
 	return (tid);
 }
 
+/*
+ * @see sys_thread_create()
+ */
+nanvix_tid_t nanvix_thread_create(
+	nanvix_tid_t *tid,
+	void*(*start)(void*),
+	void *arg
+)
+{
+	int ret;
+
+	ret = __k1_club_syscall3(
+		NR_thread_create,
+		(unsigned) tid,
+		(unsigned) start,
+		(unsigned) arg
+	);
+
+	/* System call failed. */
+	if (ret < 0)
+	{
+		errno = -ret;
+		return (-1);
+	}
+
+	return (ret);
+}
