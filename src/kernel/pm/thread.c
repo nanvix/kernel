@@ -143,6 +143,8 @@ PRIVATE NORETURN void thread_exit(void)
 
 	thread_free(curr_thread);
 
+	core_reset();
+
 	/* Never gets here. */
 	while (TRUE)
 		noop();
