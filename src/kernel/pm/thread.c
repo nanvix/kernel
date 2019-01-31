@@ -108,7 +108,7 @@ PRIVATE struct thread *thread_alloc(void)
 PRIVATE void thread_free(struct thread *t)
 {
 	KASSERT(t >= &threads[0]);
-	KASSERT(t < &threads[THREAD_MAX - 1]);
+	KASSERT(t <= &threads[THREAD_MAX - 1]);
 
 	spinlock_lock(&lock_tm);
 		t->state = THREAD_NOT_STARTED;
