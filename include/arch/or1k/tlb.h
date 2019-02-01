@@ -214,16 +214,22 @@
 	/**
 	 * @brief Lookups a TLB entry by virtual address.
 	 *
+	 * @param handler_num Handler number, identifies which TLB
+	 * type should be used.
+	 *
 	 * @param vaddr Target virtual address.
 	 *
 	 * @returns Upon successful completion, a pointer to the TLB entry
 	 * that matches the virtual address @p vaddr is returned. If no
 	 * entry that meets this criteria is found, @p NULL is returned.
 	 */
-	EXTERN const struct tlbe *or1k_tlb_lookup_vaddr(vaddr_t vaddr);
+	EXTERN const struct tlbe *or1k_tlb_lookup_vaddr(int handler_num, vaddr_t vaddr);
 
 	/**
 	 * @brief Lookups a TLB entry by physical address.
+	 *
+	 * @param handler_num Handler number, identifies which TLB
+	 * type should be used.
 	 *
 	 * @param paddr Target physical address.
 	 *
@@ -231,22 +237,28 @@
 	 * that matches the physical address @p paddr is returned. If no
 	 * entry that meets this criteria is found, @p NULL is returned.
 	 */
-	EXTERN const struct tlbe *or1k_tlb_lookup_paddr(paddr_t paddr);
+	EXTERN const struct tlbe *or1k_tlb_lookup_paddr(int handler_num, paddr_t paddr);
 
 	/**
 	 * @brief Writes a TLB entry.
 	 *
+	 * @param handler_num Handler number, identifies which TLB
+	 * type should be used.
+	 *
 	 * @param vaddr  Target virtual address.
 	 * @param paddr  Target physical address.
 	 */
-	EXTERN int or1k_tlb_write(vaddr_t vaddr, paddr_t paddr);
+	EXTERN int or1k_tlb_write(int handler_num, vaddr_t vaddr, paddr_t paddr);
 
 	/**
 	 * @brief Invalidates a TLB entry.
 	 *
+	 * @param handler_num Handler number, identifies which TLB
+	 * type should be used.
+	 *
 	 * @param vaddr Target virtual address.
 	 */
-	EXTERN int or1k_tlb_inval(vaddr_t vaddr);
+	EXTERN int or1k_tlb_inval(int handler_num, vaddr_t vaddr);
 
 	/**
 	 * @brief Flushes the TLB.
@@ -289,33 +301,33 @@
 	/**
 	 * @see or1k_tlb_lookup_vaddr().
 	 */
-	static inline const struct tlbe *tlb_lookup_vaddr(vaddr_t vaddr)
+	static inline const struct tlbe *tlb_lookup_vaddr(int handler_num, vaddr_t vaddr)
 	{
-		return (or1k_tlb_lookup_vaddr(vaddr));
+		return (or1k_tlb_lookup_vaddr(handler_num, vaddr));
 	}
 
 	/**
 	 * @see or1k_tlb_lookup_paddr().
 	 */
-	static inline const struct tlbe *tlb_lookup_paddr(paddr_t paddr)
+	static inline const struct tlbe *tlb_lookup_paddr(int handler_num, paddr_t paddr)
 	{
-		return (or1k_tlb_lookup_paddr(paddr));
+		return (or1k_tlb_lookup_paddr(handler_num, paddr));
 	}
 
 	/**
 	 * @see or1k_tlb_write()
 	 */
-	static inline int tlb_write(vaddr_t vaddr, paddr_t paddr)
+	static inline int tlb_write(int handler_num, vaddr_t vaddr, paddr_t paddr)
 	{
-		return (or1k_tlb_write(vaddr, paddr));
+		return (or1k_tlb_write(handler_num, vaddr, paddr));
 	}
 
 	/**
 	 * @see or1k_tlb_inval()
 	 */
-	static inline int tlb_inval(vaddr_t vaddr)
+	static inline int tlb_inval(int handler_num, vaddr_t vaddr)
 	{
-		return (or1k_tlb_inval(vaddr));
+		return (or1k_tlb_inval(handler_num, vaddr));
 	}
 
 	/**

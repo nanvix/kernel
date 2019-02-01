@@ -105,7 +105,7 @@
 	/**
 	 * @brief Number of exceptions in the or1k core.
 	 */
-	#define OR1K_NUM_EXCEPTIONS 9
+	#define OR1K_NUM_EXCEPTIONS 10
 
 	/**
 	 * @name or1k Exception Codes
@@ -116,10 +116,11 @@
 	#define OR1K_EXCP_PAGE_FAULT            2 /**@< Page fault Exception     */
 	#define OR1K_EXCP_ALIGNMENT             3 /**@< Alignment Exception      */
 	#define OR1K_EXCP_ILLEGAL_INSTRUCTION   4 /**@< Illegal Instruction      */
-	#define OR1K_EXCP_TLB_FAULT             5 /**@< Invalid Opcode Exception */
-	#define OR1K_EXCP_RANGE                 6 /**@< TLB Fault                */
-	#define OR1K_EXCP_FLOAT_POINT           7 /**@< Floating Point Exception */
-	#define OR1K_EXCP_TRAP                  8 /**@< Trap Exception           */
+	#define OR1K_EXCP_DTLB_FAULT            5 /**@< Data TLB Fault           */
+	#define OR1K_EXCP_ITLB_FAULT            6 /**@< Instruction TLB Fault    */
+	#define OR1K_EXCP_RANGE                 7 /**@< Range Exception          */
+	#define OR1K_EXCP_FLOAT_POINT           8 /**@< Floating Point Exception */
+	#define OR1K_EXCP_TRAP                  9 /**@< Trap Exception           */
 	/**@}*/
 
 	/**
@@ -131,7 +132,8 @@
 	#define EXCP_INVALID_OPCODE      OR1K_EXCP_ILLEGAL_INSTRUCTION  /**< Invalid Opcode     */
 	#define EXCP_PAGE_FAULT          OR1K_EXCP_PAGE_FAULT           /**< Page Fault         */
 	#define EXCP_PAGE_PROTECTION     OR1K_EXCP_PAGE_FAULT           /**< Page Protection    */
-	#define EXCP_TLB_FAULT           OR1K_EXCP_TLB_FAULT            /**< TLB Fault          */
+	#define EXCP_DTLB_FAULT          OR1K_EXCP_DTLB_FAULT           /**< DTLB Fault         */
+	#define EXCP_ITLB_FAULT          OR1K_EXCP_ITLB_FAULT           /**< ITLB Fault         */
 	#define EXCP_GENERAL_PROTECTION  OR1K_EXCP_RESET                /**< General Protection */
 	/**@}*/
 	/**@endcond*/

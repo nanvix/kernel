@@ -45,7 +45,8 @@ PRIVATE const struct
 	{ OR1K_EXCP_PAGE_FAULT,            "page fault"                },
 	{ OR1K_EXCP_ALIGNMENT,             "alignment check exception" },
 	{ OR1K_EXCP_ILLEGAL_INSTRUCTION,   "illegal instruction"       },
-	{ OR1K_EXCP_TLB_FAULT,             "tlb fault"                 },
+	{ OR1K_EXCP_DTLB_FAULT,            "data tlb fault"            },
+	{ OR1K_EXCP_ITLB_FAULT,            "instruction tlb fault"     },
 	{ OR1K_EXCP_RANGE,                 "data out of range"         },
 	{ OR1K_EXCP_FLOAT_POINT,           "float point exception"     },
 	{ OR1K_EXCP_TRAP,                  "trap exception"            }
@@ -59,7 +60,7 @@ PRIVATE const struct
 PRIVATE or1k_exception_handler_fn or1k_excp_handlers[OR1K_NUM_EXCEPTIONS] = {
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
-	NULL
+	NULL, NULL
 };
 
 /**

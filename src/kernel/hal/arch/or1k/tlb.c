@@ -124,6 +124,9 @@ PRIVATE int or1k_tlb_check_inst(vaddr_t vaddr)
  * The or1k_tlb_lookup_vaddr() function searches the architectural TLB
  * for an entry that matches the virtual address @p vaddr.
  *
+ * @param handler_num Handler number, identifies which TLB
+ * type should be used.
+ *
  * @param vaddr Address to be queried.
  *
  * @returns Upon successful completion, the matching TLB
@@ -132,7 +135,7 @@ PRIVATE int or1k_tlb_check_inst(vaddr_t vaddr)
  *
  * @author Davidson Francis
  */
-PUBLIC const struct tlbe *or1k_tlb_lookup_vaddr(vaddr_t vaddr)
+PUBLIC const struct tlbe *or1k_tlb_lookup_vaddr(int handler_num, vaddr_t vaddr)
 {
 	const struct tlbe *tlbe; /* TLB Entry Pointer. */
 	vaddr_t addr;            /* Aligned address.   */
@@ -140,7 +143,7 @@ PUBLIC const struct tlbe *or1k_tlb_lookup_vaddr(vaddr_t vaddr)
 	addr = vaddr & PAGE_MASK;
 
 	/* Search in ITLB. */
-	if (or1k_tlb_check_inst(vaddr))
+	if (handler_num == OR1K_EXCP_ITLB_FAULT)
 	{
 		for (int i = 0; i < OR1K_TLB_LENGTH; i++)
 		{
@@ -176,43 +179,48 @@ PUBLIC const struct tlbe *or1k_tlb_lookup_vaddr(vaddr_t vaddr)
  * The or1k_tlb_lookup_paddr() function searches the architectural TLB
  * for an entry that matches the physical address @p paddr.
  *
- * @param vaddr Address to be queried.
+ * @param handler_num Handler number, identifies which TLB
+ * type should be used.
+ *
+ * @param paddr Address to be queried.
  *
  * @returns Upon successful completion, the matching TLB
  * entry for the address @p vaddr is returned. If none
  * is found, @p NULL is returned.
  *
- * @note It's important to note that, since this function uses the
- * physical address instead of virtual, it's not possible to tell
- * with certainty that the address belongs to instruction or data.
- * Taken this into account, or1k_tlb_lookup_paddr will check both xTLB
- * and will return the first entry that the physical address match.
- * The case when the function returns the wrong entry only occurs if
- * the page is both instruction and data, which is kind rare.
- *
  * @author Davidson Francis
  */
-PUBLIC const struct tlbe *or1k_tlb_lookup_paddr(paddr_t paddr)
+PUBLIC const struct tlbe *or1k_tlb_lookup_paddr(int handler_num, paddr_t paddr)
 {
-	const struct tlbe *tlbe_i;  /* ITLB Entry Pointer. */
-	const struct tlbe *tlbe_d;  /* DTLB Entry Pointer. */
-	vaddr_t addr;               /* Aligned address.   */
+	const struct tlbe *tlbe;  /* TLB Entry Pointer. */
+	vaddr_t addr;             /* Aligned address.   */
 
 	addr = paddr & PAGE_MASK;
 
-	/* Search in TLB. */
-	for (int i = 0; i < OR1K_TLB_LENGTH; i++)
+	/* Search in ITLB. */
+	if (handler_num == OR1K_EXCP_ITLB_FAULT)
 	{
-		tlbe_i = &tlb.itlb[i];
-		tlbe_d = &tlb.dtlb[i];
+		for (int i = 0; i < OR1K_TLB_LENGTH; i++)
+		{
+			tlbe = &tlb.itlb[i];
 
-		/* Found in ITLB. */
-		if (or1k_tlbe_paddr_get(tlbe_i) == addr)
-			return (tlbe_i);
+			/* Found. */
+			if (or1k_tlbe_paddr_get(tlbe) == addr)
+				return (tlbe);
+		}
+	}
 
-		/* Found in DTLB. */
-		if (or1k_tlbe_paddr_get(tlbe_d) == addr)
-			return (tlbe_d);
+	/* Search in DTLB. */
+	else
+	{
+		for (int i = 0; i < OR1K_TLB_LENGTH; i++)
+		{
+			tlbe = &tlb.dtlb[i];
+
+			/* Found. */
+			if (or1k_tlbe_paddr_get(tlbe) == addr)
+				return (tlbe);
+		}
 	}
 
 	return (NULL);
@@ -223,21 +231,25 @@ PUBLIC const struct tlbe *or1k_tlb_lookup_paddr(paddr_t paddr)
  *============================================================================*/
 
 /**
- * THe or1k_tlb_write() function writes an entry into the architectural
+ * The or1k_tlb_write() function writes an entry into the architectural
  * TLB. If the new entry conflicts to an old one, the old one is
  * overwritten.
  *
- * @note This function tries to guess which TLB (Data or Instruction)
- * should be used by checking the virtual address. Although this works
- * for the most cases, sometimes this can led to wrong behaviour, for
- * instance, if the TLB miss was triggered by a read from a virtual
- * address belonging to a text segment: in this case a DTLB-Miss will
- * be triggered, but, since the virtual address is relative to a code,
- * only the ITLB will be write.
+ * @param handler_num Handler number, identifies which TLB
+ * type should be used.
+ *
+ * @param vaddr Virtual address to be mapped.
+ *
+ * @param paddr Physical address to be mapped.
+ *
+ * @note Although the OpenRISC specification states that the TLB can
+ * have up to 4-ways, there is no known implementation that uses more
+ * than 1-way, i.e: direct mapping. Therefore, this function will use
+ * only 1-way at the moment.
  *
  * @author Davidson Francis
  */
-PUBLIC int or1k_tlb_write(vaddr_t vaddr, paddr_t paddr)
+PUBLIC int or1k_tlb_write(int handler_num, vaddr_t vaddr, paddr_t paddr)
 {
 	struct tlbe_value tlbev; /* TLB Entry value.   */
 	struct tlbe tlbe;        /* TLB Entry.         */
@@ -247,6 +259,8 @@ PUBLIC int or1k_tlb_write(vaddr_t vaddr, paddr_t paddr)
 	vaddr_t kcode;           /* Kernel start code. */
 
 	kcode = (vaddr_t)&KSTART_CODE;
+	kmemset(&tlbe, 0, OR1K_TLBE_SIZE);
+
 	user = 1;
 	/*
 	 * Check if the virtual address belongs to
@@ -255,29 +269,71 @@ PUBLIC int or1k_tlb_write(vaddr_t vaddr, paddr_t paddr)
 	if (vaddr >= kcode && vaddr < KMEM_SIZE)
 		user = 0;
 
-	kmemset(&tlbe, 0, OR1K_TLBE_SIZE);
-
 	/*
-	 * Check if the virtual address belongs to
-	 * instruction or data.
+	 * Check if the virtual address is instruction
+	 * or data.
 	 */
-	if ((inst = or1k_tlb_check_inst(vaddr)))
-	{
-		if (!user)
-			tlbe.perms = OR1K_ITLBE_SXE;
-		else
-			tlbe.perms = OR1K_ITLBE_UXE;
-	}
+	inst = or1k_tlb_check_inst(vaddr);
 
-	/* Data. */
-	else
+	/* Address belonging to the kernel. */
+	if (!user)
 	{
-		if (!user)
-			tlbe.perms = OR1K_DTLBE_SRE | OR1K_DTLBE_SwE;
+		if (handler_num == OR1K_EXCP_ITLB_FAULT)
+		{
+			if (inst)
+				tlbe.perms = OR1K_ITLBE_SXE;
+			
+			/*
+			 * Kernel trying to execute data segments
+			 * should leads to error.
+			 */
+			else
+				tlbe.perms = 0;
+		}
+
 		else
 		{
-			tlbe.perms = OR1K_DTLBE_SRE | OR1K_DTLBE_SwE |
-				OR1K_DTLBE_URE | OR1K_DTLBE_UWE;
+			/*
+			 * Kernel trying to read code segment.
+			 */
+			if (inst)
+				tlbe.perms = OR1K_DTLBE_SRE;
+
+			else
+				tlbe.perms = OR1K_DTLBE_SRE | OR1K_DTLBE_SwE;
+		}
+
+	}
+
+	/* Address belonging to the user. */
+	else
+	{
+		if (handler_num == OR1K_EXCP_ITLB_FAULT)
+		{
+			if (inst)
+				tlbe.perms = OR1K_ITLBE_UXE;
+			
+			/*
+			 * User trying to execute data segments
+			 * should leads to error.
+			 */
+			else
+				tlbe.perms = 0;
+		}
+
+		else
+		{
+			/*
+			 * User trying to read code segment.
+			 * Kernel always have permissions to R/W user data.
+			 */
+			if (inst)
+				tlbe.perms = OR1K_DTLBE_URE | OR1K_DTLBE_SRE |
+					OR1K_DTLBE_SwE;
+
+			else
+				tlbe.perms = OR1K_DTLBE_URE | OR1K_DTLBE_UWE |
+					OR1K_DTLBE_SRE | OR1K_DTLBE_SwE;
 		}
 	}
 
@@ -300,7 +356,7 @@ PUBLIC int or1k_tlb_write(vaddr_t vaddr, paddr_t paddr)
 	idx = (vaddr >> PAGE_SHIFT) & (OR1K_TLB_LENGTH - 1);
 	tlbev.u.tlbe = tlbe;
 
-	if (inst)
+	if (handler_num == OR1K_EXCP_ITLB_FAULT)
 	{
 		/* Copy to the in-memory TLB copy. */
 		kmemcpy(&tlb.itlb[idx], &tlbe, OR1K_TLBE_SIZE);
@@ -326,9 +382,14 @@ PUBLIC int or1k_tlb_write(vaddr_t vaddr, paddr_t paddr)
  * The or1k_tlb_inval() function invalidates the TLB entry that
  * encodes the virtual address @p vaddr.
  *
+ * @param handler_num Handler number, identifies which TLB
+ * type should be used.
+ *
+ * @param vaddr Address to be invalidated.
+ *
  * @author Davidson Francis
  */
-PUBLIC int or1k_tlb_inval(vaddr_t vaddr)
+PUBLIC int or1k_tlb_inval(int handler_num, vaddr_t vaddr)
 {
 	struct tlbe_value tlbev; /* TLB Entry value. */
 	int idx;                 /* TLB Index.       */
@@ -340,7 +401,7 @@ PUBLIC int or1k_tlb_inval(vaddr_t vaddr)
 	 * Invalidates the entry accordingly if
 	 * instruction or data.
 	 */
-	if (or1k_tlb_check_inst(vaddr))
+	if (handler_num == OR1K_EXCP_ITLB_FAULT)
 	{
 		kmemcpy(&tlb.itlb[idx], &tlbev.u.tlbe, OR1K_TLBE_SIZE);
 		or1k_mtspr(OR1K_SPR_ITLBMR_BASE(0) | idx, 0);

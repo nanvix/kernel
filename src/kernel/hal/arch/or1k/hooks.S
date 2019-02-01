@@ -264,8 +264,8 @@ _do_handler 0x500, _do_hwint, OR1K_PC_INT_CLOCK             /* Tick timer.      
 _do_handler 0x600, _do_excp,  OR1K_EXCP_ALIGNMENT           /* Alignment.              */
 _do_handler 0x700, _do_excp,  OR1K_EXCP_ILLEGAL_INSTRUCTION /* Illegal Instruction.    */
 _do_handler 0x800, _do_hwint, OR1K_PC_INT_EXTERNAL          /* External Interrupt.     */
-_do_handler 0x900, _do_excp,  OR1K_EXCP_TLB_FAULT           /* TLB Fault.              */
-_do_handler 0xa00, _do_excp,  OR1K_EXCP_TLB_FAULT           /* TLB Fault.              */
+_do_handler 0x900, _do_excp,  OR1K_EXCP_DTLB_FAULT          /* DTLB Fault.             */
+_do_handler 0xa00, _do_excp,  OR1K_EXCP_ITLB_FAULT          /* ITLB Fault.             */
 _do_handler 0xb00, _do_excp,  OR1K_EXCP_RANGE               /* Range.                  */
 _do_handler 0xc00, _syscall,  0                             /* Syscall.                */
 _do_handler 0xd00, _do_excp,  OR1K_EXCP_FLOAT_POINT         /* Floating point.         */
