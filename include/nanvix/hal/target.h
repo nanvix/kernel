@@ -203,8 +203,12 @@
 	#endif
 
 	#ifdef HAL_TLB_SOFTWARE
-		#ifndef EXCP_TLB_FAULT
-		#error "EXCP_TLB_FAULT not defined"
+		#ifndef EXCP_DTLB_FAULT
+		#error "EXCP_DTLB_FAULT not defined"
+		#endif
+
+		#ifndef EXCP_ITLB_FAULT
+		#error "EXCP_ITLB_FAULT not defined"
 		#endif
 	#endif
 
