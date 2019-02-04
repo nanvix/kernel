@@ -35,6 +35,7 @@
 
 	/* External dependencies. */
 	#include <HAL/hal/hal_ext.h>
+	#include <arch/k1b/cache.h>
 	#include <nanvix/const.h>
 	#include <stdint.h>
 
@@ -89,6 +90,7 @@
 	{
 		while (!k1b_spinlock_trylock(lock))
 			/* noop */;
+		k1b_dcache_inval();
 	}
 
 	/**
@@ -98,6 +100,7 @@
 	 */
 	static inline void k1b_spinlock_unlock(spinlock_t *lock)
 	{
+		k1b_dcache_inval();
 		__builtin_k1_sdu(lock, K1B_SPINLOCK_UNLOCKED);
 	}
 
@@ -149,16 +152,24 @@
 	/**
 	 * @see k1b_spinlock_trylock()
 	 *
+	 * @note This operation performs a full data-cache flush in non-cache
+	 * coherent processors.
+	 *
 	 * @cond k1b
 	 */
 	static inline int spinlock_trylock(spinlock_t *lock)
 	{
-		return (k1b_spinlock_trylock(lock));
+		int ret = k1b_spinlock_trylock(lock);
+		k1b_dcache_inval();
+		return (ret);
 	}
 	/**@endcond*/
 
 	/**
 	 * @see k1b_spinlock_lock()
+	 *
+	 * @note This operation performs a full data-cache flush in non-cache
+	 * coherent processors.
 	 *
 	 * @cond k1b
 	 */
@@ -170,6 +181,9 @@
 
 	/**
 	 * @see k1b_spinlock_unlock()
+	 *
+	 * @note This operation performs a full data-cache flush in non-cache
+	 * coherent processors.
 	 *
 	 * @cond k1b
 	 */

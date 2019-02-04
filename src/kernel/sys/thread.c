@@ -22,40 +22,39 @@
  * SOFTWARE.
  */
 
-#include <nanvix/syscall.h>
-#include <sys/types.h>
-#include <errno.h>
-#include <vbsp.h>
+#include <nanvix/const.h>
+#include <nanvix/thread.h>
 
 /**
- * @brief Writes data to a file.
- *
- * @param fd  File descriptor.
- * @param buf Target buffer.
- * @param n   Number of bytes to write.
- *
- * @returns Upon successful completion, the number of bytes written is
- * returned. Upon failure, -1 is returned and @p errno is set to
- * indicate the error.
+ * @see thread_get_id().
  */
-ssize_t nanvix_write(int fd, const char *buf, size_t n)
+PUBLIC int sys_thread_get_id(void)
 {
-	ssize_t ret;
-
-	ret = __k1_club_syscall3(
-		NR_write,
-		(unsigned) fd,
-		(unsigned) buf,
-		(unsigned) n
-	);
-
-	/* System call failed. */
-	if (ret < 0)
-	{
-		errno = -ret;
-		return (-1);
-	}
-
-	return (ret);
+	return (thread_get_id(thread_get_curr()));
 }
 
+/**
+ * @see thread_create().
+ */
+PUBLIC int sys_thread_create(int *tid, void*(*start)(void*), void *arg)
+{
+	return (thread_create(tid, start, arg));
+}
+
+/**
+ * @see thread_exit().
+ */
+PUBLIC int sys_thread_exit(void *retval)
+{
+	thread_exit(retval);
+
+	return (-EAGAIN);
+}
+
+/**
+ * @see thread_join().
+ */
+PUBLIC int sys_thread_join(int tid, void **retval)
+{
+	return (thread_join(tid, retval));
+}

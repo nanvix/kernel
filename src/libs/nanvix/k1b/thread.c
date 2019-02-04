@@ -22,31 +22,40 @@
  * SOFTWARE.
  */
 
-#include <nanvix/syscall.h>
-#include <sys/types.h>
+#include <nanvix.h>
 #include <errno.h>
 #include <vbsp.h>
 
-/**
- * @brief Writes data to a file.
- *
- * @param fd  File descriptor.
- * @param buf Target buffer.
- * @param n   Number of bytes to write.
- *
- * @returns Upon successful completion, the number of bytes written is
- * returned. Upon failure, -1 is returned and @p errno is set to
- * indicate the error.
+/*
+ * @see sys_thread_get_id()
  */
-ssize_t nanvix_write(int fd, const char *buf, size_t n)
+nanvix_tid_t nanvix_thread_get_id(void)
 {
-	ssize_t ret;
+	nanvix_tid_t tid;
+
+	tid = __k1_club_syscall0(
+		NR_thread_get_id
+	);
+
+	return (tid);
+}
+
+/*
+ * @see sys_thread_create()
+ */
+nanvix_tid_t nanvix_thread_create(
+	nanvix_tid_t *tid,
+	void*(*start)(void*),
+	void *arg
+)
+{
+	int ret;
 
 	ret = __k1_club_syscall3(
-		NR_write,
-		(unsigned) fd,
-		(unsigned) buf,
-		(unsigned) n
+		NR_thread_create,
+		(unsigned) tid,
+		(unsigned) start,
+		(unsigned) arg
 	);
 
 	/* System call failed. */
@@ -59,3 +68,39 @@ ssize_t nanvix_write(int fd, const char *buf, size_t n)
 	return (ret);
 }
 
+/*
+ * @see sys_thread_exit().
+ */
+void nanvix_thread_exit(void *retval)
+{
+	__k1_club_syscall1(
+		NR_thread_exit,
+		(unsigned) retval
+	);
+}
+
+/*
+ * @see sys_thread_join()
+ */
+int nanvix_thread_join(
+	nanvix_tid_t tid,
+	void **retval
+)
+{
+	int ret;
+
+	ret = __k1_club_syscall2(
+		NR_thread_join,
+		(unsigned) tid,
+		(unsigned) retval
+	);
+
+	/* System call failed. */
+	if (ret < 0)
+	{
+		errno = -ret;
+		return (-1);
+	}
+
+	return (ret);
+}

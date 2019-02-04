@@ -24,75 +24,47 @@
 
 #include <nanvix/hal/hal.h>
 #include <nanvix/const.h>
-#include <nanvix/dev.h>
-#include <nanvix/klib.h>
-#include <nanvix/mm.h>
 #include <nanvix/thread.h>
 
-EXTERN void do_syscall2(void);
-EXTERN int main(int argc, const char *argv[], char **envp);
-
-#ifdef HAL_SMP
+/*============================================================================*
+ * thread_asleep()                                                            *
+ *============================================================================*/
 
 /**
- * @brief Init thread.
+ * The thread_asleep() function atomically puts the calling thread to
+ * sleep.  Before sleeping, the spinlock pointed to by @p lock is
+ * released.  The calling thread resumes its execution when another
+ * thread invokes thread_wakeup() on it. When the thread wakes up, the
+ * spinlock @p lock is re-acquired.
+ *
+ * @note This function is NOT thread safe.
+ *
+ * @see thread_wakeup().
+ *
+ * @author Pedro Henrique Penna
  */
-PRIVATE void *init(void *arg)
+PUBLIC void thread_asleep(spinlock_t *lock)
 {
-	int status;
-	int argc = 1;
-	const char *argv[] = { "init", NULL };
-
-	UNUSED(arg);
-
-	status = main(argc, argv, NULL);
-
-	UNUSED(status);
-
-	/* Halt. */
-	kprintf("halting...");
-	while (TRUE)
-		noop();
-
-	return (NULL);
+	spinlock_unlock(lock);
+		core_sleep();
+	spinlock_lock(lock);
 }
 
-#endif
+/*============================================================================*
+ * thread_wakeup()                                                            *
+ *============================================================================*/
 
 /**
- * @brief Initializes the kernel.
+ * The thread_wakeup() function wakes up the thread pointed to by @p
+ * thread.
+ *
+ * @note This function is NOT thread safe.
+ *
+ * @see thread_asleep().
+ *
+ * @author Pedro Henrique Penna
  */
-PUBLIC void kmain(int argc, const char *argv[])
+PUBLIC void thread_wakeup(struct thread *t)
 {
-#ifdef HAL_SMP
-	int tid;
-#endif
-
-	UNUSED(argc);
-	UNUSED(argv);
-
-	/* Master core. */
-
-	dev_init();
-	mm_init();
-
-	kprintf("enabling hardware interrupts");
-	hal_enable_interrupts();
-
-#ifndef NDEBUG
-	hal_test_driver();
-#endif
-
-#ifdef HAL_SMP
-	thread_create(&tid, init, NULL);
-#endif
-
-	while (TRUE)
-	{
-#ifdef HAL_SMP
-		do_syscall2();
-#else
-		noop();
-#endif
-	}
+	core_wakeup(thread_get_coreid(t));
 }

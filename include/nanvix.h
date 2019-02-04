@@ -1,7 +1,10 @@
 /*
  * MIT License
  *
- * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ *              2015-2017 Davidson Francis     <davidsondfgl@gmail.com>
+ *              2016-2016 Subhra S. Sarkar     <rurtle.coder@gmail.com>
+ *              2017-2017 Romane Gallier       <romanegallier@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,40 +25,29 @@
  * SOFTWARE.
  */
 
-#include <nanvix/syscall.h>
-#include <sys/types.h>
-#include <errno.h>
-#include <vbsp.h>
-
 /**
- * @brief Writes data to a file.
- *
- * @param fd  File descriptor.
- * @param buf Target buffer.
- * @param n   Number of bytes to write.
- *
- * @returns Upon successful completion, the number of bytes written is
- * returned. Upon failure, -1 is returned and @p errno is set to
- * indicate the error.
+ * @addtogroup nanvix Nanvix System
  */
-ssize_t nanvix_write(int fd, const char *buf, size_t n)
-{
-	ssize_t ret;
+/**@{*/
 
-	ret = __k1_club_syscall3(
-		NR_write,
-		(unsigned) fd,
-		(unsigned) buf,
-		(unsigned) n
-	);
+#ifndef NANVIX_H_
+#define NANVIX_H_
 
-	/* System call failed. */
-	if (ret < 0)
-	{
-		errno = -ret;
-		return (-1);
-	}
+	#include <nanvix/syscall.h>
+	#include <sys/types.h>
 
-	return (ret);
-}
+	/**
+	 * @brief Thread ID.
+	 */
+	typedef int nanvix_tid_t;
 
+	/* System calls. */
+	extern ssize_t nanvix_write(int, const char *, size_t);
+	extern nanvix_tid_t nanvix_thread_get_id(void);
+	extern int nanvix_thread_create(nanvix_tid_t *, void*(*)(void*), void *);
+	extern void nanvix_thread_exit(void *);
+	extern int nanvix_thread_join(nanvix_tid_t, void **);
+
+#endif /* NANVIX_H_ */
+
+/**@}*/

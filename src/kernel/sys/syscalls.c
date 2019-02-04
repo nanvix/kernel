@@ -30,9 +30,9 @@
 #include <errno.h>
 
 /**
- * @brief Master semaphore.
+ * @brief Semaphore variable for system call dispatcher.
  */
-PRIVATE struct semaphore syssem = SEMAPHORE_INIT(0);
+PRIVATE struct semaphore syssem = SEMAPHORE_INITIALIZER(0);
 
 /**
  * @brief System call scoreboard.
@@ -62,57 +62,61 @@ PUBLIC void do_syscall2(void)
 
 	semaphore_down(&syssem);
 
-	hal_dcache_invalidate();
-
-	for (int i = 0; i < HAL_NUM_CORES; i++)
-	{
-		if (sysboard[i].pending)
+		for (int i = 0; i < HAL_NUM_CORES; i++)
 		{
-			coreid = i;
-			break;
+			if (sysboard[i].pending)
+			{
+				coreid = i;
+				break;
+			}
 		}
-	}
 
-	/* Invalid system call number. */
-	if ((sysboard[coreid].syscall_nr < 0) || (sysboard[coreid].syscall_nr >= NR_SYSCALLS))
-	{
-		ret = -EINVAL;
-		goto out;
-	}
+		/* Invalid system call number. */
+		if ((sysboard[coreid].syscall_nr < 0) || (sysboard[coreid].syscall_nr >= NR_SYSCALLS))
+		{
+			ret = -EINVAL;
+			goto out;
+		}
 
+		/* Parse system call number. */
+		switch (sysboard[coreid].syscall_nr)
+		{
+			case NR_nosyscall:
+				ret = sys_nosyscall((unsigned) sysboard[coreid].arg0);
+				break;
 
-	/* Parse system call number. */
-	switch (sysboard[coreid].syscall_nr)
-	{
-		case NR_nosyscall:
-			ret = sys_nosyscall((unsigned) sysboard[coreid].arg0);
-			break;
+			case NR_cache_flush:
+				ret = sys_cache_flush();
+				break;
 
-		case NR_cache_flush:
-			ret = sys_cache_flush();
-			break;
+			case NR__exit:
+				sys_exit((int) sysboard[coreid].arg0);
+				break;
 
-		case NR__exit:
-			sys_exit((int) sysboard[coreid].arg0);
-			break;
+			case NR_write:
+				ret = sys_write(
+					(int) sysboard[coreid].arg0,
+					(const char *) sysboard[coreid].arg1,
+					(size_t) sysboard[coreid].arg2
+				);
+				break;
 
-		case NR_write:
-			ret = sys_write(
-				(int) sysboard[coreid].arg0,
-				(const char *) sysboard[coreid].arg1,
-				(size_t) sysboard[coreid].arg2
-			);
-			break;
+			case NR_thread_create:
+				ret = sys_thread_create(
+					(int *) sysboard[coreid].arg0,
+					(void *(*)(void *)) sysboard[coreid].arg1,
+					(void *) sysboard[coreid].arg2
+				);
+				break;
 
-		default:
-			break;
-	}
+			default:
+				break;
+		}
 
-out:
+	out:
 
-	sysboard[coreid].pending = 0;
-	sysboard[coreid].ret = ret;
-	hal_dcache_invalidate();
+		sysboard[coreid].pending = 0;
+		sysboard[coreid].ret = ret;
 
 	semaphore_up(&sysboard[coreid].syssem);
 }
@@ -142,27 +146,53 @@ PUBLIC int do_syscall1(
 	int arg6,
 	int syscall_nr)
 {
-	int coreid;
+	int ret = -EINVAL;
 
-	coreid = core_get_id();
+	/* Parse system call number. */
+	switch (syscall_nr)
+	{
+		case NR_thread_get_id:
+			ret = sys_thread_get_id();
+			break;
 
-	/* Fillup system call scoreboard. */
-	sysboard[coreid].arg0 = arg0;
-	sysboard[coreid].arg1 = arg1;
-	sysboard[coreid].arg2 = arg2;
-	sysboard[coreid].arg3 = arg3;
-	sysboard[coreid].arg4 = arg4;
-	sysboard[coreid].arg5 = arg5;
-	sysboard[coreid].arg6 = arg6;
-	sysboard[coreid].syscall_nr = syscall_nr;
-	sysboard[coreid].pending = 1;
-	semaphore_init(&sysboard[coreid].syssem, 0);
-	hal_dcache_invalidate();
+		case NR_thread_exit:
+			sys_thread_exit((void *) arg0);
+			break;
 
-	semaphore_up(&syssem);
-	semaphore_down(&sysboard[coreid].syssem);
+		case NR_thread_join:
+			ret = sys_thread_join(
+				(int) arg0,
+				(void **) arg1
+			);
+			break;
 
-	hal_dcache_invalidate();
+		/* Forward system call. */
+		default:
+		{
+			int coreid;
 
-	return (sysboard[coreid].ret);
+			coreid = core_get_id();
+
+			/* Fillup system call board. */
+			sysboard[coreid].arg0 = arg0;
+			sysboard[coreid].arg1 = arg1;
+			sysboard[coreid].arg2 = arg2;
+			sysboard[coreid].arg3 = arg3;
+			sysboard[coreid].arg4 = arg4;
+			sysboard[coreid].arg5 = arg5;
+			sysboard[coreid].arg6 = arg6;
+			sysboard[coreid].syscall_nr = syscall_nr;
+			sysboard[coreid].pending = 1;
+			semaphore_init(&sysboard[coreid].syssem, 0);
+			hal_dcache_invalidate();
+
+			semaphore_up(&syssem);
+			semaphore_down(&sysboard[coreid].syssem);
+			hal_dcache_invalidate();
+
+			ret = sysboard[coreid].ret;
+		} break;
+	}
+
+	return (ret);
 }

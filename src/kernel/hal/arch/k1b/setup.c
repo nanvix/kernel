@@ -117,6 +117,8 @@ PUBLIC NORETURN void k1b_slave_setup(void)
 {
 	k1b_stack_setup();
 
+	kprintf("[hal] starting core...");
+
 	while (TRUE)
 	{
 		k1b_core_sleep();

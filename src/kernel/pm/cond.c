@@ -22,62 +22,73 @@
  * SOFTWARE.
  */
 
+#include <nanvix/hal/hal.h>
 #include <nanvix/const.h>
-#include <nanvix/klib.h>
 #include <nanvix/thread.h>
 
 /*============================================================================*
- * semaphore_down()                                                           *
+ * cond_wait()                                                                *
  *============================================================================*/
 
 /**
- * The semaphore_down() function performs a down operation in the
- * semaphore pointed to by @p sem. It atomically checks the current
- * value of @p sem. If it is greater than one, it decrements the
- * semaphore counter by one and the calling thread continue its
- * execution, flow as usual.  Otherwise, the calling thread sleeps
- * until another thread performs a call to semaphore_up() on this
- * semaphore.
+ * The cond_wait() function causes the calling thread to block, until
+ * the condition variable pointed to by @p cond is signaled and the
+ * calling thread is chosen to run. If @p lock is unlocked before the
+ * calling thread blocks, and when it wakes up the lock is
+ * re-acquired.
  *
- * @see SEMAPHORE_INIT(), semaphore_up()
+ * @see cond_broadcast()
+ *
+ * @author Pedro Henrique Penna
  */
-PUBLIC void semaphore_down(struct semaphore *sem)
+PUBLIC int cond_wait(struct condvar *cond, spinlock_t *lock)
 {
-	KASSERT(sem != NULL);
+	struct thread *curr_thread;
 
-	spinlock_lock(&sem->lock);
+	KASSERT(cond != NULL);
+	KASSERT(lock != NULL);
 
-		while (TRUE)
-		{
-				if (sem->count > 0)
-					break;
+	curr_thread = thread_get_curr();
 
-			cond_wait(&sem->cond, &sem->lock);
-		}
+	/* Enqueue calling thread. */
+	spinlock_lock(&cond->lock);
+		curr_thread->next = cond->queue;
+		cond->queue = curr_thread;
+	spinlock_unlock(&cond->lock);
 
-		sem->count--;
+	/* Put the calling thread to sleep. */
+	thread_asleep(lock);
 
-	spinlock_unlock(&sem->lock);
+	return (0);
 }
 
 /*============================================================================*
- * semaphore_up()                                                             *
+ * cond_broadcast()                                                           *
  *============================================================================*/
 
 /**
- * The semaphore_up() function performs an up operation in a semaphore
- * pointed to by @p sem. It atomically increments the current value of
- * @p and wakes up all threads that were sleeping in this semaphore,
- * waiting for a semaphore_up() operation.
+ * The cond_broadcast() function sends a wakeup signal to all threads
+ * that are currently blocked waiting on the conditional variable
+ * pointed to by @p cond.
  *
- * @see SEMAPHORE_INIT(), semaphore_down()
+ * @see cond_wait().
+ *
+ * @author Pedro Henrique Penna
  */
-PUBLIC void semaphore_up(struct semaphore *sem)
+PUBLIC int cond_broadcast(struct condvar *cond)
 {
-	KASSERT(sem != NULL);
+	KASSERT(cond != NULL);
 
-	spinlock_lock(&sem->lock);
-		sem->count++;
-		cond_broadcast(&sem->cond);
-	spinlock_unlock(&sem->lock);
+	spinlock_lock(&cond->lock);
+
+		/* Wakeup all threads. */
+		while (cond->queue != NULL)
+		{
+			thread_wakeup(cond->queue);
+			cond->queue = cond->queue->next;
+		}
+
+	spinlock_unlock(&cond->lock);
+
+	return (0);
 }
