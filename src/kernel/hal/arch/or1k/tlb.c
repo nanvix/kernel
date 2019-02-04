@@ -431,22 +431,19 @@ PUBLIC int or1k_tlb_inval(int handler_num, vaddr_t vaddr)
  */
 PUBLIC int or1k_tlb_flush(void)
 {
-	unsigned nsets;
-	unsigned dtlbmr_base;
-	unsigned itlbmr_base;
+	struct tlbe_value tlbev; /* TLB Entry value.      */
 
-	nsets = (1 << ((or1k_mfspr(OR1K_SPR_DMMUCFGR) & OR1K_SPR_DMMUCFGR_NTS)
-			>> OR1K_SPR_DMMUCFGR_NTS_OFF));
-
-	dtlbmr_base = OR1K_SPR_DTLBMR_BASE(0);
-	itlbmr_base = OR1K_SPR_ITLBMR_BASE(0);
-
-	for (unsigned i = 0; i < nsets; i++)
+	for (int i = 0; i < OR1K_TLB_LENGTH; i++)
 	{
-		or1k_mtspr(dtlbmr_base, 0);
-		or1k_mtspr(itlbmr_base, 0);
-		dtlbmr_base++;
-		itlbmr_base++;
+		/* Data TLB. */
+		kmemcpy(&tlbev, &tlb.itlb[i], OR1K_TLBE_SIZE);
+		or1k_mtspr(OR1K_SPR_ITLBTR_BASE(0) | i, OR1K_TLBE_xTLBTR(tlbev.u.value));
+		or1k_mtspr(OR1K_SPR_ITLBMR_BASE(0) | i, OR1K_TLBE_xTLBMR(tlbev.u.value));
+
+		/* Instruction TLB. */
+		kmemcpy(&tlbev, &tlb.dtlb[i], OR1K_TLBE_SIZE);
+		or1k_mtspr(OR1K_SPR_DTLBTR_BASE(0) | i, OR1K_TLBE_xTLBTR(tlbev.u.value));
+		or1k_mtspr(OR1K_SPR_DTLBMR_BASE(0) | i, OR1K_TLBE_xTLBMR(tlbev.u.value));
 	}
 
 	return (0);
