@@ -83,7 +83,7 @@
 	 * @returns A pointer to the thread that is running in the
 	 * underlying core.
 	 */
-	static inline struct thread *thread_get(void)
+	static inline struct thread *thread_get_curr(void)
 	{
 		return (&threads[core_get_id()]);
 	}

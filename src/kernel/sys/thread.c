@@ -30,7 +30,7 @@
  */
 PUBLIC int sys_thread_get_id(void)
 {
-	return (thread_get_id(thread_get()));
+	return (thread_get_id(thread_get_curr()));
 }
 
 /**

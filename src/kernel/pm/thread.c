@@ -139,7 +139,7 @@ PUBLIC NORETURN void thread_exit(void *retval)
 
 	UNUSED(retval);
 
-	curr_thread = thread_get();
+	curr_thread = thread_get_curr();
 	curr_thread->state = THREAD_TERMINATED;
 
 	/* Flush changes. */
@@ -174,7 +174,7 @@ PRIVATE NORETURN void thread_start(void)
 	void *retval;               /* Return value.   */
 	struct thread *curr_thread; /* Current thread. */
 
-	curr_thread = thread_get();
+	curr_thread = thread_get_curr();
 
 	retval = curr_thread->start(curr_thread->arg);
 
@@ -234,72 +234,4 @@ PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
 	core_start(thread_get_coreid(new_thread), thread_start);
 
 	return (0);
-}
-
-/*============================================================================*
- * thread_asleep()                                                            *
- *============================================================================*/
-
-/**
- * The thread_asleep() function atomically places the calling thread
- * in the sleeping queue pointed to by @p queue. Before sleeping, the
- * spinlock pointed to by @p lock is released. The calling thread
- * resumes execution when another thread calls thread_wakeup() in the
- * same sleeping queue @p queue. When the thread wakes up, the
- * spinlock @p lock is unlocked. If this spinlock has to locked, it is
- * up to the caller to re-acquire this lock.
- *
- * @note This function is not thread safe.
- *
- * @author Pedro Henrique Penna
- */
-PUBLIC void thread_asleep(struct thread **queue, spinlock_t *lock)
-{
-	struct thread *curr_thread;
-
-	KASSERT(queue != NULL);
-	KASSERT(lock != NULL);
-
-	curr_thread = thread_get();
-
-	/* Enqueue calling thread. */
-	curr_thread->next = *queue;
-	*queue = curr_thread;
-
-	/* Flush changes. */
-	hal_dcache_invalidate();
-
-	/*
-	 * Atomically put the
-	 * calling thread to sleep.
-	 */
-	spinlock_unlock(lock);
-	core_sleep();
-}
-
-/*============================================================================*
- * thread_wakeup()                                                            *
- *============================================================================*/
-
-/**
- * The thread_wakeup() function wakes up all threads in the sleeping
- * queue pointed to by @p queue.
- *
- * @note This function is not thread safe.
- *
- * @see thread_asleep()
- *
- * @author Pedro Henrique Penna
- */
-PUBLIC void thread_wakeup(struct thread **queue)
-{
-	/* Wakeup all threads. */
-	while (*queue != NULL)
-	{
-		core_wakeup(thread_get_coreid(*queue));
-		*queue = (*queue)->next;
-	}
-
-	/* Flush changes. */
-	hal_dcache_invalidate();
 }
