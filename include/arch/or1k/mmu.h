@@ -152,6 +152,7 @@
 #ifndef _ASM_FILE_
 
 	#include <nanvix/klib.h>
+	#include <stdint.h>
 
 	/**
 	 * @brief Virtual address.
