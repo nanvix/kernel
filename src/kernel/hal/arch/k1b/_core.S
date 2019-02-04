@@ -28,7 +28,7 @@
 #include <arch/k1b/regs.h>
 #include <target/kalray/mppa256.h>
 
-.global k1b_core_reset
+.global _k1b_core_reset
 
 .section .text
 
@@ -40,7 +40,7 @@
  * Resets the underlying core.
  */
 .align 8
-k1b_core_reset:
+_k1b_core_reset:
 	/* Get core id. */
 	get   $r2, $pi
 	;;
