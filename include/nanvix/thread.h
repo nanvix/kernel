@@ -218,6 +218,56 @@
 	 */
 	EXTERN void semaphore_up(struct semaphore *sem);
 
+/*============================================================================*
+ *                        Condition Variables Facility                        *
+ *============================================================================*/
+
+	/**
+	 * @brief Condition variable.
+	 */
+	struct condvar
+	{
+		spinlock_t lock;      /**< Lock for sleeping queue. */
+		struct thread *queue; /**< Sleeping queue.          */
+	};
+
+	/**
+	 * @brief Static initializer for condition variables.
+	 */
+	#define COND_INITIALIZER { .lock = SPINLOCK_UNLOCKED, .queue = NULL }
+
+	/**
+	 * @brief Initializes a condition variable.
+	 *
+	 * @param cond Target condition variable.
+	 */
+	static inline void cond_init(struct condvar *cond)
+	{
+		cond->lock = SPINLOCK_UNLOCKED;
+		cond->queue = NULL;
+	}
+
+	/**
+	 * @brief Waits on a condition variable.
+	 *
+	 * @param cond Target condition variable.
+	 * @param lock Target spinlock to acquire.
+	 *
+	 * @returns Upon successful completion zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 */
+	EXTERN int cond_wait(struct condvar *cond, spinlock_t *lock);
+
+	/**
+	 * @brief Unlocks all threads waiting on a condition variable.
+	 *
+	 * @param cond Target condition variable.
+	 *
+	 * @returns Upon successful completion zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 */
+	EXTERN int cond_broadcast(struct condvar *cond);
+
 #endif /* NANVIX_THREAD_H_ */
 
 /**@}*/
