@@ -31,6 +31,9 @@
 #include <arch/k1b/cpu.h>
 #include <arch/k1b/spinlock.h>
 
+/* These are written in assembly. */
+EXTERN NORETURN void _k1b_core_reset(void);
+
 /**
  * @brief Event line used for signals.
  */
@@ -42,26 +45,28 @@
 PRIVATE struct
 {
 	int initialized;        /**< Initialized?      */
+	int laststate;          /**< Last State.       */
 	int state;              /**< State.            */
+	int wakeups;            /**< Wakeup signals.   */
 	void (*start)(void);    /**< Starting routine. */
 	spinlock_t lock;        /**< Lock.             */
 } __attribute__((aligned(K1B_CACHE_LINE_SIZE))) cores[K1B_NUM_CORES] = {
-	{ TRUE,  K1B_CORE_RUNNING,  NULL, K1B_SPINLOCK_UNLOCKED }, /* Master Core   */
-	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 1  */
-	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 2  */
-	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 3  */
-	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 4  */
-	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 5  */
-	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 6  */
-	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 7  */
-	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 8  */
-	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 9  */
-	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 10 */
-	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 11 */
-	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 12 */
-	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 13 */
-	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 14 */
-	{ FALSE, K1B_CORE_SLEEPING, NULL, K1B_SPINLOCK_UNLOCKED }, /* Slave Core 15 */
+	{ TRUE,  K1B_CORE_IDLE, K1B_CORE_RUNNING,  0, NULL, K1B_SPINLOCK_UNLOCKED }, /* Master Core   */
+	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 1  */
+	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 2  */
+	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 3  */
+	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 4  */
+	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 5  */
+	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 6  */
+	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 7  */
+	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 8  */
+	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 9  */
+	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 10 */
+	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 11 */
+	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 12 */
+	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 13 */
+	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 14 */
+	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 15 */
 };
 
 /*============================================================================*
@@ -131,15 +136,27 @@ PUBLIC void k1b_core_sleep(void)
 
 	k1b_spinlock_lock(&cores[coreid].lock);
 
-		cores[coreid].state = K1B_CORE_SLEEPING;
+		if (cores[coreid].laststate != K1B_CORE_IDLE)
+		{
+			if (cores[coreid].state == K1B_CORE_RUNNING)
+			{
+				if (cores[coreid].wakeups == 0)
+				{
+					cores[coreid].laststate = cores[coreid].state;
+					cores[coreid].state = K1B_CORE_SLEEPING;
+				}
+				else
+					cores[coreid].wakeups--;
+				k1b_dcache_inval();
+			}
+		}
 
-	k1b_dcache_inval();
 	k1b_spinlock_unlock(&cores[coreid].lock);
 
 	/* Wait for wakeup signal. */
 	do
 		k1b_core_wait();
-	while (cores[coreid].state == K1B_CORE_SLEEPING);
+	while (cores[coreid].state != K1B_CORE_RUNNING);
 }
 
 /*============================================================================*
@@ -164,9 +181,15 @@ PUBLIC void k1b_core_wakeup(int coreid)
 		/* Wakeup target core. */
 		if (cores[coreid].state == K1B_CORE_SLEEPING)
 		{
-			cores[coreid].state = K1B_CORE_RUNNING;
+			if (cores[coreid].wakeups == 0)
+			{
+				cores[coreid].laststate = cores[coreid].state;
+				cores[coreid].state = K1B_CORE_RUNNING;
+			}
 			k1b_dcache_inval();
 		}
+		else if (cores[coreid].state == K1B_CORE_RUNNING)
+			cores[coreid].wakeups++;
 
 	k1b_spinlock_unlock(&cores[coreid].lock);
 
@@ -194,8 +217,9 @@ PUBLIC void k1b_core_start(int coreid, void (*start)(void))
 	k1b_dcache_inval();
 
 		/* Wakeup target core. */
-		if (cores[coreid].state == K1B_CORE_SLEEPING)
+		if (cores[coreid].state == K1B_CORE_IDLE)
 		{
+			cores[coreid].laststate = cores[coreid].state;
 			cores[coreid].state = K1B_CORE_RUNNING;
 			cores[coreid].start = start;
 			k1b_dcache_inval();
@@ -242,6 +266,32 @@ PUBLIC void k1b_core_run(void)
 }
 
 /*============================================================================*
+ * k1b_core_reset()                                                           *
+ *============================================================================*/
+
+/**
+ * The k1b_core_reset() function resets execution instruction in
+ * the underlying core by reseting the kernel stack to its initial
+ * location and relaunching the k1b_slave_setup() function.
+ *
+ * @note This function does not return.
+ *
+ * @see k1b_slave_setup()
+ *
+ * @author Pedro Henrique Penna
+ */
+PUBLIC void k1b_core_reset(void)
+{
+	int coreid = k1b_core_get_id();
+
+	cores[coreid].laststate = cores[coreid].state;
+	cores[coreid].state = K1B_CORE_IDLE;
+	k1b_dcache_inval();
+
+	_k1b_core_reset();
+}
+
+/*============================================================================*
  * k1b_core_shutdown()                                                        *
  *============================================================================*/
 
@@ -259,6 +309,7 @@ PUBLIC void k1b_core_shutdown(int status)
 
 	k1b_spinlock_lock(&cores[coreid].lock);
 
+		cores[coreid].laststate = cores[coreid].state;
 		cores[coreid].state = K1B_CORE_OFFLINE;
 
 	k1b_dcache_inval();
