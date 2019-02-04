@@ -45,17 +45,18 @@ PUBLIC void semaphore_down(struct semaphore *sem)
 {
 	KASSERT(sem != NULL);
 
-	while (TRUE)
-	{
-		spinlock_lock(&sem->lock);
+	spinlock_lock(&sem->lock);
 
-			if (sem->count > 0)
-				break;
+		while (TRUE)
+		{
+				if (sem->count > 0)
+					break;
 
-		thread_asleep(&sem->queue, &sem->lock);
-	}
+			cond_wait(&sem->cond, &sem->lock);
+		}
 
-	sem->count--;
+		sem->count--;
+
 	spinlock_unlock(&sem->lock);
 }
 
@@ -77,6 +78,6 @@ PUBLIC void semaphore_up(struct semaphore *sem)
 
 	spinlock_lock(&sem->lock);
 		sem->count++;
-		thread_wakeup(&sem->queue);
+		cond_broadcast(&sem->cond);
 	spinlock_unlock(&sem->lock);
 }

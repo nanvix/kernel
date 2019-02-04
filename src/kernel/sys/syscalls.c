@@ -30,9 +30,9 @@
 #include <errno.h>
 
 /**
- * @brief Master semaphore.
+ * @brief Semaphore variable for system call dispatcher.
  */
-PRIVATE struct semaphore syssem = SEMAPHORE_INIT(0);
+PRIVATE struct semaphore syssem = SEMAPHORE_INITIALIZER(0);
 
 /**
  * @brief System call scoreboard.

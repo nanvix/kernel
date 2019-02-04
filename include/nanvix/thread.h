@@ -155,70 +155,6 @@
 	EXTERN void thread_wakeup(struct thread **queue);
 
 /*============================================================================*
- *                            Semaphores Facility                             *
- *============================================================================*/
-
-	/**
-	 * @brief Semahore
-	 */
-	struct semaphore
-	{
-		int count;            /**< Semaphore counter. */
-		spinlock_t lock;      /**< Semaphore lock.    */
-		struct thread *queue; /**< Sleeping queue.    */
-	};
-
-	/**
-	 * @brief Initializes a semaphore.
-	 *
-	 * The SEMAPHORE_INIT() macro statically initializes the fields of
-	 * a semaphore. The initial value of the semaphore is set to @p x
-	 * in the initialization.
-	 *
-	 * @param x Initial semaphore value.
-	 */
-	#define SEMAPHORE_INIT(x)      \
-	{                              \
-		.count = (x),              \
-		.lock = SPINLOCK_UNLOCKED, \
-		.queue = NULL,             \
-	}
-
-	/**
-	 * @brief Initializes a semaphore.
-	 *
-	 * The semaphore_init() function dynamically initializes the
-	 * fields of the semaphore pointed to by @p sem. The initial value
-	 * of the semaphore is set to @p x in the initialization.
-	 *
-	 * @param sem Target semaphore.
-	 * @param x   Initial semaphore value.
-	 */
-	static inline void semaphore_init(struct semaphore *sem, int x)
-	{
-		KASSERT(x >= 0);
-		KASSERT(sem != NULL);
-
-		sem->count = x;
-		sem->lock = SPINLOCK_UNLOCKED;
-		sem->queue = NULL;
-	}
-
-	/**
-	 * @brief Performs a down operation in a semaphore.
-	 *
-	 * @param sem Target semaphore.
-	 */
-	EXTERN void semaphore_down(struct semaphore *sem);
-
-	/**
-	 * @brief Performs an up operation in a semaphore.
-	 *
-	 * @param sem target semaphore.
-	 */
-	EXTERN void semaphore_up(struct semaphore *sem);
-
-/*============================================================================*
  *                        Condition Variables Facility                        *
  *============================================================================*/
 
@@ -233,6 +169,9 @@
 
 	/**
 	 * @brief Static initializer for condition variables.
+	 *
+	 * The @p COND_INITIALIZER macro statically initiallizes a
+	 * conditional variable.
 	 */
 	#define COND_INITIALIZER { .lock = SPINLOCK_UNLOCKED, .queue = NULL }
 
@@ -267,6 +206,70 @@
 	 * failure, a negative error code is returned instead.
 	 */
 	EXTERN int cond_broadcast(struct condvar *cond);
+
+/*============================================================================*
+ *                            Semaphores Facility                             *
+ *============================================================================*/
+
+	/**
+	 * @brief Semahore
+	 */
+	struct semaphore
+	{
+		int count;           /**< Semaphore counter.  */
+		spinlock_t lock;     /**< Semaphore lock.     */
+		struct condvar cond; /**< Condition variable. */
+	};
+
+	/**
+	 * @brief Static initializer for semaphores.
+	 *
+	 * The @p SEMAPHORE_INIT macro statically initializes the fields of
+	 * a semaphore. The initial value of the semaphore is set to @p x
+	 * in the initialization.
+	 *
+	 * @param x Initial value for semaphore.
+	 */
+	#define SEMAPHORE_INITIALIZER(x) \
+	{                                \
+		.count = (x),                \
+		.lock = SPINLOCK_UNLOCKED,   \
+		.cond = COND_INITIALIZER,    \
+	}
+
+	/**
+	 * @brief Initializes a semaphore.
+	 *
+	 * The semaphore_init() function dynamically initializes the
+	 * fields of the semaphore pointed to by @p sem. The initial value
+	 * of the semaphore is set to @p x in the initialization.
+	 *
+	 * @param sem Target semaphore.
+	 * @param x   Initial semaphore value.
+	 */
+	static inline void semaphore_init(struct semaphore *sem, int x)
+	{
+		KASSERT(x >= 0);
+		KASSERT(sem != NULL);
+
+		sem->count = x;
+		sem->lock = SPINLOCK_UNLOCKED;
+		cond_init(&sem->cond);
+	}
+
+	/**
+	 * @brief Performs a down operation in a semaphore.
+	 *
+	 * @param sem Target semaphore.
+	 */
+	EXTERN void semaphore_down(struct semaphore *sem);
+
+	/**
+	 * @brief Performs an up operation in a semaphore.
+	 *
+	 * @param sem target semaphore.
+	 */
+	EXTERN void semaphore_up(struct semaphore *sem);
 
 #endif /* NANVIX_THREAD_H_ */
 
