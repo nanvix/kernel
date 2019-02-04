@@ -46,6 +46,7 @@
 	extern nanvix_tid_t nanvix_thread_get_id(void);
 	extern int nanvix_thread_create(nanvix_tid_t *, void*(*)(void*), void *);
 	extern void nanvix_thread_exit(void *);
+	extern int nanvix_thread_join(nanvix_tid_t, void **);
 
 #endif /* NANVIX_H_ */
 

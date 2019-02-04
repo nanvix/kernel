@@ -78,3 +78,29 @@ void nanvix_thread_exit(void *retval)
 		(unsigned) retval
 	);
 }
+
+/*
+ * @see sys_thread_join()
+ */
+int nanvix_thread_join(
+	nanvix_tid_t tid,
+	void **retval
+)
+{
+	int ret;
+
+	ret = __k1_club_syscall2(
+		NR_thread_join,
+		(unsigned) tid,
+		(unsigned) retval
+	);
+
+	/* System call failed. */
+	if (ret < 0)
+	{
+		errno = -ret;
+		return (-1);
+	}
+
+	return (ret);
+}

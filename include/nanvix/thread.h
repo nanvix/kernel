@@ -140,6 +140,17 @@
 	EXTERN NORETURN void thread_exit(void *retval);
 
 	/**
+	 * @brief Waits for a thread to terminate.
+	 *
+	 * @param tid    Target thread to wait for.
+	 * @param retval Target location to store return value.
+	 *
+	 * @returns Upon successful completion zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 */
+	EXTERN int thread_join(int tid, void **retval);
+
+	/**
 	 * @brief Atomically puts the calling thread to sleep.
 	 *
 	 * @param lock  Spinlock to release and acquire.

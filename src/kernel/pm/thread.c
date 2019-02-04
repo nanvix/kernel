@@ -46,6 +46,13 @@ PUBLIC struct thread threads[THREAD_MAX] = {
 };
 
 /**
+ * @brief Thread join conditions.
+ */
+struct condvar joincond[THREAD_MAX] = {
+	[0 ... (THREAD_MAX - 1)] = COND_INITIALIZER
+};
+
+/**
  * @brief Thread manager lock.
  */
 PRIVATE spinlock_t lock_tm = SPINLOCK_UNLOCKED;
@@ -64,29 +71,25 @@ PRIVATE spinlock_t lock_tm = SPINLOCK_UNLOCKED;
  * allocated thread is returned. Upon failure, a NULL pointer is
  * returned instead.
  *
- * @note This function is thread-safe.
+ * @note This function is NOT thread-safe.
  *
  * @author Pedro Henrique Penna
  */
 PRIVATE struct thread *thread_alloc(void)
 {
-	spinlock_lock(&lock_tm);
-		for (int i = 0; i < THREAD_MAX; i++)
+	for (int i = 0; i < THREAD_MAX; i++)
+	{
+		/* Found. */
+		if (threads[i].state == THREAD_NOT_STARTED)
 		{
-			/* Found. */
-			if (threads[i].state == THREAD_NOT_STARTED)
-			{
-				struct thread *new_thread;
-				new_thread = &threads[i];
-				new_thread->state = THREAD_STARTED;
-				nthreads++;
+			struct thread *new_thread;
+			new_thread = &threads[i];
+			new_thread->state = THREAD_STARTED;
+			nthreads++;
 
-				spinlock_unlock(&lock_tm);
-
-				return (new_thread);
-			}
+			return (new_thread);
 		}
-	spinlock_unlock(&lock_tm);
+	}
 
 	return (NULL);
 }
@@ -101,7 +104,7 @@ PRIVATE struct thread *thread_alloc(void)
  * The thread_free() function releases the thread entry pointed to by
  * @p t in the table of threads.
  *
- * @note This function is thread-safe.
+ * @note This function is NOT thread-safe.
  *
  * @author Pedro Henrique Penna
  */
@@ -110,10 +113,8 @@ PRIVATE void thread_free(struct thread *t)
 	KASSERT(t >= &threads[0]);
 	KASSERT(t <= &threads[THREAD_MAX - 1]);
 
-	spinlock_lock(&lock_tm);
-		t->state = THREAD_NOT_STARTED;
-		nthreads--;
-	spinlock_unlock(&lock_tm);
+	t->state = THREAD_NOT_STARTED;
+	nthreads--;
 }
 
 /*============================================================================*
@@ -128,8 +129,9 @@ PRIVATE void thread_free(struct thread *t)
  * thread that joins this one.
  *
  * @note This function does not return.
- *
  * @note This function is thread-safe.
+ *
+ * @see thread_join().
  *
  * @author Pedro Henrique Penna
  */
@@ -139,19 +141,54 @@ PUBLIC NORETURN void thread_exit(void *retval)
 
 	UNUSED(retval);
 
-	curr_thread = thread_get_curr();
-	curr_thread->state = THREAD_TERMINATED;
+	spinlock_lock(&lock_tm);
 
-	/* Flush changes. */
-	hal_dcache_invalidate();
+		curr_thread = thread_get_curr();
+		curr_thread->state = THREAD_TERMINATED;
 
-	thread_free(curr_thread);
+		cond_broadcast(&joincond[thread_get_coreid(curr_thread)]);
+
+		thread_free(curr_thread);
+
+	spinlock_unlock(&lock_tm);
+
+	/* No rollback from this point. */
 
 	core_reset();
 
 	/* Never gets here. */
 	while (TRUE)
 		noop();
+}
+
+/*============================================================================*
+ * thread_get()                                                               *
+ *============================================================================*/
+
+/**
+ * @brief Returns the target thread.
+ *
+ * The thread_get() function performs a linear search in the table of
+ * threads for the thread whose ID equals to @p tid.
+ *
+ * @param tid ID of the target thread.
+ *
+ * @returns Upon successful completion, a pointer to the target thread
+ * is returned. Upon failure, a null pointed is returned instead.
+ *
+ * @note This function is NOT thread safe.
+ */
+PRIVATE struct thread *thread_get(int tid)
+{
+	/* Search for target thread. */
+	for (int i = 0; i < THREAD_MAX; i++)
+	{
+		/* Found. */
+		if (threads[i].tid == tid)
+			return (&threads[i]);
+	}
+
+	return (NULL);
 }
 
 /*============================================================================*
@@ -211,7 +248,10 @@ PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
 	KASSERT(start != NULL);
 
 	/* Allocate thread. */
-	if ((new_thread = thread_alloc()) == NULL)
+	spinlock_lock(&lock_tm);
+		new_thread = thread_alloc();
+	spinlock_unlock(&lock_tm);
+	if(new_thread == NULL)
 		return (-EAGAIN);
 
 	/* Get thread ID. */
@@ -234,4 +274,38 @@ PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
 	core_start(thread_get_coreid(new_thread), thread_start);
 
 	return (0);
+}
+
+/*============================================================================*
+ * thread_join()                                                              *
+ *============================================================================*/
+
+/**
+ * The thread_join() function causes the calling thread to block until
+ * the thread whose ID equals to @p tid its terminates execution, by
+ * calling thread_exit(). If @p retval is not a null pointed, then the
+ * return value of the terminated thread is stored in the location
+ * pointed to by @p retval.
+ *
+ * @see thread_exit().
+ */
+PUBLIC int thread_join(int tid, void **retval)
+{
+	struct thread *t;
+	int ret = -EINVAL;
+
+	UNUSED(retval);
+
+	spinlock_lock(&lock_tm);
+
+		/* Wait for thread termination. */
+		if ((t = thread_get(tid)) != NULL)
+		{
+			ret = 0;
+			cond_wait(&joincond[thread_get_coreid(t)], &lock_tm);
+		}
+
+	spinlock_unlock(&lock_tm);
+
+	return (ret);
 }

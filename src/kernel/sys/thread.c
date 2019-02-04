@@ -47,4 +47,14 @@ PUBLIC int sys_thread_create(int *tid, void*(*start)(void*), void *arg)
 PUBLIC int sys_thread_exit(void *retval)
 {
 	thread_exit(retval);
+
+	return (-EAGAIN);
+}
+
+/**
+ * @see thread_join().
+ */
+PUBLIC int sys_thread_join(int tid, void **retval)
+{
+	return (thread_join(tid, retval));
 }

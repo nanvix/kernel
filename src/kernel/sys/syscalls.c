@@ -62,64 +62,61 @@ PUBLIC void do_syscall2(void)
 
 	semaphore_down(&syssem);
 
-	hal_dcache_invalidate();
-
-	for (int i = 0; i < HAL_NUM_CORES; i++)
-	{
-		if (sysboard[i].pending)
+		for (int i = 0; i < HAL_NUM_CORES; i++)
 		{
-			coreid = i;
-			break;
+			if (sysboard[i].pending)
+			{
+				coreid = i;
+				break;
+			}
 		}
-	}
 
-	/* Invalid system call number. */
-	if ((sysboard[coreid].syscall_nr < 0) || (sysboard[coreid].syscall_nr >= NR_SYSCALLS))
-	{
-		ret = -EINVAL;
-		goto out;
-	}
+		/* Invalid system call number. */
+		if ((sysboard[coreid].syscall_nr < 0) || (sysboard[coreid].syscall_nr >= NR_SYSCALLS))
+		{
+			ret = -EINVAL;
+			goto out;
+		}
 
-	/* Parse system call number. */
-	switch (sysboard[coreid].syscall_nr)
-	{
-		case NR_nosyscall:
-			ret = sys_nosyscall((unsigned) sysboard[coreid].arg0);
-			break;
+		/* Parse system call number. */
+		switch (sysboard[coreid].syscall_nr)
+		{
+			case NR_nosyscall:
+				ret = sys_nosyscall((unsigned) sysboard[coreid].arg0);
+				break;
 
-		case NR_cache_flush:
-			ret = sys_cache_flush();
-			break;
+			case NR_cache_flush:
+				ret = sys_cache_flush();
+				break;
 
-		case NR__exit:
-			sys_exit((int) sysboard[coreid].arg0);
-			break;
+			case NR__exit:
+				sys_exit((int) sysboard[coreid].arg0);
+				break;
 
-		case NR_write:
-			ret = sys_write(
-				(int) sysboard[coreid].arg0,
-				(const char *) sysboard[coreid].arg1,
-				(size_t) sysboard[coreid].arg2
-			);
-			break;
+			case NR_write:
+				ret = sys_write(
+					(int) sysboard[coreid].arg0,
+					(const char *) sysboard[coreid].arg1,
+					(size_t) sysboard[coreid].arg2
+				);
+				break;
 
-		case NR_thread_create:
-			ret = sys_thread_create(
-				(int *) sysboard[coreid].arg0,
-				(void *(*)(void *)) sysboard[coreid].arg1,
-				(void *) sysboard[coreid].arg2
-			);
-			break;
+			case NR_thread_create:
+				ret = sys_thread_create(
+					(int *) sysboard[coreid].arg0,
+					(void *(*)(void *)) sysboard[coreid].arg1,
+					(void *) sysboard[coreid].arg2
+				);
+				break;
 
-		default:
-			break;
-	}
+			default:
+				break;
+		}
 
-out:
+	out:
 
-	sysboard[coreid].pending = 0;
-	sysboard[coreid].ret = ret;
-	hal_dcache_invalidate();
+		sysboard[coreid].pending = 0;
+		sysboard[coreid].ret = ret;
 
 	semaphore_up(&sysboard[coreid].syssem);
 }
@@ -160,6 +157,13 @@ PUBLIC int do_syscall1(
 
 		case NR_thread_exit:
 			sys_thread_exit((void *) arg0);
+			break;
+
+		case NR_thread_join:
+			ret = sys_thread_join(
+				(int) arg0,
+				(void **) arg1
+			);
 			break;
 
 		/* Forward system call. */

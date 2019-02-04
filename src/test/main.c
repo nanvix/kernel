@@ -24,7 +24,10 @@
 
 #include <nanvix.h>
 
-/* Import definitions. */
+/**
+ * @brief Number of threads.
+ */
+#define NTHREADS 4
 
 /**
  * @brief Returns the length of a string.
@@ -33,7 +36,7 @@
  * 
  * @returns The length of the string. 
  */
-size_t strlen(const char *str)
+static size_t strlen(const char *str)
 {
 	const char *p;
 
@@ -47,7 +50,7 @@ size_t strlen(const char *str)
 /**
  * @brief Writes a string to the standard output device.
  */
-void puts(const char *str)
+static void puts(const char *str)
 {
 	size_t len;
 
@@ -58,13 +61,45 @@ void puts(const char *str)
 
 /**
  * @brief Says hello to the world.
+ *
+ * @param str String to print.
+ */
+static void *task(void *str)
+{
+	puts(str);
+
+	return (NULL);
+}
+
+/**
+ * @brief Says many hellos.
+ *
+ * @param argc Argument counter.
+ * @param argv Argument variables.
  */
 int main(int argc, const char *argv[])
 {
+	char *strings[NTHREADS] = {
+		"hello from thread 0!\n",
+		"hello from thread 1!\n",
+		"hello from thread 2!\n",
+		"hello from thread 3!\n"
+	};
+
+	nanvix_tid_t tid[NTHREADS];
+
 	((void) argc);
 	((void) argv);
 
-	puts("hello world!\n");
+	/* Spawn threads. */
+	for (int i = 1; i < NTHREADS; i++)
+		nanvix_thread_create(&tid[i], task, strings[i]);
+
+	task(strings[1]);
+
+	/* Wait for threads. */
+	for (int i = 1; i < NTHREADS; i++)
+		nanvix_thread_join(tid[i], NULL);
 
 	return (0);
 }

@@ -42,7 +42,7 @@
 	 *
 	 * @note This should be set to the highest system call number.
 	 */
-	#define NR_SYSCALLS 7
+	#define NR_SYSCALLS 8
 
 	/**
 	 * @name Magic Numbers for nosyscall()
@@ -63,6 +63,7 @@
 	#define NR_thread_get_id 4 /**< thread_get_id() */
 	#define NR_thread_create 5 /**< thread_create() */
 	#define NR_thread_exit   6 /**< thread_exit()   */
+	#define NR_thread_join   7 /**< thread_join()   */
 	/**@}*/
 
 	/**
@@ -76,6 +77,7 @@
 	EXTERN int sys_thread_get_id(void);
 	EXTERN int sys_thread_create(int *, void*(*)(void*), void *);
 	EXTERN void sys_thread_exit(void *);
+	EXTERN int sys_thread_join(int, void **);
 	/**@}*/
 
 /**@}*/
