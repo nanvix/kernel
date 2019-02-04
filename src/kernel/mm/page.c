@@ -571,7 +571,7 @@ PRIVATE void do_tlb_fault(
 		do_page_fault(excp, ctx);
 
 	/* Lookup PTE. */
-	pgtab = (struct pte *)(kpool_frame_to_addr(pde_frame_get(pde)));
+	pgtab = (struct pte *)(pde_frame_get(pde) << PAGE_SHIFT);
 	pte = pte_get(pgtab, vaddr);
 	if (!pte_is_present(pte))
 		do_page_fault(excp, ctx);
