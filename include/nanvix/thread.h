@@ -142,17 +142,16 @@
 	/**
 	 * @brief Atomically puts the calling thread to sleep.
 	 *
-	 * @param queue Target sleeping queue.
-	 * @param lock  Spinlock o release.
+	 * @param lock  Spinlock to release and acquire.
 	 */
-	EXTERN void thread_asleep(struct thread **queue, spinlock_t *lock);
+	EXTERN void thread_asleep(spinlock_t *lock);
 
 	/**
-	 * @brief Wakes up all threads in a sleeping queue.
+	 * @brief Wakes up a thread.
 	 *
-	 * @param queue Target sleeping queue.
+	 * @param t Target thread.
 	 */
-	EXTERN void thread_wakeup(struct thread **queue);
+	EXTERN void thread_wakeup(struct thread *t);
 
 /*============================================================================*
  *                        Condition Variables Facility                        *

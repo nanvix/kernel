@@ -57,10 +57,7 @@ PUBLIC int cond_wait(struct condvar *cond, spinlock_t *lock)
 	spinlock_unlock(&cond->lock);
 
 	/* Put the calling thread to sleep. */
-	spinlock_unlock(lock);
-		core_sleep();
-
-	spinlock_lock(lock);
+	thread_asleep(lock);
 
 	return (0);
 }
@@ -87,7 +84,7 @@ PUBLIC int cond_broadcast(struct condvar *cond)
 		/* Wakeup all threads. */
 		while (cond->queue != NULL)
 		{
-			core_wakeup(thread_get_coreid(cond->queue));
+			thread_wakeup(cond->queue);
 			cond->queue = cond->queue->next;
 		}
 
