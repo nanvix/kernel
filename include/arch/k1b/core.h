@@ -105,9 +105,14 @@
 	EXTERN void k1b_core_wakeup(int coreid);
 
 	/**
-	 * @brief Suspends instruction execution in the underling core.
+	 * @brief Suspends instruction execution in the underlying core.
 	 */
 	EXTERN void k1b_core_sleep(void);
+
+	/**
+	 * @brief Suspends instruction execution in the underlying core.
+	 */
+	EXTERN void k1b_core_idle(void);
 
 	/**
 	 * @brief Shutdowns the underlying core.

@@ -81,10 +81,7 @@ PRIVATE inline void k1b_stack_setup(void)
  */
 PUBLIC void k1b_core_setup(void)
 {
-	int coreid;
-
-	coreid = k1b_core_get_id();
-	kprintf("[hal] booting up core %d", coreid);
+	kprintf("[hal] booting up core");
 
 	k1b_ivt_setup(
 		(k1b_hwint_handler_fn) k1b_do_hwint,
@@ -117,11 +114,9 @@ PUBLIC NORETURN void k1b_slave_setup(void)
 {
 	k1b_stack_setup();
 
-	kprintf("[hal] starting core...");
-
 	while (TRUE)
 	{
-		k1b_core_sleep();
+		k1b_core_idle();
 		k1b_core_run();
 	}
 }
