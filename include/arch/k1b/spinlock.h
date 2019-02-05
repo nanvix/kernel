@@ -47,8 +47,8 @@
 	 * @name Spinlock State
 	 */
 	/**@{*/
-	#define K1B_SPINLOCK_UNLOCKED 0 /**< Unlocked */
-	#define K1B_SPINLOCK_LOCKED   1 /**< Locked   */
+	#define K1B_SPINLOCK_UNLOCKED 0x1ULL /**< Unlocked */
+	#define K1B_SPINLOCK_LOCKED   0x0ULL /**< Locked   */
 	/**@}*/
 
 	/**
