@@ -39,14 +39,20 @@
 	/**
 	 * @brief Thread ID.
 	 */
-	typedef int nanvix_tid_t;
+	typedef int kthread_t;
 
 	/* System calls. */
 	extern ssize_t nanvix_write(int, const char *, size_t);
-	extern nanvix_tid_t nanvix_thread_get_id(void);
-	extern int nanvix_thread_create(nanvix_tid_t *, void*(*)(void*), void *);
-	extern void nanvix_thread_exit(void *);
-	extern int nanvix_thread_join(nanvix_tid_t, void **);
+
+	/**
+	 * @name Thread Management Kernel Calls
+	 */
+	/**@{*/
+	extern kthread_t kthread_self(void);
+	extern int kthread_create(kthread_t *, void *(*)(void*), void *);
+	extern void kthread_exit(void *);
+	extern int kthread_join(kthread_t, void **);
+	/**@}*/
 
 #endif /* NANVIX_H_ */
 

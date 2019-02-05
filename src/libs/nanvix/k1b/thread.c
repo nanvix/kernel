@@ -26,12 +26,16 @@
 #include <errno.h>
 #include <vbsp.h>
 
+/*============================================================================*
+ * kthread_self()                                                             *
+ *============================================================================*/
+
 /*
- * @see sys_thread_get_id()
+ * @see sys_kthread_get_id()
  */
-nanvix_tid_t nanvix_thread_get_id(void)
+kthread_t kthread_self(void)
 {
-	nanvix_tid_t tid;
+	kthread_t tid;
 
 	tid = __k1_club_syscall0(
 		NR_thread_get_id
@@ -40,12 +44,16 @@ nanvix_tid_t nanvix_thread_get_id(void)
 	return (tid);
 }
 
+/*============================================================================*
+ * kthread_create()                                                           *
+ *============================================================================*/
+
 /*
- * @see sys_thread_create()
+ * @see sys_kthread_create()
  */
-nanvix_tid_t nanvix_thread_create(
-	nanvix_tid_t *tid,
-	void*(*start)(void*),
+kthread_t kthread_create(
+	kthread_t *tid,
+	void *(*start)(void*),
 	void *arg
 )
 {
@@ -68,10 +76,14 @@ nanvix_tid_t nanvix_thread_create(
 	return (ret);
 }
 
+/*============================================================================*
+ * kthread_exit()                                                             *
+ *============================================================================*/
+
 /*
- * @see sys_thread_exit().
+ * @see sys_kthread_exit().
  */
-void nanvix_thread_exit(void *retval)
+void kthread_exit(void *retval)
 {
 	__k1_club_syscall1(
 		NR_thread_exit,
@@ -79,11 +91,15 @@ void nanvix_thread_exit(void *retval)
 	);
 }
 
+/*============================================================================*
+ * kthread_join()                                                             *
+ *============================================================================*/
+
 /*
- * @see sys_thread_join()
+ * @see sys_kthread_join()
  */
-int nanvix_thread_join(
-	nanvix_tid_t tid,
+int kthread_join(
+	kthread_t tid,
 	void **retval
 )
 {

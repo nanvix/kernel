@@ -61,7 +61,6 @@
 	 */
 	struct thread
 	{
-		int coreid;            /**< Core ID.                */
 		int tid;               /**< Thread ID.              */
 		int state;             /**< State.                  */
 		void *arg;             /**< Argument.               */

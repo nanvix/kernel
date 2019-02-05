@@ -25,16 +25,16 @@
 #include <nanvix.h>
 
 /**
- * @brief Number of threads.
+ * @brief Number of threads to spawn.
  */
 #define NTHREADS 4
 
 /**
  * @brief Returns the length of a string.
- * 
+ *
  * @param str String to be evaluated.
- * 
- * @returns The length of the string. 
+ *
+ * @returns The length of the string.
  */
 static size_t strlen(const char *str)
 {
@@ -86,20 +86,20 @@ int main(int argc, const char *argv[])
 		"hello from thread 3!\n"
 	};
 
-	nanvix_tid_t tid[NTHREADS];
+	kthread_t tid[NTHREADS];
 
 	((void) argc);
 	((void) argv);
 
 	/* Spawn threads. */
 	for (int i = 1; i < NTHREADS; i++)
-		nanvix_thread_create(&tid[i], task, strings[i]);
+		kthread_create(&tid[i], task, strings[i]);
 
 	task(strings[1]);
 
 	/* Wait for threads. */
 	for (int i = 1; i < NTHREADS; i++)
-		nanvix_thread_join(tid[i], NULL);
+		kthread_join(tid[i], NULL);
 
 	return (0);
 }
