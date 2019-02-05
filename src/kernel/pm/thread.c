@@ -247,29 +247,35 @@ PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
 	/* Sanity check. */
 	KASSERT(start != NULL);
 
-	/* Allocate thread. */
 	spinlock_lock(&lock_tm);
+
+		/* Allocate thread. */
 		new_thread = thread_alloc();
+		if (new_thread == NULL)
+		{
+			spinlock_unlock(&lock_tm);
+			return (-EAGAIN);
+		}
+
+		/* Get thread ID. */
+		_tid = next_tid++;
+
+		/* Initialize thread structure. */
+		new_thread->tid = _tid;
+		new_thread->state = THREAD_RUNNING;
+		new_thread->arg = arg;
+		new_thread->start = start;
+		new_thread->next = NULL;
+
 	spinlock_unlock(&lock_tm);
-	if(new_thread == NULL)
-		return (-EAGAIN);
 
-	/* Get thread ID. */
-	_tid = next_tid++;
-
-	/* Initialize thread structure. */
-	new_thread->tid = _tid;
-	new_thread->state = THREAD_RUNNING;
-	new_thread->arg = arg;
-	new_thread->start = start;
-	new_thread->next = NULL;
 
 	/* Save thread ID. */
 	if (tid != NULL)
+	{
 		*tid = _tid;
-
-	/* Flush changes. */
-	hal_dcache_invalidate();
+		hal_dcache_invalidate();
+	}
 
 	core_start(thread_get_coreid(new_thread), thread_start);
 
