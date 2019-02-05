@@ -91,37 +91,31 @@
 	/**
 	 * @brief Lookups a TLB entry by virtual address.
 	 *
-	 * @param handler_num Handler number, identifies which TLB
-	 * type should be used.
-	 *
+	 * @param tlb   Target TLB (D-TLB or I-TLB).
 	 * @param vaddr Target virtual address.
 	 *
 	 * @returns Upon successful completion, a pointer to the TLB entry
 	 * that matches the virtual address @p vaddr is returned. If no
 	 * TLB entry matches @p vaddr, @p NULL is returned instead.
 	 */
-	EXTERN const struct tlbe *tlb_lookup_vaddr(int handler_num, vaddr_t vaddr);
+	EXTERN const struct tlbe *tlb_lookup_vaddr(int tlb, vaddr_t vaddr);
 
 	/**
 	 * @brief Lookups a TLB entry by physical address.
 	 *
-	 * @param handler_num Handler number, identifies which TLB
-	 * type should be used.
-	 *
+	 * @param tlb   Target TLB (D-TLB or I-TLB).
 	 * @param paddr Target physical address.
 	 *
 	 * @returns Upon successful completion, a pointer to the TLB entry
 	 * that matches the physical address @p paddr is returned. If no
 	 * TLB entry matches @p paddr, @p NULL is returned instead.
 	 */
-	EXTERN const struct tlbe *tlb_lookup_paddr(int handler_num, paddr_t paddr);
+	EXTERN const struct tlbe *tlb_lookup_paddr(int tlb, paddr_t paddr);
 
 	/**
 	 * @brief Encodes a virtual address into the TLB.
 	 *
-	 * @param handler_num Handler number, identifies which TLB
-	 * type should be used.
-	 *
+	 * @param tlb   Target TLB (D-TLB or I-TLB).
 	 * @param vaddr Target virtual address.
 	 * @param paddr Target physical address.
 	 *
@@ -129,11 +123,11 @@
 	 * failure, a negative error code is returned instead.
 	 */
 #if !((defined(HAL_TLB_HARDWARE) && !defined(__tlb_write_fn)))
-	EXTERN int tlb_write(int handler_num, vaddr_t vaddr, paddr_t paddr);
+	EXTERN int tlb_write(int tlb, vaddr_t vaddr, paddr_t paddr);
 #else
-	static inline int tlb_write(int handler_num, vaddr_t vaddr, paddr_t paddr)
+	static inline int tlb_write(int tlb, vaddr_t vaddr, paddr_t paddr)
 	{
-		((void) handler_num);
+		((void) tlb);
 		((void) vaddr);
 		((void) paddr);
 
@@ -144,20 +138,18 @@
 	/**
 	 * @brief Invalidates a virtual address in the TLB.
 	 *
-	 * @param handler_num Handler number, identifies which TLB
-	 * type should be used.
-	 *
+	 * @param tlb   Target TLB (D-TLB or I-TLB).
 	 * @param vaddr Target virtual address.
 	 *
 	 * @returns Upon successful completion, zero is returned. Upon
 	 * failure, a negative error code is returned instead.
 	 */
 #if !((defined(HAL_TLB_HARDWARE) && !defined(__tlb_inval_fn)))
-	EXTERN int tlb_inval(int handler_num, vaddr_t vaddr);
+	EXTERN int tlb_inval(int tlb, vaddr_t vaddr);
 #else
-	static inline int tlb_inval(int handler_num, vaddr_t vaddr)
+	static inline int tlb_inval(int tlb, vaddr_t vaddr)
 	{
-		((void) handler_num);
+		((void) tlb);
 		((void) vaddr);
 
 		return (0);
