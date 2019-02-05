@@ -302,7 +302,13 @@ PUBLIC int thread_join(int tid, void **retval)
 		if ((t = thread_get(tid)) != NULL)
 		{
 			ret = 0;
-			cond_wait(&joincond[thread_get_coreid(t)], &lock_tm);
+
+			/*
+			 * The target thread is still running,
+			 * so we have to block and wait for it.
+			 */
+			if (t->state == THREAD_RUNNING)
+				cond_wait(&joincond[thread_get_coreid(t)], &lock_tm);
 		}
 
 	spinlock_unlock(&lock_tm);
