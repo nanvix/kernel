@@ -36,13 +36,13 @@
 	 * @ingroup or1k-pc
 	 */
  	#include <arch/or1k/clock.h>
-	#include <arch/or1k/context.h> 	
+	#include <arch/or1k/context.h>
 	#include <arch/or1k/core.h>
 	#include <arch/or1k/cpu.h>
 	#include <arch/or1k/excp.h>
 	#include <arch/or1k/int.h>
-	#include <arch/or1k/io.h>	
+	#include <arch/or1k/io.h>
 	#include <arch/or1k/mem.h>
-	#include <arch/or1k/pic.h>	
+	#include <arch/or1k/pic.h>
 
 #endif /* ARCH_OR1K_OR1K_H_ */

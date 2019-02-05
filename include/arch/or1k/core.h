@@ -24,7 +24,7 @@
 
 #ifndef ARCH_OR1K_CORE_H_
 #define ARCH_OR1K_CORE_H_
-	
+
 	#include <arch/or1k/regs.h>
 
 /**
@@ -133,7 +133,7 @@
 			__asm__("r3") = (unsigned) 0;
 		register unsigned r5
 			__asm__("r5") = (unsigned) reg;
-	
+
 		__asm__ __volatile__
 		(
 			"l.mfspr r3, r5, 0"

@@ -83,7 +83,7 @@
 	#define OR1K_PGTAB_SIZE (1 << OR1K_PGTAB_SHIFT) /**< Page Table Size           */
 	#define OR1K_PTE_SIZE   4                       /**< Page Table Entry Size     */
 	#define OR1K_PDE_SIZE   4                       /**< Page Directory Entry Size */
- 	#define OR1K_PT_SIZE    4096                    /**< Page table size           */
+	#define OR1K_PT_SIZE    4096                    /**< Page table size           */
 	#define OR1K_PT_SHIFT   10                      /**< Page table shift          */
 	/**@}*/
 

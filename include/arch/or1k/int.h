@@ -50,12 +50,12 @@
 	 * @brief Number of hardware interrupts in the or1k architecture.
 	 */
 	#define OR1K_NUM_HWINT 3
-	
+
 	/**
 	 * @brief System Call Hook
 	 */
 	EXTERN void syscall(void);
-	
+
 	/**
 	 * @name Hardware Interrupt Hooks
 	 */
@@ -106,8 +106,10 @@
 	 */
 	static inline void or1k_hwint_disable(void)
 	{
-		 or1k_mtspr(OR1K_SPR_SR, or1k_mfspr(OR1K_SPR_SR) & ~(OR1K_SPR_SR_IEE
-		 	| OR1K_SPR_SR_TEE));
+		 or1k_mtspr(
+			OR1K_SPR_SR,
+			or1k_mfspr(OR1K_SPR_SR) & ~(OR1K_SPR_SR_IEE | OR1K_SPR_SR_TEE)
+		);
 	}
 
 	/**

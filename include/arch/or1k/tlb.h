@@ -130,7 +130,7 @@
 	#define OR1K_DTLBE_SRE 4 /**< Supervisor Read Enable  */
 	#define OR1K_DTLBE_SwE 8 /**< Supervisor Write Enable */
 	/**@}*/
-	
+
 	/**
 	 * Instruction TLBE Protection Attributes
 	 */
@@ -341,5 +341,5 @@
 /**@endif*/
 
 /**@}*/
-	
+
 #endif /* ARCH_OR1K_TLB_H_ */

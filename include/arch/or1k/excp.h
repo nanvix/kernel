@@ -38,7 +38,7 @@
 	 * so must ensure that the underlying architecture have, to
 	 * properly save the registers.
 	 */
-#define OR1K_HAVE_SHADOW_GPRS 
+#define OR1K_HAVE_SHADOW_GPRS
 
 	/**
 	 * @brief Temporary registers used while inside exception/interrupt

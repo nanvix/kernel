@@ -47,7 +47,7 @@
 	 * @brief Estimated CPU frequency (in Hz)
 	 */
 	#define CPU_FREQUENCY 20000000
-	
+
 	/**
 	 * @brief Initializes the clock driver in the or1k architecture.
 	 *
