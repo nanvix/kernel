@@ -27,9 +27,10 @@
 
 #include <arch/k1b/cache.h>
 #include <arch/k1b/core.h>
-#include <nanvix/const.h>
 #include <arch/k1b/cpu.h>
 #include <arch/k1b/spinlock.h>
+#include <nanvix/const.h>
+#include <nanvix/klib.h>
 
 /* These are written in assembly. */
 EXTERN NORETURN void _k1b_core_reset(void);
@@ -45,50 +46,28 @@ EXTERN NORETURN void _k1b_core_reset(void);
 PRIVATE struct
 {
 	int initialized;        /**< Initialized?      */
-	int laststate;          /**< Last State.       */
 	int state;              /**< State.            */
 	int wakeups;            /**< Wakeup signals.   */
 	void (*start)(void);    /**< Starting routine. */
 	spinlock_t lock;        /**< Lock.             */
 } __attribute__((aligned(K1B_CACHE_LINE_SIZE))) cores[K1B_NUM_CORES] = {
-	{ TRUE,  K1B_CORE_IDLE, K1B_CORE_RUNNING,  0, NULL, K1B_SPINLOCK_UNLOCKED }, /* Master Core   */
-	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 1  */
-	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 2  */
-	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 3  */
-	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 4  */
-	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 5  */
-	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 6  */
-	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 7  */
-	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 8  */
-	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 9  */
-	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 10 */
-	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 11 */
-	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 12 */
-	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 13 */
-	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 14 */
-	{ FALSE, K1B_CORE_IDLE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 15 */
+	{ TRUE,  K1B_CORE_RUNNING,  0, NULL, K1B_SPINLOCK_UNLOCKED }, /* Master Core   */
+	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 1  */
+	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 2  */
+	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 3  */
+	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 4  */
+	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 5  */
+	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 6  */
+	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 7  */
+	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 8  */
+	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 9  */
+	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 10 */
+	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 11 */
+	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 12 */
+	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 13 */
+	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 14 */
+	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 15 */
 };
-
-/*============================================================================*
- * k1b_core_wait()                                                            *
- *============================================================================*/
-
-/**
- * @brief Waits for a signal.
- *
- * The k1b_core_wait() function suspends instruction execution in the
- * underlying core, until a signal is received.
- *
- * @bug For some unknown reason, we have to flush the cache here.
- *
- * @author Pedro Henrique Penna
- */
-PRIVATE inline void k1b_core_wait(void)
-{
-	mOS_pe_event_clear(K1B_EVENT_LINE);
-	mOS_pe_event_waitclear(K1B_EVENT_LINE);
-	k1b_dcache_inval();
-}
 
 /*============================================================================*
  * k1b_core_notify()                                                          *
@@ -117,16 +96,57 @@ PRIVATE inline void k1b_core_notify(int coreid)
 }
 
 /*============================================================================*
+ * k1b_core_idle()                                                            *
+ *============================================================================*/
+
+/**
+ * The k1b_core_idle() function suspends instruction execution in the
+ * underlying core until a start signal is received. While is
+ * suspended mode, the underlying core is placed in a low-power state
+ * to save energy.
+ *
+ * @see k1b_core_start(), k1b_core_run().
+ *
+ * @author Pedro Henrique Penna
+ */
+PUBLIC void k1b_core_idle(void)
+{
+	int coreid = k1b_core_get_id();
+
+	while (TRUE)
+	{
+		k1b_spinlock_lock(&cores[coreid].lock);
+		k1b_dcache_inval();
+
+			/* Awaken. */
+			if (cores[coreid].state != K1B_CORE_IDLE)
+			{
+				k1b_spinlock_unlock(&cores[coreid].lock);
+				break;
+			}
+
+			mOS_pe_event_clear(K1B_EVENT_LINE);
+
+		k1b_dcache_inval();
+		k1b_spinlock_unlock(&cores[coreid].lock);
+
+		mOS_pe_event_waitclear(K1B_EVENT_LINE);
+	}
+
+	kprintf("[hal] core awaken");
+}
+
+/*============================================================================*
  * k1b_core_sleep()                                                           *
  *============================================================================*/
 
 /**
  * The k1b_core_sleep() function suspends instruction execution in the
- * the underlying core until an wakeup signal is received. While is
- * suspended mode, the undelying core is placed in a low-power state
+ * underlying core until a wakeup signal is received. While is
+ * suspended mode, the underlying core is placed in a low-power state
  * to save energy.
  *
- * @see k1b_core_wakeup()
+ * @see k1b_core_wakeup().
  *
  * @author Pedro Henrique Penna
  */
@@ -134,29 +154,31 @@ PUBLIC void k1b_core_sleep(void)
 {
 	int coreid = k1b_core_get_id();
 
-	k1b_spinlock_lock(&cores[coreid].lock);
+	while (TRUE)
+	{
+		k1b_spinlock_lock(&cores[coreid].lock);
+		k1b_dcache_inval();
 
-		if (cores[coreid].laststate != K1B_CORE_IDLE)
-		{
-			if (cores[coreid].state == K1B_CORE_RUNNING)
+			/* Awaken. */
+			if (cores[coreid].wakeups > 0)
 			{
-				if (cores[coreid].wakeups == 0)
-				{
-					cores[coreid].laststate = cores[coreid].state;
-					cores[coreid].state = K1B_CORE_SLEEPING;
-				}
-				else
-					cores[coreid].wakeups--;
+				cores[coreid].wakeups--;
+				cores[coreid].state = K1B_CORE_RUNNING;
+
 				k1b_dcache_inval();
+				k1b_spinlock_unlock(&cores[coreid].lock);
+
+				break;
 			}
-		}
 
-	k1b_spinlock_unlock(&cores[coreid].lock);
+			cores[coreid].state = K1B_CORE_SLEEPING;
+			mOS_pe_event_clear(K1B_EVENT_LINE);
 
-	/* Wait for wakeup signal. */
-	do
-		k1b_core_wait();
-	while (cores[coreid].state != K1B_CORE_RUNNING);
+		k1b_dcache_inval();
+		k1b_spinlock_unlock(&cores[coreid].lock);
+
+		mOS_pe_event_waitclear(K1B_EVENT_LINE);
+	}
 }
 
 /*============================================================================*
@@ -167,7 +189,7 @@ PUBLIC void k1b_core_sleep(void)
  * The k1b_core_wakeup() function sends a wakeup signal to the
  * sleeping core whose ID equals to @p coreid.
  *
- * @see k1b_core_start(), k1b_core_sleep(), k1b_core_run().
+ * @see k1b_core_sleep().
  *
  * @todo Check if the calling core is not the target core.
  *
@@ -179,21 +201,11 @@ PUBLIC void k1b_core_wakeup(int coreid)
 	k1b_dcache_inval();
 
 		/* Wakeup target core. */
-		if (cores[coreid].state == K1B_CORE_SLEEPING)
-		{
-			if (cores[coreid].wakeups == 0)
-			{
-				cores[coreid].laststate = cores[coreid].state;
-				cores[coreid].state = K1B_CORE_RUNNING;
-			}
-			k1b_dcache_inval();
-		}
-		else if (cores[coreid].state == K1B_CORE_RUNNING)
-			cores[coreid].wakeups++;
+		cores[coreid].wakeups++;
+		k1b_core_notify(coreid);
 
+	k1b_dcache_inval();
 	k1b_spinlock_unlock(&cores[coreid].lock);
-
-	k1b_core_notify(coreid);
 }
 
 /*============================================================================*
@@ -205,7 +217,7 @@ PUBLIC void k1b_core_wakeup(int coreid)
  * sleeping core whose ID equals to @p coreid to @p start and sends a
  * wakeup signal to this core.
  *
- * @see k1b_core_wakeup(), k1b_core_sleep(), k1b_core_run().
+ * @see k1b_core_idle(), k1b_core_run().
  *
  * @todo Check if the calling core is not the target core.
  *
@@ -219,15 +231,14 @@ PUBLIC void k1b_core_start(int coreid, void (*start)(void))
 		/* Wakeup target core. */
 		if (cores[coreid].state == K1B_CORE_IDLE)
 		{
-			cores[coreid].laststate = cores[coreid].state;
 			cores[coreid].state = K1B_CORE_RUNNING;
 			cores[coreid].start = start;
 			k1b_dcache_inval();
+
+			k1b_core_notify(coreid);
 		}
 
 	k1b_spinlock_unlock(&cores[coreid].lock);
-
-	k1b_core_notify(coreid);
 }
 
 /*============================================================================*
@@ -241,7 +252,7 @@ PUBLIC void k1b_core_start(int coreid, void (*start)(void))
  * first call ever made to k1b_core_run(), architectural structures of
  * the underlying core are initialized.
  *
- * @see k1b_core_wakeup()
+ * @see k1b_core_idle(), k1b_core_start().
  *
  * @author Pedro Henrique Penna
  */
@@ -261,7 +272,7 @@ PUBLIC void k1b_core_run(void)
 		}
 
 	k1b_spinlock_unlock(&cores[coreid].lock);
-	
+
 	cores[coreid].start();
 }
 
@@ -284,9 +295,16 @@ PUBLIC void k1b_core_reset(void)
 {
 	int coreid = k1b_core_get_id();
 
-	cores[coreid].laststate = cores[coreid].state;
-	cores[coreid].state = K1B_CORE_IDLE;
+	k1b_spinlock_lock(&cores[coreid].lock);
 	k1b_dcache_inval();
+
+		cores[coreid].wakeups = 0;
+		cores[coreid].state = K1B_CORE_IDLE;
+
+	k1b_dcache_inval();
+	k1b_spinlock_unlock(&cores[coreid].lock);
+
+	kprintf("[hal] resetting core");
 
 	_k1b_core_reset();
 }
@@ -309,7 +327,6 @@ PUBLIC void k1b_core_shutdown(int status)
 
 	k1b_spinlock_lock(&cores[coreid].lock);
 
-		cores[coreid].laststate = cores[coreid].state;
 		cores[coreid].state = K1B_CORE_OFFLINE;
 
 	k1b_dcache_inval();
