@@ -339,32 +339,36 @@
 	/**
 	 * @see k1b_tlb_lookup_vaddr().
 	 */
-	static inline const struct tlbe *tlb_lookup_vaddr(vaddr_t vaddr)
+	static inline const struct tlbe *tlb_lookup_vaddr(int tlb, vaddr_t vaddr)
 	{
+		UNUSED(tlb);
 		return (k1b_tlb_lookup_vaddr(vaddr));
 	}
 
 	/**
 	 * @see k1b_tlb_lookup_paddr().
 	 */
-	static inline const struct tlbe *tlb_lookup_paddr(paddr_t paddr)
+	static inline const struct tlbe *tlb_lookup_paddr(int tlb, paddr_t paddr)
 	{
+		UNUSED(tlb);
 		return (k1b_tlb_lookup_paddr(paddr));
 	}
 
 	/**
 	 * @see k1b_tlb_write()
 	 */
-	static inline int tlb_write(vaddr_t vaddr, paddr_t paddr)
+	static inline int tlb_write(int tlb, vaddr_t vaddr, paddr_t paddr)
 	{
+		UNUSED(tlb);
 		return (k1b_tlb_write(vaddr, paddr, 12, 0, K1B_TLBE_PROT_RW));
 	}
 
 	/**
 	 * @see k1b_tlb_inval()
 	 */
-	static inline int tlb_inval(vaddr_t vaddr)
+	static inline int tlb_inval(int tlb, vaddr_t vaddr)
 	{
+		UNUSED(tlb);
 		return (k1b_tlb_inval(vaddr, 12, 0));
 	}
 

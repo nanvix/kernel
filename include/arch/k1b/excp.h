@@ -264,7 +264,8 @@
 	#define EXCP_INVALID_OPCODE      K1B_EXCP_OPCODE          /**< Invalid Opcode     */
 	#define EXCP_PAGE_FAULT          K1B_EXCP_VIRT_PAGE_FAULT /**< Page Fault         */
 	#define EXCP_PAGE_PROTECTION     K1B_EXCP_PAGE_PROTECTION /**< Page Protection    */
-	#define EXCP_TLB_FAULT           K1B_EXCP_TLB_FAULT       /**< TLB Fault          */
+	#define EXCP_ITLB_FAULT          K1B_EXCP_TLB_FAULT       /**< I-TLB Fault        */
+	#define EXCP_DTLB_FAULT          K1B_EXCP_TLB_FAULT       /**< D-TLB Fault        */
 	#define EXCP_GENERAL_PROTECTION  K1B_EXCP_PROTECTION      /**< General Protection */
 	/**@}*/
 
