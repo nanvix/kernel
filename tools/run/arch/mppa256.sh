@@ -34,11 +34,21 @@ function run_hw
 	local multibin=$1
 	local bin=$2
 	local args=$3
+	local debug=$4
 
-	$K1_TOOLCHAIN_DIR/bin/k1-jtag-runner \
-		--multibinary=$multibin          \
-		--exec-file=Cluster0:$bin        \
-		-- $args
+	if [ $debug == "--no-debug" ];
+	then
+		$K1_TOOLCHAIN_DIR/bin/k1-jtag-runner \
+			--multibinary=$multibin          \
+			--exec-file=Cluster0:$bin        \
+			-- $args
+	else
+		$K1_TOOLCHAIN_DIR/bin/k1-jtag-runner \
+			--gdb                            \
+			--multibinary=$multibin          \
+			--exec-file=Cluster0:$bin        \
+			-- $args
+	fi
 }
 
 #
@@ -49,7 +59,7 @@ function run_sim
 	local bin=$1
 	local args=$2
 
-	$K1_TOOLCHAIN_DIR/bin/k1-mppa \
+	$K1_TOOLCHAIN_DIR/bin/k1-cluster \
 		--mboard=$BOARD           \
 		--march=$ARCH             \
 		--bootcluster=node0       \
