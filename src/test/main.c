@@ -23,11 +23,11 @@
  */
 
 #include <nanvix.h>
+#include "test.h"
 
-/**
- * @brief Number of threads to spawn.
- */
-#define NTHREADS 4
+/*============================================================================*
+ * strlen()                                                                   *
+ *============================================================================*/
 
 /**
  * @brief Returns the length of a string.
@@ -47,10 +47,15 @@ static size_t strlen(const char *str)
 	return (p - str);
 }
 
+/*============================================================================*
+ * puts()                                                                     *
+ *============================================================================*/
+
 /**
- * @brief Writes a string to the standard output device.
+ * The puts() function writes to the standard output device the string
+ * pointed to by @p str.
  */
-static void puts(const char *str)
+void puts(const char *str)
 {
 	size_t len;
 
@@ -59,47 +64,40 @@ static void puts(const char *str)
 	nanvix_write(0, str, len);
 }
 
+/*============================================================================*
+ * main()                                                                     *
+ *============================================================================*/
+
 /**
- * @brief Says hello to the world.
- *
- * @param str String to print.
+ * @brief User-land testing units.
  */
-static void *task(void *str)
+static struct
 {
-	puts(str);
-
-	return (NULL);
-}
+	void (*test_fn)(void); /**< Test function. */
+	const char *name;      /**< Test Name.     */
+} user_tests[] = {
+	{ test_hello,  "[api]    thread creation [passed]" },
+	{ test_thread, "[stress] thread creation [passed]" },
+	{ NULL,         NULL                               },
+};
 
 /**
- * @brief Says many hellos.
+ * @brief Lunches user-land testing units.
  *
  * @param argc Argument counter.
  * @param argv Argument variables.
  */
 int main(int argc, const char *argv[])
 {
-	char *strings[NTHREADS] = {
-		"hello from thread 0!\n",
-		"hello from thread 1!\n",
-		"hello from thread 2!\n",
-		"hello from thread 3!\n"
-	};
-
-	kthread_t tid[NTHREADS];
-
 	((void) argc);
 	((void) argv);
 
-	/* Spawn threads. */
-	for (int i = 1; i < NTHREADS; i++)
-		kthread_create(&tid[i], task, strings[i]);
-
-	task(strings[1]);
-
-	/* Wait for threads. */
-	for (int i = 1; i < NTHREADS; i++)
-		kthread_join(tid[i], NULL);
+	/* Launch tests. */
+	for (int i = 0; user_tests[i].test_fn != NULL; i++)
+	{
+		user_tests[i].test_fn();
+		puts(user_tests[i].name);
+	}
 
 	return (0);
 }
