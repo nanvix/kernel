@@ -253,6 +253,7 @@ again:
 	{
 		cores[coreid].state = K1B_CORE_RUNNING;
 		cores[coreid].start = start;
+		cores[coreid].wakeups = 0;
 		k1b_dcache_inval();
 
 		k1b_core_notify(coreid);
@@ -318,7 +319,6 @@ PUBLIC void k1b_core_reset(void)
 	k1b_spinlock_lock(&cores[coreid].lock);
 	k1b_dcache_inval();
 
-		cores[coreid].wakeups = 0;
 		cores[coreid].state = K1B_CORE_RESETTING;
 
 		k1b_dcache_inval();
