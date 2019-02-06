@@ -52,21 +52,21 @@ PRIVATE struct
 	spinlock_t lock;        /**< Lock.             */
 } __attribute__((aligned(K1B_CACHE_LINE_SIZE))) cores[K1B_NUM_CORES] = {
 	{ TRUE,  K1B_CORE_RUNNING,  0, NULL, K1B_SPINLOCK_UNLOCKED }, /* Master Core   */
-	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 1  */
-	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 2  */
-	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 3  */
-	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 4  */
-	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 5  */
-	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 6  */
-	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 7  */
-	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 8  */
-	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 9  */
-	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 10 */
-	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 11 */
-	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 12 */
-	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 13 */
-	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 14 */
-	{ FALSE, K1B_CORE_IDLE, 0, NULL, K1B_SPINLOCK_UNLOCKED },     /* Slave Core 15 */
+	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 1  */
+	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 2  */
+	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 3  */
+	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 4  */
+	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 5  */
+	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 6  */
+	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 7  */
+	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 8  */
+	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 9  */
+	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 10 */
+	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 11 */
+	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 12 */
+	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 13 */
+	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 14 */
+	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 15 */
 };
 
 /*============================================================================*
@@ -111,7 +111,18 @@ PRIVATE inline void k1b_core_notify(int coreid)
  */
 PUBLIC void k1b_core_idle(void)
 {
-	int coreid = k1b_core_get_id();
+		int coreid = k1b_core_get_id();
+
+		cores[coreid].state = K1B_CORE_IDLE;
+
+		/*
+		 * The lock of this core was
+		 * acquired when resetting, in
+		 * k1b_core_reset().
+		 */
+
+	k1b_dcache_inval();
+	k1b_spinlock_unlock(&cores[coreid].lock);
 
 	while (TRUE)
 	{
@@ -225,18 +236,27 @@ PUBLIC void k1b_core_wakeup(int coreid)
  */
 PUBLIC void k1b_core_start(int coreid, void (*start)(void))
 {
+again:
+
 	k1b_spinlock_lock(&cores[coreid].lock);
 	k1b_dcache_inval();
 
-		/* Wakeup target core. */
-		if (cores[coreid].state == K1B_CORE_IDLE)
-		{
-			cores[coreid].state = K1B_CORE_RUNNING;
-			cores[coreid].start = start;
-			k1b_dcache_inval();
+	/* Wait for reset. */
+	if (cores[coreid].state == K1B_CORE_RESETTING)
+	{
+		k1b_spinlock_unlock(&cores[coreid].lock);
+		goto again;
+	}
 
-			k1b_core_notify(coreid);
-		}
+	/* Wakeup target core. */
+	if (cores[coreid].state == K1B_CORE_IDLE)
+	{
+		cores[coreid].state = K1B_CORE_RUNNING;
+		cores[coreid].start = start;
+		k1b_dcache_inval();
+
+		k1b_core_notify(coreid);
+	}
 
 	k1b_spinlock_unlock(&cores[coreid].lock);
 }
@@ -299,14 +319,19 @@ PUBLIC void k1b_core_reset(void)
 	k1b_dcache_inval();
 
 		cores[coreid].wakeups = 0;
-		cores[coreid].state = K1B_CORE_IDLE;
+		cores[coreid].state = K1B_CORE_RESETTING;
 
-	k1b_dcache_inval();
-	k1b_spinlock_unlock(&cores[coreid].lock);
+		k1b_dcache_inval();
 
-	kprintf("[hal] resetting core");
+		kprintf("[hal] resetting core");
 
-	_k1b_core_reset();
+		_k1b_core_reset();
+
+		/*
+		 * The lock of this core will
+		 * be released when resetting
+		 * is completed, in k1b_core_idle().
+		 */
 }
 
 /*============================================================================*
