@@ -44,5 +44,6 @@
 	#include <arch/or1k/io.h>
 	#include <arch/or1k/mem.h>
 	#include <arch/or1k/pic.h>
+	#include <arch/or1k/spinlock.h>
 
 #endif /* ARCH_OR1K_OR1K_H_ */
