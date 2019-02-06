@@ -49,7 +49,7 @@
 	/**
 	 * @brief Execution context size (in bytes).
 	 */
-	#define K1B_CONTEXT_SIZE 292
+	#define K1B_CONTEXT_SIZE 296
 
 	/**
 	 * @name Offsets to the Context Structure
@@ -120,13 +120,13 @@
 	#define K1B_CONTEXT_R62 248 /**< General Purpose Register 62       */
 	#define K1B_CONTEXT_R63 252 /**< General Purpose Register 63       */
 	#define K1B_CONTEXT_SPC 256 /**< Shadow Program Counter Register   */
-	#define K1B_CONTEXT_SPS 260 /**< Shadow Processing Status Register */
-	#define K1B_CONTEXT_RA  264 /**< Return Address Register           */
-	#define K1B_CONTEXT_CS  268 /**< Compute Status Register           */
-	#define K1B_CONTEXT_PS  272 /**< Processing Status Register        */
-	#define K1B_CONTEXT_LC  280 /**< Loop Count Register               */
-	#define K1B_CONTEXT_LS  284 /**< Loop Start Register               */
-	#define K1B_CONTEXT_LE  288 /**< Loop Exit Register                */
+	#define K1B_CONTEXT_RA  260 /**< Return Address Register           */
+	#define K1B_CONTEXT_CS  264 /**< Compute Status Register           */
+	#define K1B_CONTEXT_LC  268 /**< Loop Count Register               */
+	#define K1B_CONTEXT_LS  272 /**< Loop Start Register               */
+	#define K1B_CONTEXT_LE  276 /**< Loop Exit Register                */
+	#define K1B_CONTEXT_PS  280 /**< Processing Status Register        */
+	#define K1B_CONTEXT_SPS 288 /**< Shadow Processing Status Register */
 	/**@}*/
 
 #ifndef _ASM_FILE_
@@ -151,13 +151,13 @@
 		uint32_t r48, r49, r50, r51, r52, r53, r54, r55; /**< General Purpose Registers 48 to 55 */
 		uint32_t r56, r57, r58, r59, r60, r61, r62, r63; /**< General Purpose Registers 56 to 63 */
 		uint32_t spc;                                    /**< Shadow Program Counter Register    */
-		uint32_t sps;                                    /**< Shadow Processing Status Register  */
 		uint32_t ra;                                     /**< Return Address Register            */
 		uint32_t cs;                                     /**< Compute Status Register            */
-		uint64_t ps;                                     /**< Processing Status Register         */
 		uint32_t lc;                                     /**< Loop Count Register                */
 		uint32_t ls;                                     /**< Loop Start Register                */
 		uint32_t le;                                     /**< Loop Exit Register                 */
+		uint64_t ps;                                     /**< Processing Status Register         */
+		uint64_t sps;                                    /**< Shadow Processing Status Register  */
 	} __attribute__((packed));
 
 /**@endcond*/

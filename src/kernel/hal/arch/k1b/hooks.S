@@ -111,15 +111,9 @@
 	;;
 
 	/* Get SFRs*/
-	get   $r2 = $spc
-	;;
-	get   $r3 = $sps
-	;;
 	get   $r4 = $ra
 	;;
 	get   $r5 = $cs
-	;;
-	getd  $p6 = $ps
 	;;
 	get   $r8 = $lc
 	;;
@@ -128,16 +122,13 @@
 	get   $r10 = $le
 	;;
 
-	/* Save SFRs */
-	sw K1B_CONTEXT_SPC[\dest], $r2
-	;;
-	sw K1B_CONTEXT_SPS[\dest], $r3
-	;;
+	/*
+	 * Save SFRs. Note that $spc,
+	 * $ps and $sps are retrieved from mOS.
+	 */
 	sw K1B_CONTEXT_RA[\dest],  $r4
 	;;
 	sw K1B_CONTEXT_CS[\dest],  $r5
-	;;
-	sd K1B_CONTEXT_PS[\dest],  $p6
 	;;
 	sw K1B_CONTEXT_LC[\dest],  $r8
 	;;
@@ -156,8 +147,8 @@
 .macro k1b_context_restore src
 
 	/*
-	 * Restore SFRs. Note that $pc, $spc,
-	 * $ps and $spc are restored by mOS.
+	 * Restore SFRs. Note that $spc,
+	 * $ps and $sps are restored by mOS.
 	 */
 	lw $r0  = K1B_CONTEXT_RA[\src]
 	;;
@@ -402,6 +393,24 @@ _do_excp:
 	;;
 
 	_scoreboard_get $r2 $r3
+
+	/* Processing Status. */
+	ld  $p4 = MOS_VC_REG_PS[$r2]
+	;;
+	sd  K1B_CONTEXT_PS[$r1], $p4
+	;;
+
+	/* Saved Processing Status */
+	ld  $p4 = MOS_VC_REG_SPS[$r2]
+	;;
+	sd  K1B_CONTEXT_SPS[$r1], $p4
+	;;
+
+	/* Saved Program Counter. */
+	lw  $r4 = MOS_VC_REG_SPC[$r2]
+	;;
+	sw  K1B_CONTEXT_SPC[$r1], $r4
+	;;
 
 	/*
 	 * Save exception information

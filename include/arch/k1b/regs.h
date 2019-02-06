@@ -64,6 +64,6 @@
 	.macro redzone_free
 		add $sp = $sp, REDZONE_SIZE
 	.endm
-	
+
 
 #endif /* ARCH_K1B_REGS_H_ */
