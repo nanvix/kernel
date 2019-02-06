@@ -54,11 +54,11 @@ PRIVATE int itoa(char *str, unsigned num, int base)
 	/* Convert number. */
 	do
 	{
-		unsigned remainder = num & 0xf;
+		unsigned remainder = num % divisor;
 
 		*p++ = (remainder < 10) ? remainder + '0' : 
 		                          remainder + 'a' - 10;
-	} while ((num = (num >> 4)));
+	} while (num /= divisor);
 
 	/* Fill up with zeros. */
 	if (divisor == 16)
@@ -109,6 +109,8 @@ PUBLIC int kvsprintf(char *str, const char *fmt, va_list args)
 				
 				/* Number. */
 				case 'd':
+					str += itoa(str, va_arg(args, unsigned int), 'd');
+					break;
 				case 'x':
 					str += itoa(str, va_arg(args, unsigned int), 'x');
 					break;
