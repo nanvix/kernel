@@ -36,6 +36,10 @@ mppa256: $(OBJ)
 i386-pc:
 	# Nothing to do.
 
+# Builds object files for or1k target.
+or1k-pc:
+	# Nothing to do.
+
 # Cleans all object files.
 clean:
 	rm -rf $(BINDIR)/$(EXECBIN) $(OBJ)

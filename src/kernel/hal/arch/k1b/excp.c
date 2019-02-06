@@ -126,7 +126,6 @@ PUBLIC void do_excp(const struct exception *excp, const struct context *ctx)
 	if (k1b_excp_handlers[excp->num] == NULL)
 		do_generic_excp(excp, ctx);
 
-	kprintf("[k1b] forwarding exception");
 	k1b_excp_handlers[excp->num](excp, ctx);
 }
 

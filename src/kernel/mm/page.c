@@ -276,7 +276,6 @@ PUBLIC int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame)
 	pte_write_set(pte, 0);
 	pte_frame_set(pte, frame);
 	hal_dcache_invalidate();
-	tlb_write(vaddr, frame << PAGE_SHIFT);
 	tlb_flush();
 
 	return (0);
@@ -357,7 +356,8 @@ PUBLIC frame_t upage_unmap(struct pde *pgdir, vaddr_t vaddr)
 	 */
 	frame = pte_frame_get(pte);
 	pte_present_set(pte, 0);
-	tlb_inval(vaddr);
+	tlb_inval(EXCP_DTLB_FAULT, vaddr);
+	tlb_inval(EXCP_ITLB_FAULT, vaddr);
 	tlb_flush();
 
 	/* Free underlying page tables. */
@@ -571,14 +571,14 @@ PRIVATE void do_tlb_fault(
 		do_page_fault(excp, ctx);
 
 	/* Lookup PTE. */
-	pgtab = (struct pte *)(kpool_frame_to_addr(pde_frame_get(pde)));
+	pgtab = (struct pte *)(pde_frame_get(pde) << PAGE_SHIFT);
 	pte = pte_get(pgtab, vaddr);
 	if (!pte_is_present(pte))
 		do_page_fault(excp, ctx);
 
 	/* Writing mapping to TLB. */
 	paddr = pte_frame_get(pte) << PAGE_SHIFT;
-	if (tlb_write(vaddr, paddr) < 0)
+	if (tlb_write(excp->num, vaddr, paddr) < 0)
 		kpanic("cannot write to tlb");
 }
 
@@ -602,7 +602,8 @@ PUBLIC void upool_init(void)
 	exception_set_handler(EXCP_PAGE_PROTECTION, do_page_protection);
 	exception_set_handler(EXCP_PAGE_FAULT, do_page_fault);
 #ifdef HAL_TLB_SOFTWARE
-	exception_set_handler(EXCP_TLB_FAULT, do_tlb_fault);
+	exception_set_handler(EXCP_DTLB_FAULT, do_tlb_fault);
+	exception_set_handler(EXCP_ITLB_FAULT, do_tlb_fault);
 #endif
 
 #ifndef NDEBUG

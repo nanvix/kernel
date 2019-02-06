@@ -2,6 +2,7 @@
  * MIT License
  *
  * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ *              2018 Davidson Francis     <davidsondfgl@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +32,10 @@
 
 	#if (defined(__i386__) && (__pc__))
 	#include <target/ibm/pc.h>
+	#endif
+
+	#if (defined(__or1k__) && (__pc__))
+	#include <target/or1k/pc.h>
 	#endif
 
 /*============================================================================*
@@ -83,34 +88,32 @@
  * Spinlock Interface                                                         *
  *============================================================================*/
 
-	#ifdef HAL_SMP
-		#ifndef SPINLOCK_LOCKED
-		#error "SPINLOCK_LOCKED not defined"
-		#endif
+	#ifndef SPINLOCK_LOCKED
+	#error "SPINLOCK_LOCKED not defined"
+	#endif
 
-		#ifndef SPINLOCK_UNLOCKED
-		#error "SPINLOCK_UNLOCKED not defined"
-		#endif
+	#ifndef SPINLOCK_UNLOCKED
+	#error "SPINLOCK_UNLOCKED not defined"
+	#endif
 
-		#ifndef __spinlock_t
-		#error "spinlock_t not defined?"
-		#endif
+	#ifndef __spinlock_t
+	#error "spinlock_t not defined?"
+	#endif
 
-		#ifndef __spinlock_init_fn
-		#error "spinlock_init() not defined?"
-		#endif
+	#ifndef __spinlock_init_fn
+	#error "spinlock_init() not defined?"
+	#endif
 
-		#ifndef __spinlock_lock_fn
-		#error "spinlock_lock() not defined?"
-		#endif
+	#ifndef __spinlock_lock_fn
+	#error "spinlock_lock() not defined?"
+	#endif
 
-		#ifndef __spinlock_trylock_fn
-		#error "spinlock_trylock() not defined?"
-		#endif
+	#ifndef __spinlock_trylock_fn
+	#error "spinlock_trylock() not defined?"
+	#endif
 
-		#ifndef __spinlock_unlock_fn
-		#error "spinlock_unlock() not defined?"
-		#endif
+	#ifndef __spinlock_unlock_fn
+	#error "spinlock_unlock() not defined?"
 	#endif
 
 /*============================================================================*
@@ -198,8 +201,12 @@
 	#endif
 
 	#ifdef HAL_TLB_SOFTWARE
-		#ifndef EXCP_TLB_FAULT
-		#error "EXCP_TLB_FAULT not defined"
+		#ifndef EXCP_DTLB_FAULT
+		#error "EXCP_DTLB_FAULT not defined"
+		#endif
+
+		#ifndef EXCP_ITLB_FAULT
+		#error "EXCP_ITLB_FAULT not defined"
 		#endif
 	#endif
 

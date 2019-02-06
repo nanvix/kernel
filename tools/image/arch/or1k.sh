@@ -1,8 +1,7 @@
 #
 # MIT License
 #
-# Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
-#              2016-2018 Davidson Francis <davidsondfgl@gmail.com>
+# Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,30 +22,11 @@
 # SOFTWARE.
 #
 
-# NOTES:
-#   - This script should work in any Linux distribution.
-#   - You should run this script with superuser privileges.
 #
-
-export CURDIR=`pwd`
-
-case "$TARGET" in
-	"i386-pc")
-		qemu-system-i386 -s -S \
-			--display curses   \
-			-kernel bin/kernel \
-			-m 256M            \
-			-mem-prealloc
-		;;
-	"or1k-pc")
-		qemu-system-or1k       \
-			-kernel bin/kernel \
-			-serial stdio      \
-			-display none      \
-			-m 256M            \
-			-mem-prealloc
-		;;
-	*)
-        echo "error: unsupported target"
-		;;
-esac
+# Builds system image.
+#
+function build
+{
+	# Nothing to do.
+	echo ""
+}
