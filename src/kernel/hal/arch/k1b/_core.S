@@ -64,3 +64,4 @@ _k1b_core_reset:
 	/* Never gets here. */
 	k1b_core_reset.halt:
 		goto k1b_core_reset.halt
+		;;
