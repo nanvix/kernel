@@ -104,8 +104,8 @@ PRIVATE void do_generic_excp(const struct exception *excp, const struct context 
 	kprintf("[k1b] r60=%x r61=%x r62=%x r63=%x", ctx->r60, ctx->r61, ctx->r62, ctx->r63);
 
 	/* Dump special function registers. */
-	kprintf("[k1b]  pc=%x  ps=%x spc=%x sps=%x", ctx->cs, ctx->ps, ctx->spc, ctx->sps);
-	kprintf("[k1b]  ra=%x  lc=%x  ls=%x  le=%x", ctx->ra, ctx->lc, ctx->ls, ctx->le);
+	kprintf("[k1b] spc=%x  ra=%x  ps=%x sps=%x", ctx->spc, ctx->ra, ctx->ps, ctx->sps);
+	kprintf("[k1b]  lc=%x  ls=%x  le=%x", ctx->lc, ctx->ls, ctx->le);
 
 	kpanic("unhandled %s exception at %x\n", exceptions[excp->num].errmsg, excp->ea);
 }
