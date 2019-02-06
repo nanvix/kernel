@@ -88,34 +88,32 @@
  * Spinlock Interface                                                         *
  *============================================================================*/
 
-	#ifdef HAL_SMP
-		#ifndef SPINLOCK_LOCKED
-		#error "SPINLOCK_LOCKED not defined"
-		#endif
+	#ifndef SPINLOCK_LOCKED
+	#error "SPINLOCK_LOCKED not defined"
+	#endif
 
-		#ifndef SPINLOCK_UNLOCKED
-		#error "SPINLOCK_UNLOCKED not defined"
-		#endif
+	#ifndef SPINLOCK_UNLOCKED
+	#error "SPINLOCK_UNLOCKED not defined"
+	#endif
 
-		#ifndef __spinlock_t
-		#error "spinlock_t not defined?"
-		#endif
+	#ifndef __spinlock_t
+	#error "spinlock_t not defined?"
+	#endif
 
-		#ifndef __spinlock_init_fn
-		#error "spinlock_init() not defined?"
-		#endif
+	#ifndef __spinlock_init_fn
+	#error "spinlock_init() not defined?"
+	#endif
 
-		#ifndef __spinlock_lock_fn
-		#error "spinlock_lock() not defined?"
-		#endif
+	#ifndef __spinlock_lock_fn
+	#error "spinlock_lock() not defined?"
+	#endif
 
-		#ifndef __spinlock_trylock_fn
-		#error "spinlock_trylock() not defined?"
-		#endif
+	#ifndef __spinlock_trylock_fn
+	#error "spinlock_trylock() not defined?"
+	#endif
 
-		#ifndef __spinlock_unlock_fn
-		#error "spinlock_unlock() not defined?"
-		#endif
+	#ifndef __spinlock_unlock_fn
+	#error "spinlock_unlock() not defined?"
 	#endif
 
 /*============================================================================*
