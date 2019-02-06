@@ -38,7 +38,7 @@ case "$TARGET" in
 			-m 256M            \
 			-mem-prealloc
 		;;
-	"or1k")
+	"or1k-pc")
 		qemu-system-or1k       \
 			-kernel bin/kernel \
 			-serial stdio      \
