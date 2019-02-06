@@ -45,10 +45,11 @@
 	 * @name States of a Core
 	 */
 	/**@{*/
-	#define K1B_CORE_IDLE     0 /**< Idle        */
-	#define K1B_CORE_SLEEPING 1 /**< Sleeping    */
-	#define K1B_CORE_RUNNING  2 /**< Running     */
-	#define K1B_CORE_OFFLINE  3 /**< Powered Off */
+	#define K1B_CORE_IDLE      0 /**< Idle        */
+	#define K1B_CORE_SLEEPING  1 /**< Sleeping    */
+	#define K1B_CORE_RUNNING   2 /**< Running     */
+	#define K1B_CORE_RESETTING 3 /**< Resetting   */
+	#define K1B_CORE_OFFLINE   4 /**< Powered Off */
 	/**@}*/
 
 	/**
