@@ -42,12 +42,27 @@
 	/**@}*/
 
 	/**
+	 * @brief Cache line size (in bytes).
+	 *
+	 * @todo Check this.
+	 */
+	#define OR1K_CACHE_LINE_SIZE 64
+
+	/**
+	 * @see OR1K_CACHE_LINE_SIZE
+	 */
+	#define CACHE_LINE_SIZE OR1K_CACHE_LINE_SIZE
+
+	/**
 	 * @note The or1k target features cache coherency.
+	 *
+	 * @cond or1k
 	 */
 	static inline void hal_dcache_invalidate(void)
 	{
 		or1k_mtspr(OR1K_SPR_DCBIR, 0);
 	}
+	/**@endcond*/
 
 /**@}*/
 
