@@ -35,13 +35,13 @@ PRIVATE int nthreads = 1;
 /**
  * @brief Next thread ID.
  */
-PRIVATE int next_tid = 1;
+PRIVATE int next_tid = (KTHREAD_MASTER_TID + 1);
 
 /**
  * @brief Thread table.
  */
 PUBLIC struct thread threads[THREAD_MAX] = {
-	[0]                      = {.state = THREAD_RUNNING},
+	[0]                      = {.tid = KTHREAD_MASTER_TID, .state = THREAD_RUNNING},
 	[1 ... (THREAD_MAX - 1)] = {.state = THREAD_NOT_STARTED}
 };
 
