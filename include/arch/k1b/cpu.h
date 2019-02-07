@@ -37,8 +37,11 @@
 	 * @name Provided Interface
 	 */
 	/**@{*/
-	#define __hal_cpu_get_num_cores
+	#define __hal_cpu_get_num_cores /**< hal_cpu_get_num_cores() */
 	/**@}*/
+
+	#include <arch/k1b/core.h>
+	#include <nanvix/const.h>
 
 	/**
 	 * @brief Number of cores in the k1b processor.
@@ -72,6 +75,13 @@
 		return (k1b_cpu_get_num_cores());
 	}
 	/**@endcond*/
+
+	/**
+	 * @brief Gets the number of cores.
+	 *
+	 * @returns The number of cores in the underlying processor.
+	 */
+	EXTERN int hal_cpu_get_num_cores(void);
 
 /**@}*/
 

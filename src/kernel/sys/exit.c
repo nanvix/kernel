@@ -22,8 +22,7 @@
  * SOFTWARE.
  */
 
-extern int shutdown(int);
-
+#include <nanvix/hal/hal.h>
 
 /**
  * @brief Terminates the calling process.

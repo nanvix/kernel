@@ -33,16 +33,23 @@
  */
 /**@{*/
 
+	/* External dependencies. */
 	#include <nanvix/const.h>
 	#include <mOS_vcore_u.h>
 
+/*============================================================================*
+ *                               Core Interface                               *
+ *============================================================================*/
+
 	/**
-	 * @name Provided Interface
+	 * @name States of a Core
 	 */
 	/**@{*/
-	#define __hal_core_setup
-	#define __hal_core_halt
-	#define __hal_core_get_id
+	#define K1B_CORE_IDLE      0 /**< Idle        */
+	#define K1B_CORE_SLEEPING  1 /**< Sleeping    */
+	#define K1B_CORE_RUNNING   2 /**< Running     */
+	#define K1B_CORE_RESETTING 3 /**< Resetting   */
+	#define K1B_CORE_OFFLINE   4 /**< Powered Off */
 	/**@}*/
 
 	/**
@@ -58,22 +65,15 @@
 	}
 
 	/**
-	 * @see k1b_core_get_id()
+	 * @brief Puts the underlyig core in idle mode 1.
 	 *
-	 * @cond k1b
-	 */
-	static inline int hal_core_get_id(void)
-	{
-		return (k1b_core_get_id());
-	}
-	/*@endcond*/
-
-	/**
-	 * @brief Puts the processor in idle mode 1.
+	 * The k1b_await() function puts the processor in idle mode 1. In
+	 * this mode, instruction execution is suspended until an
+	 * interrupt is triggered, be it eligible or not. Events that are
+	 * not mapped on interrupts and are triggered during the idle
+	 * period do not wakeup cores in compute clusters.
 	 *
-	 * The k1b_await() function puts the processor in idle mode 1, in
-	 * which intruction execution is stopped until any event or
-	 * interrupt is triggered.
+	 * @author Pedro Henrique Penna
 	 */
 	static inline void k1b_await(void)
 	{
@@ -81,21 +81,159 @@
 	}
 
 	/**
+	 * @brief Initializes the underlying core.
+	 */
+	EXTERN void k1b_core_setup(void);
+
+	/**
+	 * @brief Resumes instruction execution in the underlying core.
+	 */
+	EXTERN void k1b_core_run(void);
+
+	/**
+	 * @brief Starts a core.
+	 *
+	 * @param coreid ID of the target core.
+	 * @param start  Starting routine to execute.
+	 */
+	EXTERN void k1b_core_start(int coreid, void (*start)(void));
+
+	/**
+	 * @brief Wakes up a core.
+	 *
+	 * @param coreid ID of the target core.
+	 */
+	EXTERN void k1b_core_wakeup(int coreid);
+
+	/**
+	 * @brief Suspends instruction execution in the underlying core.
+	 */
+	EXTERN void k1b_core_sleep(void);
+
+	/**
+	 * @brief Suspends instruction execution in the underlying core.
+	 */
+	EXTERN void k1b_core_idle(void);
+
+	/**
+	 * @brief Shutdowns the underlying core.
+	 *
+	 * @param status Shutdown status.
+	 */
+	EXTERN void k1b_core_shutdown(int status);
+
+	/**
+	 * @brief Resets the underlying core.
+	 *
+	 * The k1b_core_reset() function resets execution instruction in
+	 * the underlying core by reseting the kernel stack to its initial
+	 * location and relaunching the k1b_slave_setup() function.
+	 *
+	 * @note This function does not return.
+	 * @note For the implementation of this function check out
+	 * assembly source files.
+	 *
+	 * @see k1b_slave_setup()
+	 *
+	 * @author Pedro Henrique Penna
+	 */
+	EXTERN void k1b_core_reset(void);
+
+/*============================================================================*
+ *                              Exported Interface                            *
+ *============================================================================*/
+
+	/**
+	 * @name Provided Interface
+	 *
+	 * @cond k1b
+	 */
+	/**@{*/
+	#define __core_get_id   /**< core_get_id()   */
+	#define __core_halt     /**< core_halt()     */
+	#define __core_shutdown /**< core_shutdown() */
+	#define __core_sleep    /**< core_sleep()    */
+	#define __core_wakeup   /**< core_wakeup()   */
+	#define __core_start    /**< core_start()    */
+	/**@}*/
+	/**@endcond*/
+
+	/**
+	 * @see k1b_core_get_id()
+	 *
+	 * @cond k1b
+	 */
+	static inline int core_get_id(void)
+	{
+		return (k1b_core_get_id());
+	}
+	/*@endcond*/
+
+	/**
 	 * @see k1b_await()
 	 *
 	 * @cond k1b
 	 */
-	static inline void hal_core_halt(void)
+	static inline void core_halt(void)
 	{
 		k1b_await();
 	}
 	/*@endcond*/
 
-	/* Forward definitions. */
-	EXTERN void core_wakeup(int, void (*)(void));
-	EXTERN void core_start(void);
-	EXTERN void core_halt(void);
-	EXTERN void shutdown(int);
+	/**
+	 * @see k1b_core_sleep().
+	 *
+	 * @cond k1b
+	 */
+	static inline void core_sleep(void)
+	{
+		k1b_core_sleep();
+	}
+	/**@endcond*/
+
+	/**
+	 * @see k1b_core_wakeup().
+	 *
+	 * @cond k1b
+	 */
+	static inline void core_wakeup(int coreid)
+	{
+		k1b_core_wakeup(coreid);
+	}
+	/**@endcond*/
+
+	/**
+	 * @see k1b_core_start().
+	 *
+	 * @cond k1b
+	 */
+	static inline void core_start(int coreid, void (*start)(void))
+	{
+		k1b_core_start(coreid, start);
+	}
+	/**@endcond*/
+
+	/**
+	 * @see k1b_core_shutdown().
+	 *
+	 * @cond k1b
+	 */
+	static inline void shutdown(int status)
+	{
+		k1b_core_shutdown(status);
+	}
+	/**@endcond*/
+
+	/**
+	 * @see k1b_core_reset().
+	 *
+	 * @cond k1b
+	 */
+	static inline void core_reset(void)
+	{
+		k1b_core_reset();
+	}
+	/**@endcond*/
 
 /**@}*/
 

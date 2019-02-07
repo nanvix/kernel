@@ -48,6 +48,9 @@ case "$TARGET" in
 	"i386-pc")
 		source "tools/image/arch/i386.sh"
 		;;
+	"or1k-pc")
+		source "tools/image/arch/or1k.sh"
+		;;
 	*)
         echo "error: unsupported target"
 		exit 1

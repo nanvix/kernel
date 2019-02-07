@@ -33,13 +33,14 @@
 	 * @defgroup k1b Bostan Architecture
 	 * @ingroup mppa256
 	 */
-	#include <arch/k1b/cache.h>
 	#include <arch/k1b/clock.h>
 	#include <arch/k1b/core.h>
 	#include <arch/k1b/cpu.h>
 	#include <arch/k1b/excp.h>
 	#include <arch/k1b/int.h>
 	#include <arch/k1b/io.h>
+	#include <arch/k1b/mem.h>
 	#include <arch/k1b/pic.h>
+	#include <arch/k1b/spinlock.h>
 
 #endif /* ARCH_K1B_K1B_H_ */

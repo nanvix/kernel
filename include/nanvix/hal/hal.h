@@ -25,6 +25,8 @@
 #ifndef NANVIX_HAL_H_
 #define NANVIX_HAL_H_
 
+	#include <nanvix/const.h>
+
 	/**
 	 * @defgroup kernel-hal HAL
 	 * @ingroup kernel
@@ -38,5 +40,10 @@
 	#include <nanvix/hal/interrupt.h>
 	#include <nanvix/hal/io.h>
 	#include <nanvix/hal/memory.h>
+
+	/**
+	 * @brief Runs unit tests on the HAL.
+	 */
+	EXTERN void hal_test_driver(void);
 
 #endif /* NANVIX_HAL_H_ */

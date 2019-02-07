@@ -24,6 +24,7 @@
 
 #ifndef ARCH_I386_EXCEPTION_H_
 #define ARCH_I386_EXCEPTION_H_
+
 /**
  * @addtogroup i386-exception Exception
  * @ingroup i386
@@ -32,22 +33,44 @@
  */
 /**@{*/
 
-	#include <nanvix/const.h>
-
 	/**
 	 * @name Provided Interface
+	 *
+	 * @cond i386
 	 */
 	/**@{*/
-	#define __hal_exception_set_handler
+	#define __exception_struct      /**< @ref exception               */
+	#define __exception_get_addr    /**< @ref exception_get_addr()    */
+	#define __exception_get_instr   /**< @ref exception_get_instr()   */
+	#define __exception_get_num     /**< @ref exception_get_num()     */
+	#define __exception_set_handler /**< @ref exception_set_handler() */
+	/**@}*/
+	/**@endcond*/
+
+	/**
+	 * @brief Exception information size (in bytes).
+	 */
+	#define I386_EXCEPTION_SIZE 16
+
+	/**
+	 * @name Offsets to the Exception Information structure.
+	 *
+	 * @see exception
+	 */
+	/**@{*/
+	#define I386_EXCEPTION_NUM   0 /**< Offset to Exception Number      */
+	#define I386_EXCEPTION_ERR   4 /**< Offset to Error COde            */
+	#define I386_EXCEPTION_DATA  8 /**< Offset to Faulting Address      */
+	#define I386_EXCEPTION_CODE 12 /**< Offset to Faulting Instructtion */
 	/**@}*/
 
 	/**
 	 * @brief Number of exceptions in the i386 core.
 	 */
-	#define I386_NUM_EXCEPTION 21
+	#define I386_NUM_EXCEPTIONS 21
 
 	/**
-	 * @name Exception Codes
+	 * @name i386 Exception Codes
 	 */
 	/**@{*/
 	#define I386_EXCP_DIVIDE                       0 /**@< Division-by-Zero Error      */
@@ -74,51 +97,188 @@
 	/**@}*/
 
 	/**
+	 * @brief Exception Codes
+	 *
+	 * @cond i386
+	 */
+	/**@*/
+	#define EXCP_INVALID_OPCODE      I386_EXCP_INVALID_OPCODE     /**< Invalid Opcode     */
+	#define EXCP_PAGE_FAULT          I386_EXCP_PAGE_FAULT         /**< Page Fault         */
+	#define EXCP_PAGE_PROTECTION     I386_EXCP_PAGE_FAULT         /**< Page Protection    */
+	#define EXCP_GENERAL_PROTECTION  I386_EXCP_GENERAL_PROTECTION /**< General Protection */
+	/**@}*/
+	/**@endcond*/
+
+/**@endcond*/
+
+#ifndef _ASM_FILE_
+
+	#include <nanvix/const.h>
+	#include <arch/i386/context.h>
+	#include <arch/i386/mmu.h>
+	#include <stdint.h>
+
+	/**
+	 * @brief Exception information.
+	 *
+	 * @cond i386
+	 */
+	struct exception
+	{
+		uint32_t num;         /**< Exception number.     */
+		uint32_t code;        /**< Error code.           */
+		uint32_t addr;        /**< Faulting address.     */
+		uint32_t instruction; /**< Faulting instruction. */
+	} __attribute__((packed));
+	/**@endcond*/
+
+	/**
+	 * @brief Exception handler.
+	 */
+	typedef void (*i386_exception_handler_fn)(const struct exception *, const struct context *);
+
+	/**
 	 * @name Software Interrupt Hooks
 	 */
 	/**@{*/
-	EXTERN void excp0(void);  /**< Division-by-Zero Error      */
-	EXTERN void excp1(void);  /**< Debug Exception             */
-	EXTERN void excp2(void);  /**< Non-Maskable Interrupt      */
-	EXTERN void excp3(void);  /**< Breakpoint Exception        */
-	EXTERN void excp4(void);  /**< Overflow Exception          */
-	EXTERN void excp5(void);  /**< Bounds Check Exception      */
-	EXTERN void excp6(void);  /**< Invalid Opcode Exception    */
-	EXTERN void excp7(void);  /**< Coprocessor Not Available   */
-	EXTERN void excp8(void);  /**< Double Fault                */
-	EXTERN void excp9(void);  /**< Coprocessor Segment Overrun */
-	EXTERN void excp10(void); /**< Invalid TSS                 */
-	EXTERN void excp11(void); /**< Segment Not Present         */
-	EXTERN void excp12(void); /**< Stack Segment Fault         */
-	EXTERN void excp13(void); /**< General Protection Fault    */
-	EXTERN void excp14(void); /**< Page Fault                  */
-	EXTERN void excp15(void); /**< Reserved                    */
-	EXTERN void excp16(void); /**< Floating Point Exception    */
-	EXTERN void excp17(void); /**< Alignment Check Exception   */
-	EXTERN void excp18(void); /**< Machine Check Exception     */
-	EXTERN void excp19(void); /**< SMID Unit Exception         */
-	EXTERN void excp20(void); /**< Virtual Exception           */
-	EXTERN void excp30(void); /**< Security Exception.         */
+	EXTERN void _do_excp0(void);  /**< Division-by-Zero Error      */
+	EXTERN void _do_excp1(void);  /**< Debug Exception             */
+	EXTERN void _do_excp2(void);  /**< Non-Maskable Interrupt      */
+	EXTERN void _do_excp3(void);  /**< Breakpoint Exception        */
+	EXTERN void _do_excp4(void);  /**< Overflow Exception          */
+	EXTERN void _do_excp5(void);  /**< Bounds Check Exception      */
+	EXTERN void _do_excp6(void);  /**< Invalid Opcode Exception    */
+	EXTERN void _do_excp7(void);  /**< Coprocessor Not Available   */
+	EXTERN void _do_excp8(void);  /**< Double Fault                */
+	EXTERN void _do_excp9(void);  /**< Coprocessor Segment Overrun */
+	EXTERN void _do_excp10(void); /**< Invalid TSS                 */
+	EXTERN void _do_excp11(void); /**< Segment Not Present         */
+	EXTERN void _do_excp12(void); /**< Stack Segment Fault         */
+	EXTERN void _do_excp13(void); /**< General Protection Fault    */
+	EXTERN void _do_excp14(void); /**< Page Fault                  */
+	EXTERN void _do_excp15(void); /**< Reserved                    */
+	EXTERN void _do_excp16(void); /**< Floating Point Exception    */
+	EXTERN void _do_excp17(void); /**< Alignment Check Exception   */
+	EXTERN void _do_excp18(void); /**< Machine Check Exception     */
+	EXTERN void _do_excp19(void); /**< SMID Unit Exception         */
+	EXTERN void _do_excp20(void); /**< Virtual Exception           */
+	EXTERN void _do_excp30(void); /**< Security Exception.         */
 	/**@}*/
+
+	/**
+	 * @brief Gets the number of an exception.
+	 *
+	 * The i386_excp_get_num() function gets the exception number
+	 * stored in the exception information structure pointed to by @p
+	 * excp.
+	 *
+	 * @param excp Target exception information structure.
+	 *
+	 * @returns The exception number stored in the exception
+	 * information structure pointed to by @p excp.
+	 *
+	 * @author Pedro Henrique Penna
+	 */
+	static inline int i386_excp_get_num(const struct exception *excp)
+	{
+		return (excp->num);
+	}
+
+	/**
+	 * @see i386_excp_get_num().
+	 *
+	 * @cond i386
+	 */
+	static inline int exception_get_num(const struct exception *excp)
+	{
+		return (i386_excp_get_num(excp));
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Gets the address of an exception.
+	 *
+	 * The i386_excp_get_addr() function gets the exception address
+	 * stored in the exception information structure pointed to by @p
+	 * excp.
+	 *
+	 * @param excp Target exception information structure.
+	 *
+	 * @returns The exception address stored in the exception
+	 * information structure pointed to by @p excp.
+	 *
+	 * @author Pedro Henrique Penna
+	 */
+	static inline vaddr_t i386_excp_get_addr(const struct exception *excp)
+	{
+		return (excp->addr);
+	}
+
+	/**
+	 * @see i386_excp_get_addr().
+	 *
+	 * @cond i386
+	 */
+	static inline int exception_get_addr(const struct exception *excp)
+	{
+		return (i386_excp_get_addr(excp));
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Gets the program counter at an exception.
+	 *
+	 * The i386_excp_get_num() function gets the program counter
+	 * stored in the exception information structure pointed to by @p
+	 * excp.
+	 *
+	 * @param excp Target exception information structure.
+	 *
+	 * @returns The program counter stored in the exception
+	 * information structure pointed to by @p excp.
+	 *
+	 * @author Pedro Henrique Penna
+	 */
+	static inline vaddr_t i386_excp_get_instr(const struct exception *excp)
+	{
+		return (excp->instruction);
+	}
+
+	/**
+	 * @see i386_excp_get_code().
+	 *
+	 * @cond i386
+	 */
+	static inline int exception_get_instr(const struct exception *excp)
+	{
+		return (i386_excp_get_instr(excp));
+	}
+	/**@endcond*/
 
 	/**
 	 * @brief Sets a handler for an exception.
 	 *
-	 * @param excpnum Number of the target exception.
-	 * @param handler Handler.
+	 * @param num     Number of the target exception.
+	 * @param handler Exception handler.
 	 *
 	 * @note This function does not check if a handler is already
 	 * set for the target hardware exception.
+	 *
 	 */
-	EXTERN void i386_excp_set_handler(int excpnum, void (*handler)(int));
+	EXTERN void i386_excp_set_handler(int num, i386_exception_handler_fn handler);
 
 	/**
 	 * @see i386_excp_set_handler()
+	 *
+	 * @cond i386
 	 */
-	static inline void hal_exception_set_handler(int excpnum, void (*handler)(int))
+	static inline void exception_set_handler(int num, i386_exception_handler_fn handler)
 	{
-		i386_excp_set_handler(excpnum, handler);
+		i386_excp_set_handler(num, handler);
 	}
+	/**@endcond*/
+
+#endif /* _ASM_FILE_ */
 
 /**@}*/
 

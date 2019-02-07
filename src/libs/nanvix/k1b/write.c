@@ -38,7 +38,7 @@
  * returned. Upon failure, -1 is returned and @p errno is set to
  * indicate the error.
  */
-ssize_t write(int fd, const char *buf, size_t n)
+ssize_t nanvix_write(int fd, const char *buf, size_t n)
 {
 	ssize_t ret;
 

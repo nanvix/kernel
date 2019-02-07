@@ -23,8 +23,9 @@
 #
 
 # Command Parameters
-test=$1 # Target test.
-mode=$2 # Test mode.
+test=$1  # Target test.
+mode=$2  # Test mode.
+debug=$3 # Launch GDB?
 
 if [ -z $TARGET ]; then
 	echo "$0: missing target architecture"
@@ -55,6 +56,14 @@ then
 fi
 
 #
+# No debug mode.
+#
+if [ -z $debug ];
+then
+	debug="--no-debug"
+fi
+
+#
 # Stops regression test if running running short test.
 #
 function stop_if_short_test
@@ -71,7 +80,7 @@ case $test in
 	;&
 	kernel-core)
 		echo "=== Running Core and NoC Interface Tests"
-		run_hw "nanvix-debug.img" "bin/test-driver" "--debug --hal-core"
+		run_hw "nanvix-debug.img" "bin/test-driver" "--debug --hal-core" "$debug"
 		stop_if_short_test $mode
 	;&
 esac

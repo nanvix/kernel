@@ -34,6 +34,7 @@
 /**@{*/
 
 	#include <nanvix/const.h>
+	#include <arch/i386/context.h>
 
 	/**
 	 * @name Provided Interface
@@ -58,66 +59,94 @@
 	 * @name Hardware Interrupt Hooks
 	 */
 	/**@{*/
-	EXTERN void hwint0(void);
-	EXTERN void hwint1(void);
-	EXTERN void hwint2(void);
-	EXTERN void hwint3(void);
-	EXTERN void hwint4(void);
-	EXTERN void hwint5(void);
-	EXTERN void hwint6(void);
-	EXTERN void hwint7(void);
-	EXTERN void hwint8(void);
-	EXTERN void hwint9(void);
-	EXTERN void hwint10(void);
-	EXTERN void hwint11(void);
-	EXTERN void hwint12(void);
-	EXTERN void hwint13(void);
-	EXTERN void hwint14(void);
-	EXTERN void hwint15(void);
-	EXTERN void hwint16(void);
+	EXTERN void _do_hwint0(void);
+	EXTERN void _do_hwint1(void);
+	EXTERN void _do_hwint2(void);
+	EXTERN void _do_hwint3(void);
+	EXTERN void _do_hwint4(void);
+	EXTERN void _do_hwint5(void);
+	EXTERN void _do_hwint6(void);
+	EXTERN void _do_hwint7(void);
+	EXTERN void _do_hwint8(void);
+	EXTERN void _do_hwint9(void);
+	EXTERN void _do_hwint10(void);
+	EXTERN void _do_hwint11(void);
+	EXTERN void _do_hwint12(void);
+	EXTERN void _do_hwint13(void);
+	EXTERN void _do_hwint14(void);
+	EXTERN void _do_hwint15(void);
 	/**@}*/
 
 	/**
-	 * @brief Disables hardware interrupts.
+	 * @brief High-level hardware interrupt dispatcher.
 	 *
-	 * The i386_cli() function disables all hardware interrupts in the
-	 * underlying i386 core.
-	 */
-	static inline void i386_cli(void)
-	{
-		 __asm__("cli");
-	}
-
-	/**
-	 * @see i386_cli()
+	 * @param num Number of triggered hardware interrupt.
+	 * @param ctx Interrupted execution context.
 	 *
-	 * @cond i386
+	 * @note This function is called from assembly code.
 	 */
-	static inline void hal_disable_interrupts(void)
-	{
-		i386_cli();
-	}
-	/**@endcond*/
+	EXTERN void i386_do_hwint(int num, const struct context *ctx);
 
 	/**
 	 * @brief Enables hardware interrupts.
 	 *
-	 * The i386_sti() function enables all hardware interrupts in the
+	 * The i386_hwint_enable() function enables all hardware interrupts in the
 	 * underlying i386 core.
 	 */
-	static inline void i386_sti(void)
+	static inline void i386_hwint_enable(void)
 	{
 		 __asm__("sti");
 	}
 
 	/**
-	 * @see i386_sti()
+	 * @see i386_hwint_enable()
 	 *
 	 * @cond i386
 	 */
 	static inline void hal_enable_interrupts(void)
 	{
-		i386_sti();
+		i386_hwint_enable();
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Disables hardware interrupts.
+	 *
+	 * The i386_hwint_disable() function disables all hardware interrupts in the
+	 * underlying i386 core.
+	 */
+	static inline void i386_hwint_disable(void)
+	{
+		 __asm__("cli");
+	}
+
+	/**
+	 * @see i386_hwint_disable()
+	 *
+	 * @cond i386
+	 */
+	static inline void hal_disable_interrupts(void)
+	{
+		i386_hwint_disable();
+	}
+	/**@endcond*/
+
+	/**
+	 * @brief Sets a handler for a hardware interrupt.
+	 *
+	 * @param num     Number of the target hardware interrupt.
+	 * @param handler Hardware interrupt handler.
+	 */
+	EXTERN void i386_hwint_handler_set(int num, void (*handler)(int));
+
+	/**
+	 * @see i386_hwint_handler_set()
+	 *
+	 * @cond i386
+	 */
+	static inline void hal_interrupt_set_handler(int num, void (*handler)(int))
+	{
+		i386_hwint_handler_set(num, handler);
 	}
 	/**@endcond*/
 

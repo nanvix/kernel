@@ -22,27 +22,39 @@
  * SOFTWARE.
  */
 
-#include <nanvix/const.h>
 #include <nanvix/hal/hal.h>
+#include <nanvix/const.h>
+#include <nanvix/dev.h>
 #include <nanvix/klib.h>
+#include <nanvix/mm.h>
+#include <nanvix/thread.h>
 
+EXTERN void do_syscall2(void);
 EXTERN int main(int argc, const char *argv[], char **envp);
-EXTERN void dev_init(void);
 
-#ifdef __mppa256__
+#ifdef HAL_SMP
 
 /**
  * @brief Init thread.
  */
-PRIVATE void init(void)
+PRIVATE void *init(void *arg)
 {
 	int status;
 	int argc = 1;
 	const char *argv[] = { "init", NULL };
-   
+
+	UNUSED(arg);
+
 	status = main(argc, argv, NULL);
 
 	UNUSED(status);
+
+	/* Halt. */
+	kprintf("halting...");
+	while (TRUE)
+		noop();
+
+	return (NULL);
 }
 
 #endif
@@ -52,38 +64,35 @@ PRIVATE void init(void)
  */
 PUBLIC void kmain(int argc, const char *argv[])
 {
+#ifdef HAL_SMP
+	int tid;
+#endif
+
 	UNUSED(argc);
 	UNUSED(argv);
-
-#if defined(__mppa256__)
-
-	int coreid;
-
-	coreid = hal_core_get_id();
-
-	/* Slave core. */
-	if (coreid != 0)
-	{
-		{
-			core_halt();
-			kprintf("waking up core %d", coreid);
-			core_start();
-			kprintf("halting core %d", coreid);
-		} while(1);
-	}
-#endif
 
 	/* Master core. */
 
 	dev_init();
+	mm_init();
 
 	kprintf("enabling hardware interrupts");
 	hal_enable_interrupts();
 
-#if defined(__mppa256__)
-	init();
+#ifndef NDEBUG
+	hal_test_driver();
+#endif
+
+#ifdef HAL_SMP
+	thread_create(&tid, init, NULL);
 #endif
 
 	while (TRUE)
+	{
+#ifdef HAL_SMP
+		do_syscall2();
+#else
 		noop();
+#endif
+	}
 }

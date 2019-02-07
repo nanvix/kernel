@@ -23,9 +23,103 @@
  */
 
 #include <nanvix/const.h>
+#include <nanvix/hal/hal.h>
+#include <nanvix/thread.h>
 #include <nanvix/klib.h>
 #include <nanvix/syscall.h>
 #include <errno.h>
+
+/**
+ * @brief Semaphore variable for system call dispatcher.
+ */
+PRIVATE struct semaphore syssem = SEMAPHORE_INITIALIZER(0);
+
+/**
+ * @brief System call scoreboard.
+ */
+PRIVATE struct sysboard
+{
+	int arg0;                /**< First argument of system call.   */
+	int arg1;                /**< Second argument of system call.  */
+	int arg2;                /**< Third argument of system call.   */
+	int arg3;                /**< Fourth argument of system call.  */
+	int arg4;                /**< Fifth argument of system call.   */
+	int arg5;                /**< Sixth argument of system call.   */
+	int arg6;                /**< Seventh argument of system call. */
+	int syscall_nr;          /**< System call number.              */
+	int ret;                 /**< Return value of system call.     */
+	struct semaphore syssem; /**< Semaphore.                       */
+	int pending;
+} __attribute__((aligned(CACHE_LINE_SIZE))) sysboard[HAL_NUM_CORES];
+
+/**
+ * @brief Handles a system call IPI.
+ */
+PUBLIC void do_syscall2(void)
+{
+	int coreid = 0 ;
+	int ret = -ENOSYS;
+
+	semaphore_down(&syssem);
+
+		for (int i = 0; i < HAL_NUM_CORES; i++)
+		{
+			if (sysboard[i].pending)
+			{
+				coreid = i;
+				break;
+			}
+		}
+
+		/* Invalid system call number. */
+		if ((sysboard[coreid].syscall_nr < 0) || (sysboard[coreid].syscall_nr >= NR_SYSCALLS))
+		{
+			ret = -EINVAL;
+			goto out;
+		}
+
+		/* Parse system call number. */
+		switch (sysboard[coreid].syscall_nr)
+		{
+			case NR_nosyscall:
+				ret = sys_nosyscall((unsigned) sysboard[coreid].arg0);
+				break;
+
+			case NR_cache_flush:
+				ret = sys_cache_flush();
+				break;
+
+			case NR__exit:
+				sys_exit((int) sysboard[coreid].arg0);
+				break;
+
+			case NR_write:
+				ret = sys_write(
+					(int) sysboard[coreid].arg0,
+					(const char *) sysboard[coreid].arg1,
+					(size_t) sysboard[coreid].arg2
+				);
+				break;
+
+			case NR_thread_create:
+				ret = sys_thread_create(
+					(int *) sysboard[coreid].arg0,
+					(void *(*)(void *)) sysboard[coreid].arg1,
+					(void *) sysboard[coreid].arg2
+				);
+				break;
+
+			default:
+				break;
+		}
+
+	out:
+
+		sysboard[coreid].pending = 0;
+		sysboard[coreid].ret = ret;
+
+	semaphore_up(&sysboard[coreid].syssem);
+}
 
 /**
  * @brief System call dispatcher.
@@ -42,7 +136,7 @@
  * @returns Upon successful completion, zero is returned. Upon
  * failure, a negative error code is returned instead.
  */
-PUBLIC int do_syscall(
+PUBLIC int do_syscall1(
 	int arg0,
 	int arg1,
 	int arg2,
@@ -52,38 +146,52 @@ PUBLIC int do_syscall(
 	int arg6,
 	int syscall_nr)
 {
-	int ret = -ENOSYS;
-
-	/* Invalid system call number. */
-	if ((syscall_nr < 0) || (syscall_nr >= NR_SYSCALLS))
-		return (-EINVAL);
-
-	UNUSED(arg3);
-	UNUSED(arg4);
-	UNUSED(arg5);
-	UNUSED(arg6);
+	int ret = -EINVAL;
 
 	/* Parse system call number. */
 	switch (syscall_nr)
 	{
-		case NR_nosyscall:
-			ret = sys_nosyscall((unsigned) arg0);
+		case NR_thread_get_id:
+			ret = sys_thread_get_id();
 			break;
 
-		case NR_cache_flush:
-			ret = sys_cache_flush();
+		case NR_thread_exit:
+			sys_thread_exit((void *) arg0);
 			break;
 
-		case NR__exit:
-			sys_exit((int) arg0);
+		case NR_thread_join:
+			ret = sys_thread_join(
+				(int) arg0,
+				(void **) arg1
+			);
 			break;
 
-		case NR_write:
-			ret = sys_write((int) arg0, (const char *) arg1, (size_t) arg2);
-			break;
-
+		/* Forward system call. */
 		default:
-			break;
+		{
+			int coreid;
+
+			coreid = core_get_id();
+
+			/* Fillup system call board. */
+			sysboard[coreid].arg0 = arg0;
+			sysboard[coreid].arg1 = arg1;
+			sysboard[coreid].arg2 = arg2;
+			sysboard[coreid].arg3 = arg3;
+			sysboard[coreid].arg4 = arg4;
+			sysboard[coreid].arg5 = arg5;
+			sysboard[coreid].arg6 = arg6;
+			sysboard[coreid].syscall_nr = syscall_nr;
+			sysboard[coreid].pending = 1;
+			semaphore_init(&sysboard[coreid].syssem, 0);
+			hal_dcache_invalidate();
+
+			semaphore_up(&syssem);
+			semaphore_down(&sysboard[coreid].syssem);
+			hal_dcache_invalidate();
+
+			ret = sysboard[coreid].ret;
+		} break;
 	}
 
 	return (ret);

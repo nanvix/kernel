@@ -22,41 +22,72 @@
  * SOFTWARE.
  */
 
-#include <nanvix/const.h>
-#include <nanvix/hal/interrupt.h>
+#ifndef ARCH_I386_TLB_H_
+#define ARCH_I386_TLB_H_
 
 /**
- * @brief Interrupt handlers.
- */
-PRIVATE hal_interrupt_handler_t i386_handlers[I386_NUM_HWINT] = {
-	NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL
-};
-
-/**
- * @brief Hardware interrupt dispatcher.
+ * @addtogroup i386-tlb TLB
+ * @ingroup i386-memory
  *
- * @param irq Interrupt request.
- *
- * @note This function is called from assembly code.
+ * @brief Translation Lookaside Buffer
  */
-PUBLIC void do_hwint(int irq)
-{
-	/* Nothing to do. */
-	if (i386_handlers[irq] == NULL)
-		return;
-
-	i386_handlers[irq](irq);
-}
+/**@{*/
 
 /**
- * The hal_interrupt_set_handler() function sets the function pointed
- * to by @p handler as the handler for the hardware interrupt whose
- * number is @p num.
+ * @if i386
  */
-PUBLIC void hal_interrupt_set_handler(int num, hal_interrupt_handler_t handler)
-{
-	i386_handlers[num] = handler;
-}
+
+	/**
+	 * @brief Hardware-managed TLB.
+	 */
+	#define HAL_TLB_HARDWARE
+
+	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __tlb_flush_fn /**< tlb_flush() */
+	/**@}*/
+
+/**@endif*/
+
+	/**
+	 * @brief Flushes changes in the TLB.
+	 *
+	 * The i386_tlb_flush() function flushes the changes made to the
+	 * TLB of the underlying i386 core.
+	 *
+	 * @returns This function always returns zero.
+	 *
+	 * @todo We can improve this by using the invlpg instruction.
+	 */
+	static inline int i386_tlb_flush(void)
+	{
+		__asm__ __volatile__ (
+			"movl %%cr3, %%eax;\
+			movl %%eax, %%cr3;"
+			:
+			: 
+			:
+		);
+
+		return (0);
+	}
+
+/**
+ * @if i386
+ */
+
+	/**
+	 * @see i386_tlb_flush().
+	 */
+	static inline int tlb_flush(void)
+	{
+		return (i386_tlb_flush());
+	}
+
+/**@endif*/
+
+/**@}*/
+	
+#endif /* ARCH_I386_TLB_H_ */

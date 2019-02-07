@@ -26,7 +26,6 @@
 #include <HAL/hal/core/legacy.h>
 #include <mOS_common_types_c.h>
 
-#include <arch/k1b/cache.h>
 #include <arch/k1b/core.h>
 #include <arch/k1b/cpu.h>
 #include <arch/k1b/elf.h>
@@ -35,165 +34,164 @@
 #include <arch/k1b/ivt.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
-#include "mppa256.h"
 
 /* Import definitions. */
 EXTERN NORETURN void kmain(int, const char *[]);
+EXTERN void _do_syscall(int, int, int, int, int, int, int, int);
+
+/*============================================================================*
+ * k1b_stack_setup()                                                          *
+ *============================================================================*/
 
 /**
- * @brief Core states.
+ * @brief Setups the stack.
+ *
+ * The k1b_stack_setup() function setups the stack of the underlying
+ * core by reseting the stack pointer register to the location defined
+ * in the link scripts.
+ *
+ * It would be safier to do this in asembly code, early in boot.
+ * However, we are relying on VBSP and we cannot do so. Thus, we make
+ * this function inline and call it as early as possible. Hopefully,
+ * it will work.
+ *
+ * @author Pedro Henrique Penna
  */
-enum core_states
+PRIVATE inline void k1b_stack_setup(void)
 {
-	CORE_IDLE, /**< Idle.   */
-	CORE_BUSY  /**< In use. */
-};
+	__k1_uint8_t *stack_base;
 
-/**
- * @brief Slave Cores.
- */
-PRIVATE struct
-{
-	int initialized;        /**< Initialized core? */
-	enum core_states state; /**< State.            */
-	void (*start)(void);    /**< Starting routine. */
-} cores[K1B_NUM_CORES] = {
-	[0 ... (K1B_NUM_CORES - 1)] = {.initialized = 0, .state = CORE_IDLE}
-};
-
-/**
- * @brief Initializes the Thread Local Storage (TSS) segment.
- */
-PRIVATE void tls_init(void)
-{
-	int coreid = k1b_core_get_id();
-
-	__k1_uint8_t *tls_base1 = __k1_tls_pe_base_address(coreid);
-	__k1_setup_tls_pe(tls_base1);
-	k1b_dcache_inval();
+	stack_base = __k1_tls_pe_base_address(k1b_core_get_id());
+	__k1_setup_tls_pe(stack_base);
 }
 
+/*============================================================================*
+ * k1b_core_setup()                                                           *
+ *============================================================================*/
+
 /**
- * @brief Initializes the underlying core.
+ * The k1b_core_setup() function initializes all architectural
+ * structures of the underlying core. It setups the Interrupt Vector
+ * Table (IVT) and the Memory Management Unit (MMU) tables.
+ *
+ * @todo We should move this to the core module.
+ * @bug We cannot move this out of this file due to somelinking problem.
+ *
+ * @author Pedro Henrique Penna
  */
-PRIVATE void core_setup(void)
+PUBLIC void k1b_core_setup(void)
 {
-	int coreid;
-
-	tls_init();
-
-	coreid = k1b_core_get_id();
-	kprintf("booting up core %d", coreid);
+	kprintf("[hal] booting up core");
 
 	k1b_ivt_setup(
 		(k1b_hwint_handler_fn) k1b_do_hwint,
-		(k1b_swint_handler_fn) _syscall,
+		(k1b_swint_handler_fn) _do_syscall,
 		(k1b_excp_handler_fn) _do_excp
 	);
+
+	k1b_mmu_setup();
 }
 
+/*============================================================================*
+ * k1b_slave_setup()                                                          *
+ *============================================================================*/
+
 /**
- * @brief Initializes slave core.
+ * @brief Initializes a slave core.
+ *
+ * The k1b_slave_setup() function initializes the underlying slave
+ * core.  It setups the stack and then call the kernel main function.
+ * Architectural structures are initialized by the master core and
+ * registered later on, when the slave core is started effectively.
+ *
+ * @note This function does not return.
+ *
+ * @see k1b_core_setup() and k1b_master_setup().
+ *
+ * @author Pedro Henrique Penna
  */
-PRIVATE NORETURN void setup_slave_core(void)
+PUBLIC NORETURN void k1b_slave_setup(void)
 {
-	kmain(0, NULL);
+	k1b_stack_setup();
+
+	while (TRUE)
+	{
+		k1b_core_idle();
+		k1b_core_run();
+	}
 }
 
+/*============================================================================*
+ * k1b_master_setup()                                                         *
+ *============================================================================*/
+
 /**
- * @brief Initializes master core.
+ * @brief Initializes the master core.
+ *
+ * The k1b_master_setup() function initializes the underlying
+ * master core.  It setups the stack, retrieves the boot arguments,
+ * initializes architectural structures and then call the kernel main
+ * function.
+ *
+ * @note This function does not return.
+ *
+ * @author Pedro Henrique Penna
  */
-PRIVATE NORETURN void setup_master_core(void)
+PRIVATE NORETURN void k1b_master_setup(void)
 {
 	k1_boot_args_t args;
 
-	core_setup();
+	k1b_stack_setup();
 
 	get_k1_boot_args(&args);
 
-	k1b_dcache_inval();
+	k1b_core_setup();
 
 	kmain(args.argc, (const char **)args.argv);
 }
 
-/**
- * @brief Hals the underling core.
- */
-PUBLIC void core_halt(void)
-{
-	int coreid = k1b_core_get_id();
-
-	while (cores[coreid].state == CORE_IDLE)
-	{
-		mOS_it_disable_num(MOS_VC_IT_USER_0);
-		k1b_await();
-		k1b_dcache_inval();
-		mOS_it_clear_num(MOS_VC_IT_USER_0);
-		mOS_it_enable_num(MOS_VC_IT_USER_0);
-	}
-}
+/*============================================================================*
+ * _do_slave_pe()                                                             *
+ *============================================================================*/
 
 /**
- * @brief Starts a core.
- */
-PUBLIC void core_start(void)
-{
-	int coreid = k1b_core_get_id();
-
-	if (!cores[coreid].initialized)
-	{
-		core_setup();
-		cores[coreid].initialized = 1;
-		k1b_dcache_inval();
-	}
-	
-	cores[coreid].start();
-
-	cores[coreid].state = CORE_IDLE;
-	k1b_dcache_inval();
-}
-
-/**
- * @brief Wakes up a core.
+ * @brief Starts a slave core.
  *
- * @param coreid ID of the target core.
- * @param start  Starting routine to execute.
- */
-PUBLIC void core_wakeup(int coreid, void (*start)(void))
-{
-	cores[coreid].state = CORE_BUSY;
-	cores[coreid].start = start;
-	k1b_dcache_inval();
-	
-	bsp_inter_pe_event_notify(1 << coreid, BSP_IT_LINE);
-}
-
-/**
- * @brief Shutdowns the underlying core cluster.
+ * @param oldsp Old stack pointer (unused).
  *
- * @param status Shutdown status.
+ * The _do_slave_pe() function is the entry point for a slave core. It
+ * is called by the VBSP routines, once a bare environment is setup.
+ *
+ * @note This function does not return.
+ *
+ * @author Pedro Henrique Penna
  */
-PUBLIC void shutdown(int status)
+PUBLIC void _SECTION_TEXT NORETURN _do_slave_pe(uint32_t oldsp)
 {
-	mOS_exit(__k1_spawn_type() != __MPPA_MPPA_SPAWN, status);
+	UNUSED(oldsp);
+
+	k1b_slave_setup();
 }
 
-/**
- * @brief Starting point for slave core.
- */
-PUBLIC void _SECTION_TEXT _do_slave_pe(uint32_t old_sp)
-{
-	UNUSED(old_sp);
-
-	setup_slave_core();
-}
+/*============================================================================*
+ * _do_master_pe()                                                            *
+ *============================================================================*/
 
 /**
- * @brief Starting point for master core.
+ * @brief Starts a master core.
+ *
+ * @param oldsp Old stack pointer (unused).
+ *
+ * The _do_master_pe() function is the entry point for a master core. It
+ * is called by the VBSP routines, once a bare environment is setup.
+ *
+ * @note This function does not return.
+ *
+ * @author Pedro Henrique Penna
  */
-PUBLIC void _SECTION_TEXT _do_master_pe(uint32_t old_sp)
+PUBLIC void _SECTION_TEXT NORETURN _do_master_pe(uint32_t oldsp)
 {
-	UNUSED(old_sp);
+	UNUSED(oldsp);
 
-	setup_master_core();
+	k1b_master_setup();
 }

@@ -43,11 +43,10 @@ PRIVATE void do_clock(int num)
 {
 	UNUSED(num);
 
-	if (hal_core_get_id() == 0)
+	if (core_get_id() == 0)
 	{
 		ticks++;
 		hal_dcache_invalidate();
-		kprintf("tick %d!", ticks);
 	}
 }
 

@@ -130,8 +130,43 @@
 
 	/**
 	 * @brief Kernel assert.
+	 *
+	 * The kassert() function asserts if @p expr evaluates to non-zero. If
+	 * not, it panics the kernel with the @p msg.
+	 *
+	 * @see kpanic()
 	 */
-	#define KASSERT(x) if(x) { noop() };
+	static inline void _kassert(
+		int expr,
+		const char *msg,
+		const char *filename,
+		int linenum)
+	{
+		if (!expr)
+		{
+			kpanic(
+				"%s (%s : %d)",
+				(msg != NULL) ? msg : "",
+				filename,
+				linenum
+			);
+
+		}
+	}
+
+	/**
+	 * @see _kassert()
+	 */
+	#define kassert(x, msg) _kassert(x, msg, __FILE__, __LINE__)
+
+	/**
+	 * @brief Wrapper for kassert().
+	 *
+	 * The KASSERT() is indeed a wrapper macro for kassert() where we
+	 * do not want to print an error message. It is useful to assert
+	 * parameters of kernel routines.
+	 */
+	#define KASSERT(x) kassert(x, "kassert() failed")
 
 	/**
 	 * @brief Declares something to be unused.

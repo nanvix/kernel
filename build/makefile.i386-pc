@@ -37,6 +37,8 @@ export AR = $(TOOLCHAIN_DIR)/i386-elf-ar
 export CFLAGS   = -D __i386__ -D __pc__
 export CFLAGS  += -pedantic-errors -fextended-identifiers
 export CFLAGS  += -nostdlib -nostdinc -fno-stack-protector
+export CFLAGS  += -ansi -pedantic-errors
+export CFLAGS  += -Wstack-usage=4096
 export LDFLAGS  =
 
 # Libraries

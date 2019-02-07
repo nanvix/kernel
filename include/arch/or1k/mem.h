@@ -2,6 +2,7 @@
  * MIT License
  *
  * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ *              2017-2018 Davidson Francis     <davidsondfgl@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,37 +23,19 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_I386_PAGING_H_
-#define ARCH_I386_PAGING_H_
+#ifndef ARCH_OR1K_MEM_H_
+#define ARCH_OR1K_MEM_H_
 
 /**
- * @addtogroup i386-mmu MMU
- * @ingroup i386
- *
- * @brief Memory Management Unit
+ * @addtogroup or1k-memory Memory System
+ * @ingroup or1k
  */
 /**@{*/
 
-	/**
-	 * @name Page shifts and Masks
-	 */
-	/**@{*/
-	#define PAGE_SHIFT  12                  /**< Page shift.       */
-	#define PGTAB_SHIFT 22                  /**< Page table shift. */
-	#define PAGE_MASK   (~(PAGE_SIZE - 1))  /**< Page mask.        */
-	#define PGTAB_MASK  (~(PGTAB_SIZE - 1)) /**< Page table mask.  */
-	/**@}*/
-
-	/**
-	 * @name Size of Pages and Page Tables
-	 */
-	/**@{*/
-	#define PAGE_SIZE  (1 << PAGE_SHIFT)  /**< Page size.                 */
-	#define PGTAB_SIZE (1 << PGTAB_SHIFT) /**< Page table size.           */
-	#define PTE_SIZE   4                  /**< Page table entry size.     */
-	#define PDE_SIZE   4                  /**< Page directory entry size. */
-	/**@}*/
+	#include <arch/or1k/cache.h>
+	#include <arch/or1k/mmu.h>
+	#include <arch/or1k/tlb.h>
 
 /**@}*/
 
-#endif /* ARCH_I386_PAGING_H_ */
+#endif /* ARCH_OR1K_MEM_H_ */

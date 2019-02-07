@@ -37,21 +37,52 @@
 	#include <nanvix/hal/target.h>
 
 	/**
-	 * @brief Initializes the processor.
-	 */
-	EXTERN void hal_core_setup(void);
-
-	/**
-	 * @brief Halts the processor.
-	 */
-	EXTERN void hal_core_halt(void);
-
-	/**
 	 * @brief Gets the ID of the underlying core.
 	 *
 	 * @returns The ID of the underlying core.
 	 */
-	EXTERN int hal_core_get_id(void);
+	EXTERN int core_get_id(void);
+
+	/**
+	 * @brief Halts instruction execution in the underlying core.
+	 */
+	EXTERN void core_halt(void);
+
+	/**
+	 * @brief Shutdowns the underlying core.
+	 *
+	 * @param status Shutdown status.
+	 */
+	EXTERN void core_shutdown(int status);
+
+#ifdef HAL_SMP
+
+	/**
+	 * @brief Suspends instruction execution in the underling core.
+	 */
+	EXTERN void core_sleep(void);
+
+	/**
+	 * @brief Wakes up a core.
+	 *
+	 * @param coreid ID of the target core.
+	 */
+	EXTERN void core_wakeup(int coreid);
+
+	/**
+	 * @brief Starts a core.
+	 *
+	 * @param coreid ID of the target core.
+	 * @param start  Starting routine to execute.
+	 */
+	EXTERN void core_start(int coreid, void (*start)(void));
+
+	/**
+	 * @brief Reset the underlying core.
+	 */
+	EXTERN void core_reset(void);
+
+#endif /* HAL_SMP */
 
 /**@}*/
 
