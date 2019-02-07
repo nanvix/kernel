@@ -74,6 +74,16 @@
 	EXTERN struct thread threads[THREAD_MAX];
 
 	/**
+	 * @brief Master thread.
+	 */
+	#define KTHREAD_MASTER (&threads[0])
+
+	/**
+	 * @brief Thread ID of master thread.
+	 */
+	#define KTHREAD_MASTER_TID 0
+
+	/**
 	 * @brief Gets the currently running thread.
 	 *
 	 * The thread_get() function returns a pointer to the thread

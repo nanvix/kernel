@@ -35,13 +35,13 @@ PRIVATE int nthreads = 1;
 /**
  * @brief Next thread ID.
  */
-PRIVATE int next_tid = 1;
+PRIVATE int next_tid = (KTHREAD_MASTER_TID + 1);
 
 /**
  * @brief Thread table.
  */
 PUBLIC struct thread threads[THREAD_MAX] = {
-	[0]                      = {.state = THREAD_RUNNING},
+	[0]                      = {.tid = KTHREAD_MASTER_TID, .state = THREAD_RUNNING},
 	[1 ... (THREAD_MAX - 1)] = {.state = THREAD_NOT_STARTED}
 };
 
@@ -293,12 +293,19 @@ PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
  * return value of the terminated thread is stored in the location
  * pointed to by @p retval.
  *
+ * @retval -EINVAL Invalid thread ID.
+ *
  * @see thread_exit().
  */
 PUBLIC int thread_join(int tid, void **retval)
 {
 	struct thread *t;
 	int ret = -EINVAL;
+
+	/* Sanity check. */
+	KASSERT(tid >= 0);
+	KASSERT(tid != thread_get_id(thread_get_curr()));
+	KASSERT(tid != KTHREAD_MASTER_TID);
 
 	UNUSED(retval);
 

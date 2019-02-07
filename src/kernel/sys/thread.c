@@ -38,6 +38,10 @@ PUBLIC int sys_thread_get_id(void)
  */
 PUBLIC int sys_thread_create(int *tid, void*(*start)(void*), void *arg)
 {
+	/* Invalid start routine. */
+	if (start == NULL)
+		return (-EINVAL);
+
 	return (thread_create(tid, start, arg));
 }
 
@@ -53,8 +57,23 @@ PUBLIC int sys_thread_exit(void *retval)
 
 /**
  * @see thread_join().
+ *
+ * @retval -EINVAL Cannot join itself.
+ * @retval -EINVAL Cannot join master thread.
  */
 PUBLIC int sys_thread_join(int tid, void **retval)
 {
+	/* Invalid thread ID. */
+	if (tid < 0)
+		return (-EINVAL);
+
+	/* Cannot join itself. */
+	if (tid == thread_get_id(thread_get_curr()))
+		return (-EINVAL);
+
+	/* Cannot join master thread. */
+	if (tid == KTHREAD_MASTER_TID)
+		return (-EINVAL);
+
 	return (thread_join(tid, retval));
 }
