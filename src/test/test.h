@@ -26,14 +26,12 @@
 #define _TEST_H_
 
 	/**
-	 * @brief Number of threads to spawn.
-	 */
-	#define NTHREADS 4
-
-	/**
 	 * @brief Number of iterations for stress tests.
 	 */
-	#define NITERATIONS 1000
+	#define NITERATIONS 10
+
+	#define ___STRINGIFY(x) #x
+	#define ___TOSTRING(x) ___STRINGIFY(x)
 
 	/**
 	 * @brief Writes a string to the standard output device.
@@ -46,8 +44,24 @@
 	 * @name User-Level Testing Units
 	 */
 	/**@{*/
-	extern void test_hello(void);
-	extern void test_thread(void);
+	extern void test_api_kthread_self(void);
+	extern void test_api_kthread_create(void);
+	extern void test_fault_kthread_create(void);
+	extern void test_stress_kthread_create(void);
 	/**@{*/
+
+	/**
+	 * @brief Asserts a condition.
+	 *
+	 * @param x Condition to assert.
+	 */
+	static inline void test_assert(int x)
+	{
+		if (!x)
+		{
+			puts("assertation failed at " __FILE__":" ___TOSTRING(__LINE__));
+			while (1) /* noop */;
+		}
+	}
 
 #endif

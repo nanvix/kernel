@@ -76,9 +76,11 @@ static struct
 	void (*test_fn)(void); /**< Test function. */
 	const char *name;      /**< Test Name.     */
 } user_tests[] = {
-	{ test_hello,  "[api]    thread creation [passed]" },
-	{ test_thread, "[stress] thread creation [passed]" },
-	{ NULL,         NULL                               },
+	{ test_api_kthread_self,      "[test][user][api]    thread identification       [passed]\n" },
+	{ test_api_kthread_create,    "[test][user][api]    thread creation/termination [passed]\n" },
+	{ test_fault_kthread_create,  "[test][user][fault]  thread creation/termination [passed]\n" },
+	{ test_stress_kthread_create, "[test][user][stress] thread creation/termination [passed]\n" },
+	{ NULL,                        NULL                                                         },
 };
 
 /**
