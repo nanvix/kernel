@@ -36,15 +36,6 @@
 /**@{*/
 
 	/**
-	 * @name Provided Interface
-	 */
-	/**@{*/
-	#define __core_get_id   /**< core_get_id()   */
-	#define __core_halt     /**< core_halt()     */
-	#define __core_shutdown /**< core_shutdown() */
-	/**@}*/
-
-	/**
 	 * @name Size of Machine Types
 	 */
 	/**@{*/
@@ -91,17 +82,6 @@
 	}
 
 	/**
-	 * @see or1k_core_get_id()
-	 *
-	 * @cond or1k
-	 */
-	static inline int core_get_id(void)
-	{
-		return (or1k_core_get_id());
-	}
-	/*@endcond*/
-
-	/**
 	 * @brief Halts the processor.
 	 *
 	 * The or1k_hlt() function stops instruction execution in the the
@@ -110,14 +90,6 @@
 	 */
 	static inline void or1k_hlt(void)
 	{
-	}
-
-	/**
-	 * @see or1k_hlt()
-	 */
-	static inline void core_halt(void)
-	{
-		or1k_hlt();
 	}
 
 	/**
@@ -164,8 +136,53 @@
 		);
 	}
 
-#endif /* _ASM_FILE_ */
+/**@}*/
+
+/*============================================================================*
+ *                              Exported Interface                            *
+ *============================================================================*/
+
+/**
+ * @cond or1k
+ */
+
+	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __core_get_id   /**< core_get_id()   */
+	#define __core_halt     /**< core_halt()     */
+	#define __core_shutdown /**< core_shutdown() */
+	/**@}*/
+
+/**
+ * @addtogroup kernel-hal-core Core
+ * @ingroup kernel-hal-cpu
+ *
+ * @brief Core Interface
+ */
+/**@{*/
+
+	/**
+	 * @see or1k_core_get_id().
+	 */
+	static inline int core_get_id(void)
+	{
+		return (or1k_core_get_id());
+	}
+
+	/**
+	 * @see or1k_hlt().
+	 */
+	static inline void core_halt(void)
+	{
+		or1k_hlt();
+	}
 
 /**@}*/
+
+/**@endcond*/
+
+#endif /* _ASM_FILE_ */
 
 #endif	/* ARCH_OR1K_CORE_H_ */
