@@ -22,29 +22,57 @@
  * SOFTWARE.
  */
 
-#ifndef NANVIX_HAL_H_
-#define NANVIX_HAL_H_
+#ifndef NANVIX_HAL_SPINLOCK_H_
+#define NANVIX_HAL_SPINLOCK_H_
+
+/**
+ * @addtogroup kernel-hal-spinlock Spinlock
+ * @ingroup kernel-hal-cpu
+ *
+ * @brief Spinlock Interface
+ */
+/**@{*/
 
 	#include <nanvix/const.h>
+	#include <nanvix/hal/target.h>
+
+#ifdef HAL_SMP
 
 	/**
-	 * @defgroup kernel-hal HAL
-	 * @ingroup kernel
+	 * @brief Initializes a spinlock.
 	 *
-	 * @brief Hardware Abstraction Layer
+	 * @param lock Target spinlock.
 	 */
-	#include <nanvix/hal/clock.h>
-	#include <nanvix/hal/cpu.h>
-	#include <nanvix/hal/core.h>
-	#include <nanvix/hal/debug.h>
-	#include <nanvix/hal/interrupt.h>
-	#include <nanvix/hal/io.h>
-	#include <nanvix/hal/memory.h>
-	#include <nanvix/hal/spinlock.h>
+	EXTERN void spinlock_init(spinlock_t *lock);
 
 	/**
-	 * @brief Runs unit tests on the HAL.
+	 * @brief Locks a spinlock.
+	 *
+	 * @param lock Target spinlock.
 	 */
-	EXTERN void hal_test_driver(void);
+	EXTERN void spinlock_lock(spinlock_t *lock);
 
-#endif /* NANVIX_HAL_H_ */
+	/**
+	 * @brief Attempts to lock a spinlock.
+	 *
+	 * @param lock Target spinlock.
+	 *
+	 * @returns Upon successful completion, the spinlock pointed to by
+	 * @p lock is locked and zero is returned. Upon failure, non-zero
+	 * is returned instead, and the lock is not acquired by the
+	 * caller.
+	 */
+	EXTERN int spinlock_trylock(spinlock_t *lock);
+
+	/**
+	 * @brief Unlocks a spinlock.
+	 *
+	 * @param lock Target spinlock.
+	 */
+	EXTERN void spinlock_unlock(spinlock_t *lock);
+
+#endif
+
+/**@}*/
+
+#endif /* NANVIX_HAL_SPINLOCK_H_ */
