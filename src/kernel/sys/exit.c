@@ -33,6 +33,6 @@
  */
 void sys_exit(int status)
 {
-	shutdown(status);
+	core_shutdown(status);
 }
 

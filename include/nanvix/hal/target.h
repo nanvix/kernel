@@ -82,6 +82,10 @@
 		#ifndef __core_wakeup
 		#error "core_wakeup() not defined?"
 		#endif
+
+		#ifndef __core_reset
+		#error "core_reset() not defined?"
+		#endif
 	#endif
 
 /*============================================================================*
