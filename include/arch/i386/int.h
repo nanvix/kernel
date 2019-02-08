@@ -25,6 +25,10 @@
 #ifndef ARCH_I386_INT_H_
 #define ARCH_I386_INT_H_
 
+/*============================================================================*
+ *                             Interrupt Interface                            *
+ *============================================================================*/
+
 /**
  * @addtogroup i386-int Hardware Interrupts
  * @ingroup i386
@@ -35,15 +39,6 @@
 
 	#include <nanvix/const.h>
 	#include <arch/i386/context.h>
-
-	/**
-	 * @name Provided Interface
-	 */
-	/**@{*/
-	#define __hal_disable_interrupts
-	#define __hal_enable_interrupts
-	#define __hal_interrupt_set_handler
-	/**@}*/
 
 	/**
 	 * @brief Number of hardware interrupts in the i386 architecture.
@@ -99,17 +94,6 @@
 	}
 
 	/**
-	 * @see i386_hwint_enable()
-	 *
-	 * @cond i386
-	 */
-	static inline void hal_enable_interrupts(void)
-	{
-		i386_hwint_enable();
-	}
-	/**@endcond*/
-
-	/**
 	 * @brief Disables hardware interrupts.
 	 *
 	 * The i386_hwint_disable() function disables all hardware interrupts in the
@@ -121,17 +105,6 @@
 	}
 
 	/**
-	 * @see i386_hwint_disable()
-	 *
-	 * @cond i386
-	 */
-	static inline void hal_disable_interrupts(void)
-	{
-		i386_hwint_disable();
-	}
-	/**@endcond*/
-
-	/**
 	 * @brief Sets a handler for a hardware interrupt.
 	 *
 	 * @param num     Number of the target hardware interrupt.
@@ -139,17 +112,57 @@
 	 */
 	EXTERN void i386_hwint_handler_set(int num, void (*handler)(int));
 
+/**@}*/
+
+/*============================================================================*
+ *                              Exported Interface                            *
+ *============================================================================*/
+
+/**
+ * @cond i386
+ */
+
 	/**
-	 * @see i386_hwint_handler_set()
-	 *
-	 * @cond i386
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_disable_interrupts
+	#define __hal_enable_interrupts
+	#define __hal_interrupt_set_handler
+	/**@}*/
+
+/**
+ * @addtogroup kernel-hal-interrupts Interrupt
+ * @ingroup kernel-hal-cpu
+ */
+/**@{*/
+
+	/**
+	 * @see i386_hwint_enable()
+	 */
+	static inline void hal_enable_interrupts(void)
+	{
+		i386_hwint_enable();
+	}
+
+	/**
+	 * @see i386_hwint_disable()
+	 */
+	static inline void hal_disable_interrupts(void)
+	{
+		i386_hwint_disable();
+	}
+
+	/**
+	 * @see i386_hwint_handler_set().
 	 */
 	static inline void hal_interrupt_set_handler(int num, void (*handler)(int))
 	{
 		i386_hwint_handler_set(num, handler);
 	}
-	/**@endcond*/
 
 /**@}*/
+
+/**@endcond*/
 
 #endif /* ARCH_I386_INT_H_ */

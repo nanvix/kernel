@@ -34,19 +34,12 @@
  */
 /**@{*/
 
-/**
- * @cond or1k
- */
-
 	/**
 	 * @name Procided Interface
 	 */
 	/**@{*/
 	#define __context_struct /**< Exection Context Structure */
 	/**@}*/
-
-/**@endcond*/
-
 
 	/**
 	 * @brief Execution context size (in bytes).
@@ -56,6 +49,7 @@
 	/**
 	 * @name Offsets to the Context Structure
 	 */
+	/**@{*/
 	#define OR1K_CONTEXT_R0     0 /**< General Purpose Register  0       */
 	#define OR1K_CONTEXT_R1     4 /**< General Purpose Register  1       */
 	#define OR1K_CONTEXT_R2     8 /**< General Purpose Register  2       */
@@ -91,15 +85,11 @@
 	#define OR1K_CONTEXT_EPCR 128 /**< Shadow Program Counter Register   */
 	#define OR1K_CONTEXT_EEAR 132 /**< Shadow Effective Address          */
 	#define OR1K_CONTEXT_ESR  136 /**< Shadow Status Register            */
-	/**@{*/
+	/**@}*/
 
 #ifndef _ASM_FILE_
 
 	#include <arch/or1k/core.h>
-
-/**
- * @cond or1k
- */
 
 	/**
 	 * Saved execution context upon interrupts and exceptions.
@@ -114,8 +104,6 @@
 		uint32_t eear;                                   /**< Shadow Effective Address Register  */
 		uint32_t  esr;                                   /**< Shadow Status Register             */
 	} __attribute__((packed));
-
-/**@endcond*/
 
 #endif /* _ASM_FILE_ */
 

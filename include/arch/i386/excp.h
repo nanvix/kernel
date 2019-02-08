@@ -25,6 +25,10 @@
 #ifndef ARCH_I386_EXCEPTION_H_
 #define ARCH_I386_EXCEPTION_H_
 
+/*============================================================================*
+ *                              Exception Interface                           *
+ *============================================================================*/
+
 /**
  * @addtogroup i386-exception Exception
  * @ingroup i386
@@ -34,26 +38,12 @@
 /**@{*/
 
 	/**
-	 * @name Provided Interface
-	 *
-	 * @cond i386
-	 */
-	/**@{*/
-	#define __exception_struct      /**< @ref exception               */
-	#define __exception_get_addr    /**< @ref exception_get_addr()    */
-	#define __exception_get_instr   /**< @ref exception_get_instr()   */
-	#define __exception_get_num     /**< @ref exception_get_num()     */
-	#define __exception_set_handler /**< @ref exception_set_handler() */
-	/**@}*/
-	/**@endcond*/
-
-	/**
 	 * @brief Exception information size (in bytes).
 	 */
 	#define I386_EXCEPTION_SIZE 16
 
 	/**
-	 * @name Offsets to the Exception Information structure.
+	 * @name Offsets to the Exception Information Structure
 	 *
 	 * @see exception
 	 */
@@ -96,21 +86,6 @@
 	#define I386_EXCP_SECURITY_EXCEPTION          30 /**@< Security Exception.         */
 	/**@}*/
 
-	/**
-	 * @brief Exception Codes
-	 *
-	 * @cond i386
-	 */
-	/**@*/
-	#define EXCP_INVALID_OPCODE      I386_EXCP_INVALID_OPCODE     /**< Invalid Opcode     */
-	#define EXCP_PAGE_FAULT          I386_EXCP_PAGE_FAULT         /**< Page Fault         */
-	#define EXCP_PAGE_PROTECTION     I386_EXCP_PAGE_FAULT         /**< Page Protection    */
-	#define EXCP_GENERAL_PROTECTION  I386_EXCP_GENERAL_PROTECTION /**< General Protection */
-	/**@}*/
-	/**@endcond*/
-
-/**@endcond*/
-
 #ifndef _ASM_FILE_
 
 	#include <nanvix/const.h>
@@ -120,8 +95,6 @@
 
 	/**
 	 * @brief Exception information.
-	 *
-	 * @cond i386
 	 */
 	struct exception
 	{
@@ -130,7 +103,6 @@
 		uint32_t addr;        /**< Faulting address.     */
 		uint32_t instruction; /**< Faulting instruction. */
 	} __attribute__((packed));
-	/**@endcond*/
 
 	/**
 	 * @brief Exception handler.
@@ -185,17 +157,6 @@
 	}
 
 	/**
-	 * @see i386_excp_get_num().
-	 *
-	 * @cond i386
-	 */
-	static inline int exception_get_num(const struct exception *excp)
-	{
-		return (i386_excp_get_num(excp));
-	}
-	/**@endcond*/
-
-	/**
 	 * @brief Gets the address of an exception.
 	 *
 	 * The i386_excp_get_addr() function gets the exception address
@@ -213,17 +174,6 @@
 	{
 		return (excp->addr);
 	}
-
-	/**
-	 * @see i386_excp_get_addr().
-	 *
-	 * @cond i386
-	 */
-	static inline int exception_get_addr(const struct exception *excp)
-	{
-		return (i386_excp_get_addr(excp));
-	}
-	/**@endcond*/
 
 	/**
 	 * @brief Gets the program counter at an exception.
@@ -245,17 +195,6 @@
 	}
 
 	/**
-	 * @see i386_excp_get_code().
-	 *
-	 * @cond i386
-	 */
-	static inline int exception_get_instr(const struct exception *excp)
-	{
-		return (i386_excp_get_instr(excp));
-	}
-	/**@endcond*/
-
-	/**
 	 * @brief Sets a handler for an exception.
 	 *
 	 * @param num     Number of the target exception.
@@ -267,19 +206,79 @@
 	 */
 	EXTERN void i386_excp_set_handler(int num, i386_exception_handler_fn handler);
 
+/**@}*/
+
+/*============================================================================*
+ *                              Exported Interface                            *
+ *============================================================================*/
+
+/**
+ * @cond i386
+ */
+
+	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __exception_struct      /**< @ref exception               */
+	#define __exception_get_addr    /**< @ref exception_get_addr()    */
+	#define __exception_get_instr   /**< @ref exception_get_instr()   */
+	#define __exception_get_num     /**< @ref exception_get_num()     */
+	#define __exception_set_handler /**< @ref exception_set_handler() */
+	/**@}*/
+
+/**
+ * @addtogroup kernel-hal-exception Exception
+ * @ingroup kernel-hal-cpu
+ */
+/**@{*/
+
+	/**
+	 * @name Exception Codes
+	 */
+	/**@*/
+	#define EXCP_INVALID_OPCODE      I386_EXCP_INVALID_OPCODE     /**< Invalid Opcode     */
+	#define EXCP_PAGE_FAULT          I386_EXCP_PAGE_FAULT         /**< Page Fault         */
+	#define EXCP_PAGE_PROTECTION     I386_EXCP_PAGE_FAULT         /**< Page Protection    */
+	#define EXCP_GENERAL_PROTECTION  I386_EXCP_GENERAL_PROTECTION /**< General Protection */
+	/**@}*/
+
+	/**
+	 * @see i386_excp_get_num().
+	 */
+	static inline int exception_get_num(const struct exception *excp)
+	{
+		return (i386_excp_get_num(excp));
+	}
+
+	/**
+	 * @see i386_excp_get_addr().
+	 */
+	static inline int exception_get_addr(const struct exception *excp)
+	{
+		return (i386_excp_get_addr(excp));
+	}
+
+	/**
+	 * @see i386_excp_get_code().
+	 */
+	static inline int exception_get_instr(const struct exception *excp)
+	{
+		return (i386_excp_get_instr(excp));
+	}
+
 	/**
 	 * @see i386_excp_set_handler()
-	 *
-	 * @cond i386
 	 */
 	static inline void exception_set_handler(int num, i386_exception_handler_fn handler)
 	{
 		i386_excp_set_handler(num, handler);
 	}
-	/**@endcond*/
-
-#endif /* _ASM_FILE_ */
 
 /**@}*/
+
+/**@endcond*/
+
+#endif /* _ASM_FILE_ */
 
 #endif /* ARCH_I386_EXCEPTION_H_ */

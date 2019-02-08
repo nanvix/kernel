@@ -25,6 +25,10 @@
 #ifndef ARCH_I386_CPU_H_
 #define ARCH_I386_CPU_H_
 
+/*============================================================================*
+ *                             Processor Interface                            *
+ *============================================================================*/
+
 /**
  * @addtogroup i386-cpu CPU
  * @ingroup i386
@@ -32,13 +36,6 @@
  * @brief i386 Processor
  */
 /**@{*/
-
-	/**
-	 * @name Provided Interface
-	 */
-	/**@{*/
-	#define __hal_cpu_get_num_cores
-	/**@}*/
 
 	/**
 	 * @brief Number of cores in the i386 architecture.
@@ -58,17 +55,39 @@
 		return (I386_NUM_CORES);
 	}
 
+/**@}*/
+
+/*============================================================================*
+ *                              Exported Interface                            *
+ *============================================================================*/
+
+/**
+ * @cond i386
+ */
+
+/**
+ * @addtogroup kernel-hal-cpu Processor
+ * @ingroup kernel-hal
+ */
+/**@{*/
+
+	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_cpu_get_num_cores
+	/**@}*/
+
 	/**
 	 * @see i386_cpu_get_num_cores()
-	 *
-	 * @cond i386
 	 */
 	static inline int hal_cpu_get_num_cores(void)
 	{
 		return (i386_cpu_get_num_cores());
 	}
-	/**@endcond*/
 
 /**@}*/
+
+/**@endcond*/
 
 #endif /* ARCH_I386_CPU_H_ */

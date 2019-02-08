@@ -25,6 +25,10 @@
 #ifndef ARCH_K1B_CPU_H_
 #define ARCH_K1B_CPU_H_
 
+/*============================================================================*
+ *                             Processor Interface                            *
+ *============================================================================*/
+
 /**
  * @addtogroup k1b-cpu CPU
  * @ingroup k1b
@@ -32,13 +36,6 @@
  * @brief k1b Processor
  */
 /**@{*/
-
-	/**
-	 * @name Provided Interface
-	 */
-	/**@{*/
-	#define __hal_cpu_get_num_cores /**< hal_cpu_get_num_cores() */
-	/**@}*/
 
 	#include <arch/k1b/core.h>
 	#include <nanvix/const.h>
@@ -65,24 +62,39 @@
 		return (K1B_NUM_CORES);
 	}
 
+/**@}*/
+
+/*============================================================================*
+ *                              Exported Interface                            *
+ *============================================================================*/
+
+/**
+ * @cond k1b
+ */
+
+/**
+ * @addtogroup kernel-hal-cpu Processor
+ * @ingroup kernel-hal
+ */
+/**@{*/
+
+	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_cpu_get_num_cores /**< hal_cpu_get_num_cores() */
+	/**@}*/
+
 	/**
 	 * @see k1b_cpu_get_num_cores()
-	 *
-	 * @cond k1b
 	 */
 	static inline int hal_cpu_get_num_cores(void)
 	{
 		return (k1b_cpu_get_num_cores());
 	}
-	/**@endcond*/
-
-	/**
-	 * @brief Gets the number of cores.
-	 *
-	 * @returns The number of cores in the underlying processor.
-	 */
-	EXTERN int hal_cpu_get_num_cores(void);
 
 /**@}*/
+
+/**@endcond*/
 
 #endif /* ARCH_K1B_CPU_H_ */

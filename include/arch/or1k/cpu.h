@@ -26,6 +26,10 @@
 #ifndef ARCH_OR1K_CPU_H_
 #define ARCH_OR1K_CPU_H_
 
+/*============================================================================*
+ *                             Processor Interface                            *
+ *============================================================================*/
+
 /**
  * @addtogroup or1k-cpu CPU
  * @ingroup or1k
@@ -33,13 +37,6 @@
  * @brief or1k Processor
  */
 /**@{*/
-
-	/**
-	 * @name Provided Interface
-	 */
-	/**@{*/
-	#define __hal_cpu_get_num_cores
-	/**@}*/
 
 	/**
 	 * @brief Number of cores in the i386 architecture.
@@ -59,17 +56,39 @@
 		return (OR1K_NUM_CORES);
 	}
 
+/**@}*/
+
+/*============================================================================*
+ *                              Exported Interface                            *
+ *============================================================================*/
+
+/**
+ * @cond or1k
+ */
+
+/**
+ * @addtogroup kernel-hal-cpu Processor
+ * @ingroup kernel-hal
+ */
+/**@{*/
+
+	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_cpu_get_num_cores
+	/**@}*/
+
 	/**
 	 * @see or1k_cpu_get_num_cores()
-	 *
-	 * @cond or1k
 	 */
 	static inline int hal_cpu_get_num_cores(void)
 	{
 		return (or1k_cpu_get_num_cores());
 	}
-	/**@endcond*/
 
 /**@}*/
+
+/**@endcond*/
 
 #endif /* ARCH_OR1K_CPU_H_ */
