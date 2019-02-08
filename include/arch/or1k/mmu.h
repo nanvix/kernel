@@ -36,8 +36,6 @@
 
 	/**
 	 * @name Provided Interface
-	 *
-	 * @cond or1k
 	 */
 	/**@{*/
 	#define __frame_t            /**< Page Frame Number */
@@ -63,7 +61,6 @@
 	#define __pte_user_set_fn    /**< pte_user_set()    */
 	#define __pte_write_set_fn   /**< pte_write_set()   */
 	/**@}*/
-	/**@endcond**/
 
 	/**
 	 * @name Page Shifts and Masks
@@ -89,8 +86,6 @@
 
 	/**
 	 * @name Page Shifts
-	 *
-	 * @cond or1k
 	 */
 	/**@{*/
 	#define PAGE_SHIFT  OR1K_PAGE_SHIFT  /**< Page Shift       */
@@ -98,12 +93,9 @@
 	#define PAGE_MASK   OR1K_PAGE_MASK   /**< Page Mask        */
 	#define PGTAB_MASK  OR1K_PGTAB_MASK  /**< Page Table Mask  */
 	/**@}*/
-	/**@endcond*/
 
 	/**
 	 * @name Size of Pages and Page Tables
-	 *
-	 * @cond or1k
 	 */
 	/**@{*/
 	#define PAGE_SIZE  OR1K_PAGE_SIZE  /**< Page Size                 */
@@ -111,7 +103,6 @@
 	#define PTE_SIZE   OR1K_PTE_SIZE   /**< Page Table Entry Size     */
 	#define PDE_SIZE   OR1K_PDE_SIZE   /**< Page Directory Entry Size */
 	/**@}*/
-	/**@endcond*/
 
 	/**
 	 * Page table entry constants.

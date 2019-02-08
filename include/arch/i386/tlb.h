@@ -33,10 +33,6 @@
  */
 /**@{*/
 
-/**
- * @if i386
- */
-
 	/**
 	 * @brief Hardware-managed TLB.
 	 */
@@ -48,8 +44,6 @@
 	/**@{*/
 	#define __tlb_flush_fn /**< tlb_flush() */
 	/**@}*/
-
-/**@endif*/
 
 	/**
 	 * @brief Flushes changes in the TLB.
@@ -74,10 +68,6 @@
 		return (0);
 	}
 
-/**
- * @if i386
- */
-
 	/**
 	 * @see i386_tlb_flush().
 	 */
@@ -85,8 +75,6 @@
 	{
 		return (i386_tlb_flush());
 	}
-
-/**@endif*/
 
 /**@}*/
 	

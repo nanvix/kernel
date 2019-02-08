@@ -37,10 +37,6 @@
  */
 /**@{*/
 
-/**
- * @if or1k
- */
-
 	/**
 	 * @brief Hardware-managed TLB.
 	 */
@@ -59,8 +55,6 @@
 	#define __tlb_inval_fn        /**< tlb_inval()         */
 	#define __tlb_flush_fn        /**< tlb_flush()         */
 	/**@}*/
-
-/**@endif**/
 
 	/**
 	 * @brief Length of architectural TLB (number of entries).
@@ -139,10 +133,6 @@
 	#define OR1K_ITLBE_UXE 2 /**< User Execute Enable       */
 	/**@}*/
 
-/**
- * @cond or1k
- */
-
 	/**
 	 * @brief TLB entry.
 	 */
@@ -166,8 +156,6 @@
 		unsigned ci       :  1; /**< Cache Inhibit (CI)                      */
 		unsigned cc       :  1; /**< Cache Coherency (CC)                    */
 	} __attribute__((packed));
-
-/**@endcond*/
 
 	/**
 	 * Kernel code and data addresses.
@@ -270,10 +258,6 @@
 	 */
 	EXTERN void or1k_tlb_init(void);
 
-/**
- * @cond or1k
- */
-
 	/**
 	 * @brief Length of TLB (number of entries).
 	 *
@@ -337,8 +321,6 @@
 	{
 		return (or1k_tlb_flush());
 	}
-
-/**@endif*/
 
 /**@}*/
 

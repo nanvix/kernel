@@ -77,5 +77,5 @@ distclean:
 # Builds documentation.
 documentation:
 	mkdir -p $(DOCDIR)
-	( sed -e "s/ENABLED_SECTIONS=/ENABLED_SECTIONS=$(TARGET) $(ARCH)/g"  doxygen/doxygen.conf ) | doxygen -
+	doxygen doxygen/doxygen.$(TARGET)
 

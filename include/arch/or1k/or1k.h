@@ -32,7 +32,7 @@
 	#endif
 
 	/**
-	 * @defgroup or1k Architecture
+	 * @defgroup or1k OpenRISC
 	 * @ingroup or1k-pc
 	 */
  	#include <arch/or1k/clock.h>

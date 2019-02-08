@@ -60,8 +60,6 @@
 
 	/**
 	 * @name Provided Interface
-	 *
-	 * @cond ork1
 	 */
 	/**@{*/
 	#define __spinlock_t          /**< @p spinlock_t      */
@@ -70,68 +68,49 @@
 	#define __spinlock_trylock_fn /**< spinlock_trylock() */
 	#define __spinlock_unlock_fn  /**< spinlock_unlock()  */
 	/**@}*/
-	/**@endcond*/
 
 	/**
 	 * @see OR1K_SPINLOCK_UNLOCKED
-	 *
-	 * @cond ork1
 	 */
 	#define SPINLOCK_UNLOCKED OR1K_SPINLOCK_UNLOCKED
-	/**@endcond*/
 
 	/**
 	 * @see OR1K_SPINLOCK_LOCKED
-	 *
-	 * @cond ork1
 	 */
 	#define SPINLOCK_LOCKED OR1K_SPINLOCK_LOCKED
-	/**@endcond*/
 
 	/**
 	 * @see ork1_spinlock_init()
-	 *
-	 * @cond ork1
 	 */
 	static inline void spinlock_init(spinlock_t *lock)
 	{
 		((void) lock);
 	}
-	/**@endcond*/
 
 	/**
 	 * @see ork1_spinlock_trylock()
-	 *
-	 * @cond ork1
 	 */
 	static inline int spinlock_trylock(spinlock_t *lock)
 	{
 		((void) lock);
 		return (OR1K_SPINLOCK_LOCKED);
 	}
-	/**@endcond*/
 
 	/**
 	 * @see ork1_spinlock_lock()
-	 *
-	 * @cond ork1
 	 */
 	static inline void spinlock_lock(spinlock_t *lock)
 	{
 		((void) lock);
 	}
-	/**@endcond*/
 
 	/**
 	 * @see ork1_spinlock_unlock()
-	 *
-	 * @cond ork1
 	 */
 	static inline void spinlock_unlock(spinlock_t *lock)
 	{
 		((void) lock);
 	}
-	/**@endcond*/
 
 /**@}*/
 

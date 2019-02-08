@@ -25,6 +25,10 @@
 #ifndef ARCH_K1B_INT_H_
 #define ARCH_K1B_INT_H_
 
+/*============================================================================*
+ *                             Interrupt Interface                            *
+ *============================================================================*/
+
 /**
  * @addtogroup k1b-int Interrupt
  * @ingroup k1b
@@ -38,15 +42,6 @@
 	#include <nanvix/const.h>
 	#include <mOS_vcore_u.h>
 	#include <vbsp.h>
-
-	/**
-	 * @name Provided Interface
-	 */
-	/**@{*/
-	#define __hal_disable_interrupts
-	#define __hal_enable_interrupts
-	#define __hal_interrupt_set_handler
-	/**@}*/
 
 	/**
 	 * @brief Hardware interrupt dispatcher.
@@ -67,17 +62,6 @@
 	}
 
 	/**
-	 * @see k1b_hwint_enable()
-	 *
-	 * @cond k1b
-	 */
-	static inline void hal_enable_interrupts(void)
-	{
-		k1b_hwint_enable();
-	}
-	/**@endcond*/
-
-	/**
 	 * @brief Disables interrupts.
 	 *
 	 * Disables all hardware interrupts in the underlying core.
@@ -88,17 +72,6 @@
 	}
 
 	/**
-	 * @see k1b_hwint_disable()
-	 *
-	 * @cond k1b
-	 */
-	static inline void hal_disable_interrupts(void)
-	{
-		k1b_hwint_disable();
-	}
-	/**@endcond*/
-
-	/**
 	 * @brief Sets a handler for a hardware interrupt.
 	 *
 	 * @param num     Number of the target hardware interrupt.
@@ -106,17 +79,57 @@
 	 */
 	EXTERN void k1b_hwint_handler_set(int num, void (*handler)(int));
 
+/**@}*/
+
+/*============================================================================*
+ *                              Exported Interface                            *
+ *============================================================================*/
+
+/**
+ * @cond k1b
+ */
+
 	/**
-	 * @see k1b_hwint_handler_set()
-	 *
-	 * @cond k1b
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_disable_interrupts
+	#define __hal_enable_interrupts
+	#define __hal_interrupt_set_handler
+	/**@}*/
+
+/**
+ * @addtogroup kernel-hal-interrupts Interrupt
+ * @ingroup kernel-hal-cpu
+ */
+/**@{*/
+
+	/**
+	 * @see k1b_hwint_enable().
+	 */
+	static inline void hal_enable_interrupts(void)
+	{
+		k1b_hwint_enable();
+	}
+
+	/**
+	 * @see k1b_hwint_disable().
+	 */
+	static inline void hal_disable_interrupts(void)
+	{
+		k1b_hwint_disable();
+	}
+
+	/**
+	 * @see k1b_hwint_handler_set().
 	 */
 	static inline void hal_interrupt_set_handler(int num, void (*handler)(int))
 	{
 		k1b_hwint_handler_set(num, handler);
 	}
-	/**@endcond*/
 
 /**@}*/
+
+/**@endcond*/
 
 #endif /* ARCH_K1B_INT_H_ */

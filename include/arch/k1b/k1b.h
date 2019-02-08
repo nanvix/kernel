@@ -30,7 +30,7 @@
 	#endif
 
 	/**
-	 * @defgroup k1b Bostan Architecture
+	 * @defgroup k1b Bostan
 	 * @ingroup mppa256
 	 */
 	#include <arch/k1b/clock.h>
