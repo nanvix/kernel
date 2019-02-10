@@ -25,42 +25,25 @@
 
 #include <arch/or1k/excp.h>
 #include <arch/or1k/tlb.h>
-#include <nanvix/mm.h>
+#include <nanvix/klib.h>
 #include <nanvix/const.h>
 
-/**
- * @brief Handles a page fault.
- *
- * The or1k_do_page_fault() function is currently a dummy handler for a
- * page fault. It prints the faulting address and panics the kernel.
- *
- * @param excp Exception information.
- * @param ctx  Interrupted execution context.
- *
- * @todo Implement a rich handler.
- */
-PRIVATE void or1k_do_page_fault(
-	const struct exception *excp,
-	const struct context *ctx
-)
-{
-	UNUSED(ctx);
-
-	kpanic("[mm] page fault at %x", exception_get_addr(excp));
-}
+/* Import definitions from low-level code. */
+EXTERN struct pde idle_pgdir[];
 
 /**
  * @brief Handles a TLB fault.
  *
- * The or1k_do_tlb_fault() function handles a TLB fault. It checks the
- * current page directory for a virtual-to-physical address mapping,
- * and if it finds one, it writes this mapping to the TLB. If the
- * faulting address is not currently mapped in the current page
- * directory, this exception is forwarded to the page fault handler.
+ * The or1k_do_tlb_fault() function handles a early TLB faults. It
+ * checks the current page directory for a virtual-to-physical address
+ * mapping, and if it finds one, it writes this mapping to the TLB. If
+ * the faulting address is not currently mapped in the current page
+ * directory, it panics the kernel.
  *
  * @param excp Exception information.
  * @param ctx  Interrupted execution context.
  *
+ * @author Davidson Francis
  * @author Pedro Henrique Penna
  */
 PRIVATE void or1k_do_tlb_fault(
@@ -74,6 +57,8 @@ PRIVATE void or1k_do_tlb_fault(
 	struct pde *pde;   /* Working page directory entry.   */
 	struct pte *pgtab; /* Working page table.             */
 
+	UNUSED(ctx);
+
 	/* Get page address of faulting address. */
 	vaddr = or1k_excp_get_addr(excp);
 	vaddr &= OR1K_PAGE_MASK;
@@ -81,18 +66,18 @@ PRIVATE void or1k_do_tlb_fault(
 	/* Lookup PDE. */
 	pde = pde_get(idle_pgdir, vaddr);
 	if (!pde_is_present(pde))
-		or1k_do_page_fault(excp, ctx);
+		kpanic("[hal] page fault at %x", exception_get_addr(excp));
 
 	/* Lookup PTE. */
 	pgtab = (struct pte *)(pde_frame_get(pde) << OR1K_PAGE_SHIFT);
 	pte = pte_get(pgtab, vaddr);
 	if (!pte_is_present(pte))
-		or1k_do_page_fault(excp, ctx);
+		kpanic("[hal] page fault at %x", exception_get_addr(excp));
 
 	/* Writing mapping to TLB. */
 	paddr = pte_frame_get(pte) << OR1K_PAGE_SHIFT;
 	if (or1k_tlb_write(excp->num, vaddr, paddr) < 0)
-		kpanic("cannot write to tlb");
+		kpanic("[hal] cannot write to tlb");
 }
 
 /**
