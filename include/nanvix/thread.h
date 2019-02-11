@@ -57,6 +57,16 @@
 	/**@}*/
 
 	/**
+	 * @name Features
+	 */
+	/**@{*/
+	#define KERNEL_THREAD_BAD_START 0 /**< Check for bad thread start routine? */
+	#define KERNEL_THREAD_BAD_ARG   0 /**< Check for bad thread argument?      */
+	#define KERNEL_THREAD_BAD_JOIN  0 /**< Check for bad thread join?          */
+	#define KERNEL_THREAD_BAD_EXIT  0 /**< Check for bad thread exit?          */
+	/**@}*/
+
+	/**
 	 * @brief Thread.
 	 */
 	struct thread
