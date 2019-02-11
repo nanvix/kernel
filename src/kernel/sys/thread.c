@@ -23,6 +23,7 @@
  */
 
 #include <nanvix/const.h>
+#include <nanvix/mm.h>
 #include <nanvix/thread.h>
 
 /**
@@ -36,11 +37,23 @@ PUBLIC int sys_thread_get_id(void)
 /**
  * @see thread_create().
  */
-PUBLIC int sys_thread_create(int *tid, void*(*start)(void*), void *arg)
+PUBLIC int sys_thread_create(int *tid, void *(*start)(void*), void *arg)
 {
 	/* Invalid start routine. */
 	if (start == NULL)
 		return (-EINVAL);
+
+	/* Bad start routine. */
+#if (defined(KERNEL_THREAD_BAD_START) && (KERNEL_THREAD_BAD_START == 1))
+	if (mm_is_kaddr(VADDR(start)))
+		return (-EINVAL);
+#endif
+
+	/* Bad argument. */
+#if (defined(KERNEL_THREAD_BAD_ARG) && (KERNEL_THREAD_BAD_ARG == 1))
+	if ((arg != NULL) && (mm_is_kaddr(VADDR(arg))))
+		return (-EINVAL);
+#endif
 
 	return (thread_create(tid, start, arg));
 }
@@ -50,6 +63,12 @@ PUBLIC int sys_thread_create(int *tid, void*(*start)(void*), void *arg)
  */
 PUBLIC int sys_thread_exit(void *retval)
 {
+	/* Bad exit. */
+#if (defined(KERNEL_THREAD_BAD_EXIT) && (KERNEL_THREAD_BAD_EXIT == 1))
+	if ((retval != NULL) && (mm_is_kaddr(VADDR(retval))))
+		return (-EINVAL);
+#endif
+
 	thread_exit(retval);
 
 	return (-EAGAIN);
@@ -66,6 +85,12 @@ PUBLIC int sys_thread_join(int tid, void **retval)
 	/* Invalid thread ID. */
 	if (tid < 0)
 		return (-EINVAL);
+
+	/* Bad join. */
+#if (defined(KERNEL_THREAD_BAD_JOIN) && (KERNEL_THREAD_BAD_JOIN == 1))
+	if ((retval != NULL) && (mm_is_kaddr(VADDR(retval))))
+		return (-EINVAL);
+#endif
 
 	/* Cannot join itself. */
 	if (tid == thread_get_id(thread_get_curr()))
