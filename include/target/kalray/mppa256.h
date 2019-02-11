@@ -107,7 +107,7 @@
 	/**
 	 * @brief Memory size (in bytes) for IO DDR Cluster.
 	 */
-	#define K1B_IODDR_MEM_SIZE (2*1024*1024*1024)
+	#define K1B_IODDR_MEM_SIZE (4*1024*1024)
 
 	/**
 	 * @brief Memory size (in bytes) for IO Ethernet Cluster.
