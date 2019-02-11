@@ -71,9 +71,9 @@
 	 *
 	 * @param lock Target k1b_spinlock_t.
 	 *
-	 * @returns Upon successful completion, the k1b_spinlock_t pointed to by
-	 * @p lock is locked and zero is returned. Upon failure, non-zero
-	 * is returned instead, and the lock is not acquired by the
+	 * @returns Upon successful completion, the k1b_spinlock_t pointed
+	 * to by @p lock is locked and non-zero is returned. Upon failure,
+	 * zero is returned instead, and the lock is not acquired by the
 	 * caller.
 	 */
 	static inline int k1b_spinlock_trylock(k1b_spinlock_t *lock)
