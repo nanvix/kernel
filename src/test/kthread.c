@@ -38,6 +38,7 @@
 #define UTEST_KTHREAD_BAD_START 0 /**< Test bad thread start?    */
 #define UTEST_KTHREAD_BAD_ARG   0 /**< Test bad thread argument? */
 #define UTEST_KTHREAD_BAD_JOIN  0 /**< Test bad thread join?     */
+#define UTEST_KTHREAD_BAD_EXIT  0 /**< Test bad thread exit?     */
 /**@}*/
 
 /**
@@ -129,6 +130,12 @@ void test_fault_kthread_create(void)
 	test_assert(kthread_join(tid[0], (void *)(KBASE_VIRT)) < 0);
 	test_assert(kthread_join(tid[0], (void *)(UBASE_VIRT - PAGE_SIZE)) < 0);
 	test_assert(kthread_join(tid[0], NULL) == 0);
+#endif
+
+	/* Exit with bad return value. */
+#if (defined(UTEST_KTHREAD_BAD_EXIT) && (UTEST_KTHREAD_BAD_EXIT == 1))
+	test_assert(kthread_exit((void *)(KBASE_VIRT)) < 0);
+	test_assert(kthread_exit((void *)(UBASE_VIRT - PAGE_SIZE)) < 0);
 #endif
 }
 
