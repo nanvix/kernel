@@ -41,9 +41,14 @@
  *============================================================================*/
 
 	/**
-	 * @brief Maximum number of threads.
+	 * @brief Maximum number of kernel threads.
 	 */
-	#define THREAD_MAX HAL_NUM_CORES
+	#define KTHREAD_MAX HAL_NUM_CORES
+
+	/**
+	 * @brief Maximum number of user threads.
+	 */
+	#define THREAD_MAX (KTHREAD_MAX - 1)
 
 	/**
 	 * @name Thread States
@@ -81,7 +86,7 @@
 	/**
 	 * @brief Thread table.
 	 */
-	EXTERN struct thread threads[THREAD_MAX];
+	EXTERN struct thread threads[KTHREAD_MAX];
 
 	/**
 	 * @brief Master thread.
@@ -89,7 +94,7 @@
 	#define KTHREAD_MASTER (&threads[0])
 
 	/**
-	 * @brief Thread ID of master thread.
+	 * @brief ID of master thread.
 	 */
 	#define KTHREAD_MASTER_TID 0
 

@@ -23,13 +23,14 @@
  */
 
 #include <nanvix/mm.h>
+#include <nanvix/thread.h>
 #include <nanvix.h>
 #include "test.h"
 
 /**
  * @brief Number of threads to spawn.
  */
-#define NTHREADS 14
+#define NTHREADS (THREAD_MAX - 1)
 
 /**
  * @name Extra Tests
