@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <nanvix/mm.h>
 #include <nanvix.h>
 #include "test.h"
 
@@ -29,6 +30,16 @@
  * @brief Number of threads to spawn.
  */
 #define NTHREADS 14
+
+/**
+ * @name Extra Tests
+ */
+/**@{*/
+#define UTEST_KTHREAD_BAD_START 0 /**< Test bad thread start?    */
+#define UTEST_KTHREAD_BAD_ARG   0 /**< Test bad thread argument? */
+#define UTEST_KTHREAD_BAD_JOIN  0 /**< Test bad thread join?     */
+#define UTEST_KTHREAD_BAD_EXIT  0 /**< Test bad thread exit?     */
+/**@}*/
 
 /**
  * @brief Dummy task.
@@ -84,6 +95,18 @@ void test_fault_kthread_create(void)
 	/* Invalid start routine. */
 	test_assert(kthread_create(&tid[0], NULL, NULL) < 0);
 
+	/* Bad starting routine. */
+#if (defined(UTEST_KTHREAD_BAD_START) && (UTEST_KTHREAD_BAD_START == 1))
+	test_assert(kthread_create(&tid[0], (void *(*)(void *)) KBASE_VIRT, NULL) < 0);
+	test_assert(kthread_create(&tid[0], (void *(*)(void *)) (UBASE_VIRT - PAGE_SIZE), NULL) < 0);
+#endif
+
+	/* Bad argument. */
+#if (defined(UTEST_KTHREAD_BAD_ARG) && (UTEST_KTHREAD_BAD_ARG == 1))
+	test_assert(kthread_create(&tid[0], task, (void *(*)(void *)) KBASE_VIRT) < 0);
+	test_assert(kthread_create(&tid[0], task, (void *(*)(void *)) (UBASE_VIRT - PAGE_SIZE)) < 0);
+#endif
+
 	/* Spawn too many threads. */
 	for (int i = 0; i < NTHREADS; i++)
 		test_assert(kthread_create(&tid[i], task, NULL) == 0);
@@ -100,6 +123,20 @@ void test_fault_kthread_create(void)
 	test_assert(kthread_create(&tid[0], task, NULL) == 0);
 	test_assert(kthread_join(2, NULL) < 0);
 	test_assert(kthread_join(tid[0], NULL) == 0);
+
+	/* Join with bad return value. */
+#if (defined(UTEST_KTHREAD_BAD_JOIN) && (UTEST_KTHREAD_BAD_JOIN == 1))
+	test_assert(kthread_create(&tid[0], task, NULL) == 0);
+	test_assert(kthread_join(tid[0], (void *)(KBASE_VIRT)) < 0);
+	test_assert(kthread_join(tid[0], (void *)(UBASE_VIRT - PAGE_SIZE)) < 0);
+	test_assert(kthread_join(tid[0], NULL) == 0);
+#endif
+
+	/* Exit with bad return value. */
+#if (defined(UTEST_KTHREAD_BAD_EXIT) && (UTEST_KTHREAD_BAD_EXIT == 1))
+	test_assert(kthread_exit((void *)(KBASE_VIRT)) < 0);
+	test_assert(kthread_exit((void *)(UBASE_VIRT - PAGE_SIZE)) < 0);
+#endif
 }
 
 /*============================================================================*
