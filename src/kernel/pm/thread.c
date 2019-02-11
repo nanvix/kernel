@@ -27,6 +27,13 @@
 #include <nanvix/thread.h>
 #include <errno.h>
 
+/*
+ * Too few cores in the underlying core.
+ */
+#if (!defined(HAL_SMP) || (HAL_NUM_CORES <= 2))
+	#error "architecture does not have enough cores"
+#endif
+
 /**
  * @brief Number of running threads.
  */
@@ -40,16 +47,16 @@ PRIVATE int next_tid = (KTHREAD_MASTER_TID + 1);
 /**
  * @brief Thread table.
  */
-PUBLIC struct thread threads[THREAD_MAX] = {
-	[0]                      = {.tid = KTHREAD_MASTER_TID, .state = THREAD_RUNNING},
-	[1 ... (THREAD_MAX - 1)] = {.state = THREAD_NOT_STARTED}
+PUBLIC struct thread threads[KTHREAD_MAX] = {
+	[0]                       = {.tid = KTHREAD_MASTER_TID, .state = THREAD_RUNNING},
+	[1 ... (KTHREAD_MAX - 1)] = {.state = THREAD_NOT_STARTED}
 };
 
 /**
  * @brief Thread join conditions.
  */
-struct condvar joincond[THREAD_MAX] = {
-	[0 ... (THREAD_MAX - 1)] = COND_INITIALIZER
+struct condvar joincond[KTHREAD_MAX] = {
+	[0 ... (KTHREAD_MAX - 1)] = COND_INITIALIZER
 };
 
 /**
@@ -77,7 +84,7 @@ PRIVATE spinlock_t lock_tm = SPINLOCK_UNLOCKED;
  */
 PRIVATE struct thread *thread_alloc(void)
 {
-	for (int i = 0; i < THREAD_MAX; i++)
+	for (int i = 0; i < KTHREAD_MAX; i++)
 	{
 		/* Found. */
 		if (threads[i].state == THREAD_NOT_STARTED)
@@ -111,7 +118,7 @@ PRIVATE struct thread *thread_alloc(void)
 PRIVATE void thread_free(struct thread *t)
 {
 	KASSERT(t >= &threads[0]);
-	KASSERT(t <= &threads[THREAD_MAX - 1]);
+	KASSERT(t <= &threads[KTHREAD_MAX - 1]);
 
 	t->state = THREAD_NOT_STARTED;
 	nthreads--;
@@ -181,7 +188,7 @@ PUBLIC NORETURN void thread_exit(void *retval)
 PRIVATE struct thread *thread_get(int tid)
 {
 	/* Search for target thread. */
-	for (int i = 0; i < THREAD_MAX; i++)
+	for (int i = 0; i < KTHREAD_MAX; i++)
 	{
 		/* Found. */
 		if (threads[i].tid == tid)

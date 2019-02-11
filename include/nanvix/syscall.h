@@ -29,6 +29,7 @@
 #define NANVIX_SYSCALL_H_
 
 	#include <nanvix/const.h>
+	#include <nanvix/thread.h>
 	#include <sys/types.h>
 
 /**
