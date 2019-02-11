@@ -86,11 +86,11 @@
 	 * @name Size of Pages and Page Tables
 	 */
 	/**@{*/
-	#define K1B_HUGE_PAGE_SIZE (1 << K1B_PAGE_SHIFT)/**< Huge Page Size (in bytes)            */
-	#define K1B_PAGE_SIZE  (1 << K1B_PAGE_SHIFT)    /**< Page Size (in bytes)                 */
-	#define K1B_PGTAB_SIZE (1 << K1B_PGTAB_SHIFT)   /**< Page Table Size (in bytes)           */
-	#define K1B_PTE_SIZE   4                        /**< Page Table Entry Size (in bytes)     */
-	#define K1B_PDE_SIZE   4                        /**< Page Directory Entry Size (in bytes) */
+	#define K1B_HUGE_PAGE_SIZE (1 << K1B_HUGE_PAGE_SHIFT) /**< Huge Page Size (in bytes)            */
+	#define K1B_PAGE_SIZE  (1 << K1B_PAGE_SHIFT)          /**< Page Size (in bytes)                 */
+	#define K1B_PGTAB_SIZE (1 << K1B_PGTAB_SHIFT)         /**< Page Table Size (in bytes)           */
+	#define K1B_PTE_SIZE   4                              /**< Page Table Entry Size (in bytes)     */
+	#define K1B_PDE_SIZE   4                              /**< Page Directory Entry Size (in bytes) */
 	/**@}*/
 
 /**
