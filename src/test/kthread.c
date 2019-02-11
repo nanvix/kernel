@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <nanvix/mm.h>
 #include <nanvix.h>
 #include "test.h"
 
@@ -29,6 +30,13 @@
  * @brief Number of threads to spawn.
  */
 #define NTHREADS 14
+
+/**
+ * @name Extra Tests
+ */
+/**@{*/
+#define UTEST_KTHREAD_BAD_START 0 /**< Test bad thread start? */
+/**@}*/
 
 /**
  * @brief Dummy task.
@@ -83,6 +91,12 @@ void test_fault_kthread_create(void)
 
 	/* Invalid start routine. */
 	test_assert(kthread_create(&tid[0], NULL, NULL) < 0);
+
+	/* Bad starting routine. */
+#if (defined(UTEST_KTHREAD_BAD_START) && (UTEST_KTHREAD_BAD_START == 1))
+	test_assert(kthread_create(&tid[0], (void *(*)(void *)) KBASE_VIRT, NULL) < 0);
+	test_assert(kthread_create(&tid[0], (void *(*)(void *)) (UBASE_VIRT - PAGE_SIZE), NULL) < 0);
+#endif
 
 	/* Spawn too many threads. */
 	for (int i = 0; i < NTHREADS; i++)
