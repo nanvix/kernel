@@ -50,7 +50,7 @@
 	/**@{*/
 	extern kthread_t kthread_self(void);
 	extern int kthread_create(kthread_t *, void *(*)(void*), void *);
-	extern void kthread_exit(void *);
+	extern int kthread_exit(void *);
 	extern int kthread_join(kthread_t, void **);
 	/**@}*/
 

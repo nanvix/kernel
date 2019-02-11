@@ -83,12 +83,23 @@ kthread_t kthread_create(
 /*
  * @see sys_kthread_exit().
  */
-void kthread_exit(void *retval)
+int kthread_exit(void *retval)
 {
-	__k1_club_syscall1(
+	int ret;
+
+	ret = __k1_club_syscall1(
 		NR_thread_exit,
 		(unsigned) retval
 	);
+
+	/* System call failed. */
+	if (ret < 0)
+	{
+		errno = -ret;
+		return (-1);
+	}
+
+	return (ret);
 }
 
 /*============================================================================*
