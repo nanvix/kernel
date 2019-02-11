@@ -58,7 +58,7 @@
 	 * @param lock Target spinlock.
 	 *
 	 * @returns Upon successful completion, the spinlock pointed to by
-	 * @p lock is locked and zero is returned. Upon failure, non-zero
+	 * @p lock is locked and non-zero is returned. Upon failure, zero
 	 * is returned instead, and the lock is not acquired by the
 	 * caller.
 	 */
