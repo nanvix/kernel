@@ -138,7 +138,7 @@
 		#define MPPA256_KPOOL_BASE_PHYS      0x00070000 /**< Kernel Pool Base     */
 		#define MPPA256_KPOOL_END_PHYS       0x00080000 /**< Kernel Pool End      */
 		#define MPPA256_USER_BASE_PHYS       0x00080000 /**< User Base            */
-		#define MPPA256_USER_END_PHYS        0x001f0000 /**< End End              */
+		#define MPPA256_USER_END_PHYS        0x001f0000 /**< User End             */
 		#define MPPA256_HYPER_HIGH_BASE_PHYS 0x001f0000 /**< High Hypervisor Base */
 	#elif defined(__node__)
 		#define MPPA256_HYPER_LOW_BASE_PHYS  0x00000000 /**< Low Hypervisor Base  */
@@ -148,7 +148,7 @@
 		#define MPPA256_KPOOL_BASE_PHYS      0x00058000 /**< Kernel Pool Base     */
 		#define MPPA256_KPOOL_END_PHYS       0x00078000 /**< Kernel Pool End      */
 		#define MPPA256_USER_BASE_PHYS       0x00078000 /**< User Base            */
-		#define MPPA256_USER_END_PHYS        0x001f8000 /**< End End.             */
+		#define MPPA256_USER_END_PHYS        0x001f8000 /**< User End.            */
 		#define MPPA256_HYPER_HIGH_BASE_PHYS 0x001f8000 /**< High Hypervisor Base */
 	#endif
 	/**@}*/
