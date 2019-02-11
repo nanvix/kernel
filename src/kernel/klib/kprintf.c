@@ -29,7 +29,7 @@
 
 /**
  * @brief Writes a formated string on the kernels's output device.
- * 
+ *
  * @param fmt Formated string.
  */
 PUBLIC void kprintf(const char *fmt, ...)
@@ -37,7 +37,7 @@ PUBLIC void kprintf(const char *fmt, ...)
 	size_t len;                    /* String length.           */
 	va_list args;                  /* Variable arguments list. */
 	char buffer[KBUFFER_SIZE + 1]; /* Temporary buffer.        */
-	
+
 	/* Convert to raw string. */
 	va_start(args, fmt);
 	len = kvsprintf(buffer, fmt, args);
