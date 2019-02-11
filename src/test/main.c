@@ -36,7 +36,7 @@
  *
  * @returns The length of the string.
  */
-static size_t strlen(const char *str)
+size_t strlen(const char *str)
 {
 	const char *p;
 
