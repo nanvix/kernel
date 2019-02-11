@@ -35,7 +35,8 @@
  * @name Extra Tests
  */
 /**@{*/
-#define UTEST_KTHREAD_BAD_START 0 /**< Test bad thread start? */
+#define UTEST_KTHREAD_BAD_START 0 /**< Test bad thread start?    */
+#define UTEST_KTHREAD_BAD_ARG   0 /**< Test bad thread argument? */
 /**@}*/
 
 /**
@@ -96,6 +97,12 @@ void test_fault_kthread_create(void)
 #if (defined(UTEST_KTHREAD_BAD_START) && (UTEST_KTHREAD_BAD_START == 1))
 	test_assert(kthread_create(&tid[0], (void *(*)(void *)) KBASE_VIRT, NULL) < 0);
 	test_assert(kthread_create(&tid[0], (void *(*)(void *)) (UBASE_VIRT - PAGE_SIZE), NULL) < 0);
+#endif
+
+	/* Bad argument. */
+#if (defined(UTEST_KTHREAD_BAD_ARG) && (UTEST_KTHREAD_BAD_ARG == 1))
+	test_assert(kthread_create(&tid[0], task, (void *(*)(void *)) KBASE_VIRT) < 0);
+	test_assert(kthread_create(&tid[0], task, (void *(*)(void *)) (UBASE_VIRT - PAGE_SIZE)) < 0);
 #endif
 
 	/* Spawn too many threads. */
