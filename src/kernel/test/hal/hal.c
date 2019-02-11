@@ -24,23 +24,21 @@
 
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
-
-#if defined(__i386__)
+#include "test.h"
 
 /**
- * @brief Divides one number by another.
+ * @brief Test driver for the core interface of HAL.
  *
- * @param a First operand.
- * @param b Second operand.
- *
- * @returns The fist operand divided by the second one.
+ * @author Pedro Henrique Penna
  */
-PRIVATE unsigned divide(unsigned a, unsigned b)
+PRIVATE void hal_test_core(void)
 {
-	return (a/b);
+	for (int i = 0; core_tests_api[i].test_fn != NULL; i++)
+	{
+		core_tests_api[i].test_fn();
+		kprintf("[test][kernel][hal][core] %s [passed]", core_tests_api[i].name);
+	}
 }
-
-#endif
 
 /**
  * The hal_test_driver() function runs API, fault injection and
@@ -50,14 +48,5 @@ PRIVATE unsigned divide(unsigned a, unsigned b)
  */
 PUBLIC void hal_test_driver(void)
 {
-	kprintf("[hal] running unit tests");
-
-#if defined(__i386__)
-	if (0)
-	{
-		kprintf("[test][hal][api] divide by zero [%d]",
-			(divide(16, 0) == (unsigned)-1) ? "passed" : "FAILED"
-		);
-	}
-#endif
+	hal_test_core();
 }
