@@ -44,7 +44,7 @@ PRIVATE struct
  * @brief Flushes the kernel log buffer.
  */
 PRIVATE void klog_flush(void)
-{	
+{
 	ssize_t i;              /* Number of bytes to flush. */
 	char buf[KBUFFER_SIZE]; /* Temporary buffer.         */
 
@@ -64,13 +64,13 @@ PRIVATE void klog_flush(void)
 		if (klog.head == klog.tail)
 			break;
 	}
-	
+
 	hal_stdout_write(buf, i);
 }
 
 /**
  * @brief Writes to kernel log.
- * 
+ *
  * @param buf Target buffer.
  * @param n   Number of characters to write.
  */

@@ -71,17 +71,15 @@ PUBLIC void kmain(int argc, const char *argv[])
 	UNUSED(argc);
 	UNUSED(argv);
 
-	/* Master core. */
+#ifndef NDEBUG
+	hal_test_driver();
+#endif
 
 	dev_init();
 	mm_init();
 
 	kprintf("enabling hardware interrupts");
 	hal_enable_interrupts();
-
-#ifndef NDEBUG
-	hal_test_driver();
-#endif
 
 #ifdef HAL_SMP
 	thread_create(&tid, init, NULL);
