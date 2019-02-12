@@ -34,7 +34,7 @@ C_SRC = $(wildcard *.c)                  \
         $(wildcard mm/*.c)               \
         $(wildcard pm/*.c)               \
         $(wildcard sys/*.c)
-#
+
 # Unit Tests for Kernel
 ifneq ($(RELEASE), true)
 C_SRC += $(wildcard test/*.c) \
