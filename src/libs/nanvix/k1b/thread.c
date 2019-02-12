@@ -131,3 +131,54 @@ int kthread_join(
 
 	return (ret);
 }
+
+/*============================================================================*
+ * sleep()                                                                    *
+ *============================================================================*/
+
+/*
+ * @see sys_sleep()
+ */
+int sleep(void)
+{
+	int ret;
+
+	ret = __k1_club_syscall0(
+		(unsigned) NR_sleep
+	);
+
+	/* System call failed. */
+	if (ret < 0)
+	{
+		errno = -ret;
+		return (-1);
+	}
+
+	return (ret);
+}
+
+/*============================================================================*
+ * wakeup()                                                                   *
+ *============================================================================*/
+
+/*
+ * @see sys_wakeup()
+ */
+int wakeup(kthread_t tid)
+{
+	int ret;
+
+	ret = __k1_club_syscall1(
+		(unsigned) NR_wakeup,
+		(unsigned) tid
+	);
+
+	/* System call failed. */
+	if (ret < 0)
+	{
+		errno = -ret;
+		return (-1);
+	}
+
+	return (ret);
+}

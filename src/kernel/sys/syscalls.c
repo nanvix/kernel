@@ -109,6 +109,12 @@ PUBLIC void do_syscall2(void)
 				);
 				break;
 
+			case NR_wakeup:
+				ret = sys_wakeup(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+
 			default:
 				break;
 		}
@@ -164,6 +170,10 @@ PUBLIC int do_syscall1(
 				(int) arg0,
 				(void **) arg1
 			);
+			break;
+
+		case NR_sleep:
+			ret = sys_sleep();
 			break;
 
 		/* Forward system call. */
