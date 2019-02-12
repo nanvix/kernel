@@ -33,7 +33,9 @@ C_SRC = $(wildcard hal/arch/$(ARCH)/*.c) \
 
 # Unit Tests for Kernel
 ifneq ($(RELEASE), true)
-C_SRC += $(wildcard test/*.c)
+C_SRC += $(wildcard test/*.c) \
+         $(wildcard test/hal/hal.c) \
+         $(wildcard test/hal/core/*.c)
 endif
 
 # Asembly Source Files

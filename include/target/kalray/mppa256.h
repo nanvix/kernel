@@ -132,20 +132,20 @@
 	/**@{*/
 	#if defined(__ioddr__) || defined(__ioeth__)
 		#define MPPA256_HYPER_LOW_BASE_PHYS  0x00000000 /**< Low Hypervisor Base  */
-		#define MPPA256_KERNEL_BASE_PHYS     0x00008000 /**< Kernel Base          */
+		#define MPPA256_KERNEL_BASE_PHYS     0x00010000 /**< Kernel Base          */
 		#define MPPA256_KSTACK_BASE_PHYS     0x0001f000 /**< Kernel Stack Base    */
-		#define MPPA256_KERNEL_END_PHYS      0x00048000 /**< Kernel End           */
-		#define MPPA256_KPOOL_BASE_PHYS      0x00048000 /**< Kernel Pool Base     */
-		#define MPPA256_KPOOL_END_PHYS       0x00078000 /**< Kernel Pool End      */
-		#define MPPA256_USER_BASE_PHYS       0x00078000 /**< User Base            */
-		#define MPPA256_USER_END_PHYS        0x001f8000 /**< End End              */
-		#define MPPA256_HYPER_HIGH_BASE_PHYS 0x001f8000 /**< High Hypervisor Base */
+		#define MPPA256_KERNEL_END_PHYS      0x00070000 /**< Kernel End           */
+		#define MPPA256_KPOOL_BASE_PHYS      0x00070000 /**< Kernel Pool Base     */
+		#define MPPA256_KPOOL_END_PHYS       0x00080000 /**< Kernel Pool End      */
+		#define MPPA256_USER_BASE_PHYS       0x00080000 /**< User Base            */
+		#define MPPA256_USER_END_PHYS        0x001f0000 /**< End End              */
+		#define MPPA256_HYPER_HIGH_BASE_PHYS 0x001f0000 /**< High Hypervisor Base */
 	#elif defined(__node__)
 		#define MPPA256_HYPER_LOW_BASE_PHYS  0x00000000 /**< Low Hypervisor Base  */
 		#define MPPA256_KERNEL_BASE_PHYS     0x00008000 /**< Kernel Base          */
 		#define MPPA256_KSTACK_BASE_PHYS     0x0001f000 /**< Kernel Stack Base    */
-		#define MPPA256_KERNEL_END_PHYS      0x00048000 /**< Kernel End           */
-		#define MPPA256_KPOOL_BASE_PHYS      0x00048000 /**< Kernel Pool Base     */
+		#define MPPA256_KERNEL_END_PHYS      0x00058000 /**< Kernel End           */
+		#define MPPA256_KPOOL_BASE_PHYS      0x00058000 /**< Kernel Pool Base     */
 		#define MPPA256_KPOOL_END_PHYS       0x00078000 /**< Kernel Pool End      */
 		#define MPPA256_USER_BASE_PHYS       0x00078000 /**< User Base            */
 		#define MPPA256_USER_END_PHYS        0x001f8000 /**< End End.             */
@@ -161,20 +161,20 @@
 	/**@{*/
 	#if defined(__ioddr__) || defined(__ioeth__)
 		#define MPPA256_HYPER_LOW_BASE_VIRT  0x00000000 /**< Low Hypervisor Base  */
-		#define MPPA256_KERNEL_BASE_VIRT     0x00008000 /**< Kernel Base          */
+		#define MPPA256_KERNEL_BASE_VIRT     0x00010000 /**< Kernel Base          */
 		#define MPPA256_KSTACK_BASE_VIRT     0x0001f000 /**< Kernel Stack Base    */
-		#define MPPA256_KERNEL_END_VIRT      0x00048000 /**< Kernel End           */
-		#define MPPA256_KPOOL_BASE_VIRT      0x00048000 /**< Kernel Pool Base     */
-		#define MPPA256_KPOOL_END_VIRT       0x00078000 /**< Kernel Pool End      */
-		#define MPPA256_HYPER_HIGH_BASE_VIRT 0x001f8000 /**< High Hypervisor Base */
+		#define MPPA256_KERNEL_END_VIRT      0x00070000 /**< Kernel End           */
+		#define MPPA256_KPOOL_BASE_VIRT      0x00070000 /**< Kernel Pool Base     */
+		#define MPPA256_KPOOL_END_VIRT       0x00080000 /**< Kernel Pool End      */
+		#define MPPA256_HYPER_HIGH_BASE_VIRT 0x001f0000 /**< High Hypervisor Base */
 		#define MPPA256_USER_BASE_VIRT       0x80200000 /**< User Base            */
 		#define MPPA256_USER_END_VIRT        0xc0000000 /**< User End             */
 	#elif defined(__node__)
 		#define MPPA256_HYPER_LOW_BASE_VIRT  0x00000000 /**< Low Hypervisor Base  */
 		#define MPPA256_KERNEL_BASE_VIRT     0x00008000 /**< Kernel Base          */
 		#define MPPA256_KSTACK_BASE_VIRT     0x0001f000 /**< Kernel Stack Base    */
-		#define MPPA256_KERNEL_END_VIRT      0x00048000 /**< Kernel End           */
-		#define MPPA256_KPOOL_BASE_VIRT      0x00048000 /**< Kernel Pool Base     */
+		#define MPPA256_KERNEL_END_VIRT      0x00058000 /**< Kernel End           */
+		#define MPPA256_KPOOL_BASE_VIRT      0x00058000 /**< Kernel Pool Base     */
 		#define MPPA256_KPOOL_END_VIRT       0x00078000 /**< Kernel Pool End      */
 		#define MPPA256_HYPER_HIGH_BASE_VIRT 0x001f8000 /**< High Hypervisor Base */
 		#define MPPA256_USER_BASE_VIRT       0x80200000 /**< User Base            */

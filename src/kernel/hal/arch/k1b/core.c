@@ -55,6 +55,7 @@ PRIVATE struct
 	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 1  */
 	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 2  */
 	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 3  */
+#if defined(__node__)
 	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 4  */
 	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 5  */
 	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 6  */
@@ -67,6 +68,7 @@ PRIVATE struct
 	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 13 */
 	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 14 */
 	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 15 */
+#endif
 };
 
 /*============================================================================*
