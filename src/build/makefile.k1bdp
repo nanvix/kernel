@@ -33,6 +33,7 @@ export CLUSTER = node
 # Toolchain Configuration
 #===============================================================================
 
+# Compiler Options
 export CFLAGS += -mcluster=$(CLUSTER)
 
 #===============================================================================
@@ -44,7 +45,6 @@ export LIBKERNEL    = libkernel-$(ARCH)-$(CLUSTER).a
 export LIBNANVIX    = libnanvix-$(ARCH)-$(CLUSTER).a
 export LIBS_OURS    = $(LIBDIR)/$(LIBNANVIX) $(LIBDIR)/$(LIBKERNEL)
 export LIBS_THEIRS  = -lvbsp -mhypervisor
-export LIBS        += $(LIBS_OURS) $(LIBS_THEIRS)
 
 # Binaries
 export EXECBIN = test-driver-k1bdp

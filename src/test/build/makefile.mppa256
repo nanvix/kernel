@@ -27,7 +27,7 @@ OBJ = $(SRC:.c=.$(CLUSTER).o)
 
 # Builds object files for MPPA-256 target.
 mppa256: $(OBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC) -o $(BINDIR)/$(EXECBIN) -Wl,--whole-archive $(LIBS_OURS) -Wl,--no-whole-archive $(LIBS_THEIRS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $(BINDIR)/$(EXECBIN) -Wl,--whole-archive $(LIBS_OURS) -Wl,--no-whole-archive $(LIBS_THEIRS)
 
 # Cleans all object files.
 clean:
