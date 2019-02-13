@@ -67,7 +67,10 @@ PUBLIC struct pte root_pgtab[K1B_PGTAB_LENGTH];
  */
 PUBLIC struct pde root_pgdir[K1B_PGDIR_LENGTH];
 
-PUBLIC struct pde *idle_pgdir = root_pgdir;
+/**
+ * Alias to root page directory.
+ */
+PUBLIC struct pde *idle_pgdir = &root_pgdir[0];
 
 /**
  * @brief Map Hypervisor page frames.
