@@ -65,9 +65,12 @@ PUBLIC struct pte root_pgtab[K1B_PGTAB_LENGTH];
 /**
  * @brief Root Page Directories.
  */
-PUBLIC struct pde root_pgdir[K1B_PGDIR_LENGTH];
+PRIVATE struct pde root_pgdir[K1B_PGDIR_LENGTH];
 
-PUBLIC struct pde *idle_pgdir = root_pgdir;
+/**
+ * Alias to root page directory.
+ */
+PUBLIC struct pde *idle_pgdir = &root_pgdir[0];
 
 /**
  * @brief Map Hypervisor page frames.
@@ -246,7 +249,7 @@ PUBLIC void k1b_mmu_setup(void)
 
 		/* Build root page directory. */
 		root_pgdir[0].present = 1;
-		root_pgdir[0].present = 1;
+		root_pgdir[0].writable = 1;
 		root_pgdir[0].user = 0;
 		root_pgdir[0].frame = (vaddr_t)(root_pgtab) >> K1B_PAGE_SHIFT;
 	}

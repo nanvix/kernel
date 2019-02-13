@@ -501,7 +501,7 @@
 	 *
 	 * @todo This shall be moved to the Hardware Abstraction Layer (HAL).
 	 */
-	EXTERN struct pde idle_pgdir[];
+	EXTERN struct pde *idle_pgdir;
 
 /**@}*/
 
