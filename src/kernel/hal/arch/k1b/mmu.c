@@ -65,7 +65,7 @@ PUBLIC struct pte root_pgtab[K1B_PGTAB_LENGTH];
 /**
  * @brief Root Page Directories.
  */
-PUBLIC struct pde root_pgdir[K1B_PGDIR_LENGTH];
+PRIVATE struct pde root_pgdir[K1B_PGDIR_LENGTH];
 
 /**
  * Alias to root page directory.
