@@ -55,9 +55,14 @@ PUBLIC struct thread threads[KTHREAD_MAX] = {
 /**
  * @brief Thread join conditions.
  */
-struct condvar joincond[KTHREAD_MAX] = {
+PRIVATE struct condvar joincond[KTHREAD_MAX] = {
 	[0 ... (KTHREAD_MAX - 1)] = COND_INITIALIZER
 };
+
+/**
+ * @brief Thread exit conditions.
+ */
+PRIVATE struct condvar exitcond = COND_INITIALIZER;
 
 /**
  * @brief Thread manager lock.
@@ -154,6 +159,7 @@ PUBLIC NORETURN void thread_exit(void *retval)
 		curr_thread->state = THREAD_TERMINATED;
 
 		cond_broadcast(&joincond[thread_get_coreid(curr_thread)]);
+		cond_wait(&exitcond, &lock_tm);
 
 		thread_free(curr_thread);
 
@@ -303,6 +309,8 @@ PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
  * @retval -EINVAL Invalid thread ID.
  *
  * @see thread_exit().
+ *
+ * @todo Retrieve return value.
  */
 PUBLIC int thread_join(int tid, void **retval)
 {
@@ -329,6 +337,8 @@ PUBLIC int thread_join(int tid, void **retval)
 			 */
 			if (t->state == THREAD_RUNNING)
 				cond_wait(&joincond[thread_get_coreid(t)], &lock_tm);
+
+			cond_broadcast(&exitcond);
 		}
 
 	spinlock_unlock(&lock_tm);

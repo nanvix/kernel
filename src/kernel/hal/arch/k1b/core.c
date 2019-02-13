@@ -145,8 +145,6 @@ PUBLIC void k1b_core_idle(void)
 
 		mOS_pe_event_waitclear(K1B_EVENT_LINE);
 	}
-
-	kprintf("[hal] core awaken");
 }
 
 /*============================================================================*
@@ -324,8 +322,6 @@ PUBLIC void k1b_core_reset(void)
 		cores[coreid].state = K1B_CORE_RESETTING;
 
 		k1b_dcache_inval();
-
-		kprintf("[hal] resetting core");
 
 		_k1b_core_reset();
 
