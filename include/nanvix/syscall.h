@@ -43,38 +43,26 @@
 	 *
 	 * @note This should be set to the highest system call number.
 	 */
-	#define NR_SYSCALLS 10
-
-	/**
-	 * @name Magic Numbers for nosyscall()
-	 */
-	/**@{*/
-	#define NOSYSCALL_MAGIC_ARG 0x001f00d  /**< Magic number for argument.     */
-	#define NOSYSCALL_MAGIC_RET 0xdeadca11 /**< Magic number for return value. */
-	/**@}*/
+	#define NR_SYSCALLS 8
 
 	/**
 	 * @name System Call Numbers
 	 */
 	/**@{*/
-	#define NR_nosyscall     0 /**< nosyscall()         */
-	#define NR_cache_flush   1 /**< cache_flush()       */
-	#define NR__exit         2 /**< _exit()             */
-	#define NR_write         3 /**< sys_write()         */
-	#define NR_thread_get_id 4 /**< sys_thread_get_id() */
-	#define NR_thread_create 5 /**< sys_thread_create() */
-	#define NR_thread_exit   6 /**< sys_thread_exit()   */
-	#define NR_thread_join   7 /**< sys_thread_join()   */
-	#define NR_sleep         8 /**< sys_sleep()         */
-	#define NR_wakeup        9 /**< sys_wakeup()        */
+	#define NR__exit         0 /**< _exit()             */
+	#define NR_write         1 /**< sys_write()         */
+	#define NR_thread_get_id 2 /**< sys_thread_get_id() */
+	#define NR_thread_create 3 /**< sys_thread_create() */
+	#define NR_thread_exit   4 /**< sys_thread_exit()   */
+	#define NR_thread_join   5 /**< sys_thread_join()   */
+	#define NR_sleep         6 /**< sys_sleep()         */
+	#define NR_wakeup        7 /**< sys_wakeup()        */
 	/**@}*/
 
 	/**
 	 * @name System Calls
 	 */
 	/**@{*/
-	EXTERN int sys_nosyscall(unsigned);
-	EXTERN int sys_cache_flush(void);
 	EXTERN void sys_exit(int);
 	EXTERN ssize_t sys_write(int, const char *, size_t);
 	EXTERN int sys_thread_get_id(void);
@@ -86,6 +74,6 @@
 	/**@}*/
 
 /**@}*/
-	
+
 #endif /* NANVIX_SYSCALL_H_ */
 
