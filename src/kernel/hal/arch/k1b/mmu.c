@@ -249,7 +249,7 @@ PUBLIC void k1b_mmu_setup(void)
 
 		/* Build root page directory. */
 		root_pgdir[0].present = 1;
-		root_pgdir[0].present = 1;
+		root_pgdir[0].writable = 1;
 		root_pgdir[0].user = 0;
 		root_pgdir[0].frame = (vaddr_t)(root_pgtab) >> K1B_PAGE_SHIFT;
 	}
