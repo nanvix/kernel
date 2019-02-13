@@ -22,11 +22,6 @@
 # SOFTWARE.
 #
 
-#
-# Release version.
-#
-VERSION=v0.1-beta.1
-
 #===============================================================================
 # Directories
 #===============================================================================
@@ -42,35 +37,23 @@ export TOOLSDIR = $(CURDIR)/tools
 
 #===============================================================================
 
-include $(MAKEDIR)/makefile.$(TARGET)
-
 # Image Name
 export IMAGE = nanvix-debug.img
 
 # Builds everything.
 all: image
 
-# Builds a release.
-release: image
-	tar -cjvf nanvix-$(VERSION).tar.bz2 \
-		build/makefile.mppa256          \
-		include                         \
-		lib                             \
-		scripts/arch/mppa256.sh
-
 # Builds image.
-image: nanvix
+image: | nanvix nanvix-target
 	bash $(TOOLSDIR)/image/build-image.sh $(BINDIR) $(IMAGE)
 
-# Builds binaries and libraries.
+# Builds Nanvix.
 nanvix:
 	mkdir -p $(BINDIR)
 	mkdir -p $(LIBDIR)
-	$(MAKE) -C $(SRCDIR) all
 
 # Cleans everything.
-distclean:
-	$(MAKE) -C $(SRCDIR) distclean
+distclean: distclean-target
 	rm -rf $(IMAGE)
 	rm -rf $(BINDIR) $(LIBDIR)
 
@@ -79,3 +62,4 @@ documentation:
 	mkdir -p $(DOCDIR)
 	doxygen doxygen/doxygen.$(TARGET)
 
+include $(MAKEDIR)/makefile.$(TARGET)

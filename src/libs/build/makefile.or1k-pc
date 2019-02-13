@@ -22,20 +22,17 @@
 # SOFTWARE.
 #
 
-export K1_TOOLCHAIN_DIR="/usr/local/k1tools"
+# Object Files
+OBJ = $(SRC:.c=..o)
 
-#
-# Builds a multi-binary file.
-#
-function build
-{
-	local bindir=$1
-	local iobin=$2
-	local nodebin=$3
-	local multibin=$4
+# Builds All Object Files
+all: $(OBJ)
+	$(AR) $(ARFLAGS) $(LIBDIR)/$(LIBNANVIX) $(OBJ)
 
-	$K1_TOOLCHAIN_DIR/bin/k1-create-multibinary \
-		--boot $bindir/$iobin                   \
-		--clusters $bindir/$nodebin             \
-		-T $multibin
-}
+# Cleans All Object Files
+clean:
+	rm -rf $(LIBDIR)/$(LIBNANVIX) $(OBJ)
+
+# Builds a C Source file
+%.o: %.c
+	$(CC) $(CFLAGS) $< -c -o $@

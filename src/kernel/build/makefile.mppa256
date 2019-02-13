@@ -22,20 +22,40 @@
 # SOFTWARE.
 #
 
-export K1_TOOLCHAIN_DIR="/usr/local/k1tools"
+# C Source Files
+C_SRC += $(wildcard hal/arch/$(ARCH)/*.c) \
+         $(wildcard hal/*.c)              \
+         $(wildcard init/*.c)             \
+         $(wildcard klib/*.c)             \
+         $(wildcard dev/*.c)              \
+         $(wildcard mm/*.c)               \
+         $(wildcard dev/stdout/jtag.c)    \
+         $(wildcard pm/*.c)               \
+         $(wildcard sys/*.c)
 
-#
-# Builds a multi-binary file.
-#
-function build
-{
-	local bindir=$1
-	local iobin=$2
-	local nodebin=$3
-	local multibin=$4
+# Unit Tests for Kernel
+ifneq ($(RELEASE), true)
+C_SRC += $(wildcard test/*.c) \
+         $(wildcard test/hal/hal.c) \
+         $(wildcard test/hal/core/*.c)
+endif
 
-	$K1_TOOLCHAIN_DIR/bin/k1-create-multibinary \
-		--boot $bindir/$iobin                   \
-		--clusters $bindir/$nodebin             \
-		-T $multibin
-}
+# Object Files
+OBJ = $(ASM_SRC:.S=.$(CLUSTER).o) \
+	  $(C_SRC:.c=.$(CLUSTER).o)
+
+# Builds All Object Files
+all: $(OBJ)
+	$(AR) $(ARFLAGS) $(LIBDIR)/$(LIBKERNEL) $(OBJ)
+
+# Cleans All Object Files
+clean:
+	rm -rf $(LIBDIR)/$(LIBKERNEL) $(OBJ)
+
+# Builds a C Source file
+%.$(CLUSTER).o: %.c
+	$(CC) $(CFLAGS) $< -c -o $@
+
+# Builds an ASM Source File
+%.$(CLUSTER).o: %.S
+	$(CC) $(CFLAGS) $< -c -o $@
