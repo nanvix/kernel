@@ -58,13 +58,15 @@
 	 *
 	 * @param x Condition to assert.
 	 */
-	#define test_assert(x) \
-	{\
-		if (!x)\
-		{\
-			puts("assertation failed at " __FILE__":" ___TOSTRING(__LINE__) "\n");\
-			while (1) /* noop */;\
-		}\
+	#define test_assert(x)                            \
+	{                                                 \
+		if (!x)                                       \
+		{                                             \
+			puts("assertation failed at "             \
+				__FILE__":" ___TOSTRING(__LINE__)"\n" \
+			);                                        \
+			while (1) /* noop */;                     \
+		}                                             \
 	}
 
 #endif
