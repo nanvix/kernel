@@ -24,8 +24,8 @@
 
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
-#include <arch/i386/gdt.h>
-#include <arch/i386/tss.h>
+#include <arch/core/i386/gdt.h>
+#include <arch/core/i386/tss.h>
 
 /**
  * @brief Task state segment.

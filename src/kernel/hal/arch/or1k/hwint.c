@@ -23,9 +23,7 @@
  * SOFTWARE.
  */
 
-#include <arch/or1k/context.h>
-#include <arch/or1k/int.h>
-#include <arch/or1k/pic.h>
+#include <arch/core/or1k/int.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
 
@@ -85,7 +83,7 @@ PUBLIC void or1k_do_hwint(int num, const struct context *ctx)
 	 * we cannnot use the approach below to find
 	 * a clock int.
 	 */
-	if (num == OR1K_PC_INT_CLOCK)
+	if (num == OR1K_INT_CLOCK)
 	{
 		/* ack. */
 		or1k_pic_ack(num);

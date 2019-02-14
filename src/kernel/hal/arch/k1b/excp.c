@@ -22,10 +22,10 @@
  * SOFTWARE.
  */
 
-#include <arch/k1b/excp.h>
-#include <arch/k1b/cache.h>
-#include <arch/k1b/mmu.h>
-#include <arch/k1b/tlb.h>
+#include <arch/core/k1b/excp.h>
+#include <arch/core/k1b/cache.h>
+#include <arch/core/k1b/mmu.h>
+#include <arch/core/k1b/tlb.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
 

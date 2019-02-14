@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
+#include <nanvix/hal/core/interrupt.h>
 #include <nanvix/const.h>
-#include <nanvix/hal/interrupt.h>
 #include <nanvix/klib.h>
 #include <errno.h>
 

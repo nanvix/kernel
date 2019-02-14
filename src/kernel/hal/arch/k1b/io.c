@@ -22,9 +22,6 @@
  * SOFTWARE.
  */
 
-#include <arch/k1b/core.h>
-#include <arch/k1b/elf.h>
-#include <arch/k1b/io.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
 #include <vbsp.h>
@@ -33,6 +30,8 @@
  * @brief JTAG Write system call.
  */
 #define __NR_jtag_write 4094
+
+#define K1B_BUFSIZE 32
 
 /**
  * @brief Writes data to the JTAG device.
@@ -43,9 +42,9 @@
 void hal_jtag_write(const uint8_t *buf, size_t n)
 {
 	size_t k;
-	char jtag_buf[JTAG_BUFSIZE];
+	char jtag_buf[K1B_BUFSIZE];
 
-	k = (n > JTAG_BUFSIZE) ? JTAG_BUFSIZE : n;
+	k = (n > K1B_BUFSIZE) ? K1B_BUFSIZE : n;
 
 	kmemcpy(jtag_buf, (const char *)buf, k);
 

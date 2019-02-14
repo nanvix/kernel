@@ -23,8 +23,9 @@
  * SOFTWARE.
  */
 
-#include <arch/or1k/excp.h>
-#include <arch/or1k/tlb.h>
+#include <arch/core/or1k/core.h>
+#include <arch/core/or1k/excp.h>
+#include <arch/core/or1k/tlb.h>
 #include <nanvix/klib.h>
 #include <nanvix/const.h>
 

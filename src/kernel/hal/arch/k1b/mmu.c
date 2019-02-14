@@ -22,22 +22,17 @@
  * SOFTWARE.
  */
 
-#define NANVIX_HAL_TARGET_H_
-
-#include <arch/k1b/cpu.h>
-#include <arch/k1b/elf.h>
-#include <arch/k1b/mmu.h>
-#include <arch/k1b/tlb.h>
-#include <target/kalray/mppa256.h>
+#include <arch/cluster/k1b/cpu.h>
+#include <arch/cluster/k1b/memory.h>
 #include <nanvix/const.h>
 
 /*
  * Addresses should be alined to huge page boundaries.
  */
-#if (MPPA256_HYPER_LOW_BASE_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+#if (K1B_HYPER_LOW_BASE_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
 #error "bad memory layout"
 #endif
-#if (MPPA256_HYPER_HIGH_BASE_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+#if (K1B_HYPER_HIGH_BASE_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
 #error "bad memory layout"
 #endif
 
@@ -86,24 +81,24 @@ PUBLIC struct pde *idle_pgdir = &root_pgdir[0];
 /*
  * Physical Memory Layout
  */
-const paddr_t MPPA256_KERNEL_BASE_PHYS  = MPPA256_HYPER_LOW_END_PHYS;                                 /* Kernel Base          */
-const paddr_t MPPA256_KERNEL_END_PHYS   = (paddr_t)(&_kend);                                          /* Kernel End           */
-const paddr_t MPPA256_KPOOL_BASE_PHYS   = (paddr_t)(&_kend);                                          /* Kernel Pool Base     */
-const paddr_t MPPA256_KPOOL_END_PHYS    = (paddr_t)(&_kend) + MPPA256_KPOOL_SIZE;                     /* Kernel Pool End      */
-const paddr_t MPPA256_USER_BASE_PHYS    = (paddr_t)(&_kend) + MPPA256_KPOOL_SIZE;                     /* User Base            */
-const paddr_t MPPA256_USER_END_PHYS     = (paddr_t)(&_kend) + MPPA256_KPOOL_SIZE + MPPA256_UMEM_SIZE; /* User End             */
-const paddr_t MPPA256_KSTACK_BASE_PHYS  = (paddr_t)(&_user_stack_start);                              /* Kernel Stack Base    */
+const paddr_t K1B_KERNEL_BASE_PHYS  = K1B_HYPER_LOW_END_PHYS;                             /* Kernel Base        */
+const paddr_t K1B_KERNEL_END_PHYS   = (paddr_t)(&_kend);                                  /* Kernel End         */
+const paddr_t K1B_KPOOL_BASE_PHYS   = (paddr_t)(&_kend);                                  /* Kernel Pool Base   */
+const paddr_t K1B_KPOOL_END_PHYS    = (paddr_t)(&_kend) + K1B_KPOOL_SIZE;                 /* Kernel Pool End    */
+const paddr_t K1B_USER_BASE_PHYS    = (paddr_t)(&_kend) + K1B_KPOOL_SIZE;                 /* User Base          */
+const paddr_t K1B_USER_END_PHYS     = (paddr_t)(&_kend) + K1B_KPOOL_SIZE + K1B_UMEM_SIZE; /* User End           */
+const paddr_t K1B_KSTACK_BASE_PHYS  = (paddr_t)(&_user_stack_start);                      /* Kernel Stack Base  */
 
 /**
  * Virtual Memory Layout
  */
-const vaddr_t MPPA256_KERNEL_BASE_VIRT  = MPPA256_HYPER_LOW_END_VIRT;                                 /* Kernel Base          */
-const vaddr_t MPPA256_KERNEL_END_VIRT   = (vaddr_t)(&_kend);                                          /* Kernel End           */
-const vaddr_t MPPA256_KPOOL_BASE_VIRT   = (vaddr_t)(&_kend);                                          /* Kernel Pool Base     */
-const vaddr_t MPPA256_KPOOL_END_VIRT    = (vaddr_t)(&_kend) + MPPA256_KPOOL_SIZE;                     /* Kernel Pool End      */
-const vaddr_t MPPA256_USER_BASE_VIRT    = (vaddr_t)(&_kend) + MPPA256_KPOOL_SIZE;                     /* User Base            */
-const vaddr_t MPPA256_USER_END_VIRT     = (vaddr_t)(&_kend) + MPPA256_KPOOL_SIZE + MPPA256_UMEM_SIZE; /* User End             */
-const vaddr_t MPPA256_KSTACK_BASE_VIRT  = (vaddr_t)(&_user_stack_start);                              /* Kernel Stack Base    */
+const vaddr_t K1B_KERNEL_BASE_VIRT  = K1B_HYPER_LOW_END_VIRT;                             /* Kernel Base        */
+const vaddr_t K1B_KERNEL_END_VIRT   = (vaddr_t)(&_kend);                                  /* Kernel End         */
+const vaddr_t K1B_KPOOL_BASE_VIRT   = (vaddr_t)(&_kend);                                  /* Kernel Pool Base   */
+const vaddr_t K1B_KPOOL_END_VIRT    = (vaddr_t)(&_kend) + K1B_KPOOL_SIZE;                 /* Kernel Pool End    */
+const vaddr_t K1B_USER_BASE_VIRT    = (vaddr_t)(&_kend) + K1B_KPOOL_SIZE;                 /* User Base          */
+const vaddr_t K1B_USER_END_VIRT     = (vaddr_t)(&_kend) + K1B_KPOOL_SIZE + K1B_UMEM_SIZE; /* User End           */
+const vaddr_t K1B_KSTACK_BASE_VIRT  = (vaddr_t)(&_user_stack_start);                      /* Kernel Stack Base  */
 
 /**
  * @brief Map Hypervisor page frames.
@@ -116,8 +111,8 @@ const vaddr_t MPPA256_KSTACK_BASE_VIRT  = (vaddr_t)(&_user_stack_start);        
 PRIVATE void mmu_map_hypervisor(struct pte *pgtab)
 {
 	/* Fill up Low Hypervisor PTEs. */
-	for (vaddr_t vaddr = MPPA256_HYPER_LOW_BASE_VIRT;
-	             vaddr < MPPA256_HYPER_LOW_END_VIRT;
+	for (vaddr_t vaddr = K1B_HYPER_LOW_BASE_VIRT;
+	             vaddr < K1B_HYPER_LOW_END_VIRT;
 	             vaddr += K1B_PAGE_SIZE)
 	{
 		unsigned idx;
@@ -131,8 +126,8 @@ PRIVATE void mmu_map_hypervisor(struct pte *pgtab)
 	}
 
 	/* Fill up High Hypervisor PTEs. */
-	for (vaddr_t vaddr = MPPA256_HYPER_HIGH_BASE_VIRT;
-	             vaddr < MPPA256_HYPER_HIGH_END_VIRT;
+	for (vaddr_t vaddr = K1B_HYPER_HIGH_BASE_VIRT;
+	             vaddr < K1B_HYPER_HIGH_END_VIRT;
 	             vaddr += K1B_PAGE_SIZE)
 	{
 		unsigned idx;
@@ -155,8 +150,8 @@ PRIVATE void mmu_map_hypervisor(struct pte *pgtab)
 PRIVATE void mmu_map_kernel(struct pte *pgtab)
 {
 	/* Fill up Kernel Code and Data PTEs. */
-	for (vaddr_t vaddr = MPPA256_KERNEL_BASE_PHYS;
-	             vaddr < MPPA256_KERNEL_END_PHYS;
+	for (vaddr_t vaddr = K1B_KERNEL_BASE_PHYS;
+	             vaddr < K1B_KERNEL_END_PHYS;
 	             vaddr += K1B_PAGE_SIZE)
 	{
 		unsigned idx;
@@ -179,8 +174,8 @@ PRIVATE void mmu_map_kernel(struct pte *pgtab)
 PRIVATE void mmu_map_kpool(struct pte *pgtab)
 {
 	/* Fill up Kernel Page Pool PTEs. */
-	for (vaddr_t vaddr = MPPA256_KPOOL_BASE_PHYS;
-	             vaddr < MPPA256_KPOOL_END_PHYS;
+	for (vaddr_t vaddr = K1B_KPOOL_BASE_PHYS;
+	             vaddr < K1B_KPOOL_END_PHYS;
 	             vaddr += K1B_PAGE_SIZE)
 	{
 		unsigned idx;
@@ -211,27 +206,27 @@ PRIVATE void mmu_warmup(void)
 
 	/* Load Hypervisor entries into the TLB. */
 	k1b_tlb_write(
-		MPPA256_HYPER_LOW_BASE_VIRT,
-		MPPA256_HYPER_LOW_BASE_VIRT,
+		K1B_HYPER_LOW_BASE_VIRT,
+		K1B_HYPER_LOW_BASE_VIRT,
 		K1B_HUGE_PAGE_SHIFT,
 		1,
 		K1B_TLBE_PROT_RWX
 	);
 	k1b_tlb_write(
-		MPPA256_HYPER_HIGH_BASE_VIRT,
-		MPPA256_HYPER_HIGH_BASE_VIRT,
+		K1B_HYPER_HIGH_BASE_VIRT,
+		K1B_HYPER_HIGH_BASE_VIRT,
 		K1B_HUGE_PAGE_SHIFT,
 		1,
 		K1B_TLBE_PROT_RWX
 	);
 
 	/* Load Kernel entries into the TLB. */
-	start = MPPA256_KERNEL_BASE_VIRT; end = MPPA256_KERNEL_END_VIRT;
+	start = K1B_KERNEL_BASE_VIRT; end = K1B_KERNEL_END_VIRT;
 	for (vaddr_t vaddr = start; vaddr < end; vaddr += K1B_HUGE_PAGE_SIZE)
 		k1b_tlb_write(vaddr, vaddr, K1B_HUGE_PAGE_SHIFT, 1, K1B_TLBE_PROT_RWX);
 
 	/* Load Kernel Page Pool entries into the TLB. */
-	start = MPPA256_KPOOL_BASE_VIRT; end = MPPA256_KPOOL_END_VIRT;
+	start = K1B_KPOOL_BASE_VIRT; end = K1B_KPOOL_END_VIRT;
 	for (vaddr_t vaddr = start; vaddr < end; vaddr += K1B_HUGE_PAGE_SIZE)
 		k1b_tlb_write(vaddr, vaddr, K1B_HUGE_PAGE_SHIFT, 1, K1B_TLBE_PROT_RW);
 
@@ -246,17 +241,17 @@ PRIVATE void mmu_warmup(void)
  */
 PRIVATE void k1b_mmu_check_alignment(void)
 {
-	if (MPPA256_KERNEL_BASE_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+	if (K1B_KERNEL_BASE_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
 		kpanic("kernel base address misaligned");
-	if (MPPA256_KERNEL_END_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+	if (K1B_KERNEL_END_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
 		kpanic("kernel end address misaligned");
-	if (MPPA256_KPOOL_BASE_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+	if (K1B_KPOOL_BASE_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
 		kpanic("kernel pool base address misaligned");
-	if (MPPA256_KPOOL_END_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+	if (K1B_KPOOL_END_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
 		kpanic("kernel pool end address misaligned");
-	if (MPPA256_USER_BASE_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+	if (K1B_USER_BASE_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
 		kpanic("user base address misaligned");
-	if (MPPA256_USER_END_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+	if (K1B_USER_END_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
 		kpanic("user end address misaligned");
 }
 
@@ -270,7 +265,7 @@ PRIVATE void k1b_mmu_check_layout(void)
 	kstack_size = (vaddr_t)(&_user_stack_start) - (vaddr_t)(&_user_stack_end);
 	kstack_size /= K1B_NUM_CORES;
 
-	if (MPPA256_KSTACK_BASE_VIRT != (vaddr_t)(&_user_stack_start))
+	if (K1B_KSTACK_BASE_VIRT != (vaddr_t)(&_user_stack_start))
 		kpanic("bad kernel stack base address");
 	if (kstack_size != K1B_KSTACK_SIZE)
 		kpanic("bad kernel stack size");
@@ -296,18 +291,18 @@ PUBLIC void k1b_mmu_setup(void)
 	{
 		kprintf("[core %d][hal] kernel_base=%x kernel_end=%x",
 			coreid,
-			MPPA256_KERNEL_BASE_VIRT,
-			MPPA256_KERNEL_END_VIRT
+			K1B_KERNEL_BASE_VIRT,
+			K1B_KERNEL_END_VIRT
 		);
 		kprintf("[core %d][hal]  kpool_base=%x  kpool_end=%x",
 			coreid,
-			MPPA256_KPOOL_BASE_VIRT,
-			MPPA256_KPOOL_END_VIRT
+			K1B_KPOOL_BASE_VIRT,
+			K1B_KPOOL_END_VIRT
 		);
 		kprintf("[core %d][hal]   user_base=%x   user_end=%x",
 			coreid,
-			MPPA256_USER_BASE_VIRT,
-			MPPA256_USER_END_VIRT
+			K1B_USER_BASE_VIRT,
+			K1B_USER_END_VIRT
 		);
 
 		kprintf("[core %d][hal] memsize=%d MB kmem=%d KB kpool=%d KB umem=%d KB",

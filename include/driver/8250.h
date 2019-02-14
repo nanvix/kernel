@@ -31,6 +31,7 @@
  */
 /**@{*/
 
+	#include <nanvix/hal/cluster/memory.h>
 	#include <stddef.h>
 	#include <stdint.h>
 
@@ -39,7 +40,7 @@
 	 */
 	/**@{*/
 	#define UART_CLOCK_SIGNAL 50000000
-	#define UART_ADDR         _OR1K_UART_VIRT
+	#define UART_ADDR         _UART_ADDR
 	#define UART_BAUD         115200
 	#define UART_IRQ          2
 	/**@}*/
@@ -65,6 +66,7 @@
 	/**@{*/
 	#define DLB1 0 /**< Divisor Latch LSB (RW). */
 	#define DLB2 1 /**< Divisor Latch MSB (RW). */
+	/**@}*/
 
 	/**
 	 * Interrupt Enable Register bits.
@@ -147,9 +149,6 @@
 	 * @param n   Number of bytes to write.
 	 */
 	extern void uart8250_write(const char *buf, size_t n);
-
-	/* Memory definitions. */
-	#include <target/or1k/pc.h>
 
 /**@}*/
 

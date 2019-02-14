@@ -38,9 +38,10 @@
 /* Must come first. */
 #define _ASM_FILE_
 
-#include <arch/or1k/core.h>
-#include <arch/or1k/mmu.h>
-#include <target/or1k/pc.h>
+#include <arch/core/or1k/core.h>
+#include <arch/core/or1k/mmu.h>
+#include <arch/core/or1k/int.h>
+#include <arch/cluster/or1k/memory.h>
 
 /* Exported symbols. */
 .globl start
@@ -119,7 +120,7 @@ start:
 	l.sw  OR1K_PTE_SIZE*196(r3), r1
 
 	OR1K_LOAD_SYMBOL_2_GPR(r1, uart_pgtab)
-	OR1K_LOAD_SYMBOL_2_GPR(r2, (_OR1K_UART_PHYS >> PAGE_SHIFT) << OR1K_PPN_SHIFT)
+	OR1K_LOAD_SYMBOL_2_GPR(r2, (OR1K_UART_PHYS >> PAGE_SHIFT) << OR1K_PPN_SHIFT)
 	l.ori r2, r2, OR1K_PT_L | OR1K_PT_PRESENT
 	l.sw 0(r1), r2
 
@@ -130,7 +131,7 @@ start:
 	l.sw  PTE_SIZE*197(r3), r1
 
 	OR1K_LOAD_SYMBOL_2_GPR(r1, ompic_pgtab)
-	OR1K_LOAD_SYMBOL_2_GPR(r2, (_OR1K_OMPIC_PHYS >> PAGE_SHIFT) << OR1K_PPN_SHIFT)
+	OR1K_LOAD_SYMBOL_2_GPR(r2, (OR1K_OMPIC_PHYS >> PAGE_SHIFT) << OR1K_PPN_SHIFT)
 	l.ori r2, r2, OR1K_PT_L | OR1K_PT_PRESENT
 	l.sw 0(r1), r2
 

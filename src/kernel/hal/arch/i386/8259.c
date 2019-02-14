@@ -23,8 +23,8 @@
  */
 
 #include <nanvix/const.h>
-#include <arch/i386/8259.h>
-#include <arch/i386/io.h>
+#include <arch/core/i386/8259.h>
+#include <arch/core/i386/io.h>
 #include <stdint.h>
 
 /**

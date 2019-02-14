@@ -26,12 +26,8 @@
 #include <HAL/hal/core/legacy.h>
 #include <mOS_common_types_c.h>
 
-#include <arch/k1b/core.h>
-#include <arch/k1b/cpu.h>
-#include <arch/k1b/elf.h>
-#include <arch/k1b/excp.h>
-#include <arch/k1b/int.h>
-#include <arch/k1b/ivt.h>
+#include <arch/cluster/k1b/cpu.h>
+
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
 

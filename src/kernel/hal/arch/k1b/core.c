@@ -25,10 +25,7 @@
 #include <HAL/hal/board/boot_args.h>
 #include <mOS_vcore_u.h>
 
-#include <arch/k1b/cache.h>
-#include <arch/k1b/core.h>
-#include <arch/k1b/cpu.h>
-#include <arch/k1b/spinlock.h>
+#include <arch/cluster/k1b/cpu.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
 

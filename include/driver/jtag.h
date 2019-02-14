@@ -34,6 +34,11 @@
 	#include <stdint.h>
 
 	/**
+	 * @brief Size of JTAG buffer (in bytes).
+	 */
+	#define JTAG_BUFSIZE 32
+
+	/**
 	 * @brief Initializes the JTAG driver.
 	 */
 	extern void jtag_init(void);

@@ -25,8 +25,8 @@
 /* Must come first. */
 #define _ASM_FILE_
 
-#include <arch/k1b/regs.h>
-#include <target/kalray/mppa256.h>
+#include <arch/core/k1b/asm.h>
+#include <arch/cluster/k1b/memory.h>
 
 .global _k1b_core_reset
 
@@ -50,7 +50,7 @@ _k1b_core_reset:
 	/* Setup kernel stack. */
 	mulwdl $r0 = $r1, K1B_KSTACK_SIZE
 	;;
-	make   $r1 = MPPA256_KSTACK_BASE_VIRT
+	make   $r1 = K1B_KSTACK_BASE_VIRT
 	;;
 	lw     $r2 = 0[$r1]
 	;;

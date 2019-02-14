@@ -38,12 +38,11 @@
 /* Must come first. */
 #define _ASM_FILE_
 
-#include <arch/or1k/context.h>
-#include <arch/or1k/core.h>
-#include <arch/or1k/mmu.h>
-#include <arch/or1k/regs.h>
-#include <arch/or1k/excp.h>
-#include <target/or1k/pc.h>
+#include <arch/core/or1k/core.h>
+#include <arch/core/or1k/mmu.h>
+#include <arch/core/or1k/regs.h>
+#include <arch/core/or1k/excp.h>
+#include <arch/core/or1k/int.h>
 
 /**
  * @brief Size of red zone (in bytes).
@@ -261,10 +260,10 @@ _do_handler 0x100, _do_start, OR1K_EXCP_RESET               /* Reset.           
 _do_handler 0x200, _do_excp,  OR1K_EXCP_BUSERROR            /* Bus error.              */
 _do_handler 0x300, _do_excp,  OR1K_EXCP_PAGE_FAULT          /* Data page fault.        */
 _do_handler 0x400, _do_excp,  OR1K_EXCP_PAGE_FAULT          /* Instruction page fault. */
-_do_handler 0x500, _do_hwint, OR1K_PC_INT_CLOCK             /* Tick timer.             */
+_do_handler 0x500, _do_hwint, OR1K_INT_CLOCK                /* Tick timer.             */
 _do_handler 0x600, _do_excp,  OR1K_EXCP_ALIGNMENT           /* Alignment.              */
 _do_handler 0x700, _do_excp,  OR1K_EXCP_ILLEGAL_INSTRUCTION /* Illegal Instruction.    */
-_do_handler 0x800, _do_hwint, OR1K_PC_INT_EXTERNAL          /* External Interrupt.     */
+_do_handler 0x800, _do_hwint, OR1K_INT_EXTERNAL             /* External Interrupt.     */
 _do_handler 0x900, _do_excp,  OR1K_EXCP_DTLB_FAULT          /* DTLB Fault.             */
 _do_handler 0xa00, _do_excp,  OR1K_EXCP_ITLB_FAULT          /* ITLB Fault.             */
 _do_handler 0xb00, _do_excp,  OR1K_EXCP_RANGE               /* Range.                  */

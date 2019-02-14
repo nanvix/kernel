@@ -29,7 +29,9 @@
  *
  */
 
-#include <arch/k1b/elf.h>
+#define __NEED_K1B_ELF
+#include <arch/core/k1b/elf.h>
+#include <nanvix/const.h>
 #include <mOS_common_types_c.h>
 #include <mOS_vcore_u.h>
 

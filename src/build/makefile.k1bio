@@ -44,7 +44,7 @@ export CFLAGS += -mcluster=$(CLUSTER)
 export LIBKERNEL    = libkernel-$(ARCH)-$(CLUSTER).a
 export LIBNANVIX    = libnanvix-$(ARCH)-$(CLUSTER).a
 export LIBS_OURS    = $(LIBDIR)/$(LIBNANVIX) $(LIBDIR)/$(LIBKERNEL)
-export LIBS_THEIRS  = -lvbsp -mhypervisor
+export LIBS_THEIRS  = -lvbsp -lmppanoc -lmpparouting -mhypervisor
 
 # Binaries
 export EXECBIN = test-driver-k1bio

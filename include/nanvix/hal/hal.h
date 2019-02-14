@@ -22,10 +22,13 @@
  * SOFTWARE.
  */
 
-#ifndef NANVIX_HAL_H_
-#define NANVIX_HAL_H_
+#ifndef NANVIX_HAL_HAL_H_
+#define NANVIX_HAL_HAL_H_
 
 	#include <nanvix/const.h>
+
+	#undef  __NEED_HAL_TARGET
+	#define __NEED_HAL_TARGET
 
 	/**
 	 * @defgroup kernel-hal HAL
@@ -33,18 +36,11 @@
 	 *
 	 * @brief Hardware Abstraction Layer
 	 */
-	#include <nanvix/hal/clock.h>
-	#include <nanvix/hal/cpu.h>
-	#include <nanvix/hal/core.h>
-	#include <nanvix/hal/debug.h>
-	#include <nanvix/hal/interrupt.h>
-	#include <nanvix/hal/io.h>
-	#include <nanvix/hal/memory.h>
-	#include <nanvix/hal/spinlock.h>
+	#include <nanvix/hal/target.h>
 
 	/**
 	 * @brief Runs unit tests on the HAL.
 	 */
 	EXTERN void hal_test_driver(void);
 
-#endif /* NANVIX_HAL_H_ */
+#endif /* NANVIX_HAL_HAL_H_ */

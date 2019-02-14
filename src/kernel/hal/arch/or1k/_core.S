@@ -26,8 +26,7 @@
 /* Must come first. */
 #define _ASM_FILE_
 
-#include <arch/or1k/regs.h>
-#include <target/or1k/pc.h>
+#include <arch/core/or1k/core.h>
 
 .global _or1k_core_reset
 

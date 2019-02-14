@@ -25,9 +25,9 @@
 /* Must come first. */
 #define _ASM_FILE_
 
-#include <arch/k1b/context.h>
-#include <arch/k1b/excp.h>
-#include <arch/k1b/regs.h>
+#include <arch/core/k1b/context.h>
+#include <arch/core/k1b/excp.h>
+#include <arch/core/k1b/asm.h>
 #include <mOS_common_types_s_c.h>
 
 .global _do_syscall

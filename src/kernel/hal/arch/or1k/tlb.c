@@ -23,10 +23,10 @@
  * SOFTWARE.
  */
 
-#include <target/or1k/pc.h>
-#include <arch/or1k/core.h>
-#include <arch/or1k/cpu.h>
-#include <arch/or1k/tlb.h>
+#include <arch/core/or1k/core.h>
+#include <arch/core/or1k/tlb.h>
+#include <arch/cluster/or1k/cpu.h>
+#include <arch/cluster/or1k/memory.h>
 #include <nanvix/const.h>
 
 /**
