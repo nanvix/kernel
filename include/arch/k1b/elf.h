@@ -33,13 +33,30 @@
  */
 /**@{*/
 
-	#include <vbsp.h>
+	#include <nanvix/const.h>
 
 	/**
-	 * @name Target binary sections.
+	 * @name Binary Sections
 	 */
 	/**@{*/
-	#define _SECTION_TEXT __attribute__((section(TARGET_TEXT))) /**< Text section. */
+	#define SECTION_TEXT SECTION(".locked_text")        /**< Text section.              */
+	#define SECTION_BINDESC SECTION(".locked.binaries") /**< Binary descriptor section. */
+	/**@}*/
+
+	/**
+	 * @name Binary Symbols
+	 */
+	/**@{*/
+	extern int _bin_start_frame;   /**< Binary start frame.     */
+	extern int _bin_end_frame;     /**< Binary end frame.       */
+#ifdef __k1io__
+	extern int _ddr_frame_start;   /**< DDR start frame.        */
+	extern int _ddr_frame_end;     /**< DDR end frame.          */
+	extern int __dtb_debut_offset; /**< Device tree offset.     */
+	extern int __dtb_size;         /**< Device tree Size.       */
+#endif
+	extern int _vstart;            /**< Hypervisor entry point. */
+	extern int _scoreboard_offset; /**< Scoreboard offset.      */
 	/**@}*/
 
 /**@}*/
