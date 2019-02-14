@@ -43,7 +43,7 @@
 	 *
 	 * @note This should be set to the highest system call number.
 	 */
-	#define NR_SYSCALLS 8
+	#define NR_SYSCALLS 10
 
 	/**
 	 * @name Magic Numbers for nosyscall()
@@ -57,14 +57,16 @@
 	 * @name System Call Numbers
 	 */
 	/**@{*/
-	#define NR_nosyscall     0 /**< nosyscall()     */
-	#define NR_cache_flush   1 /**< cache_flush()   */
-	#define NR__exit         2 /**< _exit()         */
-	#define NR_write         3 /**< write()         */
-	#define NR_thread_get_id 4 /**< thread_get_id() */
-	#define NR_thread_create 5 /**< thread_create() */
-	#define NR_thread_exit   6 /**< thread_exit()   */
-	#define NR_thread_join   7 /**< thread_join()   */
+	#define NR_nosyscall     0 /**< nosyscall()         */
+	#define NR_cache_flush   1 /**< cache_flush()       */
+	#define NR__exit         2 /**< _exit()             */
+	#define NR_write         3 /**< sys_write()         */
+	#define NR_thread_get_id 4 /**< sys_thread_get_id() */
+	#define NR_thread_create 5 /**< sys_thread_create() */
+	#define NR_thread_exit   6 /**< sys_thread_exit()   */
+	#define NR_thread_join   7 /**< sys_thread_join()   */
+	#define NR_sleep         8 /**< sys_sleep()         */
+	#define NR_wakeup        9 /**< sys_wakeup()        */
 	/**@}*/
 
 	/**
@@ -79,6 +81,8 @@
 	EXTERN int sys_thread_create(int *, void*(*)(void*), void *);
 	EXTERN void sys_thread_exit(void *);
 	EXTERN int sys_thread_join(int, void **);
+	EXTERN int sys_sleep(void);
+	EXTERN int sys_wakeup(int);
 	/**@}*/
 
 /**@}*/
