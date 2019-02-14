@@ -81,14 +81,6 @@ PUBLIC void do_syscall2(void)
 		/* Parse system call number. */
 		switch (sysboard[coreid].syscall_nr)
 		{
-			case NR_nosyscall:
-				ret = sys_nosyscall((unsigned) sysboard[coreid].arg0);
-				break;
-
-			case NR_cache_flush:
-				ret = sys_cache_flush();
-				break;
-
 			case NR__exit:
 				sys_exit((int) sysboard[coreid].arg0);
 				break;

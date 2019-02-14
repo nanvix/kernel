@@ -40,7 +40,7 @@ PRIVATE struct
 } queues[KTHREAD_MAX] = {
 	[0 ... (KTHREAD_MAX - 1)] = {
 		.tid = -1,
-		.cond = COND_INITIALIZER 
+		.cond = COND_INITIALIZER
 	},
 };
 
@@ -86,7 +86,7 @@ PUBLIC int sys_wakeup(int tid)
 		return (-EINVAL);
 
 	spinlock_lock(&lock);
-	
+
 		/* Search for sleeping thread. */
 		for (int i = 0; i < KTHREAD_MAX; i++)
 		{
