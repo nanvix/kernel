@@ -22,6 +22,13 @@
 # SOFTWARE.
 #
 
+# Linker Options
+ifeq ($(CLUSTER),node)
+	export LDFLAGS  += -L $(LINKERDIR)/k1bdp/ -T link.ld
+else
+	export LDFLAGS  += -L $(LINKERDIR)/k1bio/ -T link.ld
+endif
+
 # Object Files
 OBJ = $(SRC:.c=.$(CLUSTER).o)
 
