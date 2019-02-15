@@ -62,7 +62,9 @@ PRIVATE struct condvar joincond[KTHREAD_MAX] = {
 /**
  * @brief Thread exit conditions.
  */
-PRIVATE struct condvar exitcond = COND_INITIALIZER;
+PRIVATE struct condvar exitcond[KTHREAD_MAX] = {
+	[0 ... (KTHREAD_MAX - 1)] = COND_INITIALIZER
+};
 
 /**
  * @brief Thread manager lock.
@@ -149,17 +151,20 @@ PRIVATE void thread_free(struct thread *t)
  */
 PUBLIC NORETURN void thread_exit(void *retval)
 {
+	int mycoreid;
 	struct thread *curr_thread;
 
 	UNUSED(retval);
 
+	curr_thread = thread_get_curr();
+	mycoreid = thread_get_coreid(curr_thread);
+
 	spinlock_lock(&lock_tm);
 
-		curr_thread = thread_get_curr();
 		curr_thread->state = THREAD_TERMINATED;
 
-		cond_broadcast(&joincond[thread_get_coreid(curr_thread)]);
-		cond_wait(&exitcond, &lock_tm);
+		cond_broadcast(&joincond[mycoreid]);
+		cond_wait(&exitcond[mycoreid], &lock_tm);
 
 		thread_free(curr_thread);
 
@@ -329,16 +334,19 @@ PUBLIC int thread_join(int tid, void **retval)
 		/* Wait for thread termination. */
 		if ((t = thread_get(tid)) != NULL)
 		{
+			int coreid;
+
 			ret = 0;
+			coreid = thread_get_coreid(t);
 
 			/*
 			 * The target thread is still running,
 			 * so we have to block and wait for it.
 			 */
 			if (t->state == THREAD_RUNNING)
-				cond_wait(&joincond[thread_get_coreid(t)], &lock_tm);
+				cond_wait(&joincond[coreid], &lock_tm);
 
-			cond_broadcast(&exitcond);
+			cond_broadcast(&exitcond[coreid]);
 		}
 
 	spinlock_unlock(&lock_tm);
