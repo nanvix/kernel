@@ -75,8 +75,8 @@ MPPA_SPAWN_DIRECTORY_SIZE = DEFINED(MPPA_SPAWN_DIRECTORY_SIZE) ? MPPA_SPAWN_DIRE
 MPPA_IMAGES_DIRECTORY_ADDRESS = DEFINED(MPPA_IMAGES_DIRECTORY_ADDRESS) ? MPPA_IMAGES_DIRECTORY_ADDRESS : RamBase;
 MPPA_IMAGES_DIRECTORY_SIZE = DEFINED(MPPA_IMAGES_DIRECTORY_SIZE) ? MPPA_IMAGES_DIRECTORY_SIZE : 32M;
 
+EXTERN(_vstart)
 
-EXTERN( _vstart,__bsp_global_desc, bin_descriptor, locked_assert_func, locked_memset, __bsp_get_router_id, __stack_overflow_detected, bsp_barrier, micro_interface_ctor, libnoc_ctor, __mppa_dsm_client_ctor, main, __proceed)
 /* Definition of sections */
 SECTIONS
 {

@@ -73,7 +73,7 @@ _VBSP_OVERRIDE_PE_MASK = DEFINED(_VBSP_OVERRIDE_PE_MASK) ? _VBSP_OVERRIDE_PE_MAS
 __MPPA_BURN_TX = DEFINED(__MPPA_BURN_TX) ? __MPPA_BURN_TX : 7;
 __MPPA_BURN_FDIR = DEFINED(__MPPA_BURN_FDIR) ? __MPPA_BURN_FDIR : 4;
 
-EXTERN( _vstart,__bsp_global_desc, bin_descriptor, locked_assert_func, locked_memset, __bsp_get_router_id, __stack_overflow_detected, bsp_barrier, micro_interface_ctor, libnoc_ctor, __mppa_dsm_client_ctor, main, __proceed, mppa_power_base_exit, _scoreboard, __mppa_remote_client_init_ctor)
+EXTERN(_vstart)
 
 /* Definition of sections */
 SECTIONS
