@@ -51,12 +51,26 @@
 	/**@}*/
 
 	/**
-	 * @name Function Capability Constants
+	 * @brief Places object in a binary section.
+	 *
+	 * @param x Target binary section.
 	 */
-	/**@{*/
-	#define NORETURN __attribute__((noreturn)) /**< No return. */
-	#define INLINE __atribute__((inline))      /**< Inline.    */
-	/**@}*/
+	#define SECTION(x) __attribute__((section(x)))
+
+	/**
+	 * @brief Overrides a symbol.
+	 */
+	#define OVERRIDE __attribute__((weak))
+
+	/**
+	 * @brief Casts an inline function.
+	 */
+	#define INLINE __atribute__((inline))
+
+	/**
+	 * @brief Casts a function  with no return.
+	 */
+	#define NORETURN __attribute__((noreturn))
 
 	/**
 	 * @name Logical Constants
