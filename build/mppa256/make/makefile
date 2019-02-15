@@ -47,7 +47,7 @@ export CFLAGS   = -D __mppa256__ -D __k1b__
 export CFLAGS  += -mos=$(SYSTEM) -march=$(ARCH) -mboard=$(BOARD)
 
 # Linker Options
-export LDFLAGS  = -Tlink.ld -Wl,--allow-multiple-definition
+export LDFLAGS  = -Wl,--allow-multiple-definition
 
 #===============================================================================
 

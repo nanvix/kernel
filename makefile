@@ -27,13 +27,15 @@
 #===============================================================================
 
 # Directories
-export BINDIR   = $(CURDIR)/bin
-export MAKEDIR  = $(CURDIR)/build
-export DOCDIR   = $(CURDIR)/doc
-export INCDIR   = $(CURDIR)/include
-export LIBDIR   = $(CURDIR)/lib
-export SRCDIR   = $(CURDIR)/src
-export TOOLSDIR = $(CURDIR)/tools
+export BINDIR    = $(CURDIR)/bin
+export BUILDDIR  = $(CURDIR)/build
+export LINKERDIR = $(BUILDDIR)/$(TARGET)/linker
+export MAKEDIR   = $(BUILDDIR)/$(TARGET)/make
+export DOCDIR    = $(CURDIR)/doc
+export INCDIR    = $(CURDIR)/include
+export LIBDIR    = $(CURDIR)/lib
+export SRCDIR    = $(CURDIR)/src
+export TOOLSDIR  = $(CURDIR)/tools
 
 #===============================================================================
 
@@ -62,4 +64,4 @@ documentation:
 	mkdir -p $(DOCDIR)
 	doxygen doxygen/doxygen.$(TARGET)
 
-include $(MAKEDIR)/makefile.$(TARGET)
+include $(MAKEDIR)/makefile

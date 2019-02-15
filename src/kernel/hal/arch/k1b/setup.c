@@ -166,7 +166,7 @@ PRIVATE NORETURN void k1b_master_setup(void)
  *
  * @author Pedro Henrique Penna
  */
-PUBLIC void _SECTION_TEXT NORETURN _do_slave_pe(uint32_t oldsp)
+PUBLIC void SECTION_TEXT NORETURN _do_slave_pe(uint32_t oldsp)
 {
 	UNUSED(oldsp);
 
@@ -189,7 +189,7 @@ PUBLIC void _SECTION_TEXT NORETURN _do_slave_pe(uint32_t oldsp)
  *
  * @author Pedro Henrique Penna
  */
-PUBLIC void _SECTION_TEXT NORETURN _do_master_pe(uint32_t oldsp)
+PUBLIC void SECTION_TEXT NORETURN _do_master_pe(uint32_t oldsp)
 {
 	UNUSED(oldsp);
 

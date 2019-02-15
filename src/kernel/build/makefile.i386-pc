@@ -33,7 +33,7 @@ OBJ = $(ASM_SRC:.S=.o) \
 EXEC = kernel
 
 # Linker Configuration
-export LDFLAGS = -T hal/arch/$(ARCH)/link.ld
+export LDFLAGS  += -L $(LINKERDIR)/ -T link.ld
 
 # Builds All Object Files
 all: $(OBJ)

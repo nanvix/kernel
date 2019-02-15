@@ -22,43 +22,22 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_K1B_ELF_H_
-#define ARCH_K1B_ELF_H_
-
 /**
- * @addtogroup k1b-elf ELF
- * @ingroup k1b
+ * Copyright (C) 2013-2014 Kalray SA.
  *
- * @brief ELF Multibinary Sections
+ * All rights reserved.
  */
-/**@{*/
 
-	#include <nanvix/const.h>
+MEMORY
+{
+    /* Definitions of available memory regions */
+    internal_mem           : ORIGIN = 0x00000000, LENGTH = 2M
+    upper_internal_memory  : ORIGIN = 0x00200000, LENGTH = 2M
 
-	/**
-	 * @name Binary Sections
-	 */
-	/**@{*/
-	#define SECTION_TEXT SECTION(".locked_text")        /**< Text section.              */
-	#define SECTION_BINDESC SECTION(".locked.binaries") /**< Binary descriptor section. */
-	/**@}*/
-
-	/**
-	 * @name Binary Symbols
-	 */
-	/**@{*/
-	extern int _bin_start_frame;   /**< Binary start frame.     */
-	extern int _bin_end_frame;     /**< Binary end frame.       */
-#ifdef __k1io__
-	extern int _ddr_frame_start;   /**< DDR start frame.        */
-	extern int _ddr_frame_end;     /**< DDR end frame.          */
-	extern int __dtb_debut_offset; /**< Device tree offset.     */
-	extern int __dtb_size;         /**< Device tree Size.       */
-#endif
-	extern int _vstart;            /**< Hypervisor entry point. */
-	extern int _scoreboard_offset; /**< Scoreboard offset.      */
-	/**@}*/
-
-/**@}*/
-
-#endif /* ARCH_K1B_ELF_H_ */
+    /*
+     * 2G since 64G is not directly accessible for linker
+     * a RTEMS bug prevent to use 2G, but 2G-1 does work, see #5591
+     */
+    ddr                    : ORIGIN = 0x80000000, LENGTH = 2147483647
+    flash                  : ORIGIN = 0x08000000, LENGTH = 128M
+}
