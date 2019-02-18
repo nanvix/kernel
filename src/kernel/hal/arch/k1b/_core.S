@@ -50,7 +50,11 @@ _k1b_core_reset:
 	/* Setup kernel stack. */
 	mulwdl $r0 = $r1, K1B_KSTACK_SIZE
 	;;
-	make   $r1 = MPPA256_KSTACK_BASE_VIRT - 8
+	make   $r1 = MPPA256_KSTACK_BASE_VIRT
+	;;
+	lw     $r2 = 0[$r1]
+	;;
+	add    $r1 = $r2, -8
 	;;
 	sbf    $sp = $r0, $r1
 	;;

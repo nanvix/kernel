@@ -25,10 +25,21 @@
 #define NANVIX_HAL_TARGET_H_
 
 #include <arch/k1b/cpu.h>
+#include <arch/k1b/elf.h>
 #include <arch/k1b/mmu.h>
 #include <arch/k1b/tlb.h>
 #include <target/kalray/mppa256.h>
 #include <nanvix/const.h>
+
+/*
+ * Addresses should be alined to huge page boundaries.
+ */
+#if (MPPA256_HYPER_LOW_BASE_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+#error "bad memory layout"
+#endif
+#if (MPPA256_HYPER_HIGH_BASE_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+#error "bad memory layout"
+#endif
 
 /**
  * @brief Length of virtual addresses.
@@ -72,6 +83,28 @@ PRIVATE struct pde root_pgdir[K1B_PGDIR_LENGTH] __attribute__((aligned(K1B_PAGE_
  */
 PUBLIC struct pde *idle_pgdir = &root_pgdir[0];
 
+/*
+ * Physical Memory Layout
+ */
+const paddr_t MPPA256_KERNEL_BASE_PHYS  = MPPA256_HYPER_LOW_END_PHYS;                                 /* Kernel Base          */
+const paddr_t MPPA256_KERNEL_END_PHYS   = (paddr_t)(&_kend);                                          /* Kernel End           */
+const paddr_t MPPA256_KPOOL_BASE_PHYS   = (paddr_t)(&_kend);                                          /* Kernel Pool Base     */
+const paddr_t MPPA256_KPOOL_END_PHYS    = (paddr_t)(&_kend) + MPPA256_KPOOL_SIZE;                     /* Kernel Pool End      */
+const paddr_t MPPA256_USER_BASE_PHYS    = (paddr_t)(&_kend) + MPPA256_KPOOL_SIZE;                     /* User Base            */
+const paddr_t MPPA256_USER_END_PHYS     = (paddr_t)(&_kend) + MPPA256_KPOOL_SIZE + MPPA256_UMEM_SIZE; /* User End             */
+const paddr_t MPPA256_KSTACK_BASE_PHYS  = (paddr_t)(&_user_stack_start);                              /* Kernel Stack Base    */
+
+/**
+ * Virtual Memory Layout
+ */
+const vaddr_t MPPA256_KERNEL_BASE_VIRT  = MPPA256_HYPER_LOW_END_VIRT;                                 /* Kernel Base          */
+const vaddr_t MPPA256_KERNEL_END_VIRT   = (vaddr_t)(&_kend);                                          /* Kernel End           */
+const vaddr_t MPPA256_KPOOL_BASE_VIRT   = (vaddr_t)(&_kend);                                          /* Kernel Pool Base     */
+const vaddr_t MPPA256_KPOOL_END_VIRT    = (vaddr_t)(&_kend) + MPPA256_KPOOL_SIZE;                     /* Kernel Pool End      */
+const vaddr_t MPPA256_USER_BASE_VIRT    = (vaddr_t)(&_kend) + MPPA256_KPOOL_SIZE;                     /* User Base            */
+const vaddr_t MPPA256_USER_END_VIRT     = (vaddr_t)(&_kend) + MPPA256_KPOOL_SIZE + MPPA256_UMEM_SIZE; /* User End             */
+const vaddr_t MPPA256_KSTACK_BASE_VIRT  = (vaddr_t)(&_user_stack_start);                              /* Kernel Stack Base    */
+
 /**
  * @brief Map Hypervisor page frames.
  *
@@ -83,8 +116,8 @@ PUBLIC struct pde *idle_pgdir = &root_pgdir[0];
 PRIVATE void mmu_map_hypervisor(struct pte *pgtab)
 {
 	/* Fill up Low Hypervisor PTEs. */
-	for (vaddr_t vaddr = MPPA256_HYPER_LOW_BASE_PHYS;
-	             vaddr < MPPA256_KERNEL_BASE_PHYS;
+	for (vaddr_t vaddr = MPPA256_HYPER_LOW_BASE_VIRT;
+	             vaddr < MPPA256_HYPER_LOW_END_VIRT;
 	             vaddr += K1B_PAGE_SIZE)
 	{
 		unsigned idx;
@@ -98,8 +131,8 @@ PRIVATE void mmu_map_hypervisor(struct pte *pgtab)
 	}
 
 	/* Fill up High Hypervisor PTEs. */
-	for (vaddr_t vaddr = MPPA256_HYPER_HIGH_BASE_PHYS;
-	             vaddr < (MPPA256_HYPER_HIGH_BASE_PHYS + K1B_PAGE_SIZE);
+	for (vaddr_t vaddr = MPPA256_HYPER_HIGH_BASE_VIRT;
+	             vaddr < MPPA256_HYPER_HIGH_END_VIRT;
 	             vaddr += K1B_PAGE_SIZE)
 	{
 		unsigned idx;
@@ -209,6 +242,41 @@ PRIVATE void mmu_warmup(void)
 }
 
 /**
+ * @brief Assert memory alignment.
+ */
+PRIVATE void k1b_mmu_check_alignment(void)
+{
+	if (MPPA256_KERNEL_BASE_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+		kpanic("kernel base address misaligned");
+	if (MPPA256_KERNEL_END_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+		kpanic("kernel end address misaligned");
+	if (MPPA256_KPOOL_BASE_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+		kpanic("kernel pool base address misaligned");
+	if (MPPA256_KPOOL_END_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+		kpanic("kernel pool end address misaligned");
+	if (MPPA256_USER_BASE_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+		kpanic("user base address misaligned");
+	if (MPPA256_USER_END_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+		kpanic("user end address misaligned");
+}
+
+/**
+ * @brief Assert memory layout.
+ */
+PRIVATE void k1b_mmu_check_layout(void)
+{
+	size_t kstack_size;
+
+	kstack_size = (vaddr_t)(&_user_stack_start) - (vaddr_t)(&_user_stack_end);
+	kstack_size /= K1B_NUM_CORES;
+
+	if (MPPA256_KSTACK_BASE_VIRT != (vaddr_t)(&_user_stack_start))
+		kpanic("bad kernel stack base address");
+	if (kstack_size != K1B_KSTACK_SIZE)
+		kpanic("bad kernel stack size");
+}
+
+/**
  * The k1b_mmu_setup() function initializes the Memory Management Unit
  * (MMU) of the underlying k1b core.
  */
@@ -226,6 +294,22 @@ PUBLIC void k1b_mmu_setup(void)
 	 */
 	if (coreid == 0)
 	{
+		kprintf("[core %d][hal] kernel_base=%x kernel_end=%x",
+			coreid,
+			MPPA256_KERNEL_BASE_VIRT,
+			MPPA256_KERNEL_END_VIRT
+		);
+		kprintf("[core %d][hal]  kpool_base=%x  kpool_end=%x",
+			coreid,
+			MPPA256_KPOOL_BASE_VIRT,
+			MPPA256_KPOOL_END_VIRT
+		);
+		kprintf("[core %d][hal]   user_base=%x   user_end=%x",
+			coreid,
+			MPPA256_USER_BASE_VIRT,
+			MPPA256_USER_END_VIRT
+		);
+
 		kprintf("[core %d][hal] memsize=%d MB kmem=%d KB kpool=%d KB umem=%d KB",
 			coreid,
 			_MEMORY_SIZE/(1024*1024),
@@ -233,6 +317,10 @@ PUBLIC void k1b_mmu_setup(void)
 			_KPOOL_SIZE/1024,
 			_UMEM_SIZE/1024
 		);
+
+		/* Check for memory layout. */
+		k1b_mmu_check_alignment();
+		k1b_mmu_check_layout();
 
 		/* Clean root page table. */
 		for (int i = 0; i < K1B_PGTAB_LENGTH; i++)
