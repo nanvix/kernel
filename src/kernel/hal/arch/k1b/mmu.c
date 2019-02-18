@@ -25,10 +25,21 @@
 #define NANVIX_HAL_TARGET_H_
 
 #include <arch/k1b/cpu.h>
+#include <arch/k1b/elf.h>
 #include <arch/k1b/mmu.h>
 #include <arch/k1b/tlb.h>
 #include <target/kalray/mppa256.h>
 #include <nanvix/const.h>
+
+/*
+ * Addresses should be alined to huge page boundaries.
+ */
+#if (MPPA256_HYPER_LOW_BASE_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+#error "bad memory layout"
+#endif
+#if (MPPA256_HYPER_HIGH_BASE_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+#error "bad memory layout"
+#endif
 
 /**
  * @brief Length of virtual addresses.
@@ -231,6 +242,41 @@ PRIVATE void mmu_warmup(void)
 }
 
 /**
+ * @brief Assert memory alignment.
+ */
+PRIVATE void k1b_mmu_check_alignment(void)
+{
+	if (MPPA256_KERNEL_BASE_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+		kpanic("kernel base address misaligned");
+	if (MPPA256_KERNEL_END_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+		kpanic("kernel end address misaligned");
+	if (MPPA256_KPOOL_BASE_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+		kpanic("kernel pool base address misaligned");
+	if (MPPA256_KPOOL_END_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+		kpanic("kernel pool end address misaligned");
+	if (MPPA256_USER_BASE_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+		kpanic("user base address misaligned");
+	if (MPPA256_USER_END_VIRT & (K1B_HUGE_PAGE_SIZE - 1))
+		kpanic("user end address misaligned");
+}
+
+/**
+ * @brief Assert memory layout.
+ */
+PRIVATE void k1b_mmu_check_layout(void)
+{
+	size_t kstack_size;
+
+	kstack_size = (vaddr_t)(&_user_stack_start) - (vaddr_t)(&_user_stack_end);
+	kstack_size /= K1B_NUM_CORES;
+
+	if (MPPA256_KSTACK_BASE_VIRT != (vaddr_t)(&_user_stack_start))
+		kpanic("bad kernel stack base address");
+	if (kstack_size != K1B_KSTACK_SIZE)
+		kpanic("bad kernel stack size");
+}
+
+/**
  * The k1b_mmu_setup() function initializes the Memory Management Unit
  * (MMU) of the underlying k1b core.
  */
@@ -271,6 +317,10 @@ PUBLIC void k1b_mmu_setup(void)
 			_KPOOL_SIZE/1024,
 			_UMEM_SIZE/1024
 		);
+
+		/* Check for memory layout. */
+		k1b_mmu_check_alignment();
+		k1b_mmu_check_layout();
 
 		/* Clean root page table. */
 		for (int i = 0; i < K1B_PGTAB_LENGTH; i++)
