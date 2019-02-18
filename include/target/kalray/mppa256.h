@@ -124,7 +124,13 @@
 	#endif
 
 	/**
+	 * @brief Kernel pool size (in bytes).
 	 */
+	#if defined(__ioddr__) || defined(__ioeth__)
+		#define MPPA256_KPOOL_SIZE (0x10000)
+	#elif defined(__node__)
+		#define MPPA256_KPOOL_SIZE (0x10000)
+	#endif
 
 	/**
 	 * @name Physical Memory Layout
@@ -231,7 +237,7 @@
 		/**
 		 * @brief Kernel page pool size (in bytes).
 		 */
-		#define _KPOOL_SIZE (MPPA256_KPOOL_END_PHYS - MPPA256_KPOOL_BASE_PHYS)
+		#define _KPOOL_SIZE MPPA256_KPOOL_SIZE
 
 		/**
 		 * @brief User memory size (in bytes).
