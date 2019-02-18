@@ -115,14 +115,16 @@
 	#define K1B_IOETH_MEM_SIZE (4*1024*1024)
 
 	/**
-	 * @brief Log2 of kernel stack size.
-	 */
-	#define K1B_KSTACK_SIZE_LOG2 (11)
-
-	/**
 	 * @brief Kernel stack size (in bytes).
 	 */
-	#define K1B_KSTACK_SIZE (1 << K1B_KSTACK_SIZE_LOG2)
+	#if defined(__ioddr__) || defined(__ioeth__)
+		#define K1B_KSTACK_SIZE (0x1800)
+	#elif defined(__node__)
+		#define K1B_KSTACK_SIZE (0x800)
+	#endif
+
+	/**
+	 */
 
 	/**
 	 * @name Physical Memory Layout
@@ -219,7 +221,7 @@
 		/**
 		 * @brief Kernel stack size (in bytes).
 		 */
-		#define _KSTACK_SIZE K1B_PAGE_SIZE
+		#define _KSTACK_SIZE K1B_KSTACK_SIZE
 
 		/**
 		 * @brief Kernel memory size (in bytes).
