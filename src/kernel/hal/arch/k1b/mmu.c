@@ -72,6 +72,28 @@ PRIVATE struct pde root_pgdir[K1B_PGDIR_LENGTH] __attribute__((aligned(K1B_PAGE_
  */
 PUBLIC struct pde *idle_pgdir = &root_pgdir[0];
 
+/*
+ * Physical Memory Layout
+ */
+const paddr_t MPPA256_KERNEL_BASE_PHYS  = MPPA256_HYPER_LOW_END_PHYS;                                 /* Kernel Base          */
+const paddr_t MPPA256_KERNEL_END_PHYS   = (paddr_t)(&_kend);                                          /* Kernel End           */
+const paddr_t MPPA256_KPOOL_BASE_PHYS   = (paddr_t)(&_kend);                                          /* Kernel Pool Base     */
+const paddr_t MPPA256_KPOOL_END_PHYS    = (paddr_t)(&_kend) + MPPA256_KPOOL_SIZE;                     /* Kernel Pool End      */
+const paddr_t MPPA256_USER_BASE_PHYS    = (paddr_t)(&_kend) + MPPA256_KPOOL_SIZE;                     /* User Base            */
+const paddr_t MPPA256_USER_END_PHYS     = (paddr_t)(&_kend) + MPPA256_KPOOL_SIZE + MPPA256_UMEM_SIZE; /* User End             */
+const paddr_t MPPA256_KSTACK_BASE_PHYS  = (paddr_t)(&_user_stack_start);                              /* Kernel Stack Base    */
+
+/**
+ * Virtual Memory Layout
+ */
+const vaddr_t MPPA256_KERNEL_BASE_VIRT  = MPPA256_HYPER_LOW_END_VIRT;                                 /* Kernel Base          */
+const vaddr_t MPPA256_KERNEL_END_VIRT   = (vaddr_t)(&_kend);                                          /* Kernel End           */
+const vaddr_t MPPA256_KPOOL_BASE_VIRT   = (vaddr_t)(&_kend);                                          /* Kernel Pool Base     */
+const vaddr_t MPPA256_KPOOL_END_VIRT    = (vaddr_t)(&_kend) + MPPA256_KPOOL_SIZE;                     /* Kernel Pool End      */
+const vaddr_t MPPA256_USER_BASE_VIRT    = (vaddr_t)(&_kend) + MPPA256_KPOOL_SIZE;                     /* User Base            */
+const vaddr_t MPPA256_USER_END_VIRT     = (vaddr_t)(&_kend) + MPPA256_KPOOL_SIZE + MPPA256_UMEM_SIZE; /* User End             */
+const vaddr_t MPPA256_KSTACK_BASE_VIRT  = (vaddr_t)(&_user_stack_start);                              /* Kernel Stack Base    */
+
 /**
  * @brief Map Hypervisor page frames.
  *
@@ -83,8 +105,8 @@ PUBLIC struct pde *idle_pgdir = &root_pgdir[0];
 PRIVATE void mmu_map_hypervisor(struct pte *pgtab)
 {
 	/* Fill up Low Hypervisor PTEs. */
-	for (vaddr_t vaddr = MPPA256_HYPER_LOW_BASE_PHYS;
-	             vaddr < MPPA256_KERNEL_BASE_PHYS;
+	for (vaddr_t vaddr = MPPA256_HYPER_LOW_BASE_VIRT;
+	             vaddr < MPPA256_HYPER_LOW_END_VIRT;
 	             vaddr += K1B_PAGE_SIZE)
 	{
 		unsigned idx;
@@ -98,8 +120,8 @@ PRIVATE void mmu_map_hypervisor(struct pte *pgtab)
 	}
 
 	/* Fill up High Hypervisor PTEs. */
-	for (vaddr_t vaddr = MPPA256_HYPER_HIGH_BASE_PHYS;
-	             vaddr < (MPPA256_HYPER_HIGH_BASE_PHYS + K1B_PAGE_SIZE);
+	for (vaddr_t vaddr = MPPA256_HYPER_HIGH_BASE_VIRT;
+	             vaddr < MPPA256_HYPER_HIGH_END_VIRT;
 	             vaddr += K1B_PAGE_SIZE)
 	{
 		unsigned idx;
