@@ -133,6 +133,15 @@
 	#endif
 
 	/**
+	 * @brief User memory size (in bytes).
+	 */
+	#if defined(__ioddr__) || defined(__ioeth__)
+		#define MPPA256_UMEM_SIZE (512*1024)
+	#elif defined(__node__)
+		#define MPPA256_UMEM_SIZE (512*1024)
+	#endif
+
+	/**
 	 * @name Physical Memory Layout
 	 *
 	 * @todo Check if this layout is valid for IO Clusters.
@@ -242,7 +251,7 @@
 		/**
 		 * @brief User memory size (in bytes).
 		 */
-		#define _UMEM_SIZE (MPPA256_USER_END_PHYS - MPPA256_USER_BASE_PHYS)
+		#define _UMEM_SIZE MPPA256_UMEM_SIZE
 
 	/**@endcond*/
 
