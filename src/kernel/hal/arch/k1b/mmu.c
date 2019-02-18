@@ -248,6 +248,22 @@ PUBLIC void k1b_mmu_setup(void)
 	 */
 	if (coreid == 0)
 	{
+		kprintf("[core %d][hal] kernel_base=%x kernel_end=%x",
+			coreid,
+			MPPA256_KERNEL_BASE_VIRT,
+			MPPA256_KERNEL_END_VIRT
+		);
+		kprintf("[core %d][hal]  kpool_base=%x  kpool_end=%x",
+			coreid,
+			MPPA256_KPOOL_BASE_VIRT,
+			MPPA256_KPOOL_END_VIRT
+		);
+		kprintf("[core %d][hal]   user_base=%x   user_end=%x",
+			coreid,
+			MPPA256_USER_BASE_VIRT,
+			MPPA256_USER_END_VIRT
+		);
+
 		kprintf("[core %d][hal] memsize=%d MB kmem=%d KB kpool=%d KB umem=%d KB",
 			coreid,
 			_MEMORY_SIZE/(1024*1024),
