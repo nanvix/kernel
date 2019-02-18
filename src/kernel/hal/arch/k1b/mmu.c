@@ -60,12 +60,12 @@
 /**
  * @brief Root Page Table.
  */
-PUBLIC struct pte root_pgtab[K1B_PGTAB_LENGTH];
+PRIVATE struct pte root_pgtab[K1B_PGTAB_LENGTH] __attribute__((aligned(K1B_PAGE_SIZE)));
 
 /**
  * @brief Root Page Directories.
  */
-PRIVATE struct pde root_pgdir[K1B_PGDIR_LENGTH];
+PRIVATE struct pde root_pgdir[K1B_PGDIR_LENGTH] __attribute__((aligned(K1B_PAGE_SIZE)));
 
 /**
  * Alias to root page directory.
