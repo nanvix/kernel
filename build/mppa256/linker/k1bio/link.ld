@@ -194,6 +194,9 @@ SECTIONS
   }
   ASSERT(__dtb_start < __dtb_end, ".dtb section for storing device tree unexpectedly empty.")
 
+  . = ALIGN(.,0x10000);
+  _kend = ABSOLUTE(.);
+
   . = ALIGN(.,8);
   _smem_heap_start = ABSOLUTE(.);
 

@@ -243,6 +243,9 @@ SECTIONS
   _smem_heap_start = ABSOLUTE(.);
   _smem_heap_end = ABSOLUTE(.);
 
+  . = ALIGN(.,0x8000);
+  _kend = ABSOLUTE(.);
+
   .heap ALIGN(0x1000) :  AT ( ALIGN( LOADADDR(.uncached_data) + SIZEOF(.uncached_data), 0x1000))
   {
       _heap_start    = ABSOLUTE(.);

@@ -55,8 +55,11 @@
 	extern int __dtb_debut_offset; /**< Device tree offset.     */
 	extern int __dtb_size;         /**< Device tree Size.       */
 #endif
+	extern int _user_stack_start;  /**< User stack start.       */
+	extern int _user_stack_end;    /**< User stack end.         */
 	extern int _vstart;            /**< Hypervisor entry point. */
 	extern int _scoreboard_offset; /**< Scoreboard offset.      */
+	extern int _kend;              /**< Kernel end address.     */
 	/**@}*/
 
 /**@}*/
