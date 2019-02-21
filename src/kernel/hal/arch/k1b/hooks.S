@@ -412,6 +412,24 @@ _do_excp:
 	sw  K1B_CONTEXT_SPC[$r1], $r4
 	;;
 
+	/* Shadow Stack Pointer. */
+	lw  $r4 = MOS_VC_REG_SSP[$r2]
+	;;
+	sw  K1B_CONTEXT_SSP[$r1], $r4
+	;;
+
+	/* Shadow Shadow Stack Pointer. */
+	lw  $r4 = MOS_VC_REG_SSSP[$r2]
+	;;
+	sw  K1B_CONTEXT_SSSP[$r1], $r4
+	;;
+
+	/* Shadow Shadow Shadow Stack Pointer. */
+	lw  $r4 = MOS_VC_REG_SSSSP[$r2]
+	;;
+	sw  K1B_CONTEXT_SSSSP[$r1], $r4
+	;;
+
 	/*
 	 * Save exception information
 	 * in the current stack.
