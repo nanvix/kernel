@@ -25,6 +25,10 @@
 #ifndef ARCH_OR1K_SPINLOCK_H_
 #define ARCH_OR1K_SPINLOCK_H_
 
+/*============================================================================*
+ *                             Spinlocks Interface                            *
+ *============================================================================*/
+
 /**
  * @addtogroup ork1-spinlock Spinlocks
  * @ingroup ork1
@@ -37,10 +41,6 @@
 	#include <nanvix/const.h>
 	#include <stdint.h>
 
-/*============================================================================*
- *                             Spinlocks Interface                            *
- *============================================================================*/
-
 	/**
 	 * @name Spinlock State
 	 */
@@ -52,16 +52,20 @@
 	/**
 	 * @brief Spinlock.
 	 */
-	typedef uint64_t spinlock_t;
+	typedef uint64_t or1k_spinlock_t;
+
+/**@}*/
 
 /*============================================================================*
  *                              Exported Interface                            *
  *============================================================================*/
 
+/**
+ * @cond or1k
+ */
+
 	/**
 	 * @name Provided Interface
-	 *
-	 * @cond ork1
 	 */
 	/**@{*/
 	#define __spinlock_t          /**< @p spinlock_t      */
@@ -70,70 +74,62 @@
 	#define __spinlock_trylock_fn /**< spinlock_trylock() */
 	#define __spinlock_unlock_fn  /**< spinlock_unlock()  */
 	/**@}*/
-	/**@endcond*/
+
+/**
+ * @addtogroup kernel-hal-spinlock Spinlock
+ * @ingroup kernel-cpu
+ */
+/**@{*/
 
 	/**
-	 * @see OR1K_SPINLOCK_UNLOCKED
-	 *
-	 * @cond ork1
+	 * @name Spinlock State
 	 */
-	#define SPINLOCK_UNLOCKED OR1K_SPINLOCK_UNLOCKED
-	/**@endcond*/
+	/**@{*/
+	#define SPINLOCK_UNLOCKED OR1K_SPINLOCK_UNLOCKED /**< @see OR1K_SPINLOCK_UNLOCKED */
+	#define SPINLOCK_LOCKED   OR1K_SPINLOCK_LOCKED   /**< @see OR1K_SPINLOCK_LOCKED   */
+	/**@}*/
 
 	/**
-	 * @see OR1K_SPINLOCK_LOCKED
-	 *
-	 * @cond ork1
+	 * @see or1k_spinlock_t
 	 */
-	#define SPINLOCK_LOCKED OR1K_SPINLOCK_LOCKED
-	/**@endcond*/
+	typedef or1k_spinlock_t spinlock_t;
 
 	/**
-	 * @see ork1_spinlock_init()
-	 *
-	 * @cond ork1
+	 * @see ork1_spinlock_init().
 	 */
 	static inline void spinlock_init(spinlock_t *lock)
 	{
 		((void) lock);
 	}
-	/**@endcond*/
 
 	/**
-	 * @see ork1_spinlock_trylock()
-	 *
-	 * @cond ork1
+	 * @see ork1_spinlock_trylock().
 	 */
 	static inline int spinlock_trylock(spinlock_t *lock)
 	{
 		((void) lock);
 		return (OR1K_SPINLOCK_LOCKED);
 	}
-	/**@endcond*/
 
 	/**
-	 * @see ork1_spinlock_lock()
-	 *
-	 * @cond ork1
+	 * @see ork1_spinlock_lock().
 	 */
 	static inline void spinlock_lock(spinlock_t *lock)
 	{
 		((void) lock);
 	}
-	/**@endcond*/
 
 	/**
-	 * @see ork1_spinlock_unlock()
-	 *
-	 * @cond ork1
+	 * @see ork1_spinlock_unlock().
 	 */
 	static inline void spinlock_unlock(spinlock_t *lock)
 	{
 		((void) lock);
 	}
-	/**@endcond*/
 
 /**@}*/
+
+/**@endcond*/
 
 #endif /* ARCH_OR1K_SPINLOCK_H_ */
 

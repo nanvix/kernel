@@ -50,8 +50,16 @@
 	/**@{*/
 	extern kthread_t kthread_self(void);
 	extern int kthread_create(kthread_t *, void *(*)(void*), void *);
-	extern void kthread_exit(void *);
+	extern int kthread_exit(void *);
 	extern int kthread_join(kthread_t, void **);
+	/**@}*/
+
+	/**
+	 * @name Thread Synchronization Kernel Calls
+	 */
+	/**@{*/
+	extern int sleep(void);
+	extern int wakeup(kthread_t);
 	/**@}*/
 
 #endif /* NANVIX_H_ */

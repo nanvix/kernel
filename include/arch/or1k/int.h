@@ -38,15 +38,6 @@
 	#include <arch/or1k/context.h>
 
 	/**
-	 * @name Provided Interface
-	 */
-	/**@{*/
-	#define __hal_disable_interrupts
-	#define __hal_enable_interrupts
-	#define __hal_interrupt_set_handler
-	/**@}*/
-
-	/**
 	 * @brief Number of hardware interrupts in the or1k architecture.
 	 */
 	#define OR1K_NUM_HWINT 3
@@ -88,17 +79,6 @@
 	}
 
 	/**
-	 * @see or1k_sti()
-	 *
-	 * @cond or1k
-	 */
-	static inline void hal_enable_interrupts(void)
-	{
-		or1k_hwint_enable();
-	}
-	/**@endcond*/
-
-	/**
 	 * @brief Disables hardware interrupts.
 	 *
 	 * The or1k_cli() function disables all hardware interrupts in the
@@ -113,17 +93,6 @@
 	}
 
 	/**
-	 * @see or1k_cli()
-	 *
-	 * @cond or1k
-	 */
-	static inline void hal_disable_interrupts(void)
-	{
-		or1k_hwint_disable();
-	}
-	/**@endcond*/
-
-	/**
 	 * @brief Sets a handler for a hardware interrupt.
 	 *
 	 * @param num     Number of the target hardware interrupt.
@@ -131,17 +100,58 @@
 	 */
 	EXTERN void or1k_hwint_handler_set(int num, void (*handler)(int));
 
+
+/**@}*/
+
+/*============================================================================*
+ *                              Exported Interface                            *
+ *============================================================================*/
+
+/**
+ * @cond or1k
+ */
+
+	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __hal_disable_interrupts
+	#define __hal_enable_interrupts
+	#define __hal_interrupt_set_handler
+	/**@}*/
+
+/**
+ * @addtogroup kernel-hal-interrupts Interrupt
+ * @ingroup kernel-hal-cpu
+ */
+/**@{*/
+
+	/**
+	 * @see or1k_sti()
+	 */
+	static inline void hal_enable_interrupts(void)
+	{
+		or1k_hwint_enable();
+	}
+
+	/**
+	 * @see or1k_cli()
+	 */
+	static inline void hal_disable_interrupts(void)
+	{
+		or1k_hwint_disable();
+	}
+
 	/**
 	 * @see or1k_hwint_handler_set()
-	 *
-	 * @cond or1k
 	 */
 	static inline void hal_interrupt_set_handler(int num, void (*handler)(int))
 	{
 		or1k_hwint_handler_set(num, handler);
 	}
-	/**@endcond*/
 
 /**@}*/
+
+/**@endcond*/
 
 #endif /* ARCH_OR1K_INT_H_ */

@@ -48,6 +48,9 @@
 	extern void test_api_kthread_create(void);
 	extern void test_fault_kthread_create(void);
 	extern void test_stress_kthread_create(void);
+	extern void test_api_sleep_wakeup(void);
+	extern void test_fault_sleep_wakeup(void);
+	extern void test_stress_sleep_wakeup(void);
 	/**@{*/
 
 	/**
@@ -55,13 +58,15 @@
 	 *
 	 * @param x Condition to assert.
 	 */
-	static inline void test_assert(int x)
-	{
-		if (!x)
-		{
-			puts("assertation failed at " __FILE__":" ___TOSTRING(__LINE__));
-			while (1) /* noop */;
-		}
+	#define test_assert(x)                            \
+	{                                                 \
+		if (!x)                                       \
+		{                                             \
+			puts("assertation failed at "             \
+				__FILE__":" ___TOSTRING(__LINE__)"\n" \
+			);                                        \
+			while (1) /* noop */;                     \
+		}                                             \
 	}
 
 #endif

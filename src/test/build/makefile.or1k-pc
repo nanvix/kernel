@@ -22,43 +22,13 @@
 # SOFTWARE.
 #
 
-# C Source Files
-C_SRC = $(wildcard *.c)                  \
-        $(wildcard hal/arch/$(ARCH)/*.c) \
-        $(wildcard hal/*.c)              \
-        $(wildcard dev/jtag.c)           \
-        $(wildcard dev/*.c)              \
-        $(wildcard dev/stdout/jtag.c)    \
-        $(wildcard init/*.c)             \
-        $(wildcard klib/*.c)             \
-        $(wildcard mm/*.c)               \
-        $(wildcard pm/*.c)               \
-        $(wildcard sys/*.c)
-#
-# Unit Tests for Kernel
-ifneq ($(RELEASE), true)
-C_SRC += $(wildcard test/*.c)
-endif
-
-# Asembly Source Files
-ASM_SRC = $(wildcard hal/arch/$(ARCH)/*.S)
-
 # Object Files
-OBJ = $(ASM_SRC:.S=.o) \
-	  $(C_SRC:.c=.o)
+OBJ = $(SRC:.c=.o)
 
-# Builds All Object Files
-all: $(OBJ)
-	$(AR) $(ARFLAGS) $(LIBDIR)/$(LIBKERNEL) $(OBJ)
+# Builds object files for or1k PC target.
+all:
+	# Nothing to do.
 
-# Cleans All Object Files
+# Cleans all object files.
 clean:
-	rm -rf $(LIBDIR)/$(LIBKERNEL) $(OBJ)
-
-# Builds a C Source file
-%.o: %.c
-	$(CC) $(CFLAGS) $< -c -o $@
-
-# Builds an ASM Source File
-%.o: %.S
-	$(CC) $(CFLAGS) $< -c -o $@
+	rm -rf $(BINDIR)/$(EXECBIN) $(OBJ)

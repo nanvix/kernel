@@ -1,7 +1,8 @@
 /*
  * MIT License
  *
- * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ *              2015-2016 Davidson Francis     <davidsondfgl@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,41 +24,28 @@
  */
 
 #include <nanvix/const.h>
+#include <nanvix/hal/hal.h>
 #include <nanvix/klib.h>
+#include "../test.h"
 
-#if defined(__i386__)
-
-/**
- * @brief Divides one number by another.
- *
- * @param a First operand.
- * @param b Second operand.
- *
- * @returns The fist operand divided by the second one.
- */
-PRIVATE unsigned divide(unsigned a, unsigned b)
-{
-	return (a/b);
-}
-
-#endif
+/*============================================================================*
+ * API Test: Query Core ID                                                    *
+ *============================================================================*/
 
 /**
- * The hal_test_driver() function runs API, fault injection and
- * stress tests on the HAL.
- *
- * @author Pedro Henrique Penna
+ * @brief API Test: Query Core ID
  */
-PUBLIC void hal_test_driver(void)
+static void test_core_get_id(void)
 {
-	kprintf("[hal] running unit tests");
-
-#if defined(__i386__)
-	if (0)
-	{
-		kprintf("[test][hal][api] divide by zero [%d]",
-			(divide(16, 0) == (unsigned)-1) ? "passed" : "FAILED"
-		);
-	}
-#endif
+	KASSERT(core_get_id() == COREID_MASTER);
 }
+
+/*============================================================================*/
+
+/**
+ * @brief Unit tests.
+ */
+struct test core_tests_api[] = {
+	{ test_core_get_id,   "Get Core ID" },
+	{ NULL,                    NULL     },
+};

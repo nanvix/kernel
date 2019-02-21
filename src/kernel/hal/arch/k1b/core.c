@@ -55,6 +55,7 @@ PRIVATE struct
 	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 1  */
 	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 2  */
 	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 3  */
+#if defined(__node__)
 	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 4  */
 	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 5  */
 	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 6  */
@@ -67,6 +68,7 @@ PRIVATE struct
 	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 13 */
 	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 14 */
 	{ FALSE, K1B_CORE_RESETTING, 0, NULL, K1B_SPINLOCK_LOCKED },  /* Slave Core 15 */
+#endif
 };
 
 /*============================================================================*
@@ -143,8 +145,6 @@ PUBLIC void k1b_core_idle(void)
 
 		mOS_pe_event_waitclear(K1B_EVENT_LINE);
 	}
-
-	kprintf("[hal] core awaken");
 }
 
 /*============================================================================*
@@ -322,8 +322,6 @@ PUBLIC void k1b_core_reset(void)
 		cores[coreid].state = K1B_CORE_RESETTING;
 
 		k1b_dcache_inval();
-
-		kprintf("[hal] resetting core");
 
 		_k1b_core_reset();
 

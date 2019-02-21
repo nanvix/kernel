@@ -31,7 +31,7 @@
 	#endif
 
 	/**
-	 * @defgroup i386 x86 Architecture
+	 * @defgroup i386 x86
 	 * @ingroup i386-pc
 	 */
 	#include <arch/i386/8253.h>

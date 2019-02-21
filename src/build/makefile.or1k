@@ -2,7 +2,6 @@
 # MIT License
 #
 # Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
-#              2018 Davidson Francis     <davidsondfgl@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,24 +22,4 @@
 # SOFTWARE.
 #
 
-# OpenRISC's Toolchain Directory
-export TOOLCHAIN_DIR=$(TOOLSDIR)/dev/toolchain/or1k/bin/
-
-# Target Configuration
-export ARCH = or1k
-
-# Toolchain
-export CC = $(TOOLCHAIN_DIR)/or1k-elf-gcc
-export LD = $(TOOLCHAIN_DIR)/or1k-elf-ld
-export AR = $(TOOLCHAIN_DIR)/or1k-elf-ar
-
-# Toolchain configuration.
-export CFLAGS   = -D __or1k__ -D __pc__
-export CFLAGS  += -pedantic-errors -fextended-identifiers
-export CFLAGS  += -nostdlib -nostdinc -fno-stack-protector
-export LDFLAGS  =
-
-# Libraries
-export LIBKERNEL = libkernel-$(ARCH).a
-export LIBNANVIX = libnanvix-$(ARCH).a
-export LIBS += $(LIBDIR)/$(LIBNANVIX) $(LIBDIR)/$(LIBKERNEL)
+include $(SRCDIR)/build/makefile.nanvix

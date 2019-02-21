@@ -22,27 +22,22 @@
 # SOFTWARE.
 #
 
-#
-# Release version.
-#
-VERSION=v0.1-beta.1
-
 #===============================================================================
 # Directories
 #===============================================================================
 
 # Directories
-export BINDIR   = $(CURDIR)/bin
-export MAKEDIR  = $(CURDIR)/build
-export DOCDIR   = $(CURDIR)/doc
-export INCDIR   = $(CURDIR)/include
-export LIBDIR   = $(CURDIR)/lib
-export SRCDIR   = $(CURDIR)/src
-export TOOLSDIR = $(CURDIR)/tools
+export BINDIR    = $(CURDIR)/bin
+export BUILDDIR  = $(CURDIR)/build
+export LINKERDIR = $(BUILDDIR)/$(TARGET)/linker
+export MAKEDIR   = $(BUILDDIR)/$(TARGET)/make
+export DOCDIR    = $(CURDIR)/doc
+export INCDIR    = $(CURDIR)/include
+export LIBDIR    = $(CURDIR)/lib
+export SRCDIR    = $(CURDIR)/src
+export TOOLSDIR  = $(CURDIR)/tools
 
 #===============================================================================
-
-include $(MAKEDIR)/makefile.$(TARGET)
 
 # Image Name
 export IMAGE = nanvix-debug.img
@@ -50,32 +45,23 @@ export IMAGE = nanvix-debug.img
 # Builds everything.
 all: image
 
-# Builds a release.
-release: image
-	tar -cjvf nanvix-$(VERSION).tar.bz2 \
-		build/makefile.mppa256          \
-		include                         \
-		lib                             \
-		scripts/arch/mppa256.sh
-
 # Builds image.
-image: nanvix
+image: | nanvix nanvix-target
 	bash $(TOOLSDIR)/image/build-image.sh $(BINDIR) $(IMAGE)
 
-# Builds binaries and libraries.
+# Builds Nanvix.
 nanvix:
 	mkdir -p $(BINDIR)
 	mkdir -p $(LIBDIR)
-	$(MAKE) -C $(SRCDIR) all
 
 # Cleans everything.
-distclean:
-	$(MAKE) -C $(SRCDIR) distclean
+distclean: distclean-target
 	rm -rf $(IMAGE)
 	rm -rf $(BINDIR) $(LIBDIR)
 
 # Builds documentation.
 documentation:
 	mkdir -p $(DOCDIR)
-	( sed -e "s/ENABLED_SECTIONS=/ENABLED_SECTIONS=$(TARGET) $(ARCH)/g"  doxygen/doxygen.conf ) | doxygen -
+	doxygen doxygen/doxygen.$(TARGET)
 
+include $(MAKEDIR)/makefile

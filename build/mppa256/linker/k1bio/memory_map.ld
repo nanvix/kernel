@@ -22,17 +22,22 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hal/hal.h>
-#include <nanvix/const.h>
-
 /**
- * @brief Flushes the data cache of the underlying core.
+ * Copyright (C) 2013-2014 Kalray SA.
  *
- * @returns Always returns zero.
+ * All rights reserved.
  */
-PUBLIC int sys_cache_flush(void)
-{
-	hal_dcache_invalidate();
-	return (0);
-}
 
+MEMORY
+{
+    /* Definitions of available memory regions */
+    internal_mem           : ORIGIN = 0x00000000, LENGTH = 2M
+    upper_internal_memory  : ORIGIN = 0x00200000, LENGTH = 2M
+
+    /*
+     * 2G since 64G is not directly accessible for linker
+     * a RTEMS bug prevent to use 2G, but 2G-1 does work, see #5591
+     */
+    ddr                    : ORIGIN = 0x80000000, LENGTH = 2147483647
+    flash                  : ORIGIN = 0x08000000, LENGTH = 128M
+}

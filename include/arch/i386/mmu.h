@@ -35,8 +35,6 @@
 
 	/**
 	 * @name Provided Interface
-	 *
-	 * @cond i386
 	 */
 	/**@{*/
 	#define __frame_t            /**< Page Frame Number */
@@ -63,7 +61,6 @@
 	#define __pte_user_set_fn    /**< pte_user_set()    */
 	#define __pte_write_set_fn   /**< pte_write_set()   */
 	/**@}*/
-	/**@endcond**/
 
 	/**
 	 * @name Page Shifts and Masks
@@ -87,8 +84,6 @@
 
 	/**
 	 * @name Page Shifts
-	 *
-	 * @cond i386
 	 */
 	/**@{*/
 	#define PAGE_SHIFT  I386_PAGE_SHIFT  /**< Page Shift       */
@@ -96,12 +91,9 @@
 	#define PAGE_MASK   I386_PAGE_MASK   /**< Page Mask        */
 	#define PGTAB_MASK  I386_PGTAB_MASK  /**< Page Table Mask  */
 	/**@}*/
-	/**@endcond*/
 
 	/**
 	 * @name Size of Pages and Page Tables
-	 *
-	 * @cond i386
 	 */
 	/**@{*/
 	#define PAGE_SIZE  I386_PAGE_SIZE  /**< Page Size                 */
@@ -109,7 +101,6 @@
 	#define PTE_SIZE   I386_PTE_SIZE   /**< Page Table Entry Size     */
 	#define PDE_SIZE   I386_PDE_SIZE   /**< Page Directory Entry Size */
 	/**@}*/
-	/**@endcond*/
 
 #ifndef _ASM_FILE_
 #define _ASM_FILE_

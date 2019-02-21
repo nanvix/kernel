@@ -75,7 +75,11 @@
 	 * @name Page Shifts and Masks
 	 */
 	/**@{*/
-	#define K1B_HUGE_PAGE_SHIFT 15                      /**< Huge Page Shift   */
+	#if defined(__ioddr__) || defined(__ioeth__)
+		#define K1B_HUGE_PAGE_SHIFT 16                  /**< Huge Page Shift   */
+	#elif defined(__node__)
+		#define K1B_HUGE_PAGE_SHIFT 15                  /**< Huge Page Shift   */
+	#endif
 	#define K1B_PAGE_SHIFT      12                      /**< Page Shift        */
 	#define K1B_PGTAB_SHIFT     22                      /**< Page Table Shift  */
 	#define K1B_PAGE_MASK       (~(K1B_PAGE_SIZE - 1))  /**< Page Mask         */
@@ -86,11 +90,11 @@
 	 * @name Size of Pages and Page Tables
 	 */
 	/**@{*/
-	#define K1B_HUGE_PAGE_SIZE (1 << K1B_PAGE_SHIFT)/**< Huge Page Size (in bytes)            */
-	#define K1B_PAGE_SIZE  (1 << K1B_PAGE_SHIFT)    /**< Page Size (in bytes)                 */
-	#define K1B_PGTAB_SIZE (1 << K1B_PGTAB_SHIFT)   /**< Page Table Size (in bytes)           */
-	#define K1B_PTE_SIZE   4                        /**< Page Table Entry Size (in bytes)     */
-	#define K1B_PDE_SIZE   4                        /**< Page Directory Entry Size (in bytes) */
+	#define K1B_HUGE_PAGE_SIZE (1 << K1B_HUGE_PAGE_SHIFT) /**< Huge Page Size (in bytes)            */
+	#define K1B_PAGE_SIZE  (1 << K1B_PAGE_SHIFT)          /**< Page Size (in bytes)                 */
+	#define K1B_PGTAB_SIZE (1 << K1B_PGTAB_SHIFT)         /**< Page Table Size (in bytes)           */
+	#define K1B_PTE_SIZE   4                              /**< Page Table Entry Size (in bytes)     */
+	#define K1B_PDE_SIZE   4                              /**< Page Directory Entry Size (in bytes) */
 	/**@}*/
 
 /**

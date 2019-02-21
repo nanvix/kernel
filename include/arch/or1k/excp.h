@@ -25,6 +25,11 @@
 
 #ifndef ARCH_OR1K_EXCEPTION_H_
 #define ARCH_OR1K_EXCEPTION_H_
+
+/*============================================================================*
+ *                              Exception Interface                           *
+ *============================================================================*/
+
 /**
  * @addtogroup or1k-exception Exception
  * @ingroup or1k
@@ -38,7 +43,7 @@
 	 * so must ensure that the underlying architecture have, to
 	 * properly save the registers.
 	 */
-#define OR1K_HAVE_SHADOW_GPRS
+	#define OR1K_HAVE_SHADOW_GPRS
 
 	/**
 	 * @brief Temporary registers used while inside exception/interrupt
@@ -71,20 +76,6 @@
 	#define OR1K_EXCEPTION_STORE_GPR6      l.sw  0x74(r0), r6
 	#define OR1K_EXCEPTION_LOAD_GPR6(reg)  l.lwz reg, 0x74(r0)
 #endif
-
-	/**
-	 * @name Provided Interface
-	 *
-	 * @cond or1k
-	 */
-	/**@{*/
-	#define __exception_struct      /**< @ref exception               */
-	#define __exception_get_addr    /**< @ref exception_get_addr()    */
-	#define __exception_get_instr   /**< @ref exception_get_instr()   */
-	#define __exception_get_num     /**< @ref exception_get_num()     */
-	#define __exception_set_handler /**< @ref exception_set_handler() */
-	/**@}*/
-	/**@endcond*/
 
 	/**
 	 * @brief Exception information size (in bytes).
@@ -123,23 +114,6 @@
 	#define OR1K_EXCP_TRAP                  9 /**@< Trap Exception           */
 	/**@}*/
 
-	/**
-	 * @brief Exception Codes
-	 *
-	 * @cond or1k
-	 */
-	/**@*/
-	#define EXCP_INVALID_OPCODE      OR1K_EXCP_ILLEGAL_INSTRUCTION  /**< Invalid Opcode     */
-	#define EXCP_PAGE_FAULT          OR1K_EXCP_PAGE_FAULT           /**< Page Fault         */
-	#define EXCP_PAGE_PROTECTION     OR1K_EXCP_PAGE_FAULT           /**< Page Protection    */
-	#define EXCP_DTLB_FAULT          OR1K_EXCP_DTLB_FAULT           /**< DTLB Fault         */
-	#define EXCP_ITLB_FAULT          OR1K_EXCP_ITLB_FAULT           /**< ITLB Fault         */
-	#define EXCP_GENERAL_PROTECTION  OR1K_EXCP_RESET                /**< General Protection */
-	/**@}*/
-	/**@endcond*/
-
-/**@endcond*/
-
 #ifndef _ASM_FILE_
 
 	#include <nanvix/const.h>
@@ -149,8 +123,6 @@
 
 	/**
 	 * @brief Exception information.
-	 *
-	 * @cond or1k
 	 */
 	struct exception
 	{
@@ -158,7 +130,6 @@
 		uint32_t eear;   /**< Exception address.     */
 		uint32_t epcr;   /**< Saved program counter. */
 	} __attribute__((packed));
-	/**@endcond*/
 
 	/**
 	 * @brief Exception handler.
@@ -185,17 +156,6 @@
 	}
 
 	/**
-	 * @see or1k_excp_get_num().
-	 *
-	 * @cond or1k
-	 */
-	static inline int exception_get_num(const struct exception *excp)
-	{
-		return (or1k_excp_get_num(excp));
-	}
-	/**@endcond*/
-
-	/**
 	 * @brief Gets the address of an exception.
 	 *
 	 * The or1k_excp_get_addr() function gets the exception address
@@ -213,17 +173,6 @@
 	{
 		return (excp->eear);
 	}
-
-	/**
-	 * @see or1k_excp_get_addr().
-	 *
-	 * @cond or1k
-	 */
-	static inline int exception_get_addr(const struct exception *excp)
-	{
-		return (or1k_excp_get_addr(excp));
-	}
-	/**@endcond*/
 
 	/**
 	 * @brief Gets the program counter at an exception.
@@ -245,17 +194,6 @@
 	}
 
 	/**
-	 * @see or1k_excp_get_epcr().
-	 *
-	 * @cond or1k
-	 */
-	static inline int exception_get_instr(const struct exception *excp)
-	{
-		return (or1k_excp_get_epcr(excp));
-	}
-	/**@endcond*/
-
-	/**
 	 * @brief Sets a handler for an exception.
 	 *
 	 * @param num     Number of the target exception.
@@ -266,17 +204,6 @@
 	 *
 	 */
 	EXTERN void or1k_excp_set_handler(int num, or1k_exception_handler_fn handler);
-
-	/**
-	 * @see or1k_excp_set_handler()
-	 *
-	 * @cond or1k
-	 */
-	static inline void exception_set_handler(int num, or1k_exception_handler_fn handler)
-	{
-		or1k_excp_set_handler(num, handler);
-	}
-	/**@endcond*/
 
 	/**
 	 * @brief Low-level exception dispatcher.
@@ -293,8 +220,81 @@
 	 */
 	EXTERN void do_excp(const struct exception *excp, const struct context *ctx);
 
-#endif /* _ASM_FILE_ */
+/**@}*/
+
+/*============================================================================*
+ *                              Exported Interface                            *
+ *============================================================================*/
+
+/**
+ * @cond or1k
+ */
+
+	/**
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __exception_struct      /**< @ref exception               */
+	#define __exception_get_addr    /**< @ref exception_get_addr()    */
+	#define __exception_get_instr   /**< @ref exception_get_instr()   */
+	#define __exception_get_num     /**< @ref exception_get_num()     */
+	#define __exception_set_handler /**< @ref exception_set_handler() */
+	/**@}*/
+
+/**
+ * @addtogroup kernel-hal-exception Exception
+ * @ingroup kernel-hal-cpu
+ */
+/**@{*/
+
+	/**
+	 * @name Exception Codes
+	 */
+	/**@*/
+	#define EXCP_INVALID_OPCODE      OR1K_EXCP_ILLEGAL_INSTRUCTION  /**< Invalid Opcode     */
+	#define EXCP_PAGE_FAULT          OR1K_EXCP_PAGE_FAULT           /**< Page Fault         */
+	#define EXCP_PAGE_PROTECTION     OR1K_EXCP_PAGE_FAULT           /**< Page Protection    */
+	#define EXCP_DTLB_FAULT          OR1K_EXCP_DTLB_FAULT           /**< DTLB Fault         */
+	#define EXCP_ITLB_FAULT          OR1K_EXCP_ITLB_FAULT           /**< ITLB Fault         */
+	#define EXCP_GENERAL_PROTECTION  OR1K_EXCP_RESET                /**< General Protection */
+	/**@}*/
+
+	/**
+	 * @see or1k_excp_get_num().
+	 */
+	static inline int exception_get_num(const struct exception *excp)
+	{
+		return (or1k_excp_get_num(excp));
+	}
+
+	/**
+	 * @see or1k_excp_get_addr().
+	 */
+	static inline int exception_get_addr(const struct exception *excp)
+	{
+		return (or1k_excp_get_addr(excp));
+	}
+
+	/**
+	 * @see or1k_excp_get_epcr().
+	 */
+	static inline int exception_get_instr(const struct exception *excp)
+	{
+		return (or1k_excp_get_epcr(excp));
+	}
+
+	/**
+	 * @see or1k_excp_set_handler()
+	 */
+	static inline void exception_set_handler(int num, or1k_exception_handler_fn handler)
+	{
+		or1k_excp_set_handler(num, handler);
+	}
 
 /**@}*/
+
+/**@endcond*/
+
+#endif /* _ASM_FILE_ */
 
 #endif /* ARCH_OR1K_EXCEPTION_H_ */

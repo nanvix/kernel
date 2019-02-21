@@ -25,6 +25,10 @@
 #ifndef ARCH_I386_CORE_H_
 #define ARCH_I386_CORE_H_
 
+/*============================================================================*
+ *                               Core Interface                               *
+ *============================================================================*/
+
 /**
  * @addtogroup i386-core Core
  * @ingroup i386
@@ -32,15 +36,6 @@
  * @brief i386 Core
  */
 /**@{*/
-
-	/**
-	 * @name Provided Interface
-	 */
-	/**@{*/
-	#define __core_get_id   /**< core_get_id()   */
-	#define __core_halt     /**< core_halt()     */
-	#define __core_shutdown /**< core_shutdown() */
-	/**@}*/
 
 	/**
 	 * @name Size of Machine Types
@@ -89,17 +84,6 @@
 	}
 
 	/**
-	 * @see i386_core_get_id()
-	 *
-	 * @cond i386
-	 */
-	static inline int core_get_id(void)
-	{
-		return (i386_core_get_id());
-	}
-	/*@endcond*/
-
-	/**
 	 * @brief Halts the processor.
 	 *
 	 * The i386_hlt() function stops instruction execution in the the
@@ -111,16 +95,53 @@
 		__asm__ __volatile__("hlt");
 	}
 
+/**@}*/
+
+/*============================================================================*
+ *                              Exported Interface                            *
+ *============================================================================*/
+
+/**
+ * @cond i386
+ */
+
 	/**
-	 * @see i386_hlt()
+	 * @name Provided Interface
+	 */
+	/**@{*/
+	#define __core_get_id   /**< core_get_id()   */
+	#define __core_halt     /**< core_halt()     */
+	#define __core_shutdown /**< core_shutdown() */
+	/**@}*/
+
+/**
+ * @addtogroup kernel-hal-core Core
+ * @ingroup kernel-hal-cpu
+ *
+ * @brief Core Interface
+ */
+/**@{*/
+
+	/**
+	 * @see i386_core_get_id().
+	 */
+	static inline int core_get_id(void)
+	{
+		return (i386_core_get_id());
+	}
+
+	/**
+	 * @see i386_hlt().
 	 */
 	static inline void core_halt(void)
 	{
 		i386_hlt();
 	}
 
-#endif /* _ASM_FILE_ */
-
 /**@}*/
+
+/**@endcond*/
+
+#endif /* _ASM_FILE_ */
 
 #endif /* ARCH_I386_CORE_H_ */

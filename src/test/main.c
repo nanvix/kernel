@@ -36,7 +36,7 @@
  *
  * @returns The length of the string.
  */
-static size_t strlen(const char *str)
+size_t strlen(const char *str)
 {
 	const char *p;
 
@@ -80,6 +80,9 @@ static struct
 	{ test_api_kthread_create,    "[test][user][api]    thread creation/termination [passed]\n" },
 	{ test_fault_kthread_create,  "[test][user][fault]  thread creation/termination [passed]\n" },
 	{ test_stress_kthread_create, "[test][user][stress] thread creation/termination [passed]\n" },
+	{ test_api_sleep_wakeup,      "[test][user][api]    thread sleep/wakeup         [passed]\n" },
+	{ test_fault_sleep_wakeup,    "[test][user][fault]  thread sleep/wakeup         [passed]\n" },
+	{ test_stress_sleep_wakeup,   "[test][user][stress] thread sleep/wakeup         [passed]\n" },
 	{ NULL,                        NULL                                                         },
 };
 

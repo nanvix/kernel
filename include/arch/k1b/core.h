@@ -25,6 +25,10 @@
 #ifndef ARCH_K1B_CORE_H_
 #define ARCH_K1B_CORE_H_
 
+/*============================================================================*
+ *                               Core Interface                               *
+ *============================================================================*/
+
 /**
  * @addtogroup k1b-core Core
  * @ingroup k1b
@@ -36,10 +40,6 @@
 	/* External dependencies. */
 	#include <nanvix/const.h>
 	#include <mOS_vcore_u.h>
-
-/*============================================================================*
- *                               Core Interface                               *
- *============================================================================*/
 
 	/**
 	 * @name States of a Core
@@ -139,14 +139,18 @@
 	 */
 	EXTERN void k1b_core_reset(void);
 
+/**@}*/
+
 /*============================================================================*
  *                              Exported Interface                            *
  *============================================================================*/
 
+/**
+ * @cond k1b
+ */
+
 	/**
 	 * @name Provided Interface
-	 *
-	 * @cond k1b
 	 */
 	/**@{*/
 	#define __core_get_id   /**< core_get_id()   */
@@ -155,86 +159,75 @@
 	#define __core_sleep    /**< core_sleep()    */
 	#define __core_wakeup   /**< core_wakeup()   */
 	#define __core_start    /**< core_start()    */
+	#define __core_reset    /**< core_start()    */
 	/**@}*/
-	/**@endcond*/
+
+/**
+ * @addtogroup kernel-hal-core Core
+ * @ingroup kernel-hal-cpu
+ *
+ * @brief Core Interface
+ */
+/**@{*/
 
 	/**
-	 * @see k1b_core_get_id()
-	 *
-	 * @cond k1b
+	 * @see k1b_core_get_id().
 	 */
 	static inline int core_get_id(void)
 	{
 		return (k1b_core_get_id());
 	}
-	/*@endcond*/
 
 	/**
-	 * @see k1b_await()
-	 *
-	 * @cond k1b
+	 * @see k1b_await().
 	 */
 	static inline void core_halt(void)
 	{
 		k1b_await();
 	}
-	/*@endcond*/
 
 	/**
 	 * @see k1b_core_sleep().
-	 *
-	 * @cond k1b
 	 */
 	static inline void core_sleep(void)
 	{
 		k1b_core_sleep();
 	}
-	/**@endcond*/
 
 	/**
 	 * @see k1b_core_wakeup().
-	 *
-	 * @cond k1b
 	 */
 	static inline void core_wakeup(int coreid)
 	{
 		k1b_core_wakeup(coreid);
 	}
-	/**@endcond*/
 
 	/**
 	 * @see k1b_core_start().
-	 *
-	 * @cond k1b
 	 */
 	static inline void core_start(int coreid, void (*start)(void))
 	{
 		k1b_core_start(coreid, start);
 	}
-	/**@endcond*/
 
 	/**
 	 * @see k1b_core_shutdown().
-	 *
-	 * @cond k1b
 	 */
-	static inline void shutdown(int status)
+	static inline void core_shutdown(int status)
 	{
 		k1b_core_shutdown(status);
 	}
-	/**@endcond*/
 
 	/**
 	 * @see k1b_core_reset().
-	 *
-	 * @cond k1b
 	 */
 	static inline void core_reset(void)
 	{
 		k1b_core_reset();
 	}
-	/**@endcond*/
 
 /**@}*/
+
+/**@endcond*/
 
 #endif /* ARCH_K1B_CORE_H_ */

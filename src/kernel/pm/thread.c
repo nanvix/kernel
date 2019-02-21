@@ -27,6 +27,13 @@
 #include <nanvix/thread.h>
 #include <errno.h>
 
+/*
+ * Too few cores in the underlying core.
+ */
+#if (!defined(HAL_SMP) || (HAL_NUM_CORES <= 2))
+	#error "architecture does not have enough cores"
+#endif
+
 /**
  * @brief Number of running threads.
  */
@@ -40,17 +47,22 @@ PRIVATE int next_tid = (KTHREAD_MASTER_TID + 1);
 /**
  * @brief Thread table.
  */
-PUBLIC struct thread threads[THREAD_MAX] = {
-	[0]                      = {.tid = KTHREAD_MASTER_TID, .state = THREAD_RUNNING},
-	[1 ... (THREAD_MAX - 1)] = {.state = THREAD_NOT_STARTED}
+PUBLIC struct thread threads[KTHREAD_MAX] = {
+	[0]                       = {.tid = KTHREAD_MASTER_TID, .state = THREAD_RUNNING},
+	[1 ... (KTHREAD_MAX - 1)] = {.state = THREAD_NOT_STARTED}
 };
 
 /**
  * @brief Thread join conditions.
  */
-struct condvar joincond[THREAD_MAX] = {
-	[0 ... (THREAD_MAX - 1)] = COND_INITIALIZER
+PRIVATE struct condvar joincond[KTHREAD_MAX] = {
+	[0 ... (KTHREAD_MAX - 1)] = COND_INITIALIZER
 };
+
+/**
+ * @brief Thread exit conditions.
+ */
+PRIVATE struct condvar exitcond = COND_INITIALIZER;
 
 /**
  * @brief Thread manager lock.
@@ -77,7 +89,7 @@ PRIVATE spinlock_t lock_tm = SPINLOCK_UNLOCKED;
  */
 PRIVATE struct thread *thread_alloc(void)
 {
-	for (int i = 0; i < THREAD_MAX; i++)
+	for (int i = 0; i < KTHREAD_MAX; i++)
 	{
 		/* Found. */
 		if (threads[i].state == THREAD_NOT_STARTED)
@@ -111,7 +123,7 @@ PRIVATE struct thread *thread_alloc(void)
 PRIVATE void thread_free(struct thread *t)
 {
 	KASSERT(t >= &threads[0]);
-	KASSERT(t <= &threads[THREAD_MAX - 1]);
+	KASSERT(t <= &threads[KTHREAD_MAX - 1]);
 
 	t->state = THREAD_NOT_STARTED;
 	nthreads--;
@@ -147,6 +159,7 @@ PUBLIC NORETURN void thread_exit(void *retval)
 		curr_thread->state = THREAD_TERMINATED;
 
 		cond_broadcast(&joincond[thread_get_coreid(curr_thread)]);
+		cond_wait(&exitcond, &lock_tm);
 
 		thread_free(curr_thread);
 
@@ -181,7 +194,7 @@ PUBLIC NORETURN void thread_exit(void *retval)
 PRIVATE struct thread *thread_get(int tid)
 {
 	/* Search for target thread. */
-	for (int i = 0; i < THREAD_MAX; i++)
+	for (int i = 0; i < KTHREAD_MAX; i++)
 	{
 		/* Found. */
 		if (threads[i].tid == tid)
@@ -296,6 +309,8 @@ PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
  * @retval -EINVAL Invalid thread ID.
  *
  * @see thread_exit().
+ *
+ * @todo Retrieve return value.
  */
 PUBLIC int thread_join(int tid, void **retval)
 {
@@ -322,6 +337,8 @@ PUBLIC int thread_join(int tid, void **retval)
 			 */
 			if (t->state == THREAD_RUNNING)
 				cond_wait(&joincond[thread_get_coreid(t)], &lock_tm);
+
+			cond_broadcast(&exitcond);
 		}
 
 	spinlock_unlock(&lock_tm);

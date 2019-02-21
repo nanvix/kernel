@@ -30,10 +30,12 @@ export K1_TOOLCHAIN_DIR="/usr/local/k1tools"
 function build
 {
 	local bindir=$1
-	local bin=$2
-	local multibin=$3
+	local iobin=$2
+	local nodebin=$3
+	local multibin=$4
 
 	$K1_TOOLCHAIN_DIR/bin/k1-create-multibinary \
-		--clusters $bindir/$bin                 \
+		--boot $bindir/$iobin                   \
+		--clusters $bindir/$nodebin             \
 		-T $multibin
 }

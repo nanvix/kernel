@@ -107,7 +107,7 @@
 	/**
 	 * @brief Memory size (in bytes) for IO DDR Cluster.
 	 */
-	#define K1B_IODDR_MEM_SIZE (2*1024*1024*1024)
+	#define K1B_IODDR_MEM_SIZE (4*1024*1024)
 
 	/**
 	 * @brief Memory size (in bytes) for IO Ethernet Cluster.
@@ -115,71 +115,82 @@
 	#define K1B_IOETH_MEM_SIZE (4*1024*1024)
 
 	/**
-	 * @brief Log2 of kernel stack size.
-	 */
-	#define K1B_KSTACK_SIZE_LOG2 (11)
-
-	/**
 	 * @brief Kernel stack size (in bytes).
 	 */
-	#define K1B_KSTACK_SIZE (1 << K1B_KSTACK_SIZE_LOG2)
+	#if defined(__ioddr__) || defined(__ioeth__)
+		#define K1B_KSTACK_SIZE (0x1800)
+	#elif defined(__node__)
+		#define K1B_KSTACK_SIZE (0x800)
+	#endif
+
+	/**
+	 * @brief Kernel pool size (in bytes).
+	 */
+	#if defined(__ioddr__) || defined(__ioeth__)
+		#define MPPA256_KPOOL_SIZE (0x10000)
+	#elif defined(__node__)
+		#define MPPA256_KPOOL_SIZE (0x10000)
+	#endif
+
+	/**
+	 * @brief User memory size (in bytes).
+	 */
+	#if defined(__ioddr__) || defined(__ioeth__)
+		#define MPPA256_UMEM_SIZE (512*1024)
+	#elif defined(__node__)
+		#define MPPA256_UMEM_SIZE (512*1024)
+	#endif
 
 	/**
 	 * @name Physical Memory Layout
-	 *
-	 * @todo Check if this layout is valid for IO Clusters.
 	 */
 	/**@{*/
 	#if defined(__ioddr__) || defined(__ioeth__)
 		#define MPPA256_HYPER_LOW_BASE_PHYS  0x00000000 /**< Low Hypervisor Base  */
-		#define MPPA256_KERNEL_BASE_PHYS     0x00008000 /**< Kernel Base          */
-		#define MPPA256_KSTACK_BASE_PHYS     0x0001f000 /**< Kernel Stack Base    */
-		#define MPPA256_KERNEL_END_PHYS      0x00048000 /**< Kernel End           */
-		#define MPPA256_KPOOL_BASE_PHYS      0x00048000 /**< Kernel Pool Base     */
-		#define MPPA256_KPOOL_END_PHYS       0x00078000 /**< Kernel Pool End      */
-		#define MPPA256_USER_BASE_PHYS       0x00078000 /**< User Base            */
-		#define MPPA256_USER_END_PHYS        0x001f8000 /**< End End              */
-		#define MPPA256_HYPER_HIGH_BASE_PHYS 0x001f8000 /**< High Hypervisor Base */
+		#define MPPA256_HYPER_LOW_END_PHYS   0x00010000 /**< Low Hypervisor End   */
+		#define MPPA256_HYPER_HIGH_BASE_PHYS 0x001f0000 /**< High Hypervisor Base */
+		#define MPPA256_HYPER_HIGH_END_PHYS  0x00200000 /**< High Hypervisor End  */
 	#elif defined(__node__)
 		#define MPPA256_HYPER_LOW_BASE_PHYS  0x00000000 /**< Low Hypervisor Base  */
-		#define MPPA256_KERNEL_BASE_PHYS     0x00008000 /**< Kernel Base          */
-		#define MPPA256_KSTACK_BASE_PHYS     0x0001f000 /**< Kernel Stack Base    */
-		#define MPPA256_KERNEL_END_PHYS      0x00048000 /**< Kernel End           */
-		#define MPPA256_KPOOL_BASE_PHYS      0x00048000 /**< Kernel Pool Base     */
-		#define MPPA256_KPOOL_END_PHYS       0x00078000 /**< Kernel Pool End      */
-		#define MPPA256_USER_BASE_PHYS       0x00078000 /**< User Base            */
-		#define MPPA256_USER_END_PHYS        0x001f8000 /**< End End.             */
+		#define MPPA256_HYPER_LOW_END_PHYS   0x00008000 /**< Low Hypervisor End   */
 		#define MPPA256_HYPER_HIGH_BASE_PHYS 0x001f8000 /**< High Hypervisor Base */
+		#define MPPA256_HYPER_HIGH_END_PHYS  0x00200000 /**< High Hypervisor End  */
 	#endif
+#ifndef _ASM_FILE_
+	extern const paddr_t MPPA256_KERNEL_BASE_PHYS;      /**< Kernel Base          */
+	extern const paddr_t MPPA256_KERNEL_END_PHYS;       /**< Kernel End           */
+	extern const paddr_t MPPA256_KSTACK_BASE_PHYS;      /**< Kernel Stack Base    */
+	extern const paddr_t MPPA256_KPOOL_BASE_PHYS;       /**< Kernel Pool Base     */
+	extern const paddr_t MPPA256_KPOOL_END_PHYS;        /**< Kernel Pool End      */
+	extern const paddr_t MPPA256_USER_BASE_PHYS;        /**< User Base            */
+	extern const paddr_t MPPA256_USER_END_PHYS;         /**< User End             */
+#endif
 	/**@}*/
 
 	/**
 	 * @name Virtual Memory Layout
-	 *
-	 * @todo Check if this layout is valid for IO Clusters.
 	 */
 	/**@{*/
 	#if defined(__ioddr__) || defined(__ioeth__)
 		#define MPPA256_HYPER_LOW_BASE_VIRT  0x00000000 /**< Low Hypervisor Base  */
-		#define MPPA256_KERNEL_BASE_VIRT     0x00008000 /**< Kernel Base          */
-		#define MPPA256_KSTACK_BASE_VIRT     0x0001f000 /**< Kernel Stack Base    */
-		#define MPPA256_KERNEL_END_VIRT      0x00048000 /**< Kernel End           */
-		#define MPPA256_KPOOL_BASE_VIRT      0x00048000 /**< Kernel Pool Base     */
-		#define MPPA256_KPOOL_END_VIRT       0x00078000 /**< Kernel Pool End      */
-		#define MPPA256_HYPER_HIGH_BASE_VIRT 0x001f8000 /**< High Hypervisor Base */
-		#define MPPA256_USER_BASE_VIRT       0x80200000 /**< User Base            */
-		#define MPPA256_USER_END_VIRT        0xc0000000 /**< User End             */
+		#define MPPA256_HYPER_LOW_END_VIRT   0x00010000 /**< Low Hypervisor End   */
+		#define MPPA256_HYPER_HIGH_BASE_VIRT 0x001f0000 /**< High Hypervisor Base */
+		#define MPPA256_HYPER_HIGH_END_VIRT  0x00200000 /**< High Hypervisor End  */
 	#elif defined(__node__)
 		#define MPPA256_HYPER_LOW_BASE_VIRT  0x00000000 /**< Low Hypervisor Base  */
-		#define MPPA256_KERNEL_BASE_VIRT     0x00008000 /**< Kernel Base          */
-		#define MPPA256_KSTACK_BASE_VIRT     0x0001f000 /**< Kernel Stack Base    */
-		#define MPPA256_KERNEL_END_VIRT      0x00048000 /**< Kernel End           */
-		#define MPPA256_KPOOL_BASE_VIRT      0x00048000 /**< Kernel Pool Base     */
-		#define MPPA256_KPOOL_END_VIRT       0x00078000 /**< Kernel Pool End      */
+		#define MPPA256_HYPER_LOW_END_VIRT   0x00008000 /**< Low Hypervisor End   */
 		#define MPPA256_HYPER_HIGH_BASE_VIRT 0x001f8000 /**< High Hypervisor Base */
-		#define MPPA256_USER_BASE_VIRT       0x80200000 /**< User Base            */
-		#define MPPA256_USER_END_VIRT        0xc0000000 /**< User End             */
+		#define MPPA256_HYPER_HIGH_END_VIRT  0x00200000 /**< High Hypervisor End  */
 	#endif
+#ifndef _ASM_FILE_
+	extern const vaddr_t MPPA256_KERNEL_BASE_VIRT;      /**< Kernel Base          */
+	extern const vaddr_t MPPA256_KERNEL_END_VIRT;       /**< Kernel End           */
+	extern const vaddr_t MPPA256_KSTACK_BASE_VIRT;      /**< Kernel Stack Base    */
+	extern const vaddr_t MPPA256_KPOOL_BASE_VIRT;       /**< Kernel Pool Base     */
+	extern const vaddr_t MPPA256_KPOOL_END_VIRT;        /**< Kernel Pool End      */
+	extern const vaddr_t MPPA256_USER_BASE_VIRT;        /**< User Base            */
+	extern const vaddr_t MPPA256_USER_END_VIRT;         /**< User End             */
+#endif
 	/**@}*/
 
 	/**
@@ -219,7 +230,7 @@
 		/**
 		 * @brief Kernel stack size (in bytes).
 		 */
-		#define _KSTACK_SIZE K1B_PAGE_SIZE
+		#define _KSTACK_SIZE K1B_KSTACK_SIZE
 
 		/**
 		 * @brief Kernel memory size (in bytes).
@@ -229,12 +240,12 @@
 		/**
 		 * @brief Kernel page pool size (in bytes).
 		 */
-		#define _KPOOL_SIZE (MPPA256_KPOOL_END_PHYS - MPPA256_KPOOL_BASE_PHYS)
+		#define _KPOOL_SIZE MPPA256_KPOOL_SIZE
 
 		/**
 		 * @brief User memory size (in bytes).
 		 */
-		#define _UMEM_SIZE (MPPA256_USER_END_PHYS - MPPA256_USER_BASE_PHYS)
+		#define _UMEM_SIZE MPPA256_UMEM_SIZE
 
 	/**@endcond*/
 

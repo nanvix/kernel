@@ -22,6 +22,7 @@
 
 BINDIR=$1
 IMAGE=$2
+BIN="test-driver"
 
 #
 # Missing target argument.
@@ -42,14 +43,17 @@ fi
 
 # Parse target.
 case "$TARGET" in
-	"mppa256" )
+	"mppa256")
 		source "tools/image/arch/mppa256.sh"
+		BIN="$BIN-k1bio $BIN-k1bdp"
 		;;
 	"i386-pc")
 		source "tools/image/arch/i386.sh"
+		BIN="$BIN-i386"
 		;;
 	"or1k-pc")
 		source "tools/image/arch/or1k.sh"
+		BIN="$BIN-or1k"
 		;;
 	*)
         echo "error: unsupported target"
@@ -58,4 +62,4 @@ case "$TARGET" in
 esac
 
 # Build multi-binaries.
-build $BINDIR test-driver $IMAGE
+build $BINDIR $BIN $IMAGE

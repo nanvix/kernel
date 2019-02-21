@@ -32,18 +32,12 @@
  * @brief Execution Context
  */
 
-/**
- * @cond i386
- */
-
 	/**
 	 * @name Procided Interface
 	 */
 	/**@{*/
 	#define __context_struct /**< Exection Context Structure */
 	/**@}*/
-
-/**@endcund*/
 
 	/**
 	 * @brief Hardware-saved execution context size (in bytes).
@@ -86,10 +80,6 @@
 
 	#include <arch/i386/core.h>
 
-/**
- * @cond i386
- */
-
 	/**
 	 * Saved execution context upon interrupts and exceptions.
 	 */
@@ -99,8 +89,6 @@
         dword_t edi, esi, ebp, edx, ecx, ebx, eax; /**< General Purpose Registers */
         dword_t eip, cs, eflags, useresp, ss;      /**< Special Registers         */
 	} __attribute__((packed));
-
-/**@endcond*/
 
 #endif /* _ASM_FILE_ */
 

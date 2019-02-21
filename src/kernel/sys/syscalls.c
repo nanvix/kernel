@@ -81,14 +81,6 @@ PUBLIC void do_syscall2(void)
 		/* Parse system call number. */
 		switch (sysboard[coreid].syscall_nr)
 		{
-			case NR_nosyscall:
-				ret = sys_nosyscall((unsigned) sysboard[coreid].arg0);
-				break;
-
-			case NR_cache_flush:
-				ret = sys_cache_flush();
-				break;
-
 			case NR__exit:
 				sys_exit((int) sysboard[coreid].arg0);
 				break;
@@ -106,6 +98,12 @@ PUBLIC void do_syscall2(void)
 					(int *) sysboard[coreid].arg0,
 					(void *(*)(void *)) sysboard[coreid].arg1,
 					(void *) sysboard[coreid].arg2
+				);
+				break;
+
+			case NR_wakeup:
+				ret = sys_wakeup(
+					(int) sysboard[coreid].arg0
 				);
 				break;
 
@@ -164,6 +162,10 @@ PUBLIC int do_syscall1(
 				(int) arg0,
 				(void **) arg1
 			);
+			break;
+
+		case NR_sleep:
+			ret = sys_sleep();
 			break;
 
 		/* Forward system call. */

@@ -25,17 +25,4 @@
 # Source Files
 SRC = $(wildcard nanvix/$(ARCH)/*.c)
 
-# Object Files
-OBJ = $(SRC:.c=.o)
-
-# Builds All Object Files
-all: $(OBJ)
-	$(AR) $(ARFLAGS) $(LIBDIR)/$(LIBNANVIX) $(OBJ)
-
-# Cleans All Object Files
-clean:
-	rm -rf $(LIBDIR)/$(LIBNANVIX) $(OBJ)
-
-# Builds a C Source file
-%.o: %.c
-	$(CC) $(CFLAGS) $< -c -o $@
+include build/makefile.$(TARGET)

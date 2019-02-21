@@ -40,6 +40,7 @@
 	#include <nanvix/hal/interrupt.h>
 	#include <nanvix/hal/io.h>
 	#include <nanvix/hal/memory.h>
+	#include <nanvix/hal/spinlock.h>
 
 	/**
 	 * @brief Runs unit tests on the HAL.

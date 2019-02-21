@@ -48,55 +48,6 @@
 	 */
 	EXTERN int hal_cpu_get_num_cores(void);
 
-	/**
-	 * @brief Waits for an inter-processor interrupt.
-	 */
-	EXTERN void cpu_wait(void);
-
-	/**
-	 * @brief Sends an inter-processor interrupt.
-	 *
-	 * @param coreid ID of the target core.
-	 */
-	EXTERN void cpu_notify(int coreid);
-
-#ifdef HAL_SMP
-
-	/**
-	 * @brief Initializes a spinlock.
-	 *
-	 * @param lock Target spinlock.
-	 */
-	EXTERN void spinlock_init(spinlock_t *lock);
-
-	/**
-	 * @brief Locks a spinlock.
-	 *
-	 * @param lock Target spinlock.
-	 */
-	EXTERN void spinlock_lock(spinlock_t *lock);
-
-	/**
-	 * @brief Attempts to lock a spinlock.
-	 *
-	 * @param lock Target spinlock.
-	 *
-	 * @returns Upon successful completion, the spinlock pointed to by
-	 * @p lock is locked and zero is returned. Upon failure, non-zero
-	 * is returned instead, and the lock is not acquired by the
-	 * caller.
-	 */
-	EXTERN int spinlock_trylock(spinlock_t *lock);
-
-	/**
-	 * @brief Unlocks a spinlock.
-	 *
-	 * @param lock Target spinlock.
-	 */
-	EXTERN void spinlock_unlock(spinlock_t *lock);
-
-#endif
-
 /**@}*/
 
 #endif /* NANVIX_HAL_CPU_H_ */

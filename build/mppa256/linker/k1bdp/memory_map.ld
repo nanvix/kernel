@@ -22,15 +22,17 @@
  * SOFTWARE.
  */
 
-#include <nanvix/syscall.h>
-#include <vbsp.h>
-
 /**
- * @brief Flushes the data cache of the underlying core.
+ * Copyright (C) 2013-2014 Kalray SA.
+ *
+ * All rights reserved.
  */
-void cache_flush(void)
+
+/*
+ * Available memory regions.
+ */
+MEMORY
 {
-	__k1_club_syscall0(
-		NR_cache_flush
-	);
+    internal_mem           : ORIGIN = 0x00000000, LENGTH = 2M
+	upper_internal_memory  : ORIGIN = 0x00200000, LENGTH = 0
 }

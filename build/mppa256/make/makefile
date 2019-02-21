@@ -23,56 +23,52 @@
 #
 
 #===============================================================================
+# Target Configuration
+#===============================================================================
+
+export SYSTEM = bare
+export ARCH   = k1b
+export BOARD  = developer
+
+#===============================================================================
 # Toolchain Configuration
 #===============================================================================
 
-# Compiler Options.
-export CFLAGS  += -std=c99 -fno-builtin
-export CFLAGS  += -Wall -Wextra -Werror -Wa,--warn
-export CFLAGS  += -Winit-self -Wswitch-default -Wfloat-equal
-export CFLAGS  += -Wundef -Wshadow -Wuninitialized -Wlogical-op
-export CFLAGS  += -Wvla # -Wredundant-decls
-export CFLAGS  += -I $(INCDIR)
-ifeq ($(RELEASE), true)
-	export CFLAGS  += -O3 -D NDEBUG
-else
-	export CFLAGS  += -Og -g
-endif
+# Toolchain Directory
+export K1_TOOLCHAIN_DIR=/usr/local/k1tools
 
+# Tools
+export CC = $(K1_TOOLCHAIN_DIR)/bin/k1-gcc
+export LD = $(K1_TOOLCHAIN_DIR)/bin/k1-gcc
+export AR = $(K1_TOOLCHAIN_DIR)/bin/k1-ar
+
+# Compiler Options
+export CFLAGS   = -D __mppa256__ -D __k1b__
+export CFLAGS  += -mos=$(SYSTEM) -march=$(ARCH) -mboard=$(BOARD)
 
 # Linker Options
-export LDFLAGS +=
-
-# Archiver Options
-export ARFLAGS = rc
-
-#===============================================================================
-# Binaries and Libraries
-#===============================================================================
-
-export EXECBIN = test-driver
+export LDFLAGS  = -Wl,--allow-multiple-definition
 
 #===============================================================================
 
-# Conflicts
-.PHONY: kernel
-.PHONY: libs
-.PHONY: test
+# Builds Nanvix for the MPPA-256 target.
+nanvix-target: nanvix-k1bdp nanvix-k1bio
 
-# Builds everything.
-all: kernel libs
-	$(MAKE) -C test $(TARGET)
+# Cleans everything for the MPPA-256 target.
+distclean-target: distclean-k1bdp distclean-k1bio
 
-# Builds the kernel.
-kernel: 
-	$(MAKE) -C kernel all
+# Builds Nanvix for a Compute Cluster.
+nanvix-k1bdp:
+	$(MAKE) -C $(SRCDIR) -f build/makefile.k1bdp all
 
-# Builds system libraries.
-libs:
-	$(MAKE) -C libs all
+# Builds Nanvix for an IO Cluster.
+nanvix-k1bio:
+	$(MAKE) -C $(SRCDIR) -f build/makefile.k1bio all
 
-# Cleans compilation files.
-distclean:
-	$(MAKE) -C kernel clean
-	$(MAKE) -C libs clean
-	$(MAKE) -C test clean
+# Cleans compilation files for a Compute Cluster.
+distclean-k1bdp:
+	$(MAKE) -C $(SRCDIR) -f build/makefile.k1bdp distclean
+
+# Cleans compilation files for an IO Cluster.
+distclean-k1bio:
+	$(MAKE) -C $(SRCDIR) -f build/makefile.k1bio distclean

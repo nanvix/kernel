@@ -22,45 +22,4 @@
 # SOFTWARE.
 #
 
-# C Source Files
-C_SRC = $(wildcard hal/arch/$(ARCH)/*.c) \
-        $(wildcard hal/*.c)              \
-        $(wildcard init/*.c)             \
-        $(wildcard klib/*.c)             \
-        $(wildcard dev/*.c)              \
-        $(wildcard dev/stdout/console.c) \
-        $(wildcard mm/*.c)
-
-# Unit Tests for Kernel
-ifneq ($(RELEASE), true)
-C_SRC += $(wildcard test/*.c)
-endif
-
-# Asembly Source Files
-ASM_SRC = $(wildcard hal/arch/$(ARCH)/*.S)
-
-# Object Files
-OBJ = $(ASM_SRC:.S=.o) \
-	  $(C_SRC:.c=.o)
-
-# Executable file.
-EXEC = kernel
-
-# Linker Configuration
-export LDFLAGS = -T hal/arch/$(ARCH)/link.ld
-
-# Builds All Object Files
-all: $(OBJ)
-	$(LD) $(LDFLAGS) $(OBJ) -o $(BINDIR)/$(EXEC)
-
-# Cleans All Object Files
-clean:
-	rm -rf $(BINDIR)/$(EXEC) $(OBJ)
-
-# Builds a C Source file
-%.o: %.c
-	$(CC) $(CFLAGS) $< -c -o $@
-
-# Builds an ASM Source File
-%.o: %.S
-	$(CC) $(CFLAGS) $< -c -o $@
+include $(SRCDIR)/build/makefile.nanvix

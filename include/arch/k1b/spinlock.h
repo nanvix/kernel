@@ -25,6 +25,10 @@
 #ifndef ARCH_K1B_SPINLOCK_H_
 #define ARCH_K1B_SPINLOCK_H_
 
+/*============================================================================*
+ *                             Spinlocks Interface                            *
+ *============================================================================*/
+
 /**
  * @addtogroup k1b-spinlock Spinlocks
  * @ingroup k1b
@@ -39,10 +43,6 @@
 	#include <nanvix/const.h>
 	#include <stdint.h>
 
-/*============================================================================*
- *                             Spinlocks Interface                            *
- *============================================================================*/
-
 	/**
 	 * @name Spinlock State
 	 */
@@ -54,39 +54,39 @@
 	/**
 	 * @brief Spinlock.
 	 */
-	typedef uint64_t spinlock_t;
+	typedef uint64_t k1b_spinlock_t;
 
 	/**
-	 * @brief Initializes a spinlock.
+	 * @brief Initializes a k1b_spinlock_t.
 	 *
-	 * @param lock Target spinlock.
+	 * @param lock Target k1b_spinlock_t.
 	 */
-	static inline void k1b_spinlock_init(spinlock_t *lock)
+	static inline void k1b_spinlock_init(k1b_spinlock_t *lock)
 	{
 		__builtin_k1_sdu(lock,  K1B_SPINLOCK_UNLOCKED);
 	}
 
 	/**
-	 * @brief Attempts to lock a spinlock.
+	 * @brief Attempts to lock a k1b_spinlock_t.
 	 *
-	 * @param lock Target spinlock.
+	 * @param lock Target k1b_spinlock_t.
 	 *
-	 * @returns Upon successful completion, the spinlock pointed to by
-	 * @p lock is locked and zero is returned. Upon failure, non-zero
-	 * is returned instead, and the lock is not acquired by the
+	 * @returns Upon successful completion, the k1b_spinlock_t pointed
+	 * to by @p lock is locked and non-zero is returned. Upon failure,
+	 * zero is returned instead, and the lock is not acquired by the
 	 * caller.
 	 */
-	static inline int k1b_spinlock_trylock(spinlock_t *lock)
+	static inline int k1b_spinlock_trylock(k1b_spinlock_t *lock)
 	{
 		return (__builtin_k1_ldc(lock) == K1B_SPINLOCK_UNLOCKED);
 	}
 
 	/**
-	 * @brief Locks a spinlock.
+	 * @brief Locks a k1b_spinlock_t.
 	 *
-	 * @param lock Target spinlock.
+	 * @param lock Target k1b_spinlock_t.
 	 */
-	static inline void k1b_spinlock_lock(spinlock_t *lock)
+	static inline void k1b_spinlock_lock(k1b_spinlock_t *lock)
 	{
 		while (!k1b_spinlock_trylock(lock))
 			/* noop */;
@@ -94,24 +94,28 @@
 	}
 
 	/**
-	 * @brief Unlocks a spinlock.
+	 * @brief Unlocks a k1b_spinlock_t.
 	 *
-	 * @param lock Target spinlock.
+	 * @param lock Target k1b_spinlock_t.
 	 */
-	static inline void k1b_spinlock_unlock(spinlock_t *lock)
+	static inline void k1b_spinlock_unlock(k1b_spinlock_t *lock)
 	{
 		k1b_dcache_inval();
 		__builtin_k1_sdu(lock, K1B_SPINLOCK_UNLOCKED);
 	}
 
+/**@}*/
+
 /*============================================================================*
  *                              Exported Interface                            *
  *============================================================================*/
 
+/**
+ * @cond k1b
+ */
+
 	/**
 	 * @name Provided Interface
-	 *
-	 * @cond k1b
 	 */
 	/**@{*/
 	#define __spinlock_t          /**< @p spinlock_t      */
@@ -120,42 +124,39 @@
 	#define __spinlock_trylock_fn /**< spinlock_trylock() */
 	#define __spinlock_unlock_fn  /**< spinlock_unlock()  */
 	/**@}*/
-	/**@endcond*/
+
+/**
+ * @addtogroup kernel-hal-spinlock Spinlock
+ * @ingroup kernel-cpu
+ */
+/**@{*/
 
 	/**
-	 * @see K1B_SPINLOCK_UNLOCKED
-	 *
-	 * @cond k1b
+	 * @see k1b_spinlock_t
 	 */
-	#define SPINLOCK_UNLOCKED K1B_SPINLOCK_UNLOCKED
-	/**@endcond*/
+	typedef k1b_spinlock_t spinlock_t;
 
 	/**
-	 * @see K1B_SPINLOCK_LOCKED
-	 *
-	 * @cond k1b
+	 * @name Spinlock State
 	 */
-	#define SPINLOCK_LOCKED K1B_SPINLOCK_LOCKED
-	/**@endcond*/
+	/**@{*/
+	#define SPINLOCK_UNLOCKED K1B_SPINLOCK_UNLOCKED /**< @see K1B_SPINLOCK_UNLOCKED */
+	#define SPINLOCK_LOCKED   K1B_SPINLOCK_LOCKED   /**< @see K1B_SPINLOCK_LOCKED   */
+	/**@}*/
 
 	/**
-	 * @see k1b_spinlock_init()
-	 *
-	 * @cond k1b
+	 * @see k1b_spinlock_init().
 	 */
 	static inline void spinlock_init(spinlock_t *lock)
 	{
 		k1b_spinlock_init(lock);
 	}
-	/**@endcond*/
 
 	/**
-	 * @see k1b_spinlock_trylock()
+	 * @see k1b_spinlock_trylock().
 	 *
 	 * @note This operation performs a full data-cache flush in non-cache
 	 * coherent processors.
-	 *
-	 * @cond k1b
 	 */
 	static inline int spinlock_trylock(spinlock_t *lock)
 	{
@@ -163,37 +164,32 @@
 		k1b_dcache_inval();
 		return (ret);
 	}
-	/**@endcond*/
 
 	/**
-	 * @see k1b_spinlock_lock()
+	 * @see k1b_spinlock_lock().
 	 *
 	 * @note This operation performs a full data-cache flush in non-cache
 	 * coherent processors.
-	 *
-	 * @cond k1b
 	 */
 	static inline void spinlock_lock(spinlock_t *lock)
 	{
 		k1b_spinlock_lock(lock);
 	}
-	/**@endcond*/
 
 	/**
-	 * @see k1b_spinlock_unlock()
+	 * @see k1b_spinlock_unlock().
 	 *
 	 * @note This operation performs a full data-cache flush in non-cache
 	 * coherent processors.
-	 *
-	 * @cond k1b
 	 */
 	static inline void spinlock_unlock(spinlock_t *lock)
 	{
 		k1b_spinlock_unlock(lock);
 	}
-	/**@endcond*/
 
 /**@}*/
+
+/**@endcond*/
 
 #endif /* ARCH_K1B_SPINLOCK_H_ */
 

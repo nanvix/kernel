@@ -35,18 +35,37 @@ function run_hw
 	local bin=$2
 	local args=$3
 	local debug=$4
+	local type=$5
+	local execfile=""
+
+	case $type in
+		"--all")
+			execfile="--exec-file=IODDR0:$bin-k1bio   \
+				  --exec-file=Cluster0:$bin-k1bdp"
+			;;
+		"--iocluster")
+			execfile="--exec-file=IODDR0:$bin-k1bio"
+			;;
+		"--ccluster")
+			execfile="--exec-file=Cluster0:$bin-k1bdp"
+			;;
+		*)
+			echo "error: type not specified [--all | --iocluster | --ccluster]"
+			exit 1
+			;;
+	esac
 
 	if [ $debug == "--no-debug" ];
 	then
 		$K1_TOOLCHAIN_DIR/bin/k1-jtag-runner \
 			--multibinary=$multibin          \
-			--exec-file=Cluster0:$bin        \
+			$execfile                        \
 			-- $args
 	else
 		$K1_TOOLCHAIN_DIR/bin/k1-jtag-runner \
 			--gdb                            \
 			--multibinary=$multibin          \
-			--exec-file=Cluster0:$bin        \
+			$execfile                        \
 			-- $args
 	fi
 }

@@ -22,28 +22,13 @@
 # SOFTWARE.
 #
 
-# Kalray's Toolchain Directory
-export K1_TOOLCHAIN_DIR=/usr/local/k1tools/
+# Object Files
+OBJ = $(SRC:.c=.o)
 
-# Target Configuration
-export SYSTEM = bare
-export ARCH   = k1b
-export BOARD  = developer
-export CLUSTER = node
+# Builds object files for i386 PC target.
+all:
+	# Nothing to do.
 
-# Toolchain
-export CC = $(K1_TOOLCHAIN_DIR)/bin/k1-gcc
-export LD = $(K1_TOOLCHAIN_DIR)/bin/k1-gcc
-export AR = $(K1_TOOLCHAIN_DIR)/bin/k1-ar
-
-# Toolchain Configuration
-export CFLAGS   = -D __mppa256__ -D __k1b__
-export CFLAGS  += -mos=$(SYSTEM) -mcluster=$(CLUSTER) -march=$(ARCH) -mboard=$(BOARD)
-export LDFLAGS  = -Tlink.ld
-
-# Libraries
-export LIBKERNEL    = libkernel-$(ARCH).a
-export LIBNANVIX    = libnanvix-$(ARCH).a
-export LIBS_OURS    = $(LIBDIR)/$(LIBNANVIX) $(LIBDIR)/$(LIBKERNEL)
-export LIBS_THEIRS  = -lvbsp -mhypervisor
-export LIBS        += $(LIBS_OURS) $(LIBS_THEIRS)
+# Cleans all object files.
+clean:
+	rm -rf $(BINDIR)/$(EXECBIN) $(OBJ)

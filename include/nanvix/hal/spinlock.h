@@ -22,20 +22,57 @@
  * SOFTWARE.
  */
 
-#include <nanvix/klib.h>
-#include <nanvix/syscall.h>
-#include <errno.h>
+#ifndef NANVIX_HAL_SPINLOCK_H_
+#define NANVIX_HAL_SPINLOCK_H_
 
 /**
- * @brief Dummy system call.
+ * @addtogroup kernel-hal-spinlock Spinlock
+ * @ingroup kernel-hal-cpu
  *
- * @param arg Must equal @p NOSYSCALL_MAGIC_ARG
- *
- * @returns If arg equals @p NOSYSCALL_MAGIC_ARG, then it returns
- * @p NOSYSCALL_MAGIC_RET casted to int. Otherwise, @p -EINVAL is returned
- * instead.
+ * @brief Spinlock Interface
  */
-int sys_nosyscall(unsigned arg)
-{
-	return ((arg == NOSYSCALL_MAGIC_ARG) ? (int) NOSYSCALL_MAGIC_RET : -EINVAL);
-}
+/**@{*/
+
+	#include <nanvix/const.h>
+	#include <nanvix/hal/target.h>
+
+#ifdef HAL_SMP
+
+	/**
+	 * @brief Initializes a spinlock.
+	 *
+	 * @param lock Target spinlock.
+	 */
+	EXTERN void spinlock_init(spinlock_t *lock);
+
+	/**
+	 * @brief Locks a spinlock.
+	 *
+	 * @param lock Target spinlock.
+	 */
+	EXTERN void spinlock_lock(spinlock_t *lock);
+
+	/**
+	 * @brief Attempts to lock a spinlock.
+	 *
+	 * @param lock Target spinlock.
+	 *
+	 * @returns Upon successful completion, the spinlock pointed to by
+	 * @p lock is locked and non-zero is returned. Upon failure, zero
+	 * is returned instead, and the lock is not acquired by the
+	 * caller.
+	 */
+	EXTERN int spinlock_trylock(spinlock_t *lock);
+
+	/**
+	 * @brief Unlocks a spinlock.
+	 *
+	 * @param lock Target spinlock.
+	 */
+	EXTERN void spinlock_unlock(spinlock_t *lock);
+
+#endif
+
+/**@}*/
+
+#endif /* NANVIX_HAL_SPINLOCK_H_ */

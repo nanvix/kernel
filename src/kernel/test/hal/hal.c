@@ -22,32 +22,31 @@
  * SOFTWARE.
  */
 
-#include <nanvix/syscall.h>
-#include <errno.h>
-#include <vbsp.h>
+#include <nanvix/const.h>
+#include <nanvix/klib.h>
+#include "test.h"
 
 /**
- * @brief Dummy system call.
+ * @brief Test driver for the core interface of HAL.
  *
- * @returns Upon successful completion zero is returned. Upon failure,
- * -1 is returned instead and errno is set to indicate the error.
+ * @author Pedro Henrique Penna
  */
-int nosyscall(void)
+PRIVATE void hal_test_core(void)
 {
-	int ret;
-
-	ret = __k1_club_syscall1(
-		NR_nosyscall,
-		NOSYSCALL_MAGIC_ARG
-	);
-
-	/* System call failed. */
-	if (ret != (int) NOSYSCALL_MAGIC_RET)
+	for (int i = 0; core_tests_api[i].test_fn != NULL; i++)
 	{
-		errno = -ret;
-		return (-1);
+		core_tests_api[i].test_fn();
+		kprintf("[test][kernel][hal][core] %s [passed]", core_tests_api[i].name);
 	}
-
-	return (0);
 }
 
+/**
+ * The hal_test_driver() function runs API, fault injection and
+ * stress tests on the HAL.
+ *
+ * @author Pedro Henrique Penna
+ */
+PUBLIC void hal_test_driver(void)
+{
+	hal_test_core();
+}
