@@ -476,6 +476,20 @@ _do_excp:
 	add $sp, $sp, K1B_EXCEPTION_SIZE
 	;;
 
+	_scoreboard_get $r2 $r3
+
+	/* Restore saved program counter. */
+	ld  $p4 = K1B_CONTEXT_SPC[$sp]
+	;;
+	sd  MOS_VC_REG_SPC[$r2], $p4
+	;;
+
+	/* Restore shadow stack pointer. */
+	lw  $r4 = K1B_CONTEXT_SSP[$sp]
+	;;
+	sw  MOS_VC_REG_SSP[$r2], $r4
+	;;
+
 	/*
 	 * Restore saved execution context.
 	 */
