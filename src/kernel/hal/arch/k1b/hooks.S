@@ -119,7 +119,7 @@ _do_excp:
 	 */
 	k1b_context_save
 	;;
-	ld  $p2 = 8[$bp]            /* r0 + r1 */
+	ld  $p0 = 8[$bp]            /* r0 + r1 */
 	;;
 	sd  K1B_CONTEXT_R0[$sp], $p0
 	;;
