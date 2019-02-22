@@ -130,6 +130,18 @@ PUBLIC void do_excp(const struct exception *excp, const struct context *ctx)
 }
 
 /**
+ * @todo Document this function.
+ */
+PUBLIC void forward_excp(int num, const struct exception *excp, const struct context *ctx)
+{
+	struct exception *_excp = (struct exception *)excp;
+
+	_excp->num = num;
+
+	do_excp(_excp, ctx);
+}
+
+/**
  * The k1b_excp_set_handler() function sets a handler function for
  * the exception @p num.
  *

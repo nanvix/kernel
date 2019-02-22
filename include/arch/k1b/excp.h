@@ -239,6 +239,15 @@
 	/**@}*/
 
 	/**
+	 * @brief Forwards an exception.
+	 *
+	 * @param num  Target exception.
+	 * @param excp Exception to be forwarded.
+	 * @param ctx  Context information of the forwarded exception.
+	 */
+	EXTERN void forward_excp(int num, const struct exception *excp, const struct context *ctx);
+
+	/**
 	 * @see k1b_excp_get_num().
 	 */
 	static inline int exception_get_num(const struct exception *excp)

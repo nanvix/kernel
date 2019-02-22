@@ -291,6 +291,15 @@
 		or1k_excp_set_handler(num, handler);
 	}
 
+	/**
+	 * @brief Forwards an exception.
+	 *
+	 * @param num  Target exception.
+	 * @param excp Exception to be forwarded.
+	 * @param ctx  Context information of the forwarded exception.
+	 */
+	EXTERN void forward_excp(int num, const struct exception *excp, const struct context *ctx);
+
 /**@}*/
 
 /**@endcond*/
