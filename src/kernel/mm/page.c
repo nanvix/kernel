@@ -470,57 +470,6 @@ PUBLIC int upage_free(struct pde *pgdir, vaddr_t vaddr)
 }
 
 /*============================================================================*
- * do_page_protection()                                                       *
- *============================================================================*/
-
-/**
- * @brief Handles a page protection.
- *
- * The do_page_protection() function is currently a dummy handler for
- * a page protection. It prints the faulting address and panics the
- * kernel.
- *
- * @param excp Exception information.
- * @param ctx  Interrupted execution context.
- *
- * @todo Implement a rich handler.
- */
-PRIVATE void do_page_protection(
-	const struct exception *excp,
-	const struct context *ctx
-)
-{
-	UNUSED(ctx);
-
-	kpanic("[mm] page protection at %x", exception_get_addr(excp));
-}
-
-/*============================================================================*
- * do_page_fault()                                                            *
- *============================================================================*/
-
-/**
- * @brief Handles a page fault.
- *
- * The do_page_fault() function is currently a dummy handler for a
- * page fault. It prints the faulting address and panics the kernel.
- *
- * @param excp Exception information.
- * @param ctx  Interrupted execution context.
- *
- * @todo Implement a rich handler.
- */
-PRIVATE void do_page_fault(
-	const struct exception *excp,
-	const struct context *ctx
-)
-{
-	UNUSED(ctx);
-
-	kpanic("[mm] page fault at %x", exception_get_addr(excp));
-}
-
-/*============================================================================*
  * do_tlb_fault()                                                             *
  *============================================================================*/
 
@@ -572,13 +521,19 @@ PRIVATE void do_tlb_fault(
 	/* Lookup PDE. */
 	pde = pde_get(idle_pgdir, vaddr);
 	if (!pde_is_present(pde))
-		do_page_fault(excp, ctx);
+	{
+		forward_excp(EXCP_PAGE_FAULT, excp, ctx);
+		return;
+	}
 
 	/* Lookup PTE. */
 	pgtab = (struct pte *)(pde_frame_get(pde) << PAGE_SHIFT);
 	pte = pte_get(pgtab, vaddr);
 	if (!pte_is_present(pte))
-		do_page_fault(excp, ctx);
+	{
+		forward_excp(EXCP_PAGE_FAULT, excp, ctx);
+		return;
+	}
 
 	/* Writing mapping to TLB. */
 	paddr = pte_frame_get(pte) << PAGE_SHIFT;
@@ -603,8 +558,6 @@ PUBLIC void upool_init(void)
 	kprintf("[mm] initializing the user page allocator");
 
 	/* Register handlers. */
-	exception_set_handler(EXCP_PAGE_PROTECTION, do_page_protection);
-	exception_set_handler(EXCP_PAGE_FAULT, do_page_fault);
 #ifdef HAL_TLB_SOFTWARE
 	exception_set_handler(EXCP_DTLB_FAULT, do_tlb_fault);
 	exception_set_handler(EXCP_ITLB_FAULT, do_tlb_fault);
