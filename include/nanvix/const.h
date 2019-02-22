@@ -73,6 +73,12 @@
 	#define NORETURN __attribute__((noreturn))
 
 	/**
+	 * @brief Aligns an object at a boundary.
+	 *
+	 * @param x Boundary.
+	 */
+	#define ALIGN(x) __attribute__((aligned(x)))
+	/**
 	 * @name Logical Constants
 	 */
 	/**@{*/
