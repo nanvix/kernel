@@ -225,9 +225,9 @@ _do_excp:
 	_scoreboard_get $r2 $r3
 
 	/* Restore saved program counter. */
-	ld  $p4 = K1B_CONTEXT_SPC[$sp]
+	lw  $r4 = K1B_CONTEXT_SPC[$sp]
 	;;
-	sd  MOS_VC_REG_SPC[$r2], $p4
+	sw  MOS_VC_REG_SPC[$r2], $r4
 	;;
 
 	/* Restore shadow stack pointer. */
