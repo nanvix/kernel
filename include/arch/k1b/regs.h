@@ -76,11 +76,11 @@
 		add $sp, $sp, -STACK_FRAME_SIZE
 		;;
 
-		/* Save scratch registers (r0 and r1). */
+		/* Save r0 and r1 registers. */
 		sd 8[$sp] = $p0
 		;;
 
-		/* Save return address and stack base pointer. */
+		/* Save ra and bp registers. */
 		get $r0 = $ra
 		;;
 		copy $r1 = $bp
@@ -95,6 +95,18 @@
 	.endm
 
 	.macro _do_epilogue
+
+		/* Restore bp and ra registers. */
+		ld $p0 = 0[$sp]
+		;;
+		set $ra = $r0
+		;;
+		copy $bp = $r1
+		;;
+
+		/* Restore r0 and r1 registers. */
+		ld $p0 = 8[$sp]
+		;;
 
 		/* Wipe out frame. */
 		add $sp, $sp, STACK_FRAME_SIZE
