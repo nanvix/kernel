@@ -86,54 +86,6 @@ _do_syscall:
  * _do_excp()                                                                *
  *===========================================================================*/
 
-.macro _do_prologue
-
-	/* Allocate a new stack frame. */
-	add $sp, $sp, -16
-	;;
-
-	/* Save scratch registers (r0 and r1). */
-	sd 8[$sp] = $p0
-	;;
-
-	/* Save return address and stack base pointer. */
-	get $r0 = $ra
-	;;
-	copy $r1 = $bp
-	;;
-	sd 0[$sp] = $p0
-	;;
-
-	/* Update stack base pointer. */
-	copy $bp = $sp
-	;;
-
-.endm
-
-.macro _do_epilogue
-
-	/* Save scratch registers (r0 and r1). */
-	sd 8[$sp] = $p0
-	;;
-
-	/* Save return address and stack base pointer. */
-	get $r0 = $ra
-	;;
-	copy $r1 = $bp
-	;;
-	sd 0[$sp] = $p0
-	;;
-
-	/* Update stack base pointer. */
-	copy $bp = $sp
-	;;
-
-
-	/* Free stack frame. */
-	add $sp, $sp, 16
-	;;
-.endm
-
 /*
  * Gets the scoreboard of the underlying core.
  */
@@ -290,8 +242,7 @@ _do_excp:
 	k1b_context_restore
 	;;
 
-	/* Wipe out prologue. */
-	add $sp, $sp, 16
+	_do_epilogue
 	;;
 
 	/* Restore exception context. */
