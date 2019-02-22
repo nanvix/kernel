@@ -196,7 +196,13 @@
 		;;
 		sd K1B_CONTEXT_R10[$r12], $p10 /**< r10 + r11 */
 		;;
-		sd K1B_CONTEXT_R12[$r12], $p12 /**< r12 + r13 */
+		copy $r1 = $r13
+		;;
+		copy $r0 = $r12
+		;;
+		add $r0, $r0, K1B_CONTEXT_SIZE
+		;;
+		sd K1B_CONTEXT_R12[$r12], $p0  /**< r12 + r13 */
 		;;
 		sd K1B_CONTEXT_R14[$r12], $p14 /**< r14 + r15 */
 		;;
@@ -312,7 +318,7 @@
 		set   $le = $r4
 		;;
 
-		/* Save GPRs. */
+		/* Restore GPRs. */
 		ld $p0  = K1B_CONTEXT_R0[$r12]  /**< r0  + r1  */
 		;;
 		ld $p2  = K1B_CONTEXT_R2[$r12]  /**< r2  + r3  */
@@ -325,7 +331,7 @@
 		;;
 		ld $p10 = K1B_CONTEXT_R10[$r12] /**< r10 + r11 */
 		;;
-		ld $p12 = K1B_CONTEXT_R12[$r12] /**< r12 + r13 */
+		lw $r13 = K1B_CONTEXT_R13[$r12] /**< r13       */
 		;;
 		ld $p14 = K1B_CONTEXT_R14[$r12] /**< r14 + r15 */
 		;;
