@@ -514,7 +514,7 @@ PRIVATE void do_tlb_fault(
 	 * So, it's better to get some warning.
 	 */
 	if (!mm_is_uaddr(vaddr))
-		kprintf("[mm] tlb fault in kernel land");
+		kprintf("[mm] tlb fault in kernel land at %x", vaddr);
 
 #endif
 
