@@ -30,11 +30,6 @@
 	#endif
 
 	/**
-	 * @brief Size of red zone (in bytes).
-	 */
-	#define REDZONE_SIZE 16
-
-	/**
 	 * @name Aliases for Registers
 	 */
 	/**@{*/
@@ -44,8 +39,13 @@
 	/**@}*/
 
 /*============================================================================*
- * k1b_redzone_alloc()                                                        *
+ * Red Zone                                                                   *
  *============================================================================*/
+
+	/**
+	 * @brief Size of red zone (in bytes).
+	 */
+	#define REDZONE_SIZE 16
 
 	/*
 	 * Allocates the red zone in the current stack frame.
@@ -54,10 +54,6 @@
 		add $sp = $sp, -REDZONE_SIZE
 	.endm
 
-/*============================================================================*
- * k1b_redzone_free()                                                         *
- *============================================================================*/
-
 	/*
 	 * Frees the red zone in the current stack frame.
 	 */
@@ -65,5 +61,45 @@
 		add $sp = $sp, REDZONE_SIZE
 	.endm
 
+/*============================================================================*
+ * Prologue                                                                   *
+ *============================================================================*/
+
+	/**
+	 * @brief Size of a stack frame (in bytes).
+	 */
+	#define STACK_FRAME_SIZE 16
+
+	.macro _do_prologue
+
+		/* Allocate a new stack frame. */
+		add $sp, $sp, -STACK_FRAME_SIZE
+		;;
+
+		/* Save scratch registers (r0 and r1). */
+		sd 8[$sp] = $p0
+		;;
+
+		/* Save return address and stack base pointer. */
+		get $r0 = $ra
+		;;
+		copy $r1 = $bp
+		;;
+		sd 0[$sp] = $p0
+		;;
+
+		/* Update stack base pointer. */
+		copy $bp = $sp
+		;;
+
+	.endm
+
+	.macro _do_epilogue
+
+		/* Wipe out frame. */
+		add $sp, $sp, STACK_FRAME_SIZE
+		;;
+
+	.endm
 
 #endif /* ARCH_K1B_REGS_H_ */
