@@ -119,7 +119,7 @@ PRIVATE void do_generic_excp(const struct exception *excp, const struct context 
 PUBLIC void do_excp(const struct exception *excp, const struct context *ctx)
 {
 	/* Unknown exception. */
-	if (excp->num >= K1B_NUM_EXCEPTIONS)
+	if (excp->num >= (K1B_NUM_EXCEPTIONS + K1B_NUM_EXCEPTIONS_VIRT))
 		kpanic("unknown exception %x\n", excp->num);
 
 	/* Unhandled exception. */
