@@ -54,13 +54,22 @@
 	#define CACHE_LINE_SIZE OR1K_CACHE_LINE_SIZE
 
 	/**
+	 * @brief Invalidates the data cache.
+	 */
+	static inline void or1k_dcache_inval(void)
+	{
+		or1k_mtspr(OR1K_SPR_DCBIR, 0);
+	}
+
+	/**
+	 * @see or1k_dcache_inval
 	 * @note The or1k target features cache coherency.
 	 *
 	 * @cond or1k
 	 */
 	static inline void hal_dcache_invalidate(void)
 	{
-		or1k_mtspr(OR1K_SPR_DCBIR, 0);
+		or1k_dcache_inval();
 	}
 	/**@endcond*/
 
