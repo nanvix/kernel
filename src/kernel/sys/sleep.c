@@ -24,6 +24,7 @@
 
 #include <nanvix/const.h>
 #include <nanvix/thread.h>
+#include <errno.h>
 
 /**
  * @brief Lock to sleeping queues.
