@@ -141,7 +141,7 @@ PUBLIC void do_excp(const struct exception *excp, const struct context *ctx)
 PUBLIC void k1b_excp_set_handler(int num, k1b_exception_handler_fn handler)
 {
 	/* Invalid exception. */
-	if ((num < 0) || (num > (K1B_NUM_EXCEPTIONS + K1B_NUM_EXCEPTIONS_VIRT)))
+	if ((num < 0) || (num >= (K1B_NUM_EXCEPTIONS + K1B_NUM_EXCEPTIONS_VIRT)))
 		kpanic("[k1b] invalid exception number");
 
 	k1b_excp_handlers[num] = handler;
