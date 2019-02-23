@@ -482,7 +482,8 @@ PUBLIC void or1k_tlb_init(void)
 	xtlbmr = 1;
 	coreid = or1k_core_get_id();
 
-	kprintf("[hal] initializing tlb");
+	if (!coreid)
+		kprintf("[hal] initializing tlb");
 
 	/* Write into DTLB/ITLB. */
 	for (int i = 0; i < OR1K_TLB_LENGTH; i++)

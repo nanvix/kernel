@@ -24,8 +24,9 @@
 #
 
 # C Source Files
-C_SRC += $(wildcard pm/*.c)  \
-         $(wildcard sys/*.c)
+C_SRC += $(wildcard pm/*.c)            \
+         $(wildcard sys/*.c)           \
+         $(wildcard dev/stdout/8250.c)
 
 # Unit Tests for Kernel
 ifneq ($(RELEASE), true)
