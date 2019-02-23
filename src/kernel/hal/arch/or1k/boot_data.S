@@ -23,14 +23,15 @@
 
 #include <arch/or1k/core.h>
 #include <arch/or1k/mmu.h>
+#include <arch/or1k/cpu.h>
 
 /* Exported symbols. */
 .globl kernel_pgtab
 .globl kpool_pgtab
-.globl idle_pgdir
 .globl dtlb_table
 .globl itlb_table
-.globl core0.kstack
+.globl core.kstack
+.globl ompic_pgtab
 
 .section .data
 /*----------------------------------------------------------------------------*
@@ -56,17 +57,6 @@ kpool_pgtab:
 	.fill OR1K_PAGE_SIZE/OR1K_PTE_SIZE, OR1K_PTE_SIZE, 0
 
 /*----------------------------------------------------------------------------*
- * idle_pgdir                                                                 *
- *----------------------------------------------------------------------------*/
-
-/**
- * @brief Page directory of idle process.
- */
-.align OR1K_PAGE_SIZE
-idle_pgdir:
-	.fill 256, OR1K_PTE_SIZE, 0
-
-/*----------------------------------------------------------------------------*
  * dtlb                                                                       *
  *----------------------------------------------------------------------------*/
 
@@ -89,12 +79,23 @@ itlb_table:
 	.fill 64, DWORD_SIZE, 0
 
 /*----------------------------------------------------------------------------*
- * core0.kstack                                                               *
+ * core.kstack                                                                *
  *----------------------------------------------------------------------------*/
 
 /**
- * @brief Kernel stack for core 0.
+ * @brief Kernel stack for all cores.
  */
 .align OR1K_PAGE_SIZE
-core0.kstack:
+core.kstack:
+	.fill (OR1K_PAGE_SIZE/OR1K_PTE_SIZE)*OR1K_NUM_CORES, OR1K_PTE_SIZE, 0
+
+/*----------------------------------------------------------------------------*
+ * ompic_pgtab                                                                *
+ *----------------------------------------------------------------------------*/
+
+/* 
+ * OMPIC page table.
+ */
+.align PAGE_SIZE
+ompic_pgtab:
 	.fill OR1K_PAGE_SIZE/OR1K_PTE_SIZE, OR1K_PTE_SIZE, 0

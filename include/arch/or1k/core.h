@@ -60,6 +60,21 @@
 	#include <nanvix/const.h>
 	#include <stdint.h>
 
+/*============================================================================*
+ *                               Core Interface                               *
+ *============================================================================*/
+
+	/**
+	 * @name States of a Core
+	 */
+	/**@{*/
+	#define OR1K_CORE_IDLE      0 /**< Idle        */
+	#define OR1K_CORE_SLEEPING  1 /**< Sleeping    */
+	#define OR1K_CORE_RUNNING   2 /**< Running     */
+	#define OR1K_CORE_RESETTING 3 /**< Resetting   */
+	#define OR1K_CORE_OFFLINE   4 /**< Powered Off */
+	/**@}*/
+
 	/**
 	 * @name Machine Types
 	 */
@@ -68,29 +83,6 @@
 	typedef uint16_t word_t;  /**< Word.        */
 	typedef uint32_t dword_t; /**< Double word. */
 	/**@}*/
-
-	/**
-	 * @brief Gets the ID of the core.
-	 *
-	 * The or1k_core_get_id() returns the ID of the underlying core.
-	 *
-	 * @returns The ID of the underlying core.
-	 */
-	static inline int or1k_core_get_id(void)
-	{
-		return (0);
-	}
-
-	/**
-	 * @brief Halts the processor.
-	 *
-	 * The or1k_hlt() function stops instruction execution in the the
-	 * underlying core and places it in a halt state. An enabled
-	 * hardware interrupt, NMI, or a reset resumes execution.
-	 */
-	static inline void or1k_hlt(void)
-	{
-	}
 
 	/**
 	 * @brief Reads from an specified Special-Purpose register.
@@ -136,8 +128,86 @@
 		);
 	}
 
-/**@}*/
+	/**
+	 * @brief Gets the ID of the core.
+	 *
+	 * The or1k_core_get_id() returns the ID of the underlying core.
+	 *
+	 * @returns The ID of the underlying core.
+	 */
+	static inline int or1k_core_get_id(void)
+	{
+		return (or1k_mfspr(OR1K_SPR_COREID));
+	}
 
+	/**
+	 * @brief Halts the processor.
+	 *
+	 * The or1k_hlt() function stops instruction execution in the the
+	 * underlying core and places it in a halt state. An enabled
+	 * hardware interrupt, NMI, or a reset resumes execution.
+	 */
+	EXTERN void or1k_core_hlt(void);
+
+	/**
+	 * @brief Suspends instruction execution in the underlying core.
+	 */
+	EXTERN void or1k_core_sleep(void);
+
+	/**
+	 * @brief Suspends instruction execution in the underlying core.
+	 */
+	EXTERN void or1k_core_idle(void);
+
+	/**
+	 * @brief Wakes up a core.
+	 *
+	 * @param coreid ID of the target core.
+	 */
+	EXTERN void or1k_core_wakeup(int coreid);
+
+	/**
+	 * @brief Starts a core.
+	 *
+	 * @param coreid ID of the target core.
+	 * @param start  Starting routine to execute.
+	 */
+	EXTERN void or1k_core_start(int coreid, void (*start)(void));
+
+	/**
+	 * @brief Shutdowns the underlying core.
+	 *
+	 * @param status Shutdown status.
+	 */
+	EXTERN void or1k_core_shutdown(int status);	
+
+	/**
+	 * @brief Initializes the underlying core.
+	 */
+	EXTERN void or1k_core_setup(void);
+
+	/**
+	 * @brief Resets the underlying core.
+	 *
+	 * The or1k_core_reset() function resets execution instruction in
+	 * the underlying core by reseting the kernel stack to its initial
+	 * location and relaunching the or1k_slave_setup() function.
+	 *
+	 * @note This function does not return.
+	 * @note For the implementation of this function check out
+	 * assembly source files.
+	 *
+	 * @see or1k_slave_setup()
+	 *
+	 * @author Davidson Francis
+	 */
+	EXTERN void or1k_core_reset(void);
+
+	/**
+	 * @brief Resumes instruction execution in the underlying core.
+	 */
+	EXTERN void or1k_core_run(void);
+	
 /*============================================================================*
  *                              Exported Interface                            *
  *============================================================================*/
@@ -153,8 +223,12 @@
 	#define __core_get_id   /**< core_get_id()   */
 	#define __core_halt     /**< core_halt()     */
 	#define __core_shutdown /**< core_shutdown() */
+	#define __core_sleep    /**< core_sleep()    */
+	#define __core_wakeup   /**< core_wakeup()   */
+	#define __core_start    /**< core_start()    */
+	#define __core_reset    /**< core_reset()    */
 	/**@}*/
-
+	
 /**
  * @addtogroup kernel-hal-core Core
  * @ingroup kernel-hal-cpu
@@ -164,20 +238,60 @@
 /**@{*/
 
 	/**
-	 * @see or1k_core_get_id().
+	 * @see or1k_core_get_id()
 	 */
 	static inline int core_get_id(void)
 	{
 		return (or1k_core_get_id());
 	}
-
+	
 	/**
-	 * @see or1k_hlt().
+	 * @see or1k_hlt()
 	 */
 	static inline void core_halt(void)
 	{
-		or1k_hlt();
+		or1k_core_hlt();
 	}
+	
+	/**
+	 * @see or1k_core_sleep().
+	 */
+	static inline void core_sleep(void)
+	{
+		or1k_core_sleep();
+	}
+
+	/**
+	 * @see or1k_core_wakeup().
+	 */
+	static inline void core_wakeup(int coreid)
+	{
+		or1k_core_wakeup(coreid);
+	}
+
+	/**
+	 * @see or1k_core_start().
+	 */
+	static inline void core_start(int coreid, void (*start)(void))
+	{
+		or1k_core_start(coreid, start);
+	}
+
+	/**
+	 * @see or1k_core_shutdown().
+	 */
+	static inline void core_shutdown(int status)
+	{
+		or1k_core_shutdown(status);
+	}
+
+	/**
+	 * @see or1k_core_reset().
+	 */
+	static inline void core_reset(void)
+	{
+		or1k_core_reset();
+	}	
 
 /**@}*/
 

@@ -1,8 +1,8 @@
 /*
  * MIT License
  *
- * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
- *              2017-2018 Davidson Francis     <davidsondfgl@gmail.com>
+ * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ *              2018 Davidson Francis     <davidsondfgl@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,58 +23,23 @@
  * SOFTWARE.
  */
 
-OUTPUT_FORMAT("elf32-or1k")
-ENTRY(_do_start)
+/* Must come first. */
+#define _ASM_FILE_
 
-BOOT_ADDR = 0;
+#include <arch/or1k/regs.h>
+#include <target/or1k/pc.h>
 
-SECTIONS
-{
-	. = BOOT_ADDR;
+.global _or1k_core_reset
 
-	EXCEPTIONS = .;
+.section .text
 
-	KSTART_CODE = .;
+/*===========================================================================*
+ * _or1k_core_reset()                                                        *
+ *===========================================================================*/
 
-	/* Kernel code section. */
-	.bootstrap : AT(ADDR(.bootstrap))
-	{
-		*(hooks.o)
-		*(boot_code.o)
-	}
-
-	. = ALIGN(8192);
-
-	/* Kernel code section. */
-	.text : AT(ADDR(.text))
-	{
-		*(.text)
-	}
-
-	KSTART_DATA = ALIGN(8192);
-
-	/* Initialized kernel data section. */
-	.data ALIGN(8192) : AT(ADDR(.data))
-	{
-		*boot_data.o
-		*(.rodata)
-		*(.data)
-	}
-
-	/* Uninitialized kernel data section. */
-	.bss : AT(ADDR(.bss))
-	{
-		*(.bss)
-	}
-
-	. =ALIGN(8192);
-
-	KDATA_END = .;
-
-	/* Discarded. */
-	/DISCARD/ :
-	{
-		*(.comment)
-		*(.note)
-	}
-}
+/*
+ * Resets the underlying core.
+ */
+_or1k_core_reset:
+	l.nop
+	l.nop

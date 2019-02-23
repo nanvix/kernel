@@ -44,7 +44,8 @@ case "$TARGET" in
 			-serial stdio      \
 			-display none      \
 			-m 256M            \
-			-mem-prealloc
+			-mem-prealloc      \
+			-smp 2
 		;;
 	*)
         echo "error: unsupported target"

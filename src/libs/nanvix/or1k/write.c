@@ -1,8 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
- *              2017-2018 Davidson Francis     <davidsondfgl@gmail.com>
+ * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,58 +22,27 @@
  * SOFTWARE.
  */
 
-OUTPUT_FORMAT("elf32-or1k")
-ENTRY(_do_start)
+#include <nanvix/syscall.h>
+#include <sys/types.h>
+#include <errno.h>
 
-BOOT_ADDR = 0;
-
-SECTIONS
+/**
+ * @brief Writes data to a file.
+ *
+ * @param fd  File descriptor.
+ * @param buf Target buffer.
+ * @param n   Number of bytes to write.
+ *
+ * @returns Upon successful completion, the number of bytes written is
+ * returned. Upon failure, -1 is returned and @p errno is set to
+ * indicate the error.
+ */
+ssize_t nanvix_write(int fd, const char *buf, size_t n)
 {
-	. = BOOT_ADDR;
+	((void) fd);
+	((void) buf);
+	((void) n);
 
-	EXCEPTIONS = .;
-
-	KSTART_CODE = .;
-
-	/* Kernel code section. */
-	.bootstrap : AT(ADDR(.bootstrap))
-	{
-		*(hooks.o)
-		*(boot_code.o)
-	}
-
-	. = ALIGN(8192);
-
-	/* Kernel code section. */
-	.text : AT(ADDR(.text))
-	{
-		*(.text)
-	}
-
-	KSTART_DATA = ALIGN(8192);
-
-	/* Initialized kernel data section. */
-	.data ALIGN(8192) : AT(ADDR(.data))
-	{
-		*boot_data.o
-		*(.rodata)
-		*(.data)
-	}
-
-	/* Uninitialized kernel data section. */
-	.bss : AT(ADDR(.bss))
-	{
-		*(.bss)
-	}
-
-	. =ALIGN(8192);
-
-	KDATA_END = .;
-
-	/* Discarded. */
-	/DISCARD/ :
-	{
-		*(.comment)
-		*(.note)
-	}
+	return (-1);
 }
+

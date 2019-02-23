@@ -456,6 +456,16 @@
 		return (&pgtab[pte_idx_get(vaddr)]);
 	}
 
+	/**
+	 * @brief Initializes the MMU.
+	 */
+	EXTERN void or1k_mmu_setup(void);
+
+	/**
+	 * @brief Enables the MMU.
+	 */
+	EXTERN void or1k_enable_mmu(void);
+
 #endif
 
 /**@}*/
