@@ -23,7 +23,7 @@
 #
 
 # Object Files
-OBJ = $(SRC:.c=..o)
+OBJ = $(SRC:.c=.o)
 
 # Builds All Object Files
 all: $(OBJ)

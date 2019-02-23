@@ -112,9 +112,15 @@
 
 		/* Check if timer should be masked. */
 		if (newlevel == OR1K_INTLVL_0)
+		{
 			or1k_mtspr(OR1K_SPR_SR, or1k_mfspr(OR1K_SPR_SR) & ~OR1K_SPR_SR_TEE);
+			or1k_mtspr(OR1K_SPR_SR, or1k_mfspr(OR1K_SPR_SR) & ~OR1K_SPR_SR_IEE);
+		}
 		else
+		{
 			or1k_mtspr(OR1K_SPR_SR, or1k_mfspr(OR1K_SPR_SR) |  OR1K_SPR_SR_TEE);
+			or1k_mtspr(OR1K_SPR_SR, or1k_mfspr(OR1K_SPR_SR) |  OR1K_SPR_SR_IEE);
+		}
 
 		currmask = mask;
 		oldlevel = currlevel;

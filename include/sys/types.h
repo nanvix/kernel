@@ -1,8 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
- *              2018-2018 Davidson Francis     <davidsondfgl@gmail.com>
+ * Copyright(c) 2011-2016 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,56 +22,55 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_OR1K_CACHE_H_
-#define ARCH_OR1K_CACHE_H_
+#ifndef TYPES_H_
+#define TYPES_H_
 
-/**
- * @addtogroup or1k-cache Cache
- * @ingroup or1k-memory
- *
- * @brief Memory Cache
- */
-/**@{*/
+#ifndef _ASM_FILE_
 
-	/**
-	 * @name Provided Interface
-	 */
-	/**@{*/
-	#define __hal_dcache_invalidate
-	/**@}*/
+	#include <stdint.h>
+	
+	/* Used for system times in clock ticks. */
+	typedef int clock_t;
 
-	/**
-	 * @brief Cache line size (in bytes).
-	 *
-	 * @todo Check this.
-	 */
-	#define OR1K_CACHE_LINE_SIZE 64
+	/* Used for device IDs. */
+	typedef unsigned dev_t;
+	
+	/* Used for disk addresses. */
+	typedef unsigned daddr_t;
+	
+	/* Used as a general identifier. */
+	typedef int id_t;
+	
+	/* Used for some file attributes. */
+	typedef int gid_t;
+	
+	/* Used for some file attributes. */
+	typedef int mode_t;
+	
+	/* Used for file sizes. */
+	typedef signed off_t;
 
-	/**
-	 * @see OR1K_CACHE_LINE_SIZE
-	 */
-	#define CACHE_LINE_SIZE OR1K_CACHE_LINE_SIZE
+	/* Used for process IDs and process group IDs. */
+	typedef signed pid_t;
+	
+	/* Used for time in seconds. */
+	typedef signed time_t;
 
-	/**
-	 * @brief Invalidates the data cache.
-	 */
-	static inline void or1k_dcache_inval(void)
-	{
-		or1k_mtspr(OR1K_SPR_DCBIR, 0);
-	}
+	/* Used for file serial numbers. */
+	typedef uint16_t ino_t;
 
-	/**
-	 * @see or1k_dcache_inval
-	 * @note The or1k target features cache coherency.
-	 *
-	 * @cond or1k
-	 */
-	static inline void hal_dcache_invalidate(void)
-	{
-		or1k_dcache_inval();
-	}
-	/**@endcond*/
+	/* Used for link counts. */
+	typedef int nlink_t;
 
-/**@}*/
+	/* Used for sizes of objects. */
+	typedef unsigned size_t;
+	
+	/* Used for a count of bytes or an error indication. */
+	typedef signed ssize_t;
+	
+	/* Used for user IDs. */
+	typedef int uid_t;
+	
+#endif /* _ASM_FILE */
 
-#endif /* ARCH_OR1K_CACHE_H_ */
+#endif /* TYPES_H_ */

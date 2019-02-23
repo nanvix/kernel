@@ -58,8 +58,6 @@
 #define bp r2 /**< Stack Base Pointer Register  */
 /**@}*/
 
-.section .text
-
 /*============================================================================*
  * or1k_redzone_alloc()                                                       *
  *============================================================================*/
@@ -251,6 +249,9 @@
  * hardcoded hw exceptions                                                    *
  *============================================================================*/
 
+
+.section .bootstrap,"ax",@progbits
+
 /*
  * In OpenRISC architecture, all the exceptions are hardcoded to a very
  * specific addresses.
@@ -353,6 +354,7 @@ _do_excp:
  */
 _do_hwint:
 	_do_prologue
+	redzone_alloc
 
 	/*
 	 * Save execution context
@@ -384,10 +386,8 @@ _do_hwint:
 	/*
 	 * Call interrupt handler.
 	 */
-	redzone_alloc
 	l.jal or1k_do_hwint
 	l.nop
-	redzone_free
 
 	/*
 	 * Restore saved execution context.

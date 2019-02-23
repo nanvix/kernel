@@ -44,7 +44,7 @@ export AR = $(TOOLCHAIN_DIR)/or1k-elf-ar
 
 # Compiler Options
 export CFLAGS   = -D __or1k__ -D __pc__
-export CFLAGS  += -pedantic-errors -fextended-identifiers
+export CFLAGS  += -fextended-identifiers
 export CFLAGS  += -nostdlib -nostdinc -fno-stack-protector
 
 # Linker Options
@@ -60,7 +60,7 @@ export LIBNANVIX = libnanvix-$(ARCH).a
 export LIBS += $(LIBDIR)/$(LIBNANVIX) $(LIBDIR)/$(LIBKERNEL)
 
 # Binaries
-export EXECBIN = test-driver-$(TARGET)
+export EXECBIN = kernel
 
 #===============================================================================
 

@@ -30,7 +30,7 @@
 /*
  * Too few cores in the underlying core.
  */
-#if (!defined(HAL_SMP) || (HAL_NUM_CORES <= 2))
+#if (!defined(HAL_SMP))
 	#error "architecture does not have enough cores"
 #endif
 

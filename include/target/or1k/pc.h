@@ -82,10 +82,11 @@
 	 * @name Virtual Memory Layout
 	 */
 	/**@{*/
-	#define _UBASE_VIRT  0x02000000 /**< User base.        */
-	#define _USTACK_ADDR 0xc0000000 /**< User stack.       */
-	#define _KBASE_VIRT  0xc0000000 /**< Kernel base.      */
-	#define _KPOOL_VIRT  0xc1000000 /**< Kernel page pool. */
+	#define _UBASE_VIRT      0x02000000 /**< User base.        */
+	#define _USTACK_ADDR     0xc0000000 /**< User stack.       */
+	#define _KBASE_VIRT      0xc0000000 /**< Kernel base.      */
+	#define _KPOOL_VIRT      0xc1000000 /**< Kernel page pool. */
+	#define _OR1K_OMPIC_VIRT 0xc5000000 /**< Kernel OMPIC page.*/
 	/**@}*/
 
 	/**
