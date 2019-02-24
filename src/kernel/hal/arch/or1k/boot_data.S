@@ -32,6 +32,7 @@
 .globl itlb_table
 .globl core.kstack
 .globl ompic_pgtab
+.globl uart_pgtab
 
 .section .data
 /*----------------------------------------------------------------------------*
@@ -98,4 +99,15 @@ core.kstack:
  */
 .align PAGE_SIZE
 ompic_pgtab:
+	.fill OR1K_PAGE_SIZE/OR1K_PTE_SIZE, OR1K_PTE_SIZE, 0
+
+/*----------------------------------------------------------------------------*
+ * uart_pgtab                                                                 *
+ *----------------------------------------------------------------------------*/
+
+/* 
+ * uart8250 page table.
+ */
+.align PAGE_SIZE
+uart_pgtab:
 	.fill OR1K_PAGE_SIZE/OR1K_PTE_SIZE, OR1K_PTE_SIZE, 0

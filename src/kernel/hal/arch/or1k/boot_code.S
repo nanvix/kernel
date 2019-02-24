@@ -40,6 +40,7 @@
 
 #include <arch/or1k/core.h>
 #include <arch/or1k/mmu.h>
+#include <target/or1k/pc.h>
 
 /* Exported symbols. */
 .globl start
@@ -50,6 +51,7 @@
 .globl itlb_table
 .globl core.kstack
 .globl ompic_pgtab
+.globl uart_pgtab
 
 /*============================================================================*
  *                              bootstrap section                             *
@@ -110,6 +112,17 @@ start:
 	l.ori  r1, r1, OR1K_PT_PRESENT
 	l.sw  OR1K_PTE_SIZE*193(r3), r1
 
+	OR1K_LOAD_SYMBOL_2_GPR(r1, uart_pgtab)   /* UART 8250 at 0xc4000000          */
+	l.srli r1, r1, PAGE_SHIFT
+	l.slli r1, r1, OR1K_PT_SHIFT
+	l.ori  r1, r1, OR1K_PT_PRESENT
+	l.sw  OR1K_PTE_SIZE*196(r3), r1
+
+	OR1K_LOAD_SYMBOL_2_GPR(r1, uart_pgtab)
+	OR1K_LOAD_SYMBOL_2_GPR(r2, (_OR1K_UART_PHYS >> PAGE_SHIFT) << OR1K_PPN_SHIFT)
+	l.ori r2, r2, OR1K_PT_L | OR1K_PT_PRESENT
+	l.sw 0(r1), r2
+
 	OR1K_LOAD_SYMBOL_2_GPR(r1, ompic_pgtab)  /* OMPIC at 0xc5000000              */
 	l.srli r1, r1, PAGE_SHIFT
 	l.slli r1, r1, OR1K_PT_SHIFT
@@ -117,7 +130,7 @@ start:
 	l.sw  PTE_SIZE*197(r3), r1
 
 	OR1K_LOAD_SYMBOL_2_GPR(r1, ompic_pgtab)
-	OR1K_LOAD_SYMBOL_2_GPR(r2, 0x13000000)
+	OR1K_LOAD_SYMBOL_2_GPR(r2, (_OR1K_OMPIC_PHYS >> PAGE_SHIFT) << OR1K_PPN_SHIFT)
 	l.ori r2, r2, OR1K_PT_L | OR1K_PT_PRESENT
 	l.sw 0(r1), r2
 

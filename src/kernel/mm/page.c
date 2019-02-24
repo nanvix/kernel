@@ -557,6 +557,8 @@ PRIVATE void do_tlb_fault(
 	vaddr = exception_get_addr(excp);
 	vaddr &= PAGE_MASK;
 
+#ifdef NDEBUG
+
 	/*
 	 * The faulting address lies in kernel
 	 * land and this is unlikely to happen.
@@ -564,6 +566,8 @@ PRIVATE void do_tlb_fault(
 	 */
 	if (!mm_is_uaddr(vaddr))
 		kprintf("[mm] tlb fault in kernel land");
+
+#endif
 
 	/* Lookup PDE. */
 	pde = pde_get(idle_pgdir, vaddr);

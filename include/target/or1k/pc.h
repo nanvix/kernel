@@ -86,6 +86,7 @@
 	#define _USTACK_ADDR     0xc0000000 /**< User stack.       */
 	#define _KBASE_VIRT      0xc0000000 /**< Kernel base.      */
 	#define _KPOOL_VIRT      0xc1000000 /**< Kernel page pool. */
+	#define _OR1K_UART_VIRT  0xc4000000 /**< Kernel UART page. */
 	#define _OR1K_OMPIC_VIRT 0xc5000000 /**< Kernel OMPIC page.*/
 	/**@}*/
 
@@ -93,9 +94,11 @@
 	 * @name Physical Memory Layout
 	 */
 	/**@{*/
-	#define _KBASE_PHYS 0x00000000 /**< Kernel base.      */
-	#define _KPOOL_PHYS 0x01000000 /**< Kernel page pool. */
-	#define _UBASE_PHYS 0x02000000 /**< User base.        */
+	#define _KBASE_PHYS      0x00000000 /**< Kernel base.            */
+	#define _KPOOL_PHYS      0x01000000 /**< Kernel page pool.       */
+	#define _UBASE_PHYS      0x02000000 /**< User base.              */
+	#define _OR1K_UART_PHYS  0x90000000 /**< UART Physical address.  */
+	#define _OR1K_OMPIC_PHYS 0x98000000 /**< OMPIC Physical address. */
 	/**@}*/
 
 	/**
@@ -152,20 +155,23 @@
  *============================================================================*/
 
 #ifndef _ASM_FILE_
+
+	#include <driver/8250.h>
+
 	/**
-	 * @see console_init()
+	 * @see uart8250_init()
 	 */
 	static inline void hal_stdout_init(void)
 	{
+		uart8250_init();
 	}
 
 	/**
-	 * @see console_write()
+	 * @see uart8250_write()
 	 */
 	static inline void hal_stdout_write(const char *buf, size_t n)
 	{
-		((void)buf);
-		((void)n);
+		uart8250_write(buf, n);
 	}
 #endif
 
