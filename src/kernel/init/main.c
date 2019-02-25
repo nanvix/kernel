@@ -44,13 +44,13 @@ PRIVATE void *init(void *arg)
 	const char *argv[] = { "init", NULL };
 
 	UNUSED(arg);
+	UNUSED(status);
 
 #if (HAL_NUM_CORES > 2)
 	status = main(argc, argv, NULL);
 #else
 	UNUSED(argc);
 	UNUSED(argv);
-	UNUSED(status);
 #endif
 
 	/* Halt. */

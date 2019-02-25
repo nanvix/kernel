@@ -23,8 +23,16 @@
  */
 
 #include <arch/k1b/ivt.h>
+#include <arch/k1b/cpu.h>
+#include <arch/k1b/cache.h>
+#include <arch/k1b/mmu.h>
 #include <arch/k1b/pic.h>
 #include <nanvix/const.h>
+
+/**
+ * @brief Kernel stack.
+ */
+PRIVATE uint64_t kstack[K1B_NUM_CORES][K1B_PAGE_SIZE/sizeof(uint64_t)] ALIGN(K1B_CACHE_LINE_SIZE);
 
 /**
  * Lookup table that maps hardware interrupt IDs into numbers.
@@ -72,6 +80,10 @@ PUBLIC void k1b_ivt_setup(
 		bsp_register_it(do_hwint, hwints[i]);
 	mOS_register_scall_handler(do_swint); 
 	mOS_register_trap_handler(do_excp);
+
+	mOS_register_stack_handler(kstack[k1b_core_get_id()]);
+	mOS_trap_enable_shadow_stack();
+	kprintf("[hal] exception stack at %x", kstack[k1b_core_get_id()]);
 
 	k1b_pic_setup();
 }
