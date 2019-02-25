@@ -89,6 +89,11 @@
 	EXTERN struct thread threads[KTHREAD_MAX];
 
 	/**
+	 * @brief NULL thread ID.
+	 */
+	#define KTHREAD_NULL_TID -1
+
+	/**
 	 * @brief Master thread.
 	 */
 	#define KTHREAD_MASTER (&threads[0])
