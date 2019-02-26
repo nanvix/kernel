@@ -131,12 +131,8 @@ PRIVATE inline void or1k_core_notify(int coreid)
 {
 	int mycoreid = or1k_core_get_id();
 
-	or1k_spinlock_lock(&cores[coreid].lock);
-
-		/* Set the pending IPI flag. */
-		pending_ipis[coreid] |= (1 << mycoreid);
-
-	or1k_spinlock_unlock(&cores[coreid].lock);
+	/* Set the pending IPI flag. */
+	pending_ipis[coreid] |= (1 << mycoreid);
 }
 
 /*============================================================================*
@@ -296,7 +292,6 @@ again:
 		cores[coreid].wakeups = 0;
 		or1k_dcache_inval();
 
-		or1k_spinlock_unlock(&cores[coreid].lock);
 		or1k_core_notify(coreid);
 	}
 
