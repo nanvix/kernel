@@ -23,9 +23,10 @@
  * SOFTWARE.
  */
 
+#include <target/or1k/pc.h>
 #include <arch/or1k/core.h>
+#include <arch/or1k/cpu.h>
 #include <arch/or1k/tlb.h>
-#include <nanvix/mm.h>
 #include <nanvix/const.h>
 
 /**
@@ -100,7 +101,7 @@ PRIVATE int or1k_tlb_check_inst(vaddr_t vaddr)
 	kdata = (vaddr_t)&KSTART_DATA;
 
 	/* Kernel address. */
-	if (vaddr >= kcode && vaddr < KMEM_SIZE)
+	if (vaddr >= kcode && vaddr < _KMEM_SIZE)
 	{
 		if (vaddr >= kcode && vaddr < kdata)
 			return (1);
@@ -109,7 +110,7 @@ PRIVATE int or1k_tlb_check_inst(vaddr_t vaddr)
 	/* User address. */
 	else
 	{
-		if (vaddr >= UBASE_VIRT && vaddr < USTACK_ADDR)
+		if (vaddr >= _UBASE_VIRT && vaddr < _USTACK_ADDR)
 			return (1);
 	}
 
@@ -272,7 +273,7 @@ PUBLIC int or1k_tlb_write(int handler_num, vaddr_t vaddr, paddr_t paddr)
 	 * Check if the virtual address belongs to
 	 * kernel or user.
 	 */
-	if ( (vaddr >= kcode && vaddr < KMEM_SIZE) || (vaddr >= KBASE_VIRT) )
+	if ((vaddr >= kcode && vaddr < _KMEM_SIZE) || (vaddr >= _KBASE_VIRT))
 		user = 0;
 
 	/*
