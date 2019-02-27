@@ -23,6 +23,7 @@
 #
 
 # Source Files
-SRC = $(wildcard nanvix/$(ARCH)/*.c)
+SRC = $(wildcard nanvix/$(ARCH)/*.c) \
+	$(wildcard nanvix/errno.c)
 
 include build/makefile.$(TARGET)
