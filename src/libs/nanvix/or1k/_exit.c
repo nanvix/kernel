@@ -24,47 +24,26 @@
  */
 
 #include <nanvix/syscall.h>
-#include <sys/types.h>
-#include <errno.h>
 
 /**
- * @brief Writes data to a file.
+ * @brief Terminates the calling process.
  *
- * @param fd  File descriptor.
- * @param buf Target buffer.
- * @param n   Number of bytes to write.
+ * @param status Exit status.
  *
- * @returns Upon successful completion, the number of bytes written is
- * returned. Upon failure, -1 is returned and @p errno is set to
- * indicate the error.
+ * @note This function does not return.
  */
-ssize_t nanvix_write(int fd, const char *buf, size_t n)
+void _exit(int status)
 {
 	register unsigned arg0
-		__asm__("r3") = (unsigned) fd;
-	register unsigned arg1
-		__asm__("r4") = (unsigned) buf;
-	register unsigned arg2
-		__asm__("r5") = (unsigned) n;
+		__asm__("r3") = (unsigned) status;
 
-	register ssize_t ret
-		__asm__("r11") = NR_write;
+	register int ret
+		__asm__("r11") = NR__exit;
 
 	__asm__ volatile (
 		"l.sys 1"
 		: "=r" (ret)
 		: "r" (ret),
-		"r" (arg0),
-		"r" (arg1),
-		"r" (arg2)
+		"r" (arg0)
 	);
-
-	/* System call failed. */
-	if (ret < 0)
-	{
-		errno = -ret;
-		return (-1);
-	}
-
-	return (ret);
 }

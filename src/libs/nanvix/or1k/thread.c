@@ -2,6 +2,7 @@
  * MIT License
  *
  * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ *              2018 Davidson Francis     <davidsondfgl@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +35,16 @@
  */
 kthread_t kthread_self(void)
 {
-	return (-1);
+	register kthread_t tid
+		__asm__("r11") = NR_thread_get_id;
+
+	__asm__ volatile (
+		"l.sys 1"
+		: "=r" (tid)
+		: "r"  (tid)
+	);
+
+	return (tid);
 }
 
 /*============================================================================*
@@ -50,11 +60,33 @@ int kthread_create(
 	void *arg
 )
 {
-	((void) tid);
-	((void) start);
-	((void) arg);
+	register unsigned arg0
+		__asm__("r3") = (unsigned) tid;
+	register unsigned arg1
+		__asm__("r4") = (unsigned) start;
+	register unsigned arg2
+		__asm__("r5") = (unsigned) arg;
 
-	return (-1);
+	register int ret
+		__asm__("r11") = NR_thread_create;
+
+	__asm__ volatile (
+		"l.sys 1"
+		: "=r" (ret)
+		: "r" (ret),
+		"r" (arg0),
+		"r" (arg1),
+		"r" (arg2)
+	);
+
+	/* System call failed. */
+	if (ret < 0)
+	{
+		errno = -ret;
+		return (-1);
+	}
+
+	return (ret);
 }
 
 /*============================================================================*
@@ -66,9 +98,27 @@ int kthread_create(
  */
 int kthread_exit(void *retval)
 {
-	((void) retval);
-	
-	return (-1);
+	register unsigned arg0
+		__asm__("r3") = (unsigned) retval;
+
+	register int ret
+		__asm__("r11") = NR_thread_exit;
+
+	__asm__ volatile (
+		"l.sys 1"
+		: "=r" (ret)
+		: "r" (ret),
+		"r" (arg0)
+	);
+
+	/* System call failed. */
+	if (ret < 0)
+	{
+		errno = -ret;
+		return (-1);
+	}
+
+	return (ret);
 }
 
 /*============================================================================*
@@ -83,10 +133,30 @@ int kthread_join(
 	void **retval
 )
 {
-	((void) tid);
-	((void) retval);
+	register unsigned arg0
+		__asm__("r3") = (unsigned) tid;
+	register unsigned arg1
+		__asm__("r4") = (unsigned) retval;
 
-	return (-1);
+	register int ret
+		__asm__("r11") = NR_thread_join;
+
+	__asm__ volatile (
+		"l.sys 1"
+		: "=r" (ret)
+		: "r" (ret),
+		"r" (arg0),
+		"r" (arg1)
+	);
+
+	/* System call failed. */
+	if (ret < 0)
+	{
+		errno = -ret;
+		return (-1);
+	}
+
+	return (ret);
 }
 
 /*============================================================================*
@@ -98,7 +168,23 @@ int kthread_join(
  */
 int sleep(void)
 {
-	return (-1);
+	register int ret
+		__asm__("r11") = NR_sleep;
+
+	__asm__ volatile (
+		"l.sys 1"
+		: "=r" (ret)
+		: "r"  (ret)
+	);
+
+	/* System call failed. */
+	if (ret < 0)
+	{
+		errno = -ret;
+		return (-1);
+	}
+
+	return (ret);
 }
 
 /*============================================================================*
@@ -110,7 +196,25 @@ int sleep(void)
  */
 int wakeup(kthread_t tid)
 {
-	((void) (tid));
+	register unsigned arg0
+		__asm__("r3") = (unsigned) tid;
 
-	return (-1);
+	register int ret
+		__asm__("r11") = NR_wakeup;
+
+	__asm__ volatile (
+		"l.sys 1"
+		: "=r" (ret)
+		: "r" (ret),
+		"r" (arg0)
+	);
+
+	/* System call failed. */
+	if (ret < 0)
+	{
+		errno = -ret;
+		return (-1);
+	}
+
+	return (ret);
 }
