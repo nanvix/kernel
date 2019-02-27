@@ -88,5 +88,5 @@ PRIVATE void or1k_ompic_handle_ipi(int num)
 PUBLIC void or1k_ompic_init(void)
 {
 	/* IPI handler. */
-	interrupt_register(OR1K_PC_INT_OMPIC, or1k_ompic_handle_ipi);
+	or1k_hwint_handler_set(OR1K_PC_INT_OMPIC, or1k_ompic_handle_ipi);
 }
