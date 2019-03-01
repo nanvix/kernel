@@ -407,7 +407,51 @@ _do_hwint:
  * System call hook.
  */
 _syscall:
+	_do_prologue
+	redzone_alloc
+
+	/*
+	 * Save execution context
+	 * in the current stack.
+	 */
+	l.addi sp, sp, -OR1K_CONTEXT_SIZE
+	or1k_context_save sp
+
+	/*
+	 * Syscall parameters.
+	 */
+	l.lwz r3, OR1K_CONTEXT_R13(sp) /* arg6. */
+	l.sw -8(sp), r3
+	l.lwz r3, OR1K_CONTEXT_R11(sp) /* syscall_nr */
+	l.sw -4(sp), r3
+
+	l.lwz r8, OR1K_CONTEXT_R8(sp)  /* arg5. */
+	l.lwz r7, OR1K_CONTEXT_R7(sp)  /* arg4. */
+	l.lwz r6, OR1K_CONTEXT_R6(sp)  /* arg3. */
+	l.lwz r5, OR1K_CONTEXT_R5(sp)  /* arg2. */
+	l.lwz r4, OR1K_CONTEXT_R4(sp)  /* arg1. */
+	l.lwz r3, OR1K_CONTEXT_R3(sp)  /* arg0. */
+
+	l.addi sp, sp, -8
+
+	/*
+	 * Call syscall handler.
+	 */
+	l.jal do_syscall1
 	l.nop
+	l.addi sp, sp, 8
+
+	/* Copy return value to the user stack. */
+	l.sw OR1K_CONTEXT_R11(sp), r11
+
+	/*
+	 * Restore saved execution context.
+	 */
+	or1k_context_restore sp
+
+	_do_epilogue
+
+	l.rfe
 	l.nop
 
 /*===========================================================================*
