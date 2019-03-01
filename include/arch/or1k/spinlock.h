@@ -2,6 +2,7 @@
  * MIT License
  *
  * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ *              2018 Davidson Francis     <davidsondfgl@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -52,7 +53,108 @@
 	/**
 	 * @brief Spinlock.
 	 */
-	typedef uint64_t or1k_spinlock_t;
+	typedef uint32_t or1k_spinlock_t;
+
+	/**
+	 * @brief Initializes a or1k_spinlock_t.
+	 *
+	 * @param lock Target or1k_spinlock_t.
+	 */
+	static inline void or1k_spinlock_init(or1k_spinlock_t *lock)
+	{
+		register or1k_spinlock_t *lock_reg
+			__asm__("r5") = lock;
+
+		__asm__ __volatile__
+		(
+			"l.sw 0(r5), r0"
+			:
+			: "r" (lock_reg)
+		);
+	}
+
+	/**
+	 * @brief Attempts to lock a or1k_spinlock_t.
+	 *
+	 * @param lock Target or1k_spinlock_t.
+	 *
+	 * @returns Upon successful completion, the or1k_spinlock_t pointed to by
+	 * @p lock is locked and zero is returned. Upon failure, non-zero
+	 * is returned instead, and the lock is not acquired by the
+	 * caller.
+	 */
+	static inline int or1k_spinlock_trylock(or1k_spinlock_t *lock)
+	{
+		register or1k_spinlock_t *lock_reg
+			__asm__("r5") = lock;
+		register or1k_spinlock_t lock_value
+			__asm__("r7") = OR1K_SPINLOCK_UNLOCKED;
+		register unsigned locked
+			__asm__("r9") = 0;
+
+		/* First, atomically reads the lock. */
+		__asm__ __volatile__
+		(
+			"l.lwa r7, 0(r5)"
+			: "=r" (lock_value)
+			: "r" (lock_reg)
+		);
+
+		/* Lock already locked. */
+		if (lock_value == OR1K_SPINLOCK_LOCKED)
+			return (1);
+
+		/* Tries to lock. */
+		lock_value = OR1K_SPINLOCK_LOCKED;
+		__asm__ __volatile__
+		(
+			"l.swa   0(r5),  r7\n"
+			"l.mfspr r9, r0, 0x11\n"  /* Supervisor Register. */
+			"l.andi  r9, r9, 0x200\n" /* Condition Flag.      */
+			: "=r" (locked)
+			: "r"  (lock_reg),
+			  "r"  (lock_value)
+		);
+
+		/* Check if lock was successful. */
+		if (locked)
+			return (0);
+		else
+			return (1);
+	}
+
+	/**
+	 * @brief Locks a or1k_spinlock_t.
+	 *
+	 * @param lock Target or1k_spinlock_t.
+	 */
+	static inline void or1k_spinlock_lock(or1k_spinlock_t *lock)
+	{
+		while (or1k_spinlock_trylock(lock))
+			/* noop */;
+	}
+
+	/**
+	 * @brief Unlocks a or1k_spinlock_t.
+	 *
+	 * @param lock Target or1k_spinlock_t.
+	 */
+	static inline void or1k_spinlock_unlock(or1k_spinlock_t *lock)
+	{
+		register or1k_spinlock_t *lock_reg
+			__asm__("r5") = lock;
+
+		__asm__ __volatile__
+		(
+			"1:\n"
+			"	l.lwa r7, 0(r5)\n"
+			"	l.swa 0(r5), r0\n"
+			"	l.bnf 1b\n"
+			"	l.nop\n"
+			:
+			: "r" (lock_reg)
+		);
+	}
 
 /**@}*/
 
@@ -99,7 +201,7 @@
 	 */
 	static inline void spinlock_init(spinlock_t *lock)
 	{
-		((void) lock);
+		or1k_spinlock_init(lock);
 	}
 
 	/**
@@ -107,8 +209,7 @@
 	 */
 	static inline int spinlock_trylock(spinlock_t *lock)
 	{
-		((void) lock);
-		return (OR1K_SPINLOCK_LOCKED);
+		return (or1k_spinlock_trylock(lock));
 	}
 
 	/**
@@ -116,7 +217,7 @@
 	 */
 	static inline void spinlock_lock(spinlock_t *lock)
 	{
-		((void) lock);
+		or1k_spinlock_lock(lock);
 	}
 
 	/**
@@ -124,7 +225,7 @@
 	 */
 	static inline void spinlock_unlock(spinlock_t *lock)
 	{
-		((void) lock);
+		or1k_spinlock_unlock(lock);
 	}
 
 /**@}*/
@@ -132,4 +233,3 @@
 /**@endcond*/
 
 #endif /* ARCH_OR1K_SPINLOCK_H_ */
-

@@ -1,8 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
- *              2018-2018 Davidson Francis     <davidsondfgl@gmail.com>
+ * Copyright(c) 2018-2018 Davidson Francis <davidsondfgl@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,56 +22,33 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_OR1K_CACHE_H_
-#define ARCH_OR1K_CACHE_H_
+#ifndef ARCH_OR1K_OMPIC_H_
+#define ARCH_OR1K_OMPIC_H_
 
-/**
- * @addtogroup or1k-cache Cache
- * @ingroup or1k-memory
- *
- * @brief Memory Cache
- */
-/**@{*/
+	#include <nanvix/mm.h>
+	#include <nanvix/const.h>
 
 	/**
-	 * @name Provided Interface
+	 * OMPIC Registers and flags.
 	 */
 	/**@{*/
-	#define __hal_dcache_invalidate
-	/**@}*/
+	#define OR1K_OMPIC_CPUBYTES	        8
+	#define OR1K_OMPIC_CTRL(cpu)        (_OR1K_OMPIC_VIRT + (0x0 + ((cpu) * OR1K_OMPIC_CPUBYTES)))
+	#define OR1K_OMPIC_STAT(cpu)        (_OR1K_OMPIC_VIRT + (0x4 + ((cpu) * OR1K_OMPIC_CPUBYTES)))
+	#define OR1K_OMPIC_CTRL_IRQ_ACK	    (1 << 31)
+	#define OR1K_OMPIC_CTRL_IRQ_GEN	    (1 << 30)
+	#define OR1K_OMPIC_CTRL_DST(cpu)    (((cpu) & 0x3fff) << 16)
+	#define OR1K_OMPIC_STAT_IRQ_PENDING (1 << 30)
+	#define OR1K_OMPIC_DATA(x)          ((x) & 0xffff)
+	#define OR1K_OMPIC_STAT_SRC(x)      (((x) >> 16) & 0x3fff)
+	/**@{*/
 
-	/**
-	 * @brief Cache line size (in bytes).
-	 *
-	 * @todo Check this.
-	 */
-	#define OR1K_CACHE_LINE_SIZE 64
+#ifndef _ASM_FILE_
 
-	/**
-	 * @see OR1K_CACHE_LINE_SIZE
-	 */
-	#define CACHE_LINE_SIZE OR1K_CACHE_LINE_SIZE
+	/* External functions. */
+	EXTERN void or1k_ompic_init(void);
+	EXTERN void or1k_ompic_send_ipi(uint32_t dstcore, uint16_t data);
 
-	/**
-	 * @brief Invalidates the data cache.
-	 */
-	static inline void or1k_dcache_inval(void)
-	{
-		or1k_mtspr(OR1K_SPR_DCBIR, 0);
-	}
+#endif /* _ASM_FILE_ */
 
-	/**
-	 * @see or1k_dcache_inval
-	 * @note The or1k target features cache coherency.
-	 *
-	 * @cond or1k
-	 */
-	static inline void hal_dcache_invalidate(void)
-	{
-		or1k_dcache_inval();
-	}
-	/**@endcond*/
-
-/**@}*/
-
-#endif /* ARCH_OR1K_CACHE_H_ */
+#endif /* ARCH_OR1K_OMPIC_H_ */

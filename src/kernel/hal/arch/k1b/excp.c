@@ -119,7 +119,7 @@ PRIVATE void do_generic_excp(const struct exception *excp, const struct context 
 PUBLIC void do_excp(const struct exception *excp, const struct context *ctx)
 {
 	/* Unknown exception. */
-	if (excp->num >= K1B_NUM_EXCEPTIONS)
+	if (excp->num >= (K1B_NUM_EXCEPTIONS + K1B_NUM_EXCEPTIONS_VIRT))
 		kpanic("unknown exception %x\n", excp->num);
 
 	/* Unhandled exception. */
@@ -127,6 +127,18 @@ PUBLIC void do_excp(const struct exception *excp, const struct context *ctx)
 		do_generic_excp(excp, ctx);
 
 	k1b_excp_handlers[excp->num](excp, ctx);
+}
+
+/**
+ * @todo Document this function.
+ */
+PUBLIC void forward_excp(int num, const struct exception *excp, const struct context *ctx)
+{
+	struct exception *_excp = (struct exception *)excp;
+
+	_excp->num = num;
+
+	do_excp(_excp, ctx);
 }
 
 /**
@@ -141,7 +153,7 @@ PUBLIC void do_excp(const struct exception *excp, const struct context *ctx)
 PUBLIC void k1b_excp_set_handler(int num, k1b_exception_handler_fn handler)
 {
 	/* Invalid exception. */
-	if ((num < 0) || (num > (K1B_NUM_EXCEPTIONS + K1B_NUM_EXCEPTIONS_VIRT)))
+	if ((num < 0) || (num >= (K1B_NUM_EXCEPTIONS + K1B_NUM_EXCEPTIONS_VIRT)))
 		kpanic("[k1b] invalid exception number");
 
 	k1b_excp_handlers[num] = handler;

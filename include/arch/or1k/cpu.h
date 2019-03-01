@@ -39,10 +39,11 @@
 /**@{*/
 
 	/**
-	 * @brief Number of cores in the i386 architecture.
+	 * @brief Number of cores in the or1k architecture.
 	 */
-	#define OR1K_NUM_CORES 1
+	#define OR1K_NUM_CORES 2
 
+#ifndef _ASM_FILE_
 	/**
 	 * @brief Gets the number of cores.
 	 *
@@ -88,6 +89,8 @@
 	}
 
 /**@}*/
+
+#endif /* _ASM_FILE_ */
 
 /**@endcond*/
 

@@ -66,10 +66,11 @@
 	 * @name Page Shifts and Masks
 	 */
 	/**@{*/
-	#define OR1K_PAGE_SHIFT  13                       /**< Page Shift       */
-	#define OR1K_PGTAB_SHIFT 24                       /**< Page Table Shift */
-	#define OR1K_PAGE_MASK   (~(OR1K_PAGE_SIZE - 1))  /**< Page Mask        */
-	#define OR1K_PGTAB_MASK  (~(OR1K_PGTAB_SIZE - 1)) /**< Page Table Mask  */
+	#define OR1K_PAGE_SHIFT  13                       /**< Page Shift        */
+	#define OR1K_PGTAB_SHIFT 24                       /**< Page Table Shift  */
+	#define OR1K_PAGE_MASK   (~(OR1K_PAGE_SIZE - 1))  /**< Page Mask         */
+	#define OR1K_PGTAB_MASK  (~(OR1K_PGTAB_SIZE - 1)) /**< Page Table Mask   */
+	#define OR1K_PPN_SHIFT   10                       /**< Page Number shift */
 	/**@}*/
 
 	/**
@@ -455,6 +456,16 @@
 	{
 		return (&pgtab[pte_idx_get(vaddr)]);
 	}
+
+	/**
+	 * @brief Initializes the MMU.
+	 */
+	EXTERN void or1k_mmu_setup(void);
+
+	/**
+	 * @brief Enables the MMU.
+	 */
+	EXTERN void or1k_enable_mmu(void);
 
 #endif
 

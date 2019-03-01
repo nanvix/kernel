@@ -22,13 +22,19 @@
 # SOFTWARE.
 #
 
+export LDFLAGS  += -L $(LINKERDIR)/ -T link.ld
+
 # Object Files
 OBJ = $(SRC:.c=.o)
 
 # Builds object files for or1k PC target.
-all:
-	# Nothing to do.
+all: $(OBJ)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $(BINDIR)/$(EXECBIN) -Wl,--whole-archive $(LIBS)
 
 # Cleans all object files.
 clean:
 	rm -rf $(BINDIR)/$(EXECBIN) $(OBJ)
+
+# Builds a C source file.
+%.o: %.c
+	$(CC) $(CFLAGS) $< -c -o $@

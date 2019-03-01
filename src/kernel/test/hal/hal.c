@@ -48,5 +48,10 @@ PRIVATE void hal_test_core(void)
  */
 PUBLIC void hal_test_driver(void)
 {
+#ifdef HAL_TEST_PAGE_FAULT
+	unsigned *x = (unsigned *)0xdeadbeef;
+	KASSERT(*x == 0);
+#endif
+
 	hal_test_core();
 }

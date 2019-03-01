@@ -60,7 +60,7 @@
 	 */
 	#define test_assert(x)                            \
 	{                                                 \
-		if (!x)                                       \
+		if (!(x))                                     \
 		{                                             \
 			puts("assertation failed at "             \
 				__FILE__":" ___TOSTRING(__LINE__)"\n" \

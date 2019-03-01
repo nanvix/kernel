@@ -44,10 +44,14 @@ PRIVATE void *init(void *arg)
 	const char *argv[] = { "init", NULL };
 
 	UNUSED(arg);
-
-	status = main(argc, argv, NULL);
-
 	UNUSED(status);
+
+#if (HAL_NUM_CORES > 2)
+	status = main(argc, argv, NULL);
+#else
+	UNUSED(argc);
+	UNUSED(argv);
+#endif
 
 	/* Halt. */
 	kprintf("halting...");

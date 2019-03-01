@@ -1,8 +1,8 @@
 /*
  * MIT License
  *
- * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
- *              2018-2018 Davidson Francis     <davidsondfgl@gmail.com>
+ * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ *              2018 Davidson Francis     <davidsondfgl@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,56 +23,48 @@
  * SOFTWARE.
  */
 
-#ifndef ARCH_OR1K_CACHE_H_
-#define ARCH_OR1K_CACHE_H_
+#include <nanvix/syscall.h>
+#include <sys/types.h>
+#include <errno.h>
 
 /**
- * @addtogroup or1k-cache Cache
- * @ingroup or1k-memory
+ * @brief Writes data to a file.
  *
- * @brief Memory Cache
+ * @param fd  File descriptor.
+ * @param buf Target buffer.
+ * @param n   Number of bytes to write.
+ *
+ * @returns Upon successful completion, the number of bytes written is
+ * returned. Upon failure, -1 is returned and @p errno is set to
+ * indicate the error.
  */
-/**@{*/
+ssize_t nanvix_write(int fd, const char *buf, size_t n)
+{
+	register unsigned arg0
+		__asm__("r3") = (unsigned) fd;
+	register unsigned arg1
+		__asm__("r4") = (unsigned) buf;
+	register unsigned arg2
+		__asm__("r5") = (unsigned) n;
 
-	/**
-	 * @name Provided Interface
-	 */
-	/**@{*/
-	#define __hal_dcache_invalidate
-	/**@}*/
+	register ssize_t ret
+		__asm__("r11") = NR_write;
 
-	/**
-	 * @brief Cache line size (in bytes).
-	 *
-	 * @todo Check this.
-	 */
-	#define OR1K_CACHE_LINE_SIZE 64
+	__asm__ volatile (
+		"l.sys 1"
+		: "=r" (ret)
+		: "r" (ret),
+		"r" (arg0),
+		"r" (arg1),
+		"r" (arg2)
+	);
 
-	/**
-	 * @see OR1K_CACHE_LINE_SIZE
-	 */
-	#define CACHE_LINE_SIZE OR1K_CACHE_LINE_SIZE
-
-	/**
-	 * @brief Invalidates the data cache.
-	 */
-	static inline void or1k_dcache_inval(void)
+	/* System call failed. */
+	if (ret < 0)
 	{
-		or1k_mtspr(OR1K_SPR_DCBIR, 0);
+		errno = -ret;
+		return (-1);
 	}
 
-	/**
-	 * @see or1k_dcache_inval
-	 * @note The or1k target features cache coherency.
-	 *
-	 * @cond or1k
-	 */
-	static inline void hal_dcache_invalidate(void)
-	{
-		or1k_dcache_inval();
-	}
-	/**@endcond*/
-
-/**@}*/
-
-#endif /* ARCH_OR1K_CACHE_H_ */
+	return (ret);
+}
