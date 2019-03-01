@@ -24,8 +24,8 @@
  */
 
 #include <nanvix/const.h>
-#include <arch/or1k/core.h>
-#include <arch/or1k/clock.h>
+#include <arch/core/or1k/core.h>
+#include <arch/core/or1k/clock.h>
 
 /**
  * The or1k_clock_init() function initializes the clock driver in the

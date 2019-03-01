@@ -22,11 +22,9 @@
  * SOFTWARE.
  */
 
-#include <arch/k1b/cache.h>
-#include <arch/k1b/core.h>
-#include <arch/k1b/cpu.h>
-#include <arch/k1b/tlb.h>
+#include <arch/cluster/k1b/cpu.h>
 #include <nanvix/const.h>
+#include <errno.h>
 
 /**
  * @brief TLB

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#include <arch/i386/context.h>
-#include <arch/i386/excp.h>
+#include <arch/core/i386/context.h>
+#include <arch/core/i386/excp.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
 

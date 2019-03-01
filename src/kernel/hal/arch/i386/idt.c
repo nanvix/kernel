@@ -24,11 +24,11 @@
 
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
-#include <arch/i386/8259.h>
-#include <arch/i386/excp.h>
-#include <arch/i386/gdt.h>
-#include <arch/i386/idt.h>
-#include <arch/i386/int.h>
+#include <arch/core/i386/8259.h>
+#include <arch/core/i386/excp.h>
+#include <arch/core/i386/gdt.h>
+#include <arch/core/i386/idt.h>
+#include <arch/core/i386/int.h>
 
 /**
  * @brief Interrupt Descriptor Table (IDT).

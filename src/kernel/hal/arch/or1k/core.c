@@ -22,12 +22,12 @@
  * SOFTWARE.
  */
 
-#include <arch/or1k/core.h>
-#include <arch/or1k/cache.h>
-#include <arch/or1k/cpu.h>
-#include <arch/or1k/ompic.h>
-#include <arch/or1k/pic.h>
-#include <arch/or1k/spinlock.h>
+#include <arch/core/or1k/core.h>
+#include <arch/core/or1k/cache.h>
+#include <arch/cluster/or1k/cpu.h>
+#include <arch/core/or1k/ompic.h>
+#include <arch/core/or1k/pic.h>
+#include <arch/core/or1k/spinlock.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
 

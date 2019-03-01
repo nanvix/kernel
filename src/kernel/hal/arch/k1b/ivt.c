@@ -22,11 +22,7 @@
  * SOFTWARE.
  */
 
-#include <arch/k1b/ivt.h>
-#include <arch/k1b/cpu.h>
-#include <arch/k1b/cache.h>
-#include <arch/k1b/mmu.h>
-#include <arch/k1b/pic.h>
+#include <arch/cluster/k1b/cpu.h>
 #include <nanvix/const.h>
 
 /**
@@ -72,14 +68,14 @@ PUBLIC const k1b_hwint_id_t hwints[K1B_NUM_HWINT] = {
  * exceptions, respectively.
  */
 PUBLIC void k1b_ivt_setup(
-	k1b_hwint_handler_fn do_hwint,
-	k1b_swint_handler_fn do_swint,
-	k1b_excp_handler_fn do_excp)
+	k1b_hwint_handler_fn hwint_handler,
+	k1b_swint_handler_fn swint_handler,
+	k1b_excp_handler_fn excp_handler)
 {
 	for (int i = 0; i < K1B_NUM_HWINT; i++)
-		bsp_register_it(do_hwint, hwints[i]);
-	mOS_register_scall_handler(do_swint); 
-	mOS_register_trap_handler(do_excp);
+		bsp_register_it(hwint_handler, hwints[i]);
+	mOS_register_scall_handler(swint_handler); 
+	mOS_register_trap_handler(excp_handler);
 
 	mOS_register_stack_handler(kstack[k1b_core_get_id()]);
 	mOS_trap_enable_shadow_stack();

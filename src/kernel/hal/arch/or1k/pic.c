@@ -23,7 +23,7 @@
  * SOFTWARE.
  */
 
-#include <arch/or1k/pic.h>
+#include <arch/core/or1k/int.h>
 #include <nanvix/const.h>
 
 /**

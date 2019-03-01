@@ -23,10 +23,10 @@
  * SOFTWARE.
  */
 
-#include <arch/or1k/excp.h>
-#include <arch/or1k/cache.h>
-#include <arch/or1k/mmu.h>
-#include <arch/or1k/tlb.h>
+#include <arch/core/or1k/excp.h>
+#include <arch/core/or1k/cache.h>
+#include <arch/core/or1k/mmu.h>
+#include <arch/core/or1k/tlb.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
 

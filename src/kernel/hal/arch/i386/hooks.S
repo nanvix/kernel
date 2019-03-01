@@ -25,11 +25,11 @@
 /* Must come first. */
 #define _ASM_FILE_
 
-#include <arch/i386/8259.h>
-#include <arch/i386/context.h>
-#include <arch/i386/core.h>
-#include <arch/i386/excp.h>
-#include <arch/i386/gdt.h>
+#include <arch/core/i386/8259.h>
+#include <arch/core/i386/context.h>
+#include <arch/core/i386/core.h>
+#include <arch/core/i386/excp.h>
+#include <arch/core/i386/gdt.h>
 
 /* Exported symbols. */
 .globl _do_excp0

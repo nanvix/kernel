@@ -21,9 +21,9 @@
 /* Must come first. */
 #define _ASM_FILE_
 
-#include <arch/or1k/core.h>
-#include <arch/or1k/mmu.h>
-#include <arch/or1k/cpu.h>
+#include <arch/core/or1k/core.h>
+#include <arch/core/or1k/mmu.h>
+#include <arch/cluster/or1k/cpu.h>
 
 /* Exported symbols. */
 .globl kernel_pgtab

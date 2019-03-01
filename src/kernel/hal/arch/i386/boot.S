@@ -28,8 +28,8 @@
 #define _ASM_FILE_
 
 #include <grub/mboot.h>
-#include <arch/i386/core.h>
-#include <arch/i386/mmu.h>
+#include <arch/core/i386/core.h>
+#include <arch/core/i386/mmu.h>
 
 /**
  * @brief Multiboot flags.

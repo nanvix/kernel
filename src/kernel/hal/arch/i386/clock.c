@@ -23,8 +23,8 @@
  */
 
 #include <nanvix/const.h>
-#include <arch/i386/8253.h>
-#include <arch/i386/io.h>
+#include <arch/core/i386/8253.h>
+#include <arch/core/i386/io.h>
 
 /**
  * The i386_clock_init() function initializes the clock driver in the

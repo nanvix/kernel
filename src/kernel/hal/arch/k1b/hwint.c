@@ -22,10 +22,10 @@
  * SOFTWARE.
  */
 
-#include <arch/k1b/cache.h>
-#include <arch/k1b/context.h>
-#include <arch/k1b/int.h>
-#include <arch/k1b/ivt.h>
+#include <arch/core/k1b/cache.h>
+#include <arch/core/k1b/context.h>
+#include <arch/core/k1b/int.h>
+#include <arch/core/k1b/ivt.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
 #include <errno.h>

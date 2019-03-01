@@ -23,10 +23,9 @@
  * SOFTWARE.
  */
 
-#include <arch/or1k/core.h>
-#include <arch/or1k/excp.h>
-#include <arch/or1k/tlb.h>
-#include <arch/or1k/ompic.h>
+#define __NEED_TARGET_QEMU_OR1K_PC
+
+#include <arch/target/qemu/or1k-pc.h>
 #include <nanvix/klib.h>
 #include <nanvix/const.h>
 
@@ -45,7 +44,7 @@ PUBLIC void or1k_core_setup(void)
 	or1k_ompic_init();
 
 	/* Enable OMPIC interrupts. */
-	or1k_pic_unmask(OR1K_PC_INT_OMPIC);
+	or1k_pic_unmask(OR1K_INT_OMPIC);
 
 	/* Enable interrupts. */
 	or1k_mtspr(OR1K_SPR_SR, or1k_mfspr(OR1K_SPR_SR) | OR1K_SPR_SR_IEE);
@@ -74,7 +73,7 @@ PUBLIC NORETURN void or1k_slave_setup(void)
 	or1k_enable_mmu();
 
 	/* Enable OMPIC interrupts. */
-	or1k_pic_unmask(OR1K_PC_INT_OMPIC);
+	or1k_pic_unmask(OR1K_INT_OMPIC);
 
 	/* Enable interrupts. */
 	or1k_mtspr(OR1K_SPR_SR, or1k_mfspr(OR1K_SPR_SR) | OR1K_SPR_SR_IEE);

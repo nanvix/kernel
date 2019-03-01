@@ -23,20 +23,21 @@
 #
 
 # C Source Files
-C_SRC += $(wildcard hal/arch/$(ARCH)/*.c) \
-         $(wildcard hal/*.c)              \
-         $(wildcard init/*.c)             \
-         $(wildcard klib/*.c)             \
-         $(wildcard dev/*.c)              \
-         $(wildcard mm/*.c)               \
-         $(wildcard dev/stdout/jtag.c)    \
-         $(wildcard pm/*.c)               \
+C_SRC += $(wildcard hal/cluster/$(ARCH)/*.c)     \
+         $(wildcard hal/target/$(TARGET)/*.c) \
+         $(wildcard hal/*.c)                  \
+         $(wildcard init/*.c)                 \
+         $(wildcard klib/*.c)                 \
+         $(wildcard dev/*.c)                  \
+         $(wildcard mm/*.c)                   \
+         $(wildcard dev/stdout/jtag.c)        \
+         $(wildcard pm/*.c)                   \
          $(wildcard sys/*.c)
 
 # Unit Tests for Kernel
 ifneq ($(RELEASE), true)
-C_SRC += $(wildcard test/*.c) \
-         $(wildcard test/hal/hal.c) \
+C_SRC += $(wildcard test/*.c)          \
+         $(wildcard test/hal/hal.c)    \
          $(wildcard test/hal/core/*.c)
 endif
 

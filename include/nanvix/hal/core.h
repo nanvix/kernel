@@ -25,16 +25,57 @@
 #ifndef NANVIX_HAL_CORE_H_
 #define NANVIX_HAL_CORE_H_
 
+	#ifndef __NEED_HAL_CORE
+		#error "include <nanvix/hal/cluster.h> instead"
+	#endif
+
+	/* Core Interface Implementation */
+	#include <nanvix/hal/core/_core.h>
+
+	#include <nanvix/hal/core/cache.h>
+	#include <nanvix/hal/core/clock.h>
+	#include <nanvix/hal/core/context.h>
+	#include <nanvix/hal/core/exception.h>
+	#include <nanvix/hal/core/interrupt.h>
+	#include <nanvix/hal/core/mmu.h>
+	#include <nanvix/hal/core/spinlock.h>
+	#include <nanvix/const.h>
+
+/*============================================================================*
+ * Interface Implementation Checking                                          *
+ *============================================================================*/
+
+	/* Functions */
+	#ifndef __core_get_id
+	#error "core_get_id() not defined?"
+	#endif
+	#ifndef __core_shutdown
+	#error "core_shutdown() not defined?"
+	#endif
+	#ifndef __core_sleep
+	#error "core_sleep() not defined?"
+	#endif
+	#ifndef __core_start
+	#error "core_start() not defined?"
+	#endif
+	#ifndef __core_wakeup
+	#error "core_wakeup() not defined?"
+	#endif
+	#ifndef __core_reset
+	#error "core_reset() not defined?"
+	#endif
+
+/*============================================================================*
+ * Core Interface                                                             *
+ *============================================================================*/
+
 /**
  * @addtogroup kernel-hal-core Core
- * @ingroup kernel-hal-cpu
+ * @ingroup kernel-hal
  *
- * @brief Core Interface
+ * @brief Core HAL Interface
  */
 /**@{*/
-
-	#include <nanvix/const.h>
-	#include <nanvix/hal/target.h>
 
 	/**
 	 * @brief Gets the ID of the underlying core.
@@ -44,18 +85,11 @@
 	EXTERN int core_get_id(void);
 
 	/**
-	 * @brief Halts instruction execution in the underlying core.
-	 */
-	EXTERN void core_halt(void);
-
-	/**
 	 * @brief Shutdowns the underlying core.
 	 *
 	 * @param status Shutdown status.
 	 */
 	EXTERN void core_shutdown(int status);
-
-#ifdef HAL_SMP
 
 	/**
 	 * @brief Suspends instruction execution in the underling core.
@@ -81,8 +115,6 @@
 	 * @brief Reset the underlying core.
 	 */
 	EXTERN void core_reset(void);
-
-#endif /* HAL_SMP */
 
 /**@}*/
 

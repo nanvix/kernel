@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
+#include <nanvix/hal/cluster/io.h>
 #include <driver/jtag.h>
 #include <nanvix/const.h>
-#include <nanvix/hal/io.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -41,7 +41,7 @@ PUBLIC void jtag_write(const char *buf, size_t n)
 		k = (n > JTAG_BUFSIZE) ? JTAG_BUFSIZE : n;
 
 		hal_jtag_write((const uint8_t *) buf, k);
-		
+
 		n -= k;
 		buf += k;
 	}

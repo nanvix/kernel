@@ -22,12 +22,9 @@
  * SOFTWARE.
  */
 
+#include <nanvix/hal/cluster/cpu.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
-#include <nanvix/hal/clock.h>
-#include <nanvix/hal/core.h>
-#include <nanvix/hal/interrupt.h>
-#include <nanvix/hal/memory.h>
 
 /**
  * @brief Clock interrupts since system initialization.

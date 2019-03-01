@@ -23,11 +23,12 @@
 #
 
 # C Source Files
-C_SRC = $(wildcard hal/arch/$(ARCH)/*.c) \
-        $(wildcard hal/*.c)              \
-        $(wildcard init/*.c)             \
-        $(wildcard klib/*.c)             \
-        $(wildcard dev/*.c)              \
+C_SRC = $(wildcard hal/arch/$(ARCH)/*.c)     \
+        $(wildcard hal/target/$(TARGET)/*.c) \
+        $(wildcard hal/*.c)                  \
+        $(wildcard init/*.c)                 \
+        $(wildcard klib/*.c)                 \
+        $(wildcard dev/*.c)                  \
         $(wildcard mm/*.c)
 
 # Asembly Source Files

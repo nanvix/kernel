@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include <arch/k1b/pic.h>
+#include <arch/core/k1b/pic.h>
 #include <nanvix/const.h>
 
 /**
