@@ -27,7 +27,8 @@
 
 	/* Target Interface Implementation */
 	#include <nanvix/hal/target/_target.h>
-	#include <sys/types.h>
+
+	#include <nanvix/const.h>
 
 /*============================================================================*
  * Interface Implementation Checking                                          *

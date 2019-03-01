@@ -30,7 +30,6 @@
 
 	#include <nanvix/const.h>
 	#include <nanvix/thread.h>
-	#include <sys/types.h>
 
 /**
  * @addtogroup kernel-syscalls System Calls

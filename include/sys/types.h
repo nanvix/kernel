@@ -62,11 +62,9 @@
 	/* Used for link counts. */
 	typedef int nlink_t;
 
-	/* Used for sizes of objects. */
-	typedef unsigned size_t;
-	
-	/* Used for a count of bytes or an error indication. */
-	typedef signed ssize_t;
+	#define __need_size_t
+	#define __need_ssize_t
+	#include <decl.h>
 	
 	/* Used for user IDs. */
 	typedef int uid_t;
