@@ -33,6 +33,10 @@
 	/* Cluster Interface Implementation */
 	#include <arch/cluster/or1k/_or1k.h>
 
+/*============================================================================*
+ * Exported Interface                                                         *
+ *============================================================================*/
+
 /**
  * @addtogroup or1k-cluster or1k Cluster
  * @ingroup clusters
@@ -41,6 +45,13 @@
 
 	#include <arch/cluster/or1k/cpu.h>
 	#include <arch/cluster/or1k/memory.h>
+
+	/**
+	 * @name Provided Features
+	 */
+	/**@{*/
+	#define CLUSTER_IS_MULTICORE 1
+	/**@}*/
 
 /**@}*/
 

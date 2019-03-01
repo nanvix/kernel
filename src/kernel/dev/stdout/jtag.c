@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hal/cluster/io.h>
+#include <nanvix/hal/hal.h>
 #include <driver/jtag.h>
 #include <nanvix/const.h>
 #include <stddef.h>
@@ -34,20 +34,10 @@
  */
 PUBLIC void jtag_write(const char *buf, size_t n)
 {
-	while (n)
-	{
-		size_t k;
-
-		k = (n > JTAG_BUFSIZE) ? JTAG_BUFSIZE : n;
-
-		hal_jtag_write((const uint8_t *) buf, k);
-
-		n -= k;
-		buf += k;
-	}
+	output8s(TARGET_STDOUT_PMIO, (const uint8_t *) buf, n);
 }
 
-/**
+/*
  * Initializes the JTAG driver.
  */
 PUBLIC void jtag_init(void)

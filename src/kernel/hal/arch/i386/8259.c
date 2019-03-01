@@ -24,7 +24,7 @@
 
 #include <nanvix/const.h>
 #include <arch/core/i386/8259.h>
-#include <arch/core/i386/io.h>
+#include <arch/core/i386/pmio.h>
 #include <stdint.h>
 
 /**
@@ -84,7 +84,7 @@ PUBLIC void i386_pic_mask(int intnum)
 
 	currmask = newmask;
 
-	i386_outb(port, value);
+	i386_output8(port, value);
 }
 
 /*============================================================================*
@@ -116,7 +116,7 @@ PUBLIC void i386_pic_unmask(int intnum)
 
 	currmask = newmask;
 
-	i386_outb(port, value);
+	i386_output8(port, value);
 }
 
 /*============================================================================*
@@ -134,8 +134,8 @@ PUBLIC int i386_pic_lvl_set(int newlevel)
 
 	mask = intlvl_masks[newlevel];
 
-	i386_outb(PIC_DATA_MASTER, mask & 0xff);
-	i386_outb(PIC_DATA_SLAVE, mask >> 8);
+	i386_output8(PIC_DATA_MASTER, mask & 0xff);
+	i386_output8(PIC_DATA_SLAVE, mask >> 8);
 
 	currmask = mask;
 	oldlevel = currlevel;
@@ -160,15 +160,15 @@ PUBLIC void i386_pic_setup(uint8_t offset1, uint8_t offset2)
 	 * Starts initialization sequence
 	 * in cascade mode.
 	 */
-	i386_outb(PIC_CTRL_MASTER, 0x11);
+	i386_output8(PIC_CTRL_MASTER, 0x11);
 	i386_iowait();
-	i386_outb(PIC_CTRL_SLAVE, 0x11);
+	i386_output8(PIC_CTRL_SLAVE, 0x11);
 	i386_iowait();
 	
 	/* Send new vector offset. */
-	i386_outb(PIC_DATA_MASTER, offset1);
+	i386_output8(PIC_DATA_MASTER, offset1);
 	i386_iowait();
-	i386_outb(PIC_DATA_SLAVE, offset2);
+	i386_output8(PIC_DATA_SLAVE, offset2);
 	i386_iowait();
 	
 	/*
@@ -176,15 +176,15 @@ PUBLIC void i386_pic_setup(uint8_t offset1, uint8_t offset2)
 	 * PIC hired up at IRQ line 2 and tell
 	 * the slave PIC that it is the second PIC. 
 	 */
-	i386_outb(PIC_DATA_MASTER, 0x04);
+	i386_output8(PIC_DATA_MASTER, 0x04);
 	i386_iowait();
-	i386_outb(PIC_DATA_SLAVE, 0x02);
+	i386_output8(PIC_DATA_SLAVE, 0x02);
 	i386_iowait();
 	
 	/* Set 8086 mode. */
-	i386_outb(PIC_DATA_MASTER, 0x01);
+	i386_output8(PIC_DATA_MASTER, 0x01);
 	i386_iowait();
-	i386_outb(PIC_DATA_SLAVE, 0x01);
+	i386_output8(PIC_DATA_SLAVE, 0x01);
 	i386_iowait();
 	
 	/* Clears interrupt mask. */

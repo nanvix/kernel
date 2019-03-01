@@ -22,20 +22,48 @@
  * SOFTWARE.
  */
 
-#ifndef CLUSTER_K1B_IO_H_
-#define CLUSTER_K1B_IO_H_
+#ifndef CORE_K1B_PMIO_H_
+#define CORE_K1B_PMIO_H_
 
 	/* Cluster Interface Implementation */
 	#include <arch/cluster/k1b/_k1b.h>
 
 /**
- * @addtogroup k1b-cluster-io k1b Cluster I/O
- * @ingroup k1b-cluster
+ * @addtogroup k1b-core-io Port-Mapped I/O
+ * @ingroup k1b-core
+ *
+ * @brief Port-Mapped I/O
  */
 /**@{*/
 
-	#include <nanvix/klib.h>
 	#include <stdint.h>
+
+	/**
+	 * @brief Writes 8 bits to an I/O port.
+	 *
+	 * @param port Number of the target port.
+	 * @param bits Bits to write.
+	 */
+	static inline void k1b_output8(uint16_t port, uint8_t byte)
+	{
+		__k1_club_syscall2(port, (unsigned) &byte, 1);
+	}
+
+	/**
+	 * @brief Writes a 8-bit string to an I/O port.
+	 *
+	 * @param port Number of the target port.
+	 * @param str  8-bit string to write.
+	 * @param len  Length of the string.
+	 */
+	static inline void k1b_output8s(uint16_t port, const uint8_t *str, size_t len)
+	{
+		/* Nothing to do. */
+		if (len <= 0)
+			return;
+
+		__k1_club_syscall2(port, (unsigned) str, len);
+	}
 
 /**@}*/
 
@@ -48,37 +76,38 @@
  */
 
 	/**
-	 * @name Provided Interface
+	 * @name Provided Functions
 	 */
 	/**@{*/
-	#define __hal_outputb
-	#define __hal_iowait
+	#define __output8_fn  /**< k1b_output8()  */
+	#define __output8s_fn /**< k1b_output8s() */
+	#define __iowait_fn   /**< iowait()       */
 	/**@}*/
 
 	/**
-	 * The hal_outputb() function is a dummy function. In the k1b
-	 * architecture, there are not I/O ports.
+	 * @see k1b_output8().
 	 */
-	static inline void hal_outputb(uint16_t port, uint8_t byte)
+	static inline void output8(uint16_t port, uint8_t bits)
 	{
-		UNUSED(port);
-		UNUSED(byte);
+		k1b_output8(port, bits);
 	}
 
 	/**
-	 * The hal_iowait() function is a dummy function. In the k1b
-	 * architecture, there are not I/O ports.
+	 * @see k1b_output8s().
 	 */
-	static inline void hal_iowait(void)
+	static inline void output8s(uint16_t port, const uint8_t *str, size_t len)
 	{
-		noop();
+		k1b_output8s(port, str, len);
 	}
 
 	/**
-	 * @todo Fix this.
+	 * @see k1b_iowait().
 	 */
-	extern void hal_jtag_write(const uint8_t *buf, size_t n);
+	static inline void iowait(uint16_t port)
+	{
+		((void) port);
+	}
 
 /**@endcond*/
 
-#endif /* CLUSTER_K1B_IO_H_ */
+#endif /* CORE_K1B_PMIO_H_ */

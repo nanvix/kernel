@@ -33,12 +33,14 @@
 	/* Cluster Interface Implementation */
 	#include <nanvix/hal/cluster/_cluster.h>
 
-	#include <nanvix/hal/cluster/cpu.h>
-	#include <nanvix/hal/cluster/io.h>
-
 /*============================================================================*
  * Interface Implementation Checking                                          *
  *============================================================================*/
+
+	/* Feature Checking */
+	#ifndef CLUSTER_IS_MULTICORE
+	#error "is this a multicore cluster?"
+	#endif
 
 /*============================================================================*
  * Cluster Interface                                                          *
@@ -51,6 +53,8 @@
  * @brief Cluster HAL Interface
  */
 /**@{*/
+
+	#include <nanvix/hal/cluster/cpu.h>
 
 /**@}*/
 

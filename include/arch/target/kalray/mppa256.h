@@ -57,6 +57,11 @@
 	#define TARGET_HAS_STDOUT 1
 	/**@}*/
 
+	/**
+	 * @brief Port-Mapped I/O for stdout.
+	 */
+	#define TARGET_STDOUT_PMIO 4094
+
 /**@endcond*/
 
 #endif /* TARGET_KALRAY_MPPA256_H_ */

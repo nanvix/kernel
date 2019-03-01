@@ -24,7 +24,7 @@
 
 #include <nanvix/const.h>
 #include <arch/core/i386/8253.h>
-#include <arch/core/i386/io.h>
+#include <arch/core/i386/pmio.h>
 
 /**
  * The i386_clock_init() function initializes the clock driver in the
@@ -38,10 +38,10 @@ PUBLIC void i386_clock_init(unsigned freq)
 	freq_divisor = PIT_FREQUENCY/freq;
 	
 	/* Send control byte: adjust frequency divisor. */
-	i386_outb(PIT_CTRL, 0x36);
+	i386_output8(PIT_CTRL, 0x36);
 	
 	/* Send data byte: divisor_low and divisor_high. */
-	i386_outb(PIT_DATA, (uint8_t)(freq_divisor & 0xff));
-	i386_outb(PIT_DATA, (uint8_t)((freq_divisor >> 8)));
+	i386_output8(PIT_DATA, (uint8_t)(freq_divisor & 0xff));
+	i386_output8(PIT_DATA, (uint8_t)((freq_divisor >> 8)));
 }
 

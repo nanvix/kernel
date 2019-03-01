@@ -37,14 +37,22 @@
 
 	#include <arch/core/i386/8253.h>
 	#include <arch/core/i386/8259.h>
-	#include <arch/core/i386/context.h>
+	#include <arch/core/i386/cache.h>
 	#include <arch/core/i386/core.h>
 	#include <arch/core/i386/excp.h>
 	#include <arch/core/i386/int.h>
-	#include <arch/core/i386/io.h>
-	#include <arch/core/i386/cache.h>
 	#include <arch/core/i386/mmu.h>
+	#include <arch/core/i386/pmio.h>
 	#include <arch/core/i386/tlb.h>
+
+/**
+ * @cond i386
+ */
+
+	/* Feature Declaration */
+	#define CORE_SUPPORTS_PMIO 1
+
+/**@}*/
 
 #endif /* CORE_I386_H_ */
 
