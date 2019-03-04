@@ -38,6 +38,7 @@
 	#include <nanvix/hal/core/exception.h>
 	#include <nanvix/hal/core/interrupt.h>
 	#include <nanvix/hal/core/mmu.h>
+	#include <nanvix/hal/core/pmio.h>
 	#include <nanvix/hal/core/spinlock.h>
 	#include <nanvix/const.h>
 

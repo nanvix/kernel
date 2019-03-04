@@ -97,7 +97,7 @@
 
 #ifndef _ASM_FILE_
 
-	#include <arch/core/i386/io.h>
+	#include <arch/core/i386/pmio.h>
 	#include <nanvix/const.h>
 	#include <stdint.h>
 	
@@ -153,9 +153,9 @@
 	static inline void i386_pic_ack(int intnum)
 	{
 		if (intnum >= 8)
-			i386_outb(PIC_CTRL_SLAVE, PIC_EOI);
+			i386_output8(PIC_CTRL_SLAVE, PIC_EOI);
 
-		i386_outb(PIC_CTRL_MASTER,PIC_EOI);
+		i386_output8(PIC_CTRL_MASTER,PIC_EOI);
 	}
 
 	/**

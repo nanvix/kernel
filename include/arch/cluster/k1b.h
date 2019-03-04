@@ -33,6 +33,10 @@
 	/* Cluster Interface Implementation */
 	#include <arch/cluster/k1b/_k1b.h>
 
+/*============================================================================*
+ * Exported Interface                                                         *
+ *============================================================================*/
+
 /**
  * @addtogroup k1b-cluster k1b Cluster
  * @ingroup clusters
@@ -40,8 +44,14 @@
 /**@{*/
 
 	#include <arch/cluster/k1b/cpu.h>
-	#include <arch/cluster/k1b/io.h>
 	#include <arch/cluster/k1b/memory.h>
+
+	/**
+	 * @name Provided Features
+	 */
+	/**@{*/
+	#define CLUSTER_IS_MULTICORE 1
+	/**@}*/
 
 /**@}*/
 

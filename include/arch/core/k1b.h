@@ -37,15 +37,24 @@
 
 	#include <arch/core/k1b/cache.h>
 	#include <arch/core/k1b/clock.h>
-	#include <arch/core/k1b/context.h>
 	#include <arch/core/k1b/core.h>
 	#include <arch/core/k1b/excp.h>
 	#include <arch/core/k1b/int.h>
 	#include <arch/core/k1b/mmu.h>
+	#include <arch/core/k1b/pmio.h>
 	#include <arch/core/k1b/pic.h>
 	#include <arch/core/k1b/spinlock.h>
 	#include <arch/core/k1b/tlb.h>
 	#include <arch/core/k1b/types.h>
+
+/**
+ * @cond k1b
+ */
+
+	/* Feature Declaration */
+	#define CORE_SUPPORTS_PMIO 1
+
+/**@}*/
 
 #endif /* CORE_K1B_H_ */
 

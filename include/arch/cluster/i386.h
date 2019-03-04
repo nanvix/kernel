@@ -33,6 +33,10 @@
 	/* Cluster Interface Implementation */
 	#include <arch/cluster/i386/_i386.h>
 
+/*============================================================================*
+ * Exported Interface                                                         *
+ *============================================================================*/
+
 /**
  * @addtogroup i386-cluster i386 Cluster
  * @ingroup clusters
@@ -41,6 +45,13 @@
 
 	#include <arch/cluster/i386/cpu.h>
 	#include <arch/cluster/i386/memory.h>
+
+	/**
+	 * @name Provided Features
+	 */
+	/**@{*/
+	#define CLUSTER_IS_MULTICORE 0
+	/**@}*/
 
 /**@}*/
 

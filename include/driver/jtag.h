@@ -24,6 +24,7 @@
 
 #ifndef DRIVER_JTAG_H_
 #define DRIVER_JTAG_H_
+
 /**
  * @addtogroup dev-jtag JTAG
  * @ingroup dev
@@ -32,11 +33,6 @@
 
 	#include <stddef.h>
 	#include <stdint.h>
-
-	/**
-	 * @brief Size of JTAG buffer (in bytes).
-	 */
-	#define JTAG_BUFSIZE 32
 
 	/**
 	 * @brief Initializes the JTAG driver.

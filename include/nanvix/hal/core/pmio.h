@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef NANVIX_HAL_CLUSTER_IO_H_
-#define NANVIX_HAL_CLUSTER_IO_H_
+#ifndef NANVIX_HAL_CORE_PMIO_H_
+#define NANVIX_HAL_CORE_PMIO_H_
 
 	/* Cluster Interface Implementation */
 	#include <nanvix/hal/cluster/_cluster.h>
@@ -32,12 +32,24 @@
  * Interface Implementation Checking                                          *
  *============================================================================*/
 
-	/* Functions */
-	#ifndef __hal_outputb
-	#error "hal_outputb() not defined?"
+	/* Feature Checking */
+	#ifndef CORE_SUPPORTS_PMIO
+	#error "does this core support port-mapped i/o devices?"
 	#endif
-	#ifndef __hal_iowait
-	#error "hal_iowait() not defined?"
+
+	#if (CORE_SUPPORTS_PMIO)
+
+		/* Functions */
+		#ifndef __output8_fn
+		#error "output8() not defined?"
+		#endif
+		#ifndef __output8s_fn
+		#error "output8s() not defined?"
+		#endif
+		#ifndef __iowait_fn
+		#error "iowait() not defined?"
+		#endif
+
 	#endif
 
 /*============================================================================*
@@ -45,10 +57,10 @@
  *============================================================================*/
 
 /**
- * @addtogroup kernel-hal-cluster-io Input/Output
- * @ingroup kernel-hal-cluster
+ * @addtogroup kernel-hal-core-pmio Port-Mapped I/O
+ * @ingroup kernel-hal-core
  *
- * @brief Input/Output HAL Interface
+ * @brief Port-Mapped I/O HAL Interface
  */
 /**@{*/
 
@@ -56,17 +68,51 @@
 	#include <stdint.h>
 
 	/**
-	 * @brief Writes a byte to an I/O port.
+	 * @brief Writes 8 bits to an I/O port.
 	 *
 	 * @param port Number of the target port.
-	 * @param byte Byte to write.
+	 * @param bits Bits to write.
 	 */
-	EXTERN void hal_outputb(uint16_t port, uint8_t byte);
+#if (CORE_SUPPORTS_PMIO)
+	EXTERN void output8(uint16_t port, uint8_t bits);
+#else
+	static inline void output8(uint16_t port, uint8_t bits)
+	{
+		((void) port);
+		((void) bits);
+	}
+#endif
+	/**
+	 * @brief Writes a 8-bit string to an I/O port.
+	 *
+	 * @param port Number of the target port.
+	 * @param str  8-bit string to write.
+	 * @param len  Length of the string.
+	 */
+#if (CORE_SUPPORTS_PMIO)
+	EXTERN void output8s(uint16_t port, const uint8_t *str, size_t len);
+#else
+	static inline void output8s(uint16_t port, const uint8_t *str, size_t len)
+	{
+		((void) port);
+		((void) str);
+		((void) len);
+	}
+#endif
 
 	/**
-	 * @brief Waits an operation in an I/O port to complete.
+	 * @brief Waits for an operation in an I/O port to complete.
+	 *
+	 * @param port Number of the target port.
 	 */
-	EXTERN void hal_iowait(void);
+#if (CORE_SUPPORTS_PMIO)
+	EXTERN void iowait(uint16_t port);
+#else
+	static inline void iowait(uint16_t port)
+	{
+		((void) port);
+	}
+#endif
 
 /**@}*/
 

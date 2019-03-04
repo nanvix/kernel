@@ -48,5 +48,14 @@
 	#include <arch/core/or1k/tlb.h>
 	#include <arch/core/or1k/types.h>
 
+/**
+ * @cond or1k
+ */
+
+	/* Feature Declaration */
+	#define CORE_SUPPORTS_PMIO 0
+
+/**@}*/
+
 #endif /* CORE_OR1K_H_ */
 
