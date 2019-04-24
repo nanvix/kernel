@@ -39,6 +39,8 @@ PUBLIC int sys_thread_get_id(void)
 	return (thread_get_id(thread_get_curr()));
 }
 
+#if (THREAD_MAX > 1)
+
 /*============================================================================*
  * sys_thread_create()                                                        *
  *============================================================================*/
@@ -119,3 +121,5 @@ PUBLIC int sys_thread_join(int tid, void **retval)
 
 	return (thread_join(tid, retval));
 }
+
+#endif

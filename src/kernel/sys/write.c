@@ -34,7 +34,7 @@ PUBLIC ssize_t sys_write(int fd, const char *buf, size_t n)
 {
 	UNUSED(fd);
 
-	hal_stdout_write(buf, n);
+	stdout_write(buf, n);
 
 	return (n);
 }
