@@ -1,7 +1,8 @@
 /*
  * MIT License
  *
- * Copyright(c) 2019 Davidson Francis <davidsondfgl@gmail.com>
+ * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ *              2018 Davidson Francis     <davidsondfgl@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +23,38 @@
  * SOFTWARE.
  */
 
+#include <nanvix/syscall.h>
+#include <sys/types.h>
+#include <errno.h>
+
 /**
- * @brief Number of last error.
+ * @brief Writes data to a file.
+ *
+ * @param fd  File descriptor.
+ * @param buf Target buffer.
+ * @param n   Number of bytes to write.
+ *
+ * @returns Upon successful completion, the number of bytes written is
+ * returned. Upon failure, -1 is returned and @p errno is set to
+ * indicate the error.
  */
-int errno = 0;
+ssize_t nanvix_write(int fd, const char *buf, size_t n)
+{
+	ssize_t ret;
+
+	ret = syscall3(
+		NR_write,
+		(word_t) fd,
+		(word_t) buf,
+		(word_t) n
+	);
+
+	/* System call failed. */
+	if (ret < 0)
+	{
+		errno = -ret;
+		return (-1);
+	}
+
+	return (ret);
+}

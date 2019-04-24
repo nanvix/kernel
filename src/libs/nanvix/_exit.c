@@ -1,7 +1,8 @@
 /*
  * MIT License
  *
- * Copyright(c) 2019 Davidson Francis <davidsondfgl@gmail.com>
+ * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ *              2018 Davidson Francis     <davidsondfgl@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +23,16 @@
  * SOFTWARE.
  */
 
+#include <nanvix/syscall.h>
+
 /**
- * @brief Number of last error.
+ * @brief Terminates the calling process.
+ *
+ * @param status Exit status.
+ *
+ * @note This function does not return.
  */
-int errno = 0;
+void _exit(int status)
+{
+	syscall1(NR__exit, status);
+}
