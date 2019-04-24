@@ -1,8 +1,0 @@
-[submodule "tools/dev/toolchain/i386"]
-	path = tools/dev/toolchain/i386
-	url = https://github.com/nanvix/toolchain.git
-	branch = i386
-[submodule "tools/dev/toolchain/or1k"]
-	path = tools/dev/toolchain/or1k
-	url = https://github.com/nanvix/toolchain.git
-	branch = or1k
