@@ -22,8 +22,6 @@
  * SOFTWARE.
  */
 
-#include <nanvix/mm.h>
-#include <nanvix/thread.h>
 #include <nanvix.h>
 #include "test.h"
 
@@ -41,103 +39,14 @@
 #define NTRIALS 1000
 
 /**
+ * @brief Mutex for shared variable.
+ */
+static struct nanvix_mutex mutex;
+
+/**
  * @brief Shared variable.
  */
 static volatile int var;
-
-/*============================================================================*
- * Mutex                                                                      *
- *============================================================================*/
-
-/**
- * @brief Mutex.
- */
-struct
-{
-	bool locked;              /**< Locked?           */
-	spinlock_t lock;          /**< Lock.             */
-	kthread_t tids[NTHREADS]; /**< Sleeping threads. */
-} mutex;
-
-/**
- * @brief Initializes the mutex.
- */
-static void mutex_init(void)
-{
-	mutex.locked = false;
-	mutex.lock = SPINLOCK_UNLOCKED;
-	for (int i = 0; i < NTHREADS; i++)
-		mutex.tids[i] = -1;
-}
-
-/**
- * @brief Locks the mutex.
- */
-static void mutex_lock(void)
-{
-	kthread_t tid;
-
-	tid = kthread_self();
-
-	do
-	{
-		spinlock_lock(&mutex.lock);
-
-			for (int i = 0; i < NTHREADS; i++)
-			{
-				if (mutex.tids[i] == tid)
-				{
-					for (int j = i; j < (NTHREADS - 1); j++)
-						mutex.tids[j] = mutex.tids[j + 1];
-					mutex.tids[NTHREADS - 1] = -1;
-					break;
-				}
-			}
-
-			/* Lock. */
-			if (!mutex.locked)
-			{
-				mutex.locked = true;
-				spinlock_unlock(&mutex.lock);
-				break;
-			}
-
-			for (int i = 0; i < NTHREADS; i++)
-			{
-				if (mutex.tids[i] == -1)
-				{
-					mutex.tids[i] = tid;
-					break;
-				}
-			}
-
-		spinlock_unlock(&mutex.lock);
-
-		test_assert(sleep() == 0);
-	} while (true);
-}
-
-/**
- * @brief unlocks the mutex.
- */
-static void mutex_unlock(void)
-{
-again:
-	spinlock_lock(&mutex.lock);
-
-		if (mutex.tids[0] != -1)
-		{
-			if (wakeup(mutex.tids[0]) != 0)
-			{
-				spinlock_unlock(&mutex.lock);
-				goto again;
-			}
-		}
-
-		mutex.locked = false;
-
-	spinlock_unlock(&mutex.lock);
-}
 
 /*============================================================================*
  * API Testing Units                                                          *
@@ -155,9 +64,9 @@ static void *task1(void *arg)
 	/* Increment a variable many times. */
 	for (int i = 0; i < NTRIALS; i++)
 	{
-		mutex_lock();
+		nanvix_mutex_lock(&mutex);
 			var++;
-		mutex_unlock();
+		nanvix_mutex_unlock(&mutex);
 	}
 
 	return (NULL);
@@ -171,7 +80,7 @@ void test_api_sleep_wakeup(void)
 	kthread_t tids[NTHREADS];
 
 	var = 0;
-	mutex_init();
+	nanvix_mutex_init(&mutex);
 
 	/* Spawn threads. */
 	for (int i = 0; i < NTHREADS; i++)
@@ -242,9 +151,9 @@ static void *task3(void *arg)
 	/* Increment a variable many times. */
 	for (int i = 0; i < NTRIALS; i++)
 	{
-		mutex_lock();
+		nanvix_mutex_lock(&mutex);
 			var++;
-		mutex_unlock();
+		nanvix_mutex_unlock(&mutex);
 	}
 
 	return (NULL);
@@ -256,7 +165,7 @@ static void *task3(void *arg)
 void test_stress_sleep_wakeup(void)
 {
 	kthread_t tids[NTHREADS];
-	mutex_init();
+	nanvix_mutex_init(&mutex);
 
 	for (int k = 0; k < NITERATIONS; k++)
 	{
