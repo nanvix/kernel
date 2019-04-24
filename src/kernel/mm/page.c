@@ -89,7 +89,7 @@ PRIVATE inline struct pde *pgtab_map(struct pde *pgdir, vaddr_t vaddr)
 	 * Allocate a kernel page to
 	 * accommodate the page table.
 	 */
-	if ((pgtab = kpage_get(FALSE)) == NULL)
+	if ((pgtab = kpage_get(false)) == NULL)
 		return (NULL);
 
 	/*
@@ -99,10 +99,13 @@ PRIVATE inline struct pde *pgtab_map(struct pde *pgdir, vaddr_t vaddr)
 	 * flush the TLB of each affected core.
 	 */
 	frame = kpool_addr_to_frame(VADDR(pgtab));
-	pde_frame_set(pde, frame);
-	pde_present_set(pde, 1);
-	pde_user_set(pde, 1);
-	pde_write_set(pde, 1);
+	mmu_pgtab_map(
+		pgdir,
+		frame << PAGE_SHIFT,
+		vaddr
+	);
+
+	dcache_invalidate();
 	tlb_flush();
 
 	/*
@@ -179,7 +182,7 @@ PRIVATE int pgtab_unmap(struct pde *pgdir, vaddr_t vaddr)
 	 * flush the TLB of each affected core.
 	 */
 	pde_present_set(pde, 0);
-	hal_dcache_invalidate();
+	dcache_invalidate();
 	tlb_flush();
 
 	/* Cannot release kernel page. */
@@ -271,11 +274,15 @@ PUBLIC int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame)
 	 * FIXME: in a multicore platform, we should
 	 * flush the TLB of each affected core core.
 	 */
-	pte_present_set(pte, 1);
-	pte_user_set(pte, 1);
-	pte_write_set(pte, 0);
-	pte_frame_set(pte, frame);
-	hal_dcache_invalidate();
+	mmu_page_map(
+		pgtab,
+		frame << PAGE_SHIFT,
+		vaddr,
+		true,
+		false
+	);
+
+	dcache_invalidate();
 	tlb_flush();
 
 	return (0);
@@ -356,8 +363,12 @@ PUBLIC frame_t upage_unmap(struct pde *pgdir, vaddr_t vaddr)
 	 */
 	frame = pte_frame_get(pte);
 	pte_present_set(pte, 0);
-	tlb_inval(EXCP_DTLB_FAULT, vaddr);
-	tlb_inval(EXCP_ITLB_FAULT, vaddr);
+
+#if (!CORE_HAS_TLB_HW)
+	tlb_inval(EXCEPTION_DTLB_FAULT, vaddr);
+	tlb_inval(EXCEPTION_ITLB_FAULT, vaddr);
+#endif
+
 	tlb_flush();
 
 	/* Free underlying page tables. */
@@ -473,7 +484,7 @@ PUBLIC int upage_free(struct pde *pgdir, vaddr_t vaddr)
  * do_tlb_fault()                                                             *
  *============================================================================*/
 
-#ifdef HAL_TLB_SOFTWARE
+#if (!CORE_HAS_TLB_HW)
 
 /**
  * @brief Handles a TLB fault.
@@ -494,6 +505,7 @@ PRIVATE void do_tlb_fault(
 	const struct context *ctx
 )
 {
+	int tlb_type;      /* Type of TLB.                    */
 	paddr_t paddr;     /* Physical address.               */
 	vaddr_t vaddr;     /* Faulting address.               */
 	struct pte *pte;   /* Working page table table entry. */
@@ -519,10 +531,10 @@ PRIVATE void do_tlb_fault(
 #endif
 
 	/* Lookup PDE. */
-	pde = pde_get(idle_pgdir, vaddr);
+	pde = pde_get(root_pgdir, vaddr);
 	if (!pde_is_present(pde))
 	{
-		forward_excp(EXCP_PAGE_FAULT, excp, ctx);
+		exception_forward(EXCEPTION_PAGE_FAULT, excp, ctx);
 		return;
 	}
 
@@ -531,13 +543,14 @@ PRIVATE void do_tlb_fault(
 	pte = pte_get(pgtab, vaddr);
 	if (!pte_is_present(pte))
 	{
-		forward_excp(EXCP_PAGE_FAULT, excp, ctx);
+		exception_forward(EXCEPTION_PAGE_FAULT, excp, ctx);
 		return;
 	}
 
 	/* Writing mapping to TLB. */
+	tlb_type = (excp->num == EXCEPTION_DTLB_FAULT) ? TLB_DATA : TLB_INSTRUCTION;
 	paddr = pte_frame_get(pte) << PAGE_SHIFT;
-	if (tlb_write(excp->num, vaddr, paddr) < 0)
+	if (tlb_write(tlb_type, vaddr, paddr) < 0)
 		kpanic("cannot write to tlb");
 }
 
@@ -558,9 +571,9 @@ PUBLIC void upool_init(void)
 	kprintf("[mm] initializing the user page allocator");
 
 	/* Register handlers. */
-#ifdef HAL_TLB_SOFTWARE
-	exception_set_handler(EXCP_DTLB_FAULT, do_tlb_fault);
-	exception_set_handler(EXCP_ITLB_FAULT, do_tlb_fault);
+#if (!CORE_HAS_TLB_HW)
+	exception_register(EXCEPTION_DTLB_FAULT, do_tlb_fault);
+	exception_register(EXCEPTION_ITLB_FAULT, do_tlb_fault);
 #endif
 
 #ifndef NDEBUG

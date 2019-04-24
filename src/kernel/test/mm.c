@@ -117,14 +117,14 @@ PRIVATE void test_fault_frame_double_free(void)
 PRIVATE void test_fault_frame_allocation_overflow(void)
 {
 	/* Allocate all page frames. */
-	for (int i = 0; i < NUM_UFRAMES; i++)
+	for (frame_t i = 0; i < NUM_UFRAMES; i++)
 		KASSERT(frame_alloc() != FRAME_NULL);
 
 	/* Fail to allocate an extra page frame. */
 	KASSERT(frame_alloc() == FRAME_NULL);
 
 	/* Release all page frames. */
-	for (int i = 0; i < NUM_UFRAMES; i++)
+	for (frame_t i = 0; i < NUM_UFRAMES; i++)
 		KASSERT(frame_free(frame_id_to_num(i)) == 0);
 }
 
@@ -136,11 +136,11 @@ PRIVATE void test_fault_frame_allocation_overflow(void)
 PRIVATE void test_stress_frame_allocation(void)
 {
 	/* Allocate all page frames. */
-	for (int i = 0; i < NUM_UFRAMES; i++)
+	for (frame_t  i = 0; i < NUM_UFRAMES; i++)
 		KASSERT(frame_alloc() != FRAME_NULL);
 
 	/* Release all page frames. */
-	for (int i = 0; i < NUM_UFRAMES; i++)
+	for (frame_t i = 0; i < NUM_UFRAMES; i++)
 		KASSERT(frame_free(frame_id_to_num(i)) == 0);
 }
 
@@ -310,14 +310,14 @@ PRIVATE void test_fault_kpage_allocation_overflow(void)
 	unsigned *kpg;
 
 	/* Allocate all kernel pages. */
-	for (int i = 0; i < NUM_KPAGES; i++)
+	for (unsigned i = 0; i < NUM_KPAGES; i++)
 		KASSERT((kpg = kpage_get(0)) != NULL);
 
 	/* Fail to allocate one more page. */
 	KASSERT((kpg = kpage_get(0)) == NULL);
 
 	/* Free all kernel pages. */
-	for (int i = 0; i < NUM_KPAGES; i++)
+	for (unsigned i = 0; i < NUM_KPAGES; i++)
 		KASSERT(kpage_put((void *)(KPOOL_VIRT + i*PAGE_SIZE)) == 0);
 }
 
@@ -329,11 +329,11 @@ PRIVATE void test_stress_kpage_allocation(void)
 	unsigned *kpg;
 
 	/* Allocate all kernel pages. */
-	for (int i = 0; i < NUM_KPAGES; i++)
+	for (unsigned i = 0; i < NUM_KPAGES; i++)
 		KASSERT((kpg = kpage_get(0)) != NULL);
 
 	/* Free all kernel pages. */
-	for (int i = 0; i < NUM_KPAGES; i++)
+	for (unsigned i = 0; i < NUM_KPAGES; i++)
 		KASSERT(kpage_put((void *)(KPOOL_VIRT + i*PAGE_SIZE)) == 0);
 }
 
@@ -348,7 +348,7 @@ PRIVATE void test_stress_kpage_write(void)
 	const unsigned magic = 0xdeadbeef;
 
 	/* Allocate all kernel pages. */
-	for (int i = 0; i < NUM_KPAGES; i++)
+	for (unsigned i = 0; i < NUM_KPAGES; i++)
 	{
 		KASSERT((kpg = kpage_get(1)) != NULL);
 
@@ -358,7 +358,7 @@ PRIVATE void test_stress_kpage_write(void)
 	}
 
 	/* Free all kernel pages. */
-	for (int i = 0; i < NUM_KPAGES; i++)
+	for (unsigned i = 0; i < NUM_KPAGES; i++)
 	{
 		kpg = (void *)(KPOOL_VIRT + i*PAGE_SIZE);
 
@@ -422,8 +422,8 @@ PUBLIC void kpool_test_driver(void)
  */
 PRIVATE void test_api_upage_allocation(void)
 {
-	KASSERT(upage_alloc(idle_pgdir, UBASE_VIRT) == 0);
-	KASSERT(upage_free(idle_pgdir, UBASE_VIRT) == 0);
+	KASSERT(upage_alloc(root_pgdir, UBASE_VIRT) == 0);
+	KASSERT(upage_free(root_pgdir, UBASE_VIRT) == 0);
 }
 
 /**
@@ -439,7 +439,7 @@ PRIVATE void test_api_upage_write(void)
 	upg = (unsigned  *)(UBASE_VIRT);
 
 	/* Allocate.*/
-	KASSERT(upage_alloc(idle_pgdir, VADDR(upg)) == 0);
+	KASSERT(upage_alloc(root_pgdir, VADDR(upg)) == 0);
 
 	/* Write. */
 	for (size_t i = 0; i < PAGE_SIZE/sizeof(unsigned); i++)
@@ -448,7 +448,7 @@ PRIVATE void test_api_upage_write(void)
 		KASSERT(upg[i] == magic);
 
 	/* Unmap. */
-	KASSERT(upage_free(idle_pgdir, VADDR(upg)) == 0);
+	KASSERT(upage_free(root_pgdir, VADDR(upg)) == 0);
 }
 
 /**
@@ -459,9 +459,9 @@ PRIVATE void test_api_upage_write(void)
 PRIVATE void test_fault_upage_invalid_allocation(void)
 {
 	KASSERT(upage_alloc(NULL, UBASE_VIRT) == -EINVAL);
-	KASSERT(upage_alloc(idle_pgdir, KBASE_VIRT) == -EFAULT);
-	KASSERT(upage_alloc(idle_pgdir, UBASE_VIRT - PAGE_SIZE) == -EFAULT);
-	KASSERT(upage_alloc(idle_pgdir, UBASE_VIRT + PAGE_SIZE - 1) == -EINVAL);
+	KASSERT(upage_alloc(root_pgdir, KBASE_VIRT) == -EFAULT);
+	KASSERT(upage_alloc(root_pgdir, UBASE_VIRT - PAGE_SIZE) == -EFAULT);
+	KASSERT(upage_alloc(root_pgdir, UBASE_VIRT + PAGE_SIZE - 1) == -EINVAL);
 }
 
 /**
@@ -471,9 +471,9 @@ PRIVATE void test_fault_upage_invalid_allocation(void)
  */
 PRIVATE void test_fault_upage_double_allocation(void)
 {
-	KASSERT(upage_alloc(idle_pgdir, UBASE_VIRT) == 0);
-	KASSERT(upage_alloc(idle_pgdir, UBASE_VIRT) == -EADDRINUSE);
-	KASSERT(upage_free(idle_pgdir, UBASE_VIRT) == 0);
+	KASSERT(upage_alloc(root_pgdir, UBASE_VIRT) == 0);
+	KASSERT(upage_alloc(root_pgdir, UBASE_VIRT) == -EADDRINUSE);
+	KASSERT(upage_free(root_pgdir, UBASE_VIRT) == 0);
 }
 
 /**
@@ -484,9 +484,9 @@ PRIVATE void test_fault_upage_double_allocation(void)
 PRIVATE void test_fault_upage_invalid_free(void)
 {
 	KASSERT(upage_free(NULL, UBASE_VIRT) == -EFAULT);
-	KASSERT(upage_free(idle_pgdir, KBASE_VIRT) == -EFAULT);
-	KASSERT(upage_free(idle_pgdir, UBASE_VIRT - PAGE_SIZE) == -EFAULT);
-	KASSERT(upage_free(idle_pgdir, UBASE_VIRT + PAGE_SIZE - 1) == -EFAULT);
+	KASSERT(upage_free(root_pgdir, KBASE_VIRT) == -EFAULT);
+	KASSERT(upage_free(root_pgdir, UBASE_VIRT - PAGE_SIZE) == -EFAULT);
+	KASSERT(upage_free(root_pgdir, UBASE_VIRT + PAGE_SIZE - 1) == -EFAULT);
 }
 
 /**
@@ -496,7 +496,7 @@ PRIVATE void test_fault_upage_invalid_free(void)
  */
 PRIVATE void test_fault_upage_bad_free(void)
 {
-	KASSERT(upage_free(idle_pgdir, UBASE_VIRT) == -EFAULT);
+	KASSERT(upage_free(root_pgdir, UBASE_VIRT) == -EFAULT);
 }
 
 /**
@@ -506,9 +506,9 @@ PRIVATE void test_fault_upage_bad_free(void)
  */
 PRIVATE void test_fault_upage_double_free(void)
 {
-	KASSERT(upage_alloc(idle_pgdir, UBASE_VIRT) == 0);
-	KASSERT(upage_free(idle_pgdir, UBASE_VIRT) == 0);
-	KASSERT(upage_free(idle_pgdir, UBASE_VIRT) == -EFAULT);
+	KASSERT(upage_alloc(root_pgdir, UBASE_VIRT) == 0);
+	KASSERT(upage_free(root_pgdir, UBASE_VIRT) == 0);
+	KASSERT(upage_free(root_pgdir, UBASE_VIRT) == -EFAULT);
 }
 
 /**
@@ -519,15 +519,15 @@ PRIVATE void test_fault_upage_double_free(void)
 PRIVATE void test_fault_upage_allocation_overflow(void)
 {
 	/* Allocate pages. */
-	for (int i = 0; i < NUM_UPAGES; i++)
-		KASSERT(upage_alloc(idle_pgdir, UBASE_VIRT + i*PAGE_SIZE) == 0);
+	for (unsigned i = 0; i < NUM_UPAGES; i++)
+		KASSERT(upage_alloc(root_pgdir, UBASE_VIRT + i*PAGE_SIZE) == 0);
 
 	/* Fail to allocate an extra page. */
-	KASSERT(upage_alloc(idle_pgdir, UBASE_VIRT + NUM_UPAGES*PAGE_SIZE) == -EAGAIN);
+	KASSERT(upage_alloc(root_pgdir, UBASE_VIRT + NUM_UPAGES*PAGE_SIZE) == -EAGAIN);
 
 	/* Release pages. */
-	for (int i = 0; i < NUM_UPAGES; i++)
-		KASSERT(upage_free(idle_pgdir, UBASE_VIRT + i*PAGE_SIZE) == 0);
+	for (unsigned i = 0; i < NUM_UPAGES; i++)
+		KASSERT(upage_free(root_pgdir, UBASE_VIRT + i*PAGE_SIZE) == 0);
 }
 
 /**
@@ -538,12 +538,12 @@ PRIVATE void test_fault_upage_allocation_overflow(void)
 PRIVATE void test_stress_upage_allocation(void)
 {
 	/* Allocate pages. */
-	for (int i = 0; i < NUM_UPAGES; i++)
-		KASSERT(upage_alloc(idle_pgdir, UBASE_VIRT + i*PAGE_SIZE) == 0);
+	for (unsigned i = 0; i < NUM_UPAGES; i++)
+		KASSERT(upage_alloc(root_pgdir, UBASE_VIRT + i*PAGE_SIZE) == 0);
 
 	/* Release pages. */
-	for (int i = 0; i < NUM_UPAGES; i++)
-		KASSERT(upage_free(idle_pgdir, UBASE_VIRT + i*PAGE_SIZE) == 0);
+	for (unsigned i = 0; i < NUM_UPAGES; i++)
+		KASSERT(upage_free(root_pgdir, UBASE_VIRT + i*PAGE_SIZE) == 0);
 }
 
 /**
@@ -557,7 +557,7 @@ PRIVATE void test_stress_upage_write(void)
 	unsigned *upg;
 	const unsigned magic = 0xdeadbeef;
 
-	#ifdef HAL_TLB_SOFTWARE
+	#if (!CORE_HAS_TLB_HW)
 	num_upages = NUM_UPAGES/TLB_LENGTH;
 	#else
 	num_upages = NUM_UPAGES;
@@ -568,7 +568,7 @@ PRIVATE void test_stress_upage_write(void)
 	{
 		upg = (void *)(UBASE_VIRT + i*PAGE_SIZE);
 
-		KASSERT(upage_alloc(idle_pgdir, VADDR(upg)) == 0);
+		KASSERT(upage_alloc(root_pgdir, VADDR(upg)) == 0);
 
 		/* Write to kernel page. */
 		for (unsigned j = 0; j < PAGE_SIZE/sizeof(unsigned); j++)
@@ -584,7 +584,7 @@ PRIVATE void test_stress_upage_write(void)
 		for (unsigned j = 0; j < PAGE_SIZE/sizeof(unsigned); j++)
 			KASSERT(upg[j] == magic);
 
-		KASSERT(upage_free(idle_pgdir, VADDR(upg)) == 0);
+		KASSERT(upage_free(root_pgdir, VADDR(upg)) == 0);
 	}
 }
 

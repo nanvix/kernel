@@ -50,8 +50,8 @@ PRIVATE int kpages[NUM_KPAGES] = { 0,  };
  */
 PUBLIC void *kpage_get(int clean)
 {
-	int i; /* Loop index.  */
 	void *kpg;  /* Kernel page. */
+	unsigned i; /* Loop index.  */
 
 	/* Search for a free kernel page. */
 	for (i = 0; i < NUM_KPAGES; i++)
@@ -70,7 +70,7 @@ found:
 	/* Set page as used. */
 	kpg = (void *) kpool_id_to_addr(i);
 	kpages[i]++;
-	hal_dcache_invalidate();
+	dcache_invalidate();
 
 	/* Clean page. */
 	if (clean)
@@ -114,7 +114,7 @@ PUBLIC int kpage_put(void *kpg)
 	}
 
 	kpages[i]--;
-	hal_dcache_invalidate();
+	dcache_invalidate();
 
 	return (0);
 }
@@ -136,7 +136,7 @@ PUBLIC void kpool_init(void)
 	kprintf("[mm] initializing the kernel page allocator");
 
 #ifndef __NANVIX_FAST_BOOT
-	for (int i = 0; i < NUM_KPAGES; i++)
+	for (unsigned i = 0; i < NUM_KPAGES; i++)
 		kpages[i] = 0;
 #endif
 
