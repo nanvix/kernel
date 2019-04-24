@@ -66,6 +66,8 @@ void test_api_kthread_self(void)
 	test_assert(kthread_self() == 1);
 }
 
+#if (THREAD_MAX > 2)
+
 /**
  * @brief API test for thread creation/termination.
  */
@@ -82,9 +84,13 @@ void test_api_kthread_create(void)
 		test_assert(kthread_join(tid[i], NULL) == 0);
 }
 
+#endif
+
 /*============================================================================*
  * Fault Injection Testing Units                                              *
  *============================================================================*/
+
+#if (THREAD_MAX > 1)
 
 /**
  * @brief Fault Injection test for thread creation/termination.
@@ -140,9 +146,13 @@ void test_fault_kthread_create(void)
 #endif
 }
 
+#endif
+
 /*============================================================================*
  * Stress Testing Units                                                       *
  *============================================================================*/
+
+#if (THREAD_MAX > 2)
 
 /**
  * @brief Stress test for thread creation/termination.
@@ -163,3 +173,4 @@ void test_stress_kthread_create(void)
 	}
 }
 
+#endif

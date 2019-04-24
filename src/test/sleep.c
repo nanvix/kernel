@@ -27,6 +27,9 @@
 #include <nanvix.h>
 #include "test.h"
 
+
+#if (THREAD_MAX > 2)
+
 /**
  * @brief Number of threads to spawn.
  */
@@ -51,8 +54,7 @@ static volatile int var;
  */
 struct
 {
-	int nblocked;
-	int locked;               /**< Locked?           */
+	bool locked;              /**< Locked?           */
 	spinlock_t lock;          /**< Lock.             */
 	kthread_t tids[NTHREADS]; /**< Sleeping threads. */
 } mutex;
@@ -62,8 +64,7 @@ struct
  */
 static void mutex_init(void)
 {
-	mutex.nblocked = 0;
-	mutex.locked = 0;
+	mutex.locked = false;
 	mutex.lock = SPINLOCK_UNLOCKED;
 	for (int i = 0; i < NTHREADS; i++)
 		mutex.tids[i] = -1;
@@ -86,14 +87,17 @@ static void mutex_lock(void)
 			{
 				if (mutex.tids[i] == tid)
 				{
-					mutex.tids[i] = -1;
+					for (int j = i; j < (NTHREADS - 1); j++)
+						mutex.tids[j] = mutex.tids[j + 1];
+					mutex.tids[NTHREADS - 1] = -1;
 					break;
 				}
 			}
 
+			/* Lock. */
 			if (!mutex.locked)
 			{
-				mutex.locked = 1;
+				mutex.locked = true;
 				spinlock_unlock(&mutex.lock);
 				break;
 			}
@@ -102,7 +106,6 @@ static void mutex_lock(void)
 			{
 				if (mutex.tids[i] == -1)
 				{
-					mutex.nblocked++;
 					mutex.tids[i] = tid;
 					break;
 				}
@@ -111,8 +114,7 @@ static void mutex_lock(void)
 		spinlock_unlock(&mutex.lock);
 
 		test_assert(sleep() == 0);
-	}
-	while (1);
+	} while (true);
 }
 
 /**
@@ -120,43 +122,21 @@ static void mutex_lock(void)
  */
 static void mutex_unlock(void)
 {
-	int again;
-	kthread_t tid;
+again:
+	spinlock_lock(&mutex.lock);
 
-	tid = kthread_self();
-
-	do
-	{
-		again = 1;
-
-		spinlock_lock(&mutex.lock);
-
-			if (mutex.nblocked == 0)
-				again = 0;
-			else
+		if (mutex.tids[0] != -1)
+		{
+			if (wakeup(mutex.tids[0]) != 0)
 			{
-				for (int i = 0; i < NTHREADS; i++)
-				{
-					if (mutex.tids[i] != -1)
-					{
-						if (mutex.tids[i] != tid)
-						{
-							if (wakeup(mutex.tids[i]) == 0)
-							{
-								mutex.nblocked--;
-								again = 0;
-								break;
-							}
-						}
-					}
-				}
+				spinlock_unlock(&mutex.lock);
+				goto again;
 			}
+		}
 
-			if (!again)
-				mutex.locked = 0;
+		mutex.locked = false;
 
-		spinlock_unlock(&mutex.lock);
-	} while (again);
+	spinlock_unlock(&mutex.lock);
 }
 
 /*============================================================================*
@@ -276,11 +256,11 @@ static void *task3(void *arg)
 void test_stress_sleep_wakeup(void)
 {
 	kthread_t tids[NTHREADS];
+	mutex_init();
 
 	for (int k = 0; k < NITERATIONS; k++)
 	{
 		var = 0;
-		mutex_init();
 
 		/* Spawn threads. */
 		for (int i = 0; i < NTHREADS; i++)
@@ -293,3 +273,5 @@ void test_stress_sleep_wakeup(void)
 		test_assert(var == NTRIALS*NTHREADS);
 	}
 }
+
+#endif
