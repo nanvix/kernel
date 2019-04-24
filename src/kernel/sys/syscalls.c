@@ -172,6 +172,10 @@ PUBLIC int do_syscall(
 
 #endif
 
+		case NR_shutdown:
+			ret = sys_shutdown();
+			break;
+
 		/* Forward system call. */
 		default:
 		{

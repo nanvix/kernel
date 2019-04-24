@@ -67,6 +67,14 @@
 	extern int wakeup(kthread_t);
 	/**@}*/
 
+	/**
+	 * @brief Shutdowns the kernel.
+	 *
+	 * @returns Upon successful completion, this function does not
+	 * return.Upon failure, a negative error code is returned instead.
+	 */
+	extern int shutdown(void);
+
 /*============================================================================*
  * Mutex                                                                      *
  *============================================================================*/

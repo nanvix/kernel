@@ -2,6 +2,7 @@
  * MIT License
  *
  * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ *              2018 Davidson Francis     <davidsondfgl@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,73 +24,16 @@
  */
 
 #include <nanvix/hal/hal.h>
-#include <nanvix/const.h>
-#include <nanvix/dev.h>
-#include <nanvix/klib.h>
-#include <nanvix/mm.h>
-#include <nanvix/thread.h>
-#include <nanvix.h>
-
-EXTERN void do_syscall2(void);
-EXTERN int main(int argc, const char *argv[], char **envp);
-
-#if (CLUSTER_IS_MULTICORE)
 
 /**
- * @brief Init thread.
+ * The sys_shutdown() function shutdowns the kernel.
+ *
+ * @author Pedro Henrique Penna
  */
-PRIVATE void *init(void *arg)
+int sys_shutdown(void)
 {
-	int status;
-	int argc = 1;
-	const char *argv[] = { "init", NULL };
+	core_poweroff();
 
-	UNUSED(arg);
-	UNUSED(status);
-
-#if (CORES_NUM > 2)
-	status = main(argc, argv, NULL);
-#else
-	UNUSED(argc);
-	UNUSED(argv);
-#endif
-
-	/* Halt. */
-	kprintf("halting...");
-	while (true)
-		noop();
-
-	return (NULL);
+	return (-EAGAIN);
 }
 
-#endif
-
-/**
- * @brief Initializes the kernel.
- */
-PUBLIC void kmain(int argc, const char *argv[])
-{
-#if (CLUSTER_IS_MULTICORE)
-	int tid;
-#endif
-
-	UNUSED(argc);
-	UNUSED(argv);
-
-	hal_init();
-	dev_init();
-	mm_init();
-
-	kprintf("enabling hardware interrupts");
-	interrupts_enable();
-
-#if (CLUSTER_IS_MULTICORE)
-	thread_create(&tid, init, NULL);
-	while (true)
-		do_syscall2();
-#else
-	kprintf("halting...");
-	while (true)
-		noop();
-#endif
-}
