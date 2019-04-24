@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+# Copyright(c) 2011-2019 The Maintainers of Nanvix
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,49 +23,46 @@
 #
 
 #===============================================================================
-# Sources and Objects
+# Target Configuration
 #===============================================================================
 
-# C Source Files
-SRC = $(wildcard nanvix/*.c)
+export CFLAGS += -D __qemu_x86__    # Target
+export CFLAGS += -D __x86__         # Processor
+export CFLAGS += -D __x86_cluster__ # Cluster
+export CFLAGS += -D __i486__        # Core
 
-# Object Files
-OBJ = $(SRC:.c=.o)
+#===============================================================================
+# Toolchain Configuration
+#===============================================================================
+
+# Toolchain Directory
+export TOOLCHAIN_DIR ?= $(TOOLSDIR)/dev/toolchain/i486/bin
+
+# Toolchain
+export CC = $(TOOLCHAIN_DIR)/i486-elf-gcc
+export LD = $(TOOLCHAIN_DIR)/i486-elf-ld
+export AR = $(TOOLCHAIN_DIR)/i486-elf-ar
+
+# Compiler Options
+export CFLAGS  += -D __HAS_HW_DIVISION
+export CFLAGS  += -Wstack-usage=4096
+export CFLAGS  += -nostdlib -nostdinc
+
+# Linker Options
+export LDFLAGS += -nostdlib -nostdinc
+
+#===============================================================================
+# Libraries
+#===============================================================================
+
+export THEIR_LIBS :=
 
 #===============================================================================
 
-# Builds All Object Files
-all: $(OBJ)
-ifeq ($(VERBOSE), no)
-	@echo [AR] $(LIBNANVIX)
-	@$(AR) $(ARFLAGS) $(LIBNANVIX) $(OBJ)
-else
-	$(AR) $(ARFLAGS) $(LIBNANVIX) $(OBJ)
-endif
+# Builds everything.
+all-target:
+	$(MAKE) -C $(SRCDIR) all
 
-# Cleans All Object Files
-clean:
-ifeq ($(VERBOSE), no)
-	@echo [CLEAN] $(OBJ)
-	@rm -rf $(OBJ)
-else
-	rm -rf $(OBJ)
-endif
-
-# Cleans Everything
-distclean: clean
-ifeq ($(VERBOSE), no)
-	@echo [CLEAN] $(LIBNANVIX)
-	@rm -rf $(LIBNANVIX)
-else
-	rm -rf $(LIBNANVIX)
-endif
-
-# Builds a C Source file
-%.o: %.c
-ifeq ($(VERBOSE), no)
-	@echo [CC] $@
-	@$(CC) $(CFLAGS) $< -c -o $@
-else
-	$(CC) $(CFLAGS) $< -c -o $@
-endif
+# Cleans everything.
+clean-target:
+	$(MAKE) -C $(SRCDIR) clean

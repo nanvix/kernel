@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ * Copyright(c) 2011-2019 The Maintainers of Nanvix
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -48,7 +48,7 @@ PAGE_SIZE = 4096;
 /*
  * ROM
  */
-ROM_MEM_SIZE = 4K; 
+ROM_MEM_SIZE = 4K;
 ROM_MEM_END  = INTERNAL_RAM_BASE + INTERNAL_RAM_SIZE ;
 ROM_MEM_START = INTERNAL_RAM_BASE + INTERNAL_RAM_SIZE - ROM_MEM_SIZE ;
 

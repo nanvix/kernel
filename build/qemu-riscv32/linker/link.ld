@@ -22,17 +22,87 @@
  * SOFTWARE.
  */
 
-/**
- * Copyright (C) 2013-2014 Kalray SA.
- *
- * All rights reserved.
- */
+OUTPUT_FORMAT("elf32-littleriscv")
+OUTPUT_ARCH("riscv")
+
+ENTRY(_do_start)
 
 /*
- * Available memory regions.
+ * RAM Configuration
  */
+RAM_BASE = 0x80000000; /* Base Address: 2 GB */
+RAM_SIZE = 0x8000000;  /* Size: 128 MB       */
+
+/*
+ * Page Size (4 KB)
+ */
+PAGE_SIZE = 0x1000;
+
+/*
+ * Boot Address
+ */
+BOOT_ADDR = RAM_BASE;
+
 MEMORY
 {
-    internal_mem           : ORIGIN = 0x00000000, LENGTH = 2M
-	upper_internal_memory  : ORIGIN = 0x00200000, LENGTH = 0
+	ram(wxa!ri) : ORIGIN = BOOT_ADDR, LENGTH = RAM_SIZE
+}
+
+SECTIONS
+{
+	. = BOOT_ADDR;
+
+	KERNEL_CODE_START = .;
+
+	/* Bootstrap. */
+	.bootstrap :
+	{
+		__BOOTSTRAP_START = .;
+		*boot.o (.*)
+		__BOOTSTRAP_END = .;
+	} > ram
+
+	. = ALIGN(PAGE_SIZE);
+
+	/* Text. */
+	.text : AT(ADDR(.text))
+	{
+		__TEXT_START = .;
+		*(.text)
+		__TEXT_END = .;
+	} > ram
+
+
+	. = ALIGN(PAGE_SIZE);
+
+	KERNEL_CODE_END = .;
+	KERNEL_DATA_START = .;
+
+	/* Initialized data. */
+	.data : AT(ADDR(.data))
+	{
+		__DATA_START = .;
+		*(.rodata)
+		*(.data)
+		__DATA_END = .;
+	} > ram
+
+	/* Uninitialized data. */
+	.bss : AT(ADDR(.bss))
+	{
+		__BSS_START = .;
+		*(.bss)
+		__BSS_END = .;
+	} > ram
+
+	. = ALIGN(PAGE_SIZE);
+
+	KERNEL_DATA_END = .;
+
+	/* Discarded. */
+	/DISCARD/ :
+	{
+		*(.comment)
+		*(.note)
+	}
 }

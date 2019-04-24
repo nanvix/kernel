@@ -22,17 +22,50 @@
  * SOFTWARE.
  */
 
-/**
- * Copyright (C) 2013-2014 Kalray SA.
- *
- * All rights reserved.
- */
+OUTPUT_FORMAT("elf32-i386")
+ENTRY(start)
 
-/*
- * Available memory regions.
- */
-MEMORY
+SECTIONS
 {
-    internal_mem           : ORIGIN = 0x00000000, LENGTH = 2M
-	upper_internal_memory  : ORIGIN = 0x00200000, LENGTH = 0
+	. = 0x100000;
+
+	KSTART = .;
+
+	/* Bootstrap section. */
+	.bootstrap :
+	{
+		*boot.o *(.bootstrap)
+	}
+
+	. += 0xc0000000;
+
+	/* Kernel code section. */
+	.text ALIGN(4096) : AT(ADDR(.text) - 0xc0000000)
+   {
+       *(.text)
+       *(.rodata)
+   }
+
+   /* Initialized kernel data section. */
+   .data ALIGN(4096) : AT(ADDR(.data) - 0xc0000000)
+   {
+       *(.data)
+   }
+
+   /* Uninitialized kernel data section. */
+   .bss : AT(ADDR(.bss) - 0xc0000000)
+   {
+       *(.bss)
+   }
+
+   . =ALIGN(4096);
+
+   KDATA_END = .;
+
+   /* Discarded. */
+   /DISCARD/ :
+   {
+        *(.comment)
+        *(.note)
+   }
 }

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ * Copyright(c) 2011-2019 The Maintainers of Nanvix
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -161,7 +161,7 @@ SECTIONS
     . += _tls_size;
     . = ALIGN(8);
     _tls_pe8_end = ABSOLUTE(.);
-   } =0x12345678 
+   } =0x12345678
 
    /* Reserve room for .tdata and .tbss for PE9 */
    .tls_pe9 ALIGN(8) : AT ( ALIGN( LOADADDR(.tls_pe8) + SIZEOF(.tls_pe8), 8))

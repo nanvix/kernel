@@ -34,6 +34,8 @@ function build
 	local nodebin=$3
 	local multibin=$4
 
+	rm -rf $multibin
+
 	$K1_TOOLCHAIN_DIR/bin/k1-create-multibinary \
 		--boot $bindir/$iobin                   \
 		--clusters $bindir/$nodebin             \

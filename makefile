@@ -23,19 +23,68 @@
 #
 
 #===============================================================================
+# Build Options
+#===============================================================================
+
+# Verbose Build?
+export VERBOSE ?= no
+
+#===============================================================================
 # Directories
 #===============================================================================
 
 # Directories
-export BINDIR    = $(CURDIR)/bin
-export BUILDDIR  = $(CURDIR)/build
-export LINKERDIR = $(BUILDDIR)/$(TARGET)/linker
-export MAKEDIR   = $(BUILDDIR)/$(TARGET)/make
-export DOCDIR    = $(CURDIR)/doc
-export INCDIR    = $(CURDIR)/include
-export LIBDIR    = $(CURDIR)/lib
-export SRCDIR    = $(CURDIR)/src
-export TOOLSDIR  = $(CURDIR)/tools
+export ROOTDIR    := $(CURDIR)
+export BINDIR     := $(ROOTDIR)/bin
+export BUILDDIR   := $(ROOTDIR)/build
+export CONTRIBDIR := $(ROOTDIR)/contrib
+export LINKERDIR  := $(BUILDDIR)/$(TARGET)/linker
+export MAKEDIR    := $(BUILDDIR)/$(TARGET)/make
+export DOCDIR     := $(ROOTDIR)/doc
+export INCDIR     := $(ROOTDIR)/include
+export LIBDIR     := $(ROOTDIR)/lib
+export SRCDIR     := $(ROOTDIR)/src
+export TOOLSDIR   := $(ROOTDIR)/tools
+
+#===============================================================================
+# Libraries and Binaries
+#===============================================================================
+
+# Libraries
+export LIBHAL    = $(LIBDIR)/libhal-$(TARGET).a
+export LIBKERNEL = $(LIBDIR)/libkernel-$(TARGET).a
+export LIBNANVIX = $(LIBDIR)/libnanvix-$(TARGET).a
+
+# Binaries
+export EXEC := $(BINDIR)/test-driver
+
+#===============================================================================
+# Target-Specific Make Rules
+#===============================================================================
+
+include $(MAKEDIR)/makefile
+
+#===============================================================================
+# Toolchain Configuration
+#===============================================================================
+
+# Compiler Options.
+export CFLAGS  += -std=c99 -fno-builtin
+export CFLAGS  += -pedantic-errors
+export CFLAGS  += -Wall -Wextra -Werror -Wa,--warn
+export CFLAGS  += -Winit-self -Wswitch-default -Wfloat-equal
+export CFLAGS  += -Wundef -Wshadow -Wuninitialized -Wlogical-op
+export CFLAGS  += -fno-stack-protector
+export CFLAGS  += -Wvla # -Wredundant-decls
+export CFLAGS  += -I $(INCDIR)
+ifeq ($(RELEASE), true)
+	export CFLAGS  += -O3 -D NDEBUG
+else
+	export CFLAGS  += -O0 -g -Wno-unused-function
+endif
+
+# Archiver Options
+export ARFLAGS = rc
 
 #===============================================================================
 
@@ -43,25 +92,50 @@ export TOOLSDIR  = $(CURDIR)/tools
 export IMAGE = nanvix-debug.img
 
 # Builds everything.
-all: image
-
-# Builds image.
-image: | nanvix nanvix-target
+all: | make-dirs all-target
 	bash $(TOOLSDIR)/image/build-image.sh $(BINDIR) $(IMAGE)
 
-# Builds Nanvix.
-nanvix:
-	mkdir -p $(BINDIR)
-	mkdir -p $(LIBDIR)
+# Make Directories
+make-dirs:
+	@mkdir -p $(BINDIR)
+	@mkdir -p $(LIBDIR)
+
+# Cleans builds.
+clean: clean-target
 
 # Cleans everything.
-distclean: distclean-target
-	rm -rf $(IMAGE)
-	rm -rf $(BINDIR) $(LIBDIR)
+distclean: | clean-target
+	 @rm -f $(BINDIR)/*
+	 @find $(SRCDIR) -name "*.o" -exec rm -rf {} \;
 
-# Builds documentation.
-documentation:
-	mkdir -p $(DOCDIR)
-	doxygen doxygen/doxygen.$(TARGET)
+# Builds contrib.
+contrib: make-dirs
+	$(MAKE) -C $(CONTRIBDIR)/hal install PREFIX=$(ROOTDIR)
 
-include $(MAKEDIR)/makefile
+# Cleans the HAL.
+contrib-uninstall:
+	$(MAKE) -C $(CONTRIBDIR)/hal uninstall PREFIX=$(ROOTDIR)
+
+# Runs Unit Tests in all clusters
+run: | all
+	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) all --no-debug
+
+# Runs Unit Tests in IO Cluster.
+run-iocluster: | all
+	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) iocluster --no-debug
+
+# Runs Unit Tests in Compute Cluster.
+run-ccluster: | all
+	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) ccluster --no-debug
+
+# Runs Unit Tests in all clusters in debug mode.
+debug: | all
+	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) all --debug
+
+# Runs Unit Tests in IO Cluster in debug mode.
+debug-iocluster: | all
+	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) iocluster --debug
+
+# Runs Unit Tests in Compute Cluster in debug mode.
+debug-ccluster: | all
+	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) ccluster --debug

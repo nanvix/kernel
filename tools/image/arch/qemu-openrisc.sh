@@ -22,50 +22,11 @@
 # SOFTWARE.
 #
 
-#===============================================================================
-# Sources and Objects
-#===============================================================================
-
-# C Source Files
-SRC = $(wildcard nanvix/*.c)
-
-# Object Files
-OBJ = $(SRC:.c=.o)
-
-#===============================================================================
-
-# Builds All Object Files
-all: $(OBJ)
-ifeq ($(VERBOSE), no)
-	@echo [AR] $(LIBNANVIX)
-	@$(AR) $(ARFLAGS) $(LIBNANVIX) $(OBJ)
-else
-	$(AR) $(ARFLAGS) $(LIBNANVIX) $(OBJ)
-endif
-
-# Cleans All Object Files
-clean:
-ifeq ($(VERBOSE), no)
-	@echo [CLEAN] $(OBJ)
-	@rm -rf $(OBJ)
-else
-	rm -rf $(OBJ)
-endif
-
-# Cleans Everything
-distclean: clean
-ifeq ($(VERBOSE), no)
-	@echo [CLEAN] $(LIBNANVIX)
-	@rm -rf $(LIBNANVIX)
-else
-	rm -rf $(LIBNANVIX)
-endif
-
-# Builds a C Source file
-%.o: %.c
-ifeq ($(VERBOSE), no)
-	@echo [CC] $@
-	@$(CC) $(CFLAGS) $< -c -o $@
-else
-	$(CC) $(CFLAGS) $< -c -o $@
-endif
+#
+# Builds system image.
+#
+function build
+{
+	# Nothing to do.
+	echo ""
+}

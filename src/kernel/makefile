@@ -22,16 +22,55 @@
 # SOFTWARE.
 #
 
+#===============================================================================
+# Sources and Objects
+#===============================================================================
+
 # C Source Files
-C_SRC = $(wildcard hal/arch/$(ARCH)/*.c)     \
-        $(wildcard hal/target/$(TARGET)/*.c) \
-        $(wildcard hal/*.c)                  \
-        $(wildcard init/*.c)                 \
-        $(wildcard klib/*.c)                 \
-        $(wildcard dev/*.c)                  \
-        $(wildcard mm/*.c)
+SRC = $(wildcard dev/*.c)  \
+      $(wildcard init/*.c) \
+      $(wildcard mm/*.c)   \
+      $(wildcard pm/*.c)   \
+      $(wildcard sys/*.c)  \
+      $(wildcard test/*.c) \
 
-# Asembly Source Files
-ASM_SRC = $(wildcard hal/arch/$(ARCH)/*.S)
+# Object Files
+OBJ = $(SRC:.c=.o)
 
-include build/makefile.$(TARGET)
+#===============================================================================
+
+# Builds All Object Files
+all: $(OBJ)
+ifeq ($(VERBOSE), no)
+	@echo [AR] $(LIBKERNEL)
+	@$(AR) $(ARFLAGS) $(LIBKERNEL) $(OBJ)
+else
+	$(AR) $(ARFLAGS) $(LIBKERNEL) $(OBJ)
+endif
+
+# Cleans All Object Files
+clean:
+ifeq ($(VERBOSE), no)
+	@echo [CLEAN] $(OBJ)
+	@rm -rf $(OBJ)
+else
+	rm -rf $(OBJ)
+endif
+
+# Cleans Everything
+distclean: clean
+ifeq ($(VERBOSE), no)
+	@echo [CLEAN] $(LIBKERNEL)
+	@rm -rf $(LIBKERNEL)
+else
+	rm -rf $(LIBKERNEL)
+endif
+
+# Builds a C Source file
+%.o: %.c
+ifeq ($(VERBOSE), no)
+	@echo [CC] $@
+	@$(CC) $(CFLAGS) $< -c -o $@
+else
+	$(CC) $(CFLAGS) $< -c -o $@
+endif

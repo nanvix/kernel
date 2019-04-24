@@ -22,17 +22,58 @@
  * SOFTWARE.
  */
 
-/**
- * Copyright (C) 2013-2014 Kalray SA.
- *
- * All rights reserved.
- */
+OUTPUT_FORMAT("elf32-or1k")
+ENTRY(_do_start)
 
-/*
- * Available memory regions.
- */
-MEMORY
+BOOT_ADDR = 0;
+
+SECTIONS
 {
-    internal_mem           : ORIGIN = 0x00000000, LENGTH = 2M
-	upper_internal_memory  : ORIGIN = 0x00200000, LENGTH = 0
+	. = BOOT_ADDR;
+
+	EXCEPTIONS = .;
+
+	KSTART_CODE = .;
+
+	/* Kernel code section. */
+	.bootstrap : AT(ADDR(.bootstrap))
+	{
+		*hooks.o
+		*boot_code.o
+	}
+
+	. = ALIGN(8192);
+
+	/* Kernel code section. */
+	.text : AT(ADDR(.text))
+	{
+		*(.text)
+	}
+
+	KSTART_DATA = ALIGN(8192);
+
+	/* Initialized kernel data section. */
+	.data ALIGN(8192) : AT(ADDR(.data))
+	{
+		*boot_data.o
+		*(.rodata)
+		*(.data)
+	}
+
+	/* Uninitialized kernel data section. */
+	.bss : AT(ADDR(.bss))
+	{
+		*(.bss)
+	}
+
+	. =ALIGN(8192);
+
+	KDATA_END = .;
+
+	/* Discarded. */
+	/DISCARD/ :
+	{
+		*(.comment)
+		*(.note)
+	}
 }

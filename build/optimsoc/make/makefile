@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+# Copyright(c) 2011-2019 The Maintainers of Nanvix
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,49 +23,30 @@
 #
 
 #===============================================================================
-# Sources and Objects
+# Target Configuration
 #===============================================================================
 
-# C Source Files
-SRC = $(wildcard nanvix/*.c)
-
-# Object Files
-OBJ = $(SRC:.c=.o)
+export CFLAGS += -D __optimsoc__     # Target
+export CFLAGS += -D __optimsoc4__    # Processor
+export CFLAGS += -D __or1k_cluster__ # CLuster
+export CFLAGS += -D __or1k__         # Core
+export CFLAGS += -D __mor1kx__       # Core Variant
 
 #===============================================================================
+# Toolchain Configuration
+#===============================================================================
 
-# Builds All Object Files
-all: $(OBJ)
-ifeq ($(VERBOSE), no)
-	@echo [AR] $(LIBNANVIX)
-	@$(AR) $(ARFLAGS) $(LIBNANVIX) $(OBJ)
-else
-	$(AR) $(ARFLAGS) $(LIBNANVIX) $(OBJ)
-endif
+# Toolchain Directory
+export TOOLCHAIN_DIR ?= $(TOOLSDIR)/dev/toolchain/or1k/bin/
 
-# Cleans All Object Files
-clean:
-ifeq ($(VERBOSE), no)
-	@echo [CLEAN] $(OBJ)
-	@rm -rf $(OBJ)
-else
-	rm -rf $(OBJ)
-endif
+# Toolchain
+export CC = $(TOOLCHAIN_DIR)/or1k-elf-gcc
+export LD = $(TOOLCHAIN_DIR)/or1k-elf-ld
+export AR = $(TOOLCHAIN_DIR)/or1k-elf-ar
 
-# Cleans Everything
-distclean: clean
-ifeq ($(VERBOSE), no)
-	@echo [CLEAN] $(LIBNANVIX)
-	@rm -rf $(LIBNANVIX)
-else
-	rm -rf $(LIBNANVIX)
-endif
+# Compiler Options
+export CFLAGS  += -Wstack-usage=4096
+export CFLAGS  += -nostdlib -nostdinc
 
-# Builds a C Source file
-%.o: %.c
-ifeq ($(VERBOSE), no)
-	@echo [CC] $@
-	@$(CC) $(CFLAGS) $< -c -o $@
-else
-	$(CC) $(CFLAGS) $< -c -o $@
-endif
+# Linker Options
+export LDFLAGS  += -nostdlib -nostdinc

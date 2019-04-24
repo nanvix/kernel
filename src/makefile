@@ -23,49 +23,41 @@
 #
 
 #===============================================================================
-# Sources and Objects
+# Conflicts
 #===============================================================================
 
-# C Source Files
-SRC = $(wildcard nanvix/*.c)
-
-# Object Files
-OBJ = $(SRC:.c=.o)
+.PHONY: kernel
+.PHONY: libs
+.PHONY: test
 
 #===============================================================================
 
-# Builds All Object Files
-all: $(OBJ)
-ifeq ($(VERBOSE), no)
-	@echo [AR] $(LIBNANVIX)
-	@$(AR) $(ARFLAGS) $(LIBNANVIX) $(OBJ)
-else
-	$(AR) $(ARFLAGS) $(LIBNANVIX) $(OBJ)
-endif
+# Builds Everything
+all: kernel test
 
-# Cleans All Object Files
-clean:
-ifeq ($(VERBOSE), no)
-	@echo [CLEAN] $(OBJ)
-	@rm -rf $(OBJ)
-else
-	rm -rf $(OBJ)
-endif
+# Builds the Kernel
+kernel:
+	$(MAKE) -C kernel all
+
+# Builds User Libraries
+libs: kernel
+	$(MAKE) -C libs all
+
+# Builds The Test Driver
+test: libs kernel
+	$(MAKE) -C test all
 
 # Cleans Everything
-distclean: clean
-ifeq ($(VERBOSE), no)
-	@echo [CLEAN] $(LIBNANVIX)
-	@rm -rf $(LIBNANVIX)
-else
-	rm -rf $(LIBNANVIX)
-endif
+clean: clean-kernel clean-libs clean-test
 
-# Builds a C Source file
-%.o: %.c
-ifeq ($(VERBOSE), no)
-	@echo [CC] $@
-	@$(CC) $(CFLAGS) $< -c -o $@
-else
-	$(CC) $(CFLAGS) $< -c -o $@
-endif
+# Cleans Kernel Build
+clean-kernel:
+	$(MAKE) -C kernel clean
+
+# Cleans User Libraries Build
+clean-libs:
+	$(MAKE) -C libs clean
+
+# Cleans Test Driver Build
+clean-test:
+	$(MAKE) -C test clean
