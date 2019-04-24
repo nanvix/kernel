@@ -32,7 +32,7 @@
 EXTERN void do_syscall2(void);
 EXTERN int main(int argc, const char *argv[], char **envp);
 
-#ifdef HAL_SMP
+#if (CLUSTER_IS_MULTICORE)
 
 /**
  * @brief Init thread.
@@ -46,7 +46,7 @@ PRIVATE void *init(void *arg)
 	UNUSED(arg);
 	UNUSED(status);
 
-#if (HAL_NUM_CORES > 2)
+#if (CORES_NUM > 2)
 	status = main(argc, argv, NULL);
 #else
 	UNUSED(argc);
@@ -55,7 +55,7 @@ PRIVATE void *init(void *arg)
 
 	/* Halt. */
 	kprintf("halting...");
-	while (TRUE)
+	while (true)
 		noop();
 
 	return (NULL);
@@ -68,33 +68,27 @@ PRIVATE void *init(void *arg)
  */
 PUBLIC void kmain(int argc, const char *argv[])
 {
-#ifdef HAL_SMP
+#if (CLUSTER_IS_MULTICORE)
 	int tid;
 #endif
 
 	UNUSED(argc);
 	UNUSED(argv);
 
-#ifndef NDEBUG
-	hal_test_driver();
-#endif
-
+	hal_init();
 	dev_init();
 	mm_init();
 
 	kprintf("enabling hardware interrupts");
-	hal_enable_interrupts();
+	interrupts_enable();
 
-#ifdef HAL_SMP
+#if (CLUSTER_IS_MULTICORE)
 	thread_create(&tid, init, NULL);
-#endif
-
-	while (TRUE)
-	{
-#ifdef HAL_SMP
+	while (true)
 		do_syscall2();
 #else
+	kprintf("halting...");
+	while (true)
 		noop();
 #endif
-	}
 }
