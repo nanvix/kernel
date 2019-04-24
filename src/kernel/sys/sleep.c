@@ -34,7 +34,7 @@ spinlock_t lock = SPINLOCK_UNLOCKED;
 /**
  * brief Sleeping queues.
  */
-PRIVATE struct
+EXTENSION PRIVATE struct
 {
 	int tid;
 	struct condvar cond;
@@ -99,7 +99,7 @@ PUBLIC int sys_wakeup(int tid)
 			}
 		}
 
-		ret = -EINVAL;
+		ret = -EAGAIN;
 
 done:
 

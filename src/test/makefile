@@ -16,13 +16,64 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# AUTHORS OR COPYRIGHT HOCCERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
 
-# Source Files
+#===============================================================================
+# Toolchain Configuration 
+#===============================================================================
+
+# Libraries
+LIBS  = -Wl,--whole-archive $(LIBNANVIX) $(LIBKERNEL) $(LIBHAL)
+LIBS += -Wl,--no-whole-archive $(THEIR_LIBS)
+
+#===============================================================================
+# Sources and Objects
+#===============================================================================
+
+# C Source Files
 SRC = $(wildcard *.c)
 
-include build/makefile.$(TARGET)
+# Object Files
+OBJ = $(SRC:.c=.o)
+
+#===============================================================================
+
+# Builds All Object Files
+all: $(OBJ)
+ifeq ($(VERBOSE), no)
+	@echo [CC] $(EXEC)
+	@$(CC) $(LDFLAGS) -L $(LINKERDIR)/ -T link.ld -o $(EXEC) $(OBJ) $(LIBS)
+else
+	$(CC) $(LDFLAGS) -L $(LINKERDIR)/ -T link.ld -o $(EXEC) $(OBJ) $(LIBS)
+endif
+
+# Cleans All Object Files
+clean:
+ifeq ($(VERBOSE), no)
+	@echo [CLEAN] $(OBJ)
+	@rm -rf $(OBJ)
+else
+	rm -rf $(OBJ)
+endif
+
+# Cleans Everything
+distclean: clean
+ifeq ($(VERBOSE), no)
+	@echo [CLEAN] $(EXEC)
+	@rm -rf $(EXEC)
+else
+	rm -rf $(EXEC))
+endif
+
+# Builds a C Source file
+%.o: %.c
+ifeq ($(VERBOSE), no)
+	@echo [CC] $@
+	@$(CC) $(CFLAGS) $< -c -o $@
+else
+	$(CC) $(CFLAGS) $< -c -o $@
+endif

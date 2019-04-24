@@ -43,7 +43,7 @@
 	/**
 	 * @brief Maximum number of kernel threads.
 	 */
-	#define KTHREAD_MAX HAL_NUM_CORES
+	#define KTHREAD_MAX CORES_NUM
 
 	/**
 	 * @brief Maximum number of user threads.

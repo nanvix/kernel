@@ -1,10 +1,37 @@
-*.a
-*.o
+# Vim
 *.swp
 *.swo
-*.output
 
+# Tools
+tools/dev/toolchain/
+
+# Doxygen
 doc/html
-bin/
+doxygen.output
 
+# Build Files
+bin/
+lib/
+*.a
+*.o
+
+# Ctags
 tags
+
+# HAL Headers
+include/arch/
+include/grub/
+include/machine/
+include/nanvix/cc.h
+include/nanvix/const.h
+include/nanvix/hal/
+include/nanvix/klib.h
+include/sys/_intsup.h
+include/sys/features.h
+include/sys/types.h
+include/decl.h
+include/errno.h
+include/stdarg.h
+include/stddef.h
+include/stdint.h
+include/stdbool.h

@@ -24,5 +24,5 @@
 
 /**
  * @brief Number of last error.
- */ 
+ */
 int errno = 0;

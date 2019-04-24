@@ -1,9 +1,7 @@
 #
 # MIT License
 #
-# Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
-#              2016-2018 Davidson Francis     <davidsondfgl@gmail.com>
-#              2016-2017 Subhra Sarkar        <rurtle.coder@gmail.com>
+# Copyright(c) 2011-2019 The Maintainers of Nanvix
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,11 +32,11 @@ fi
 # Parse target platform.
 case "$TARGET" in
 	# Intel 80386
-	"i386")
+	"i386-pc")
 		bash "tools/dev/arch/i386.sh"
 		;;
 	# OpenRISC
-	"or1k")
+	"or1k-pc")
 		bash "tools/dev/arch/or1k.sh"
 		;;
 	# Unknown

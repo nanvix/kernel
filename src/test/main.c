@@ -77,12 +77,18 @@ static struct
 	const char *name;      /**< Test Name.     */
 } user_tests[] = {
 	{ test_api_kthread_self,      "[test][user][api]    thread identification       [passed]\n" },
+#if (THREAD_MAX > 1)
+#if (THREAD_MAX > 2)
 	{ test_api_kthread_create,    "[test][user][api]    thread creation/termination [passed]\n" },
+#endif
 	{ test_fault_kthread_create,  "[test][user][fault]  thread creation/termination [passed]\n" },
+#if (THREAD_MAX > 2)
 	{ test_stress_kthread_create, "[test][user][stress] thread creation/termination [passed]\n" },
 	{ test_api_sleep_wakeup,      "[test][user][api]    thread sleep/wakeup         [passed]\n" },
 	{ test_fault_sleep_wakeup,    "[test][user][fault]  thread sleep/wakeup         [passed]\n" },
 	{ test_stress_sleep_wakeup,   "[test][user][stress] thread sleep/wakeup         [passed]\n" },
+#endif
+#endif
 	{ NULL,                        NULL                                                         },
 };
 

@@ -24,12 +24,15 @@
 #
 
 layout split
+file bin/test-driver
 target remote localhost:1234
 handle SIGSEGV nostop noprint nopass
-symbol-file bin/kernel
 set confirm off
+focus cmd
 define hook-stop
 	if $_isvoid ($_exitcode) != 1
 		quit
 	end
+
+	focus cmd
 end

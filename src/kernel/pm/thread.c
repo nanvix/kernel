@@ -27,12 +27,31 @@
 #include <nanvix/thread.h>
 #include <errno.h>
 
-/*
- * Too few cores in the underlying core.
+/**
+ * @brief Thread table.
  */
-#if (!defined(HAL_SMP))
-	#error "architecture does not have enough cores"
+EXTENSION PUBLIC struct thread threads[KTHREAD_MAX] = {
+	[0]                       = {.tid = KTHREAD_MASTER_TID, .state = THREAD_RUNNING},
+#if CLUSTER_IS_MULTICORE
+	[1 ... (KTHREAD_MAX - 1)] = {.state = THREAD_NOT_STARTED}
 #endif
+} ;
+
+#if CLUSTER_IS_MULTICORE
+
+/**
+ * @brief Thread join conditions.
+ */
+EXTENSION PRIVATE struct condvar joincond[KTHREAD_MAX] = {
+	[0 ... (KTHREAD_MAX - 1)] = COND_INITIALIZER
+};
+
+/**
+ * @brief Thread exit conditions.
+ */
+EXTENSION PRIVATE struct condvar exitcond[KTHREAD_MAX] = {
+	[0 ... (KTHREAD_MAX - 1)] = COND_INITIALIZER
+};
 
 /**
  * @brief Number of running threads.
@@ -43,28 +62,6 @@ PRIVATE int nthreads = 1;
  * @brief Next thread ID.
  */
 PRIVATE int next_tid = (KTHREAD_MASTER_TID + 1);
-
-/**
- * @brief Thread table.
- */
-PUBLIC struct thread threads[KTHREAD_MAX] = {
-	[0]                       = {.tid = KTHREAD_MASTER_TID, .state = THREAD_RUNNING},
-	[1 ... (KTHREAD_MAX - 1)] = {.state = THREAD_NOT_STARTED}
-};
-
-/**
- * @brief Thread join conditions.
- */
-PRIVATE struct condvar joincond[KTHREAD_MAX] = {
-	[0 ... (KTHREAD_MAX - 1)] = COND_INITIALIZER
-};
-
-/**
- * @brief Thread exit conditions.
- */
-PRIVATE struct condvar exitcond[KTHREAD_MAX] = {
-	[0 ... (KTHREAD_MAX - 1)] = COND_INITIALIZER
-};
 
 /**
  * @brief Thread manager lock.
@@ -175,7 +172,7 @@ PUBLIC NORETURN void thread_exit(void *retval)
 	core_reset();
 
 	/* Never gets here. */
-	while (TRUE)
+	while (true)
 		noop();
 }
 
@@ -236,7 +233,7 @@ PRIVATE NORETURN void thread_start(void)
 	thread_exit(retval);
 
 	/* Never gets here. */
-	while (TRUE)
+	while (true)
 		noop();
 }
 
@@ -271,6 +268,7 @@ PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
 		new_thread = thread_alloc();
 		if (new_thread == NULL)
 		{
+			kprintf("[pm] cannot create thread");
 			spinlock_unlock(&lock_tm);
 			return (-EAGAIN);
 		}
@@ -287,12 +285,11 @@ PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
 
 	spinlock_unlock(&lock_tm);
 
-
 	/* Save thread ID. */
 	if (tid != NULL)
 	{
 		*tid = _tid;
-		hal_dcache_invalidate();
+		dcache_invalidate();
 	}
 
 	core_start(thread_get_coreid(new_thread), thread_start);
@@ -346,6 +343,8 @@ PUBLIC int thread_join(int tid, void **retval)
 			if (t->state == THREAD_RUNNING)
 				cond_wait(&joincond[coreid], &lock_tm);
 
+			KASSERT(t->state == THREAD_TERMINATED);
+
 			cond_broadcast(&exitcond[coreid]);
 		}
 
@@ -353,3 +352,4 @@ PUBLIC int thread_join(int tid, void **retval)
 
 	return (ret);
 }
+#endif

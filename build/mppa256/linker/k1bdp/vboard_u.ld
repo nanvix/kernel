@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ * Copyright(c) 2011-2019 The Maintainers of Nanvix
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -65,7 +65,7 @@ K1_BOOT_ADDRESS = 0x0;
 
 K1_MONITOR_SCOREBOARD = 0;
 
-/* 
+/*
  * We want a virtual memory entry at mem_base + mem_size of size
  * mem_base + mem_size. On the K1 TLB entries have to begin at a
  * multiple of their size, which has to be a multiple of 2. This
@@ -85,7 +85,7 @@ K1_KERNEL_DATA_ADDR_ALIGN += 1;
  * kernel data is @ 256K, but loaded continuously to text in
  * kernel_mem
  */
-K1_KERNEL_DATA_ADDR = ALIGN(INTERNAL_RAM_BASE + INTERNAL_RAM_SIZE, K1_KERNEL_DATA_ADDR_ALIGN ); 
+K1_KERNEL_DATA_ADDR = ALIGN(INTERNAL_RAM_BASE + INTERNAL_RAM_SIZE, K1_KERNEL_DATA_ADDR_ALIGN );
 
 /*
  * Flash

@@ -44,13 +44,11 @@ PRIVATE struct sysboard
 	int arg2;                /**< Third argument of system call.   */
 	int arg3;                /**< Fourth argument of system call.  */
 	int arg4;                /**< Fifth argument of system call.   */
-	int arg5;                /**< Sixth argument of system call.   */
-	int arg6;                /**< Seventh argument of system call. */
 	int syscall_nr;          /**< System call number.              */
 	int ret;                 /**< Return value of system call.     */
 	struct semaphore syssem; /**< Semaphore.                       */
 	int pending;
-} __attribute__((aligned(CACHE_LINE_SIZE))) sysboard[HAL_NUM_CORES];
+} __attribute__((aligned(CACHE_LINE_SIZE))) sysboard[CORES_NUM];
 
 /**
  * @brief Handles a system call IPI.
@@ -62,7 +60,7 @@ PUBLIC void do_syscall2(void)
 
 	semaphore_down(&syssem);
 
-		for (int i = 0; i < HAL_NUM_CORES; i++)
+		for (int i = 0; i < CORES_NUM; i++)
 		{
 			if (sysboard[i].pending)
 			{
@@ -93,6 +91,8 @@ PUBLIC void do_syscall2(void)
 				);
 				break;
 
+#if (THREAD_MAX > 1)
+
 			case NR_thread_create:
 				ret = sys_thread_create(
 					(int *) sysboard[coreid].arg0,
@@ -106,6 +106,8 @@ PUBLIC void do_syscall2(void)
 					(int) sysboard[coreid].arg0
 				);
 				break;
+
+#endif
 
 			default:
 				break;
@@ -134,15 +136,13 @@ PUBLIC void do_syscall2(void)
  * @returns Upon successful completion, zero is returned. Upon
  * failure, a negative error code is returned instead.
  */
-PUBLIC int do_syscall1(
-	int arg0,
-	int arg1,
-	int arg2,
-	int arg3,
-	int arg4,
-	int arg5,
-	int arg6,
-	int syscall_nr)
+PUBLIC int do_syscall(
+	unsigned arg0,
+	unsigned arg1,
+	unsigned arg2,
+	unsigned arg3,
+	unsigned arg4,
+	unsigned syscall_nr)
 {
 	int ret = -EINVAL;
 
@@ -152,6 +152,8 @@ PUBLIC int do_syscall1(
 		case NR_thread_get_id:
 			ret = sys_thread_get_id();
 			break;
+
+#if (THREAD_MAX > 1)
 
 		case NR_thread_exit:
 			sys_thread_exit((void *) arg0);
@@ -168,6 +170,8 @@ PUBLIC int do_syscall1(
 			ret = sys_sleep();
 			break;
 
+#endif
+
 		/* Forward system call. */
 		default:
 		{
@@ -181,16 +185,14 @@ PUBLIC int do_syscall1(
 			sysboard[coreid].arg2 = arg2;
 			sysboard[coreid].arg3 = arg3;
 			sysboard[coreid].arg4 = arg4;
-			sysboard[coreid].arg5 = arg5;
-			sysboard[coreid].arg6 = arg6;
 			sysboard[coreid].syscall_nr = syscall_nr;
 			sysboard[coreid].pending = 1;
 			semaphore_init(&sysboard[coreid].syssem, 0);
-			hal_dcache_invalidate();
+			dcache_invalidate();
 
 			semaphore_up(&syssem);
 			semaphore_down(&sysboard[coreid].syssem);
-			hal_dcache_invalidate();
+			dcache_invalidate();
 
 			ret = sysboard[coreid].ret;
 		} break;

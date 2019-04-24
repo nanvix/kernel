@@ -1,8 +1,7 @@
 #
 # MIT License
 #
-# Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
-#              2016-2018 Davidson Francis     <davidsondfgl@gmail.com>
+# Copyright(c) 2011-2019 The Maintainers of Nanvix
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,28 +27,34 @@ export CURDIR=`pwd`
 export WORKDIR=$CURDIR/tools/dev/toolchain/or1k
 export PREFIX=$WORKDIR
 export TARGET=or1k-elf
-
-mkdir -p $WORKDIR
-cd $WORKDIR
+export COMMIT=7bb98e7d6f4f2b636e5d1ddb87645ca6ccfdde98
 
 # Retrieve the number of processor cores
 NCORES=`grep -c ^processor /proc/cpuinfo`
 
-if [ ! "$(ls -A $WORKDIR)" ];
-then
-	git submodule update --init .
-fi
+mkdir -p $WORKDIR
+cd $WORKDIR
+
+# Get toolchain.
+wget "https://github.com/nanvix/toolchain/archive/$COMMIT.zip"
+unzip $COMMIT.zip
+mv toolchain-$COMMIT/* .
+
+# Cleanup.
+rm -rf toolchain-$COMMIT
+rm -rf $COMMIT.zip
 
 # Build binutils and GDB.
 cd binutils*/
 ./configure --target=$TARGET --prefix=$PREFIX --disable-nls --disable-sim --with-auto-load-safe-path=/ --enable-tui --with-guile=no
 make -j $NCORES all
 make install
-git checkout .
-git clean -f -d
+
+# Cleanup.
+cd $WORKDIR
+rm -rf binutils*
 
 # Build GCC.
-cd $WORKDIR
 cd gcc*/
 ./contrib/download_prerequisites
 mkdir build
@@ -59,13 +64,17 @@ make -j $NCORES all-gcc
 make -j $NCORES all-target-libgcc
 make install-gcc
 make install-target-libgcc
-git checkout .
-git clean -f -d
+
+# Cleanup.
+cd $WORKDIR
+rm -rf gcc*
 
 # GCC for Linux
-cd $WORKDIR
 wget "https://github.com/openrisc/musl-cross/releases/download/gcc5.3.0-musl1.1.14/or1k-linux-musl_gcc5.3.0_binutils2.26_musl1.1.14.tgz"
 tar -xvf or1k-linux-musl_gcc5.3.0_binutils2.26_musl1.1.14.tgz
+
+# Cleanup.
+rm -rf or1k-linux-musl_gcc5.3.0_binutils2.26_musl1.1.14.tgz
 
 # Back to the current folder
 cd $CURDIR

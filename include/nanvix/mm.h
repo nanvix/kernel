@@ -40,52 +40,6 @@
 /**@{*/
 
 	/**
-	 * @name Virtual Memory Layout
-	 */
-	/**@{*/
-	#define UBASE_VIRT  _UBASE_VIRT  /**< User Base        */
-	#define USTACK_ADDR _USTACK_ADDR /**< User Stack       */
-	#define KBASE_VIRT  _KBASE_VIRT  /**< Kernel Base      */
-	#define KPOOL_VIRT  _KPOOL_VIRT  /**< Kernel Page Pool */
-	/**@}*/
-
-	/**
-	 * @name Physical Memory Layout
-	 */
-	/**@{*/
-	#define KBASE_PHYS _KBASE_PHYS /**< Kernel base.      */
-	#define KPOOL_PHYS _KPOOL_PHYS /**< Kernel page pool. */
-	#define UBASE_PHYS _UBASE_PHYS /**< User base.        */
-	/**@}*/
-
-	/**
-	 * @brief Physical memory size (in bytes).
-	 */
-	#define MEMORY_SIZE _MEMORY_SIZE
-
-	/**
-	 * @brief Kernel memory size (in bytes).
-	 */
-	#define KMEM_SIZE _KMEM_SIZE
-
-	/**
-	 * @brief Kernel page pool size (in bytes).
-	 */
-	#define KPOOL_SIZE _KPOOL_SIZE
-
-	/**
-	 * @brief User memory size (in bytes).
-	 */
-	#define UMEM_SIZE _UMEM_SIZE
-
-	/**
-	 * Casts something to a virtual address.
-	 *
-	 * @param x Something.
-	 */
-	#define VADDR(x) ((vaddr_t)(x))
-
-	/**
 	 * @brief Initializes the Memory Management (MM) system.
 	 */
 	EXTERN void mm_init(void);
@@ -156,9 +110,9 @@
 	 *
 	 * @author Pedro Henrique Penna
 	 */
-	static inline int frame_is_valid_id(int id)
+	static inline int frame_is_valid_id(frame_t id)
 	{
-		return ((id >= 0) && (id < NUM_UFRAMES));
+		return (id < NUM_UFRAMES);
 	}
 
 	/**
@@ -170,7 +124,7 @@
 	 *
 	 * @author Pedro Henrique Penna
 	 */
-	static inline frame_t frame_id_to_num(int id)
+	static inline frame_t frame_id_to_num(frame_t id)
 	{
 		/* Invalid ID. */
 		if (!frame_is_valid_id(id))
@@ -501,7 +455,7 @@
 	 *
 	 * @todo This shall be moved to the Hardware Abstraction Layer (HAL).
 	 */
-	EXTERN struct pde *idle_pgdir;
+	EXTERN struct pde *root_pgdir;
 
 /**@}*/
 

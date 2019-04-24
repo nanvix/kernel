@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+# Copyright(c) 2011-2019 The Maintainers of Nanvix
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,49 +26,79 @@
 # Target Configuration
 #===============================================================================
 
-export SYSTEM = bare
-export ARCH   = k1b
-export BOARD  = developer
+export CFLAGS += -D __mppa256__ # Target
+export CFLAGS += -D __bostan__  # Processor
+export CFLAGS += -D __k1b__     # Cluster and Core
 
 #===============================================================================
 # Toolchain Configuration
 #===============================================================================
 
 # Toolchain Directory
-export K1_TOOLCHAIN_DIR=/usr/local/k1tools
+export TOOLCHAIN_DIR ?= /usr/local/k1tools
 
-# Tools
-export CC = $(K1_TOOLCHAIN_DIR)/bin/k1-gcc
-export LD = $(K1_TOOLCHAIN_DIR)/bin/k1-gcc
-export AR = $(K1_TOOLCHAIN_DIR)/bin/k1-ar
+# Toolchain
+export CC = $(TOOLCHAIN_DIR)/bin/k1-gcc
+export LD = $(TOOLCHAIN_DIR)/bin/k1-gcc
+export AR = $(TOOLCHAIN_DIR)/bin/k1-ar
 
 # Compiler Options
-export CFLAGS   = -D __mppa256__ -D __k1b__
-export CFLAGS  += -mos=$(SYSTEM) -march=$(ARCH) -mboard=$(BOARD)
+export CFLAGS += -D __HAS_HW_DIVISION
+export CFLAGS += -mos=bare -march=k1b -mboard=developer
 
 # Linker Options
-export LDFLAGS  = -Wl,--allow-multiple-definition
+export LDFLAGS = -Wl,--allow-multiple-definition
+
+#===============================================================================
+# Libraries
+#===============================================================================
+
+export THEIR_LIBS = -lvbsp -lmppanoc -lmpparouting -mhypervisor
 
 #===============================================================================
 
-# Builds Nanvix for the MPPA-256 target.
-nanvix-target: nanvix-k1bdp nanvix-k1bio
+# Builds everything.
+all-target: | all-k1bdp clean-target all-k1bio
 
-# Cleans everything for the MPPA-256 target.
+# Builds everything for node cluster variant.
+all-k1bdp:
+	@$(MAKE) -C $(SRCDIR) all                          \
+		CFLAGS="$(CFLAGS) -D __k1bdp__ -mcluster=node" \
+		LDFLAGS="$(LDFLAGS) -mcluster=node"            \
+		LINKERDIR=$(BUILDDIR)/mppa256/linker/k1bdp     \
+		LIBHAL=$(LIBDIR)/libhal-k1b-node.a             \
+		LIBKERNEL=$(LIBDIR)/libkernel-k1b-node.a       \
+		LIBNANVIX=$(LIBDIR)/libnanvix-k1b-node.a       \
+		EXEC=$(BINDIR)/test-driver-k1bdp
+
+# Builds everything for node ioddr variant.
+all-k1bio:
+	@$(MAKE) -C $(SRCDIR) all                           \
+		CFLAGS="$(CFLAGS) -D __k1bio__ -mcluster=ioddr" \
+		LDFLAGS="$(LDFLAGS) -mcluster=ioddr"            \
+		LINKERDIR=$(BUILDDIR)/mppa256/linker/k1bio      \
+		LIBHAL=$(LIBDIR)/libhal-k1b-ioddr.a             \
+		LIBKERNEL=$(LIBDIR)/libkernel-k1b-ioddr.a       \
+		LIBNANVIX=$(LIBDIR)/libnanvix-k1b-ioddr.a       \
+		EXEC=$(BINDIR)/test-driver-k1bio
+
+# Cleans object files.
+clean-target:
+	$(MAKE) -C $(SRCDIR) clean
+
+# Cleans everything.
 distclean-target: distclean-k1bdp distclean-k1bio
 
-# Builds Nanvix for a Compute Cluster.
-nanvix-k1bdp:
-	$(MAKE) -C $(SRCDIR) -f build/makefile.k1bdp all
+# Cleans everything for node cluster variant.
+distclean-k1bdp: clean-target
+	@$(MAKE) -C $(SRCDIR) distclean              \
+		LIBKERNEL=$(LIBDIR)/libkernel-k1b-node.a \
+		LIBNANVIX=$(LIBDIR)/libnanvix-k1b-node.a \
+		EXEC=$(BINDIR)/test-driver-k1bdp
 
-# Builds Nanvix for an IO Cluster.
-nanvix-k1bio:
-	$(MAKE) -C $(SRCDIR) -f build/makefile.k1bio all
-
-# Cleans compilation files for a Compute Cluster.
-distclean-k1bdp:
-	$(MAKE) -C $(SRCDIR) -f build/makefile.k1bdp distclean
-
-# Cleans compilation files for an IO Cluster.
-distclean-k1bio:
-	$(MAKE) -C $(SRCDIR) -f build/makefile.k1bio distclean
+# Cleans everything for node ioddr variant.
+distclean-k1bio: clean-target
+	@$(MAKE) -C $(SRCDIR) distclean               \
+		LIBKERNEL=$(LIBDIR)/libkernel-k1b-ioddr.a \
+		LIBNANVIX=$(LIBDIR)/libnanvix-k1b-ioddr.a \
+		EXEC=$(BINDIR)/test-driver-k1bio

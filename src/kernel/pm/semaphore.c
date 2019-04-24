@@ -47,7 +47,7 @@ PUBLIC void semaphore_down(struct semaphore *sem)
 
 	spinlock_lock(&sem->lock);
 
-		while (TRUE)
+		while (true)
 		{
 				if (sem->count > 0)
 					break;

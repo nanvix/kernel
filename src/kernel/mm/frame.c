@@ -50,13 +50,13 @@ PRIVATE int frames[NUM_UFRAMES] = {0, };
 PUBLIC frame_t frame_alloc(void)
 {
 	/* Search for a free frame. */
-	for (int i = 0; i < NUM_UFRAMES; i++)
+	for (frame_t i = 0; i < NUM_UFRAMES; i++)
 	{
 		/* Found it. */
 		if (frames[i] == 0)
 		{
 			frames[i] = 1;
-			hal_dcache_invalidate();
+			dcache_invalidate();
 
 			return (frame_id_to_num(i));
 		}
@@ -92,7 +92,7 @@ PUBLIC int frame_free(frame_t frame)
 	}
 
 	frames[frame_num_to_id(frame)]--;
-	hal_dcache_invalidate();
+	dcache_invalidate();
 
 	return (0);
 }
@@ -114,7 +114,7 @@ PUBLIC void frame_init(void)
 	kprintf("[mm] initializing the page frame allocator");
 
 #ifndef __NANVIX_FAST_BOOT
-	for (int i = 0; i < NUM_UFRAMES; i++)
+	for (frame_t i = 0; i < NUM_UFRAMES; i++)
 		frames[i] = 0;
 #endif
 
