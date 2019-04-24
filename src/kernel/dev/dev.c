@@ -24,22 +24,38 @@
 
 #include <nanvix/hal/hal.h>
 #include <nanvix/const.h>
-#include <nanvix/klog.h>
 
 /**
  * @brief Clock frequency.
  */
 #define CLOCK_FREQ 30
 
-/* Forward definitions. */
-EXTERN void clock_init(unsigned);
+/**
+ * @brief Clock interrupts since system initialization.
+ */
+PRIVATE unsigned ticks = 0;
+
+/**
+ * @brief Handles a clock interrupt.
+ *
+ * @param num Number of interrupt (currently unused).
+ */
+PRIVATE void do_clock(int num)
+{
+	UNUSED(num);
+
+	if (core_get_id() == 0)
+	{
+		ticks++;
+		dcache_invalidate();
+	}
+}
 
 /**
  * Initializes the device management subsystem.
  */
 PUBLIC void dev_init(void)
 {
-	klog_setup();
-	interrupt_setup();
 	clock_init(CLOCK_FREQ);
+	KASSERT(interrupt_register(INTERRUPT_CLOCK, do_clock) == 0);
 }
