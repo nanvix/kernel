@@ -42,20 +42,20 @@
 	 *
 	 * @note This should be set to the highest system call number.
 	 */
-	#define NR_SYSCALLS 8
+	#define NR_SYSCALLS 9
 
 	/**
 	 * @name System Call Numbers
 	 */
 	/**@{*/
-	#define NR__exit         0 /**< _exit()             */
-	#define NR_write         1 /**< sys_write()         */
-	#define NR_thread_get_id 2 /**< sys_thread_get_id() */
-	#define NR_thread_create 3 /**< sys_thread_create() */
-	#define NR_thread_exit   4 /**< sys_thread_exit()   */
-	#define NR_thread_join   5 /**< sys_thread_join()   */
-	#define NR_sleep         6 /**< sys_sleep()         */
-	#define NR_wakeup        7 /**< sys_wakeup()        */
+	#define NR__exit         1 /**< _exit()             */
+	#define NR_write         2 /**< sys_write()         */
+	#define NR_thread_get_id 3 /**< sys_thread_get_id() */
+	#define NR_thread_create 4 /**< sys_thread_create() */
+	#define NR_thread_exit   5 /**< sys_thread_exit()   */
+	#define NR_thread_join   6 /**< sys_thread_join()   */
+	#define NR_sleep         7 /**< sys_sleep()         */
+	#define NR_wakeup        8 /**< sys_wakeup()        */
 	/**@}*/
 
 	/**
