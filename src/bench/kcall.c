@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ * Copyright(c) 2011-2019 The Maintainers of Nanvix
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,38 +26,69 @@
 #include "kbench.h"
 
 /**
- * Performance events.
+ * @brief Benchmarks a remote Kernel Call
  */
-struct perf_event perf_events[] = {
-	{ "cycles",        PERF_CYCLES        },
-	{ "branches",      PERF_BRANCH_TAKEN  },
-	{ "branch_stalls", PERF_BRANCH_STALLS },
-	{ "reg_stalls",    PERF_REG_STALLS    },
-	{ "dcache_stalls", PERF_DCACHE_STALLS },
-	{ "icache_stalls", PERF_ICACHE_STALLS },
-	{ "dtlb_stalls",   PERF_DTLB_STALLS   },
-	{ "itlb_stalls",   PERF_ITLB_STALLS   },
-};
+void benchmark_kcall_local(void)
+{
+	uint64_t reg;
+
+	/*
+	 * TODO: Query performance monitoring capabilities.
+	 */
+
+	for (size_t j = 0; j < ARRAY_LENGTH(perf_events); j++)
+	{
+		for (int i = SKIP; i < NITERATIONS + SKIP; i++)
+		{
+			nanvix_perf_start(0, perf_events[j].num);
+
+				syscall0(NR_thread_get_id);
+
+			nanvix_perf_stop(0);
+			reg = nanvix_perf_read(0);
+
+			if (i >= SKIP)
+			{
+				kprintf("[benchmarks][kcall_local] %d %s %d",
+					i - SKIP,
+					perf_events[j].name,
+					UINT32(reg)
+				);
+			}
+		}
+	}
+}
 
 /**
- * @brief Lunches user-land testing units.
- *
- * @param argc Argument counter.
- * @param argv Argument variables.
+ * @brief Benchmarks a remote Kernel Call
  */
-int main(int argc, const char *argv[])
+void benchmark_kcall_remote(void)
 {
-	((void) argc);
-	((void) argv);
+	uint64_t reg;
 
-	/* Kernel Call Benchmark */
-	benchmark_kcall_local();
-	kprintf("--------------------------------------------------------------------------------");
-	benchmark_kcall_remote();
-	kprintf("--------------------------------------------------------------------------------");
+	/*
+	 * TODO: Query performance monitoring capabilities.
+	 */
 
-	/* Shutdown. */
-	shutdown();
+	for (size_t j = 0; j < ARRAY_LENGTH(perf_events); j++)
+	{
+		for (int i = SKIP; i < NITERATIONS + SKIP; i++)
+		{
+			nanvix_perf_start(0, perf_events[j].num);
 
-	return (0);
+				syscall0(NR_SYSCALLS);
+
+			nanvix_perf_stop(0);
+			reg = nanvix_perf_read(0);
+
+			if (i >= SKIP)
+			{
+				kprintf("[benchmarks][kcall_remote] %d %s %d",
+					i - SKIP,
+					perf_events[j].name,
+					UINT32(reg)
+				);
+			}
+		}
+	}
 }

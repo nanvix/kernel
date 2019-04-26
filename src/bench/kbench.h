@@ -67,4 +67,12 @@
 	 */
 	extern struct perf_event perf_events[8];
 
+	/**
+	 * @name Benchmarks
+	 */
+	/**@{*/
+	extern void benchmark_kcall_local(void);
+	extern void benchmark_kcall_remote(void);
+	/**@}*/
+
 #endif /* _KBENCH_H_ */
