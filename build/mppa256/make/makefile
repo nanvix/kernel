@@ -58,10 +58,10 @@ export THEIR_LIBS = -lvbsp -lmppanoc -lmpparouting -mhypervisor
 #===============================================================================
 
 # Builds everything.
-all-target: | all-k1bdp clean-target all-k1bio
+all-target: all-k1bio all-k1bdp
 
 # Builds everything for node cluster variant.
-all-k1bdp:
+all-k1bdp: clean-target
 	@$(MAKE) -C $(SRCDIR) all                          \
 		CFLAGS="$(CFLAGS) -D __k1bdp__ -mcluster=node" \
 		LDFLAGS="$(LDFLAGS) -mcluster=node"            \
@@ -69,10 +69,11 @@ all-k1bdp:
 		LIBHAL=$(LIBDIR)/libhal-k1b-node.a             \
 		LIBKERNEL=$(LIBDIR)/libkernel-k1b-node.a       \
 		LIBNANVIX=$(LIBDIR)/libnanvix-k1b-node.a       \
-		EXEC=$(BINDIR)/test-driver-k1bdp
+		OBJ_SUFFIX=node                                \
+		EXEC=$(BINDIR)/test-driver-k1bdp               \
 
 # Builds everything for node ioddr variant.
-all-k1bio:
+all-k1bio: clean-target
 	@$(MAKE) -C $(SRCDIR) all                           \
 		CFLAGS="$(CFLAGS) -D __k1bio__ -mcluster=ioddr" \
 		LDFLAGS="$(LDFLAGS) -mcluster=ioddr"            \
@@ -80,11 +81,12 @@ all-k1bio:
 		LIBHAL=$(LIBDIR)/libhal-k1b-ioddr.a             \
 		LIBKERNEL=$(LIBDIR)/libkernel-k1b-ioddr.a       \
 		LIBNANVIX=$(LIBDIR)/libnanvix-k1b-ioddr.a       \
-		EXEC=$(BINDIR)/test-driver-k1bio
+		EXEC=$(BINDIR)/test-driver-k1bio                \
+		OBJ_SUFFIX=ioddr                                \
 
 # Cleans object files.
 clean-target:
-	$(MAKE) -C $(SRCDIR) clean
+	@$(MAKE) -C $(SRCDIR) clean
 
 # Cleans everything.
 distclean-target: distclean-k1bdp distclean-k1bio
@@ -94,6 +96,7 @@ distclean-k1bdp: clean-target
 	@$(MAKE) -C $(SRCDIR) distclean              \
 		LIBKERNEL=$(LIBDIR)/libkernel-k1b-node.a \
 		LIBNANVIX=$(LIBDIR)/libnanvix-k1b-node.a \
+		OBJ_SUFFIX=node                          \
 		EXEC=$(BINDIR)/test-driver-k1bdp
 
 # Cleans everything for node ioddr variant.
@@ -101,4 +104,5 @@ distclean-k1bio: clean-target
 	@$(MAKE) -C $(SRCDIR) distclean               \
 		LIBKERNEL=$(LIBDIR)/libkernel-k1b-ioddr.a \
 		LIBNANVIX=$(LIBDIR)/libnanvix-k1b-ioddr.a \
+		OBJ_SUFFIX=ioddr                          \
 		EXEC=$(BINDIR)/test-driver-k1bio

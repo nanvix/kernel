@@ -29,6 +29,9 @@
 # Verbose Build?
 export VERBOSE ?= no
 
+# Object suffix for heterogeneous architectures.
+export OBJ_SUFFIX :=
+
 #===============================================================================
 # Directories
 #===============================================================================
