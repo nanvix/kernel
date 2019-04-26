@@ -71,6 +71,7 @@ all-k1bdp: clean-target
 		LIBNANVIX=$(LIBDIR)/libnanvix-k1b-node.a       \
 		OBJ_SUFFIX=node                                \
 		EXEC=$(BINDIR)/test-driver-k1bdp               \
+		EXEC_BENCH=$(BINDIR)/benchmarks-k1bdp
 
 # Builds everything for node ioddr variant.
 all-k1bio: clean-target
@@ -83,6 +84,7 @@ all-k1bio: clean-target
 		LIBNANVIX=$(LIBDIR)/libnanvix-k1b-ioddr.a       \
 		EXEC=$(BINDIR)/test-driver-k1bio                \
 		OBJ_SUFFIX=ioddr                                \
+		EXEC_BENCH=$(BINDIR)/benchmarks-k1bio
 
 # Cleans object files.
 clean-target:
