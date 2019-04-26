@@ -89,7 +89,10 @@ static struct
 	{ test_stress_sleep_wakeup,   "[test][user][stress] thread sleep/wakeup         [passed]\n" },
 #endif
 #endif
-	{ NULL,                        NULL                                                         },
+#if (CORE_HAS_PERF)
+	{ test_nanvix_perf_api_read, "[test][user][api] read performance monitor        [passed]\n" },
+#endif
+	{ NULL,                       NULL                                                          },
 };
 
 /**
