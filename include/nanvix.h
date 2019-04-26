@@ -36,6 +36,7 @@
 	#include <nanvix/syscall.h>
 	#include <sys/types.h>
 	#include <stdbool.h>
+	#include <stdint.h>
 
 /*============================================================================*
  * Kernel Threads                                                             *
@@ -74,6 +75,50 @@
 	 * return.Upon failure, a negative error code is returned instead.
 	 */
 	extern int shutdown(void);
+
+	/**
+	 * @brief Queries a performance event.
+	 *
+	 * @param event Target event.
+	 *
+	 * @returns Upon successful completion, either zero or non zero is
+	 * returned, indicating whether or not the queried performance event
+	 * may be monitored in the underlying core. Upon failure, a negative
+	 * error code is returned instead.
+	 */
+	extern int nanvix_perf_query(int event);
+
+	/**
+	 * @brief Starts a performance monitor.
+	 *
+	 * @param perf  Target performance monitor.
+	 * @param event Target event to watch.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 */
+	extern int nanvix_perf_start(int perf, int event);
+
+	/**
+	 * @brief Stops a performance monitor.
+	 *
+	 * @param perf Target performance monitor.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 */
+	extern int nanvix_perf_stop(int perf);
+
+	/**
+	 * @brief Reads a PM register.
+	 *
+	 * @param perf Target performance monitor.
+	 *
+	 * @returns Upon successful completion, the value of the target
+	 * performance monitor. Upon failure, a negative error code,
+	 * converted to uint64_t is returned instead.
+	 */
+	extern uint64_t nanvix_perf_read(int perf);
 
 /*============================================================================*
  * Mutex                                                                      *
