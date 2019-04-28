@@ -1,0 +1,112 @@
+#
+# MIT License
+#
+# Copyright(c) 2011-2019 The Maintainers of Nanvix
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+
+ifeq ($(RELEASE), true)
+
+export CFLAGS += -O0 -D NDEBUG
+export CFLAGS += -fauto-inc-dec
+export CFLAGS += -fbranch-count-reg
+export CFLAGS += -fcombine-stack-adjustments
+export CFLAGS += -fcompare-elim
+export CFLAGS += -fcprop-registers
+export CFLAGS += -fdce
+export CFLAGS += -fdefer-pop
+export CFLAGS += -fdse
+export CFLAGS += -fforward-propagate
+export CFLAGS += -fguess-branch-probability
+export CFLAGS += -fif-conversion
+export CFLAGS += -fif-conversion2
+export CFLAGS += -finline-functions-called-once
+export CFLAGS += -fipa-profile
+export CFLAGS += -fipa-pure-const
+export CFLAGS += -fipa-reference
+export CFLAGS += -fmerge-constants
+export CFLAGS += -fmove-loop-invariants
+export CFLAGS += -fomit-frame-pointer
+export CFLAGS += -freorder-blocks
+export CFLAGS += -fshrink-wrap
+export CFLAGS += -fsplit-wide-types
+export CFLAGS += -ftree-bit-ccp
+export CFLAGS += -ftree-ccp
+export CFLAGS += -ftree-ch
+export CFLAGS += -ftree-coalesce-vars
+export CFLAGS += -ftree-copy-prop
+export CFLAGS += -ftree-dce
+export CFLAGS += -ftree-dominator-opts
+export CFLAGS += -ftree-dse
+export CFLAGS += -ftree-forwprop
+export CFLAGS += -ftree-fre
+export CFLAGS += -ftree-phiprop
+export CFLAGS += -ftree-pta
+export CFLAGS += -ftree-scev-cprop
+export CFLAGS += -ftree-sink
+export CFLAGS += -ftree-slsr
+export CFLAGS += -ftree-sra
+export CFLAGS += -ftree-ter
+export CFLAGS += -funit-at-a-time
+export CFLAGS += -falign-functions -falign-jumps
+export CFLAGS += -falign-labels -falign-loops
+export CFLAGS += -fcaller-saves
+export CFLAGS += -fcrossjumping
+export CFLAGS += -fcse-follow-jumps  -fcse-skip-blocks
+export CFLAGS += -fdelete-null-pointer-checks
+export CFLAGS += -fdevirtualize  -fdevirtualize-speculatively
+export CFLAGS += -fexpensive-optimizations
+export CFLAGS += -fgcse  -fgcse-lm
+export CFLAGS += -fhoist-adjacent-loads
+export CFLAGS += -finline-small-functions
+export CFLAGS += -findirect-inlining
+export CFLAGS += -fipa-sra
+export CFLAGS += -fisolate-erroneous-paths-dereference
+export CFLAGS += -foptimize-sibling-calls
+export CFLAGS += -foptimize-strlen
+export CFLAGS += -fpartial-inlining
+export CFLAGS += -fpeephole2
+export CFLAGS += -freorder-blocks-and-partition  -freorder-functions
+export CFLAGS += -frerun-cse-after-loop
+export CFLAGS += -fschedule-insns  -fschedule-insns2
+export CFLAGS += -fsched-interblock  -fsched-spec
+export CFLAGS += -fno-strict-aliasing
+export CFLAGS += -fthread-jumps
+export CFLAGS += -ftree-builtin-call-dce
+export CFLAGS += -ftree-pre
+export CFLAGS += -ftree-switch-conversion  -ftree-tail-merge
+export CFLAGS += -ftree-vrp
+export CFLAGS += -fgcse-after-reload
+export CFLAGS += -finline-functions
+export CFLAGS += -fipa-cp-clone
+export CFLAGS += -fpeel-loops
+export CFLAGS += -fpredictive-commoning
+export CFLAGS += -ftree-loop-distribute-patterns
+export CFLAGS += -ftree-loop-distribution
+export CFLAGS += -ftree-loop-vectorize
+export CFLAGS += -ftree-partial-pre
+export CFLAGS += -ftree-slp-vectorize
+export CFLAGS += -funswitch-loops
+export CFLAGS += -fvect-cost-model
+
+else
+export CFLAGS  += -O0 -g
+
+endif

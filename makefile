@@ -77,14 +77,11 @@ export CFLAGS  += -pedantic-errors
 export CFLAGS  += -Wall -Wextra -Werror -Wa,--warn
 export CFLAGS  += -Winit-self -Wswitch-default -Wfloat-equal
 export CFLAGS  += -Wundef -Wshadow -Wuninitialized -Wlogical-op
+export CFLAGS  += -Wno-unused-function
 export CFLAGS  += -fno-stack-protector
 export CFLAGS  += -Wvla # -Wredundant-decls
 export CFLAGS  += -I $(INCDIR)
-ifeq ($(RELEASE), true)
-	export CFLAGS  += -O3 -D NDEBUG
-else
-	export CFLAGS  += -O0 -g -Wno-unused-function
-endif
+include $(BUILDDIR)/makefile.oflags
 
 # Archiver Options
 export ARFLAGS = rc
