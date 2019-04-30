@@ -56,6 +56,23 @@ int main(int argc, const char *argv[])
 	benchmark_kcall_remote();
 	kprintf("--------------------------------------------------------------------------------");
 
+#ifdef __BENCHMARK_MATRIX__
+	/* Matrix Benchmark */
+	for (int i = 1; i < (THREAD_MAX - 1); i = i*2)
+	{
+		int maxsize_log2;
+
+		maxsize_log2 = CACHE_SIZE_LOG2;     /* fit in cache       */
+		maxsize_log2 -= 2 + 2;              /* 3 FP matrixes (~4) */
+		maxsize_log2 -= (maxsize_log2 & 1); /* round              */
+		maxsize_log2 -= maxsize_log2/2;     /* compute dimension  */
+
+		for (int j = 3; j <= (maxsize_log2 + 1); j++)
+			benchmark_matrix(i, j);
+	}
+	kprintf("--------------------------------------------------------------------------------");
+#endif /* __BENCHMARK_MATRIX__ */
+
 	/* Shutdown. */
 	shutdown();
 
