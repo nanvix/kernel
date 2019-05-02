@@ -42,7 +42,7 @@
 	 *
 	 * @note This should be set to the highest system call number.
 	 */
-	#define NR_SYSCALLS 10
+	#define NR_SYSCALLS 14
 
 	/**
 	 * @name System Call Numbers
@@ -57,12 +57,12 @@
 	#define NR_sleep         7 /**< sys_sleep()         */
 	#define NR_wakeup        8 /**< sys_wakeup()        */
 	#define NR_shutdown      9 /**< sys_shutdown()      */
+	#define NR_perf_query   10 /**< sys_perf_query()    */
+	#define NR_perf_start   11 /**< sys_perf_start()    */
+	#define NR_perf_stop    12 /**< sys_perf_stop()     */
+	#define NR_perf_read    13 /**< sys_perf_read()     */
 	/**@}*/
 
-	/**
-	 * @name System Calls
-	 */
-	/**@{*/
 	EXTERN void sys_exit(int);
 	EXTERN ssize_t sys_write(int, const char *, size_t);
 	EXTERN int sys_thread_get_id(void);
@@ -79,7 +79,50 @@
 	 * return.Upon failure, a negative error code is returned instead.
 	 */
 	EXTERN int sys_shutdown(void);
-	/**@}*/
+
+	/**
+	 * @brief Queries a performance event.
+	 *
+	 * @param event Target event.
+	 *
+	 * @returns Upon successful completion, either zero or non zero is
+	 * returned, indicating whether or not the queried performance event
+	 * may be monitored in the underlying core. Upon failure, a negative
+	 * error code is returned instead.
+	 */
+	EXTERN int sys_perf_query(int event);
+
+	/**
+	 * @brief Starts a performance monitor.
+	 *
+	 * @param perf  Target performance monitor.
+	 * @param event Target event to watch.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 */
+	EXTERN int sys_perf_start(int perf, int event);
+
+	/**
+	 * @brief Stops a performance monitor.
+	 *
+	 * @param perf Target performance monitor.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 */
+	EXTERN int sys_perf_stop(int perf);
+
+	/**
+	 * @brief Reads a PM register.
+	 *
+	 * @param perf Target performance monitor.
+	 *
+	 * @returns Upon successful completion, the value of the target
+	 * performance monitor. Upon failure, a negative error code,
+	 * converted to uint64_t is returned instead.
+	 */
+	EXTERN uint64_t sys_perf_read(int perf);
 
 /**@}*/
 
