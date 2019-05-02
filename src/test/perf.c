@@ -40,6 +40,7 @@
  */
 void test_nanvix_perf_api_read(void)
 {
+#if (CORE_HAS_PERF)
 	uint64_t cycles;
 
 	/* Query performance monitoring capabilities. */
@@ -56,4 +57,6 @@ void test_nanvix_perf_api_read(void)
 	cycles = nanvix_perf_read(0);
 
 	UNUSED(cycles);
+
+#endif
 }
