@@ -42,7 +42,7 @@
 	 *
 	 * @note This should be set to the highest system call number.
 	 */
-	#define NR_SYSCALLS 9
+	#define NR_SYSCALLS 10
 
 	/**
 	 * @name System Call Numbers
@@ -56,6 +56,7 @@
 	#define NR_thread_join   6 /**< sys_thread_join()   */
 	#define NR_sleep         7 /**< sys_sleep()         */
 	#define NR_wakeup        8 /**< sys_wakeup()        */
+	#define NR_shutdown      9 /**< sys_shutdown()      */
 	/**@}*/
 
 	/**
@@ -70,6 +71,14 @@
 	EXTERN int sys_thread_join(int, void **);
 	EXTERN int sys_sleep(void);
 	EXTERN int sys_wakeup(int);
+
+	/**
+	 * @brief Shutdowns the kernel.
+	 *
+	 * @returns Upon successful completion, this function does not
+	 * return.Upon failure, a negative error code is returned instead.
+	 */
+	EXTERN int sys_shutdown(void);
 	/**@}*/
 
 /**@}*/

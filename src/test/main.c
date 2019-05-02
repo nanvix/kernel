@@ -110,5 +110,9 @@ int main(int argc, const char *argv[])
 		puts(user_tests[i].name);
 	}
 
+	/* Halt. */
+	shutdown();
+	UNREACHABLE();
+
 	return (0);
 }
