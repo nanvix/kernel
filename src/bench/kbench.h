@@ -71,6 +71,7 @@
 	 * @name Benchmarks
 	 */
 	/**@{*/
+	extern void benchmark_perf(void);
 	extern void benchmark_kcall_local(void);
 	extern void benchmark_kcall_remote(void);
 	extern void benchmark_matrix(int nthreads, int n);

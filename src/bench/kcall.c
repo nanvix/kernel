@@ -26,6 +26,39 @@
 #include "kbench.h"
 
 /**
+ * @brief Benchmarks Performance Monitoring Overhead
+ */
+void benchmark_perf(void)
+{
+	uint64_t reg;
+
+	/*
+	 * TODO: Query performance monitoring capabilities.
+	 */
+
+	for (size_t j = 0; j < ARRAY_LENGTH(perf_events); j++)
+	{
+		for (int i = SKIP; i < NITERATIONS + SKIP; i++)
+		{
+			nanvix_perf_start(0, perf_events[j].num);
+
+
+			nanvix_perf_stop(0);
+			reg = nanvix_perf_read(0);
+
+			if (i >= SKIP)
+			{
+				kprintf("[benchmarks][perf] %d %s %d",
+					i - SKIP,
+					perf_events[j].name,
+					UINT32(reg)
+				);
+			}
+		}
+	}
+}
+
+/**
  * @brief Benchmarks a remote Kernel Call
  */
 void benchmark_kcall_local(void)
