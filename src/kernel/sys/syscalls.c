@@ -219,11 +219,9 @@ PUBLIC int do_syscall(
 			sysboard[coreid].syscall_nr = syscall_nr;
 			sysboard[coreid].pending = 1;
 			semaphore_init(&sysboard[coreid].syssem, 0);
-			dcache_invalidate();
 
 			semaphore_up(&syssem);
 			semaphore_down(&sysboard[coreid].syssem);
-			dcache_invalidate();
 
 			ret = sysboard[coreid].ret;
 		} break;
