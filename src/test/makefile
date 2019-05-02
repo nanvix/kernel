@@ -38,7 +38,7 @@ LIBS += -Wl,--no-whole-archive $(THEIR_LIBS)
 SRC = $(wildcard *.c)
 
 # Object Files
-OBJ = $(SRC:.c=.o)
+OBJ = $(SRC:.c=.$(OBJ_SUFFIX).o)
 
 #===============================================================================
 
@@ -70,7 +70,7 @@ else
 endif
 
 # Builds a C Source file
-%.o: %.c
+%.$(OBJ_SUFFIX).o: %.c
 ifeq ($(VERBOSE), no)
 	@echo [CC] $@
 	@$(CC) $(CFLAGS) $< -c -o $@

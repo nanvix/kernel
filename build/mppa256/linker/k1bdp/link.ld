@@ -257,6 +257,8 @@ SECTIONS
   _heap_end      =  VIRT_U_MEM_END;
   _bin_start_frame = LOADADDR(.boot) >> 12;
   _bin_end_frame   = (INTERNAL_RAM_SIZE >> 12);
+  __image_start = LOADADDR(.boot);
+  __image_end = _kend;
 
 	INCLUDE "epilogue_link.ld"
 
