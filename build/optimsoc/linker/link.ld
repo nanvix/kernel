@@ -47,7 +47,9 @@ SECTIONS
 	/* Kernel code section. */
 	.text : AT(ADDR(.text))
 	{
+		__TEXT_START = .;
 		*(.text)
+		__TEXT_END = .;
 	}
 
 	KSTART_DATA = ALIGN(8192);
@@ -55,15 +57,19 @@ SECTIONS
 	/* Initialized kernel data section. */
 	.data ALIGN(8192) : AT(ADDR(.data))
 	{
-		*boot_data.o
+		__DATA_START = .;
 		*(.rodata)
 		*(.data)
+		__DATA_END = .;
 	}
 
 	/* Uninitialized kernel data section. */
 	.bss : AT(ADDR(.bss))
 	{
+		__BSS_START = .;
+		*boot_data.o
 		*(.bss)
+		__BSS_END = .;
 	}
 
 	. =ALIGN(8192);
