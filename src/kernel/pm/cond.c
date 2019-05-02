@@ -82,7 +82,7 @@ PUBLIC int cond_broadcast(struct condvar *cond)
 	spinlock_lock(&cond->lock);
 
 		/* Wakeup all threads. */
-		while (cond->queue != NULL)
+		while (UNLIKELY(cond->queue != NULL))
 		{
 			thread_wakeup(cond->queue);
 			cond->queue = cond->queue->next;
