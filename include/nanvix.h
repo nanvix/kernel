@@ -35,6 +35,11 @@
 
 	#include <nanvix/syscall.h>
 	#include <sys/types.h>
+	#include <stdbool.h>
+
+/*============================================================================*
+ * Kernel Threads                                                             *
+ *============================================================================*/
 
 	/**
 	 * @brief Thread ID.
@@ -62,6 +67,54 @@
 	extern int wakeup(kthread_t);
 	/**@}*/
 
-#endif /* NANVIX_H_ */
+/*============================================================================*
+ * Mutex                                                                      *
+ *============================================================================*/
+
+#if (CORES_NUM > 1)
+
+	/**
+	 * @brief Mutex.
+	 */
+	struct nanvix_mutex
+	{
+		bool locked;                /**< Locked?           */
+		spinlock_t lock;            /**< Lock.             */
+		kthread_t tids[THREAD_MAX]; /**< Sleeping threads. */
+	};
+
+	/**
+	 * @brief Initializes a mutex.
+	 *
+	 * @param m Target mutex.
+	 *
+	 * @param Upon sucessful completion, zero is returned. Upon failure, a
+	 * negative error code is returned instead.
+	 */
+	extern int nanvix_mutex_init(struct nanvix_mutex *m);
+
+	/**
+	 * @brief Locks a mutex.
+	 *
+	 * @param m Target mutex.
+	 *
+	 * @param Upon sucessful completion, zero is returned. Upon failure, a
+	 * negative error code is returned instead.
+	 */
+	extern int nanvix_mutex_lock(struct nanvix_mutex *m);
+
+	/**
+	 * @brief unlocks a mutex.
+	 *
+	 * @param m Target mutex.
+	 *
+	 * @param Upon sucessful completion, zero is returned. Upon failure, a
+	 * negative error code is returned instead.
+	 */
+	extern int nanvix_mutex_unlock(struct nanvix_mutex *m);
+
+#endif /* CORES_NUM > 1 */
 
 /**@}*/
+
+#endif /* NANVIX_H_ */
