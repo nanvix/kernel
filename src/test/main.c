@@ -90,7 +90,7 @@ static struct
 #endif
 #endif
 #if (CORE_HAS_PERF)
-	{ test_nanvix_perf_api_read, "[test][user][api] read performance monitor        [passed]\n" },
+	{ test_nanvix_perf_api_read, "[test][user][api] read performance monitor       [passed]\n"  },
 #endif
 	{ NULL,                       NULL                                                          },
 };

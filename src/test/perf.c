@@ -45,7 +45,7 @@ void test_nanvix_perf_api_read(void)
 
 	/* Query performance monitoring capabilities. */
 	test_assert(PERF_EVENTS_MAX >= 1);
-	test_assert(nanvix_perf_query(PERF_CYCLES));
+	test_assert(nanvix_perf_query(PERF_CYCLES) == 0);
 
 	/* Start performance monitors. */
 	test_assert(nanvix_perf_start(0, PERF_CYCLES) == 0);
