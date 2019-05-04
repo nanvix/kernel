@@ -60,6 +60,7 @@ export LIBNANVIX = $(LIBDIR)/libnanvix-$(TARGET).a
 
 # Binaries
 export EXEC := $(BINDIR)/test-driver
+export EXEC_BENCH := $(BINDIR)/benchmarks
 
 #===============================================================================
 # Target-Specific Make Rules
@@ -90,10 +91,16 @@ export ARFLAGS = rc
 
 # Image Name
 export IMAGE = nanvix-debug.img
+export IMAGE_BENCHMARKS = nanvix-benchmarks.img
 
 # Builds everything.
-all: | make-dirs all-target
+all: image-tests image-benchmarks
+
+image-tests: | make-dirs all-target
 	bash $(TOOLSDIR)/image/build-image.sh $(BINDIR) $(IMAGE)
+
+image-benchmarks: | make-dirs all-target
+	bash $(TOOLSDIR)/image/build-image.sh $(BINDIR) $(IMAGE_BENCHMARKS)
 
 # Make Directories
 make-dirs:
@@ -117,25 +124,25 @@ contrib-uninstall:
 	$(MAKE) -C $(CONTRIBDIR)/hal uninstall PREFIX=$(ROOTDIR)
 
 # Runs Unit Tests in all clusters
-run: | all
+run:
 	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) all --no-debug
 
 # Runs Unit Tests in IO Cluster.
-run-iocluster: | all
+run-iocluster:
 	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) iocluster --no-debug
 
 # Runs Unit Tests in Compute Cluster.
-run-ccluster: | all
+run-ccluster:
 	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) ccluster --no-debug
 
 # Runs Unit Tests in all clusters in debug mode.
-debug: | all
+debug:
 	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) all --debug
 
 # Runs Unit Tests in IO Cluster in debug mode.
-debug-iocluster: | all
+debug-iocluster:
 	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) iocluster --debug
 
 # Runs Unit Tests in Compute Cluster in debug mode.
-debug-ccluster: | all
+debug-ccluster:
 	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) ccluster --debug

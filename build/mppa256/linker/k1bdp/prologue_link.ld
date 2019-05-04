@@ -58,16 +58,18 @@
   }  =0x12345678
   _debug_start_lma  = LOADADDR( .locked_text ) + _debug_start - __text_begin;
 
-  .text ALIGN(0x100) : AT ( ALIGN( LOADADDR(.locked_text) + SIZEOF(.locked_text), 0x100))
-  {
-      KEEP(*(.init))
-      KEEP(*(.fini))
-      *(.text)
-      *(.text.*)
-      *(.gnu.linkonce.t.*)
-    . = ALIGN(4096);
-	__text_end = ABSOLUTE(.);
-  }
+	.text ALIGN(0x100) : AT ( ALIGN( LOADADDR(.locked_text) + SIZEOF(.locked_text), 0x100))
+	{
+		KEEP(*(.init))
+		KEEP(*(.fini))
+		__TEXT_START = ABSOLUTE(.);
+			*(.text)
+		__TEXT_END = ABSOLUTE(.);
+		*(.text.*)
+		*(.gnu.linkonce.t.*)
+		. = ALIGN(4096);
+		__text_end = ABSOLUTE(.);
+	}
 
   .stack ALIGN(0x1000) :  AT ( ALIGN( LOADADDR(.text) + SIZEOF(.text) , 0x1000))
   {
@@ -206,7 +208,9 @@
   .data   ALIGN(0x8) :  AT ( ALIGN( LOADADDR(.rela.plt) + SIZEOF(.rela.plt), 0x8))
   {
     _data_start = ABSOLUTE(.);
-    *(.data)
+	__DATA_START = ABSOLUTE(.);
+		*(.data)
+	__DATA_END = ABSOLUTE(.);
     *(.tls_start*)
     *(.data.*)
     *(.gnu.linkonce.d.*)
@@ -218,12 +222,14 @@
   .bss   ALIGN(0x20) :  AT ( ALIGN( LOADADDR(.data) + SIZEOF(.data), 0x20))
   {
     _bss_start = ABSOLUTE(.);
-    *(.bss)
-    *(.bss.*)
-    *(.dynbss)
-    *(.dynbss.*)
-    *(.gnu.linkonce.b.*)
-    . = ALIGN(0x20);
+		__BSS_START = ABSOLUTE(.);
+			*(.bss)
+		__BSS_END = ABSOLUTE(.);
+		*(.bss.*)
+		*(.dynbss)
+		*(.dynbss.*)
+		*(.gnu.linkonce.b.*)
+		. = ALIGN(0x20);
     _bss_end = ABSOLUTE(.);
   } =0x12345678
 

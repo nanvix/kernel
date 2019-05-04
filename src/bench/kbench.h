@@ -22,64 +22,59 @@
  * SOFTWARE.
  */
 
-OUTPUT_FORMAT("elf32-or1k")
-ENTRY(_do_start)
+#ifndef _KBENCH_H_
+#define _KBENCH_H_
 
-BOOT_ADDR = 0;
+	#include <stdint.h>
 
-SECTIONS
-{
-	. = BOOT_ADDR;
+	/**
+	 * @brief Number of benchmark iterations.
+	 */
+	#define NITERATIONS 30
 
-	EXCEPTIONS = .;
+	/**
+	 * @brief Iterations to skip on warmup.
+	 */
+	#define SKIP 10
 
-	KSTART_CODE = .;
+	/**
+	 * @brief Casts something to a uint32_t.
+	 */
+	#define UINT32(x) ((uint32_t)((x) & 0xffffffff))
 
-	/* Kernel code section. */
-	.bootstrap : AT(ADDR(.bootstrap))
+	/**
+	 * @brief Alias for kprintf().
+	 */
+	#define printf(fmt, ...) kprintf(fmt, ##__VA_ARGS__)
+
+	/**
+	 * @brief Alias for KASSERT().
+	 */
+	#undef assert
+	#define assert(x) KASSERT(x)
+
+	/**
+	 * @brief Performance event.
+	 */
+	struct perf_event
 	{
-		*hooks.o
-		*boot_code.o
-	}
+		const char *name; /**< Event name.   */
+		int num;          /**< Event number. */
+	};
 
-	. = ALIGN(8192);
+	/**
+	 * @brief Performance events.
+	 */
+	extern struct perf_event perf_events[8];
 
-	/* Kernel code section. */
-	.text : AT(ADDR(.text))
-	{
-		__TEXT_START = .;
-		*(.text)
-		__TEXT_END = .;
-	}
+	/**
+	 * @name Benchmarks
+	 */
+	/**@{*/
+	extern void benchmark_perf(void);
+	extern void benchmark_kcall_local(void);
+	extern void benchmark_kcall_remote(void);
+	extern void benchmark_matrix(int nthreads, int n);
+	/**@}*/
 
-	KSTART_DATA = ALIGN(8192);
-
-	/* Initialized kernel data section. */
-	.data ALIGN(8192) : AT(ADDR(.data))
-	{
-		__DATA_START = .;
-		*(.rodata)
-		*(.data)
-		__DATA_END = .;
-	}
-
-	/* Uninitialized kernel data section. */
-	.bss : AT(ADDR(.bss))
-	{
-		__BSS_START = .;
-		*boot_data.o
-		*(.bss)
-		__BSS_END = .;
-	}
-
-	. =ALIGN(8192);
-
-	KDATA_END = .;
-
-	/* Discarded. */
-	/DISCARD/ :
-	{
-		*(.comment)
-		*(.note)
-	}
-}
+#endif /* _KBENCH_H_ */
