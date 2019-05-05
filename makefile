@@ -93,10 +93,9 @@ export ARFLAGS = rc
 
 # Image Name
 export IMAGE = nanvix-debug.img
-export IMAGE_BENCHMARKS = nanvix-benchmarks.img
 
 # Builds everything.
-all: image-tests image-benchmarks
+all: image-tests
 
 # Make Directories
 make-dirs:
@@ -105,9 +104,6 @@ make-dirs:
 
 image-tests: | make-dirs all-target
 	bash $(TOOLSDIR)/image/build-image.sh $(BINDIR) $(IMAGE)
-
-image-benchmarks: | make-dirs all-target
-	bash $(TOOLSDIR)/image/build-image.sh $(BINDIR) $(IMAGE_BENCHMARKS)
 
 # Cleans builds.
 clean: clean-target
