@@ -29,12 +29,11 @@
 .PHONY: kernel
 .PHONY: libs
 .PHONY: test
-.PHONY: bench
 
 #===============================================================================
 
 # Builds Everything
-all: kernel test bench
+all: kernel test
 
 # Builds the Kernel
 kernel:
@@ -48,12 +47,8 @@ libs: kernel
 test: libs kernel
 	$(MAKE) -C test all
 
-# Builds Benchmarks
-bench: libs kernel
-	$(MAKE) -C bench all
-
 # Cleans Everything
-clean: clean-kernel clean-libs clean-test clean-bench
+clean: clean-kernel clean-libs clean-test
 
 # Cleans Kernel Build
 clean-kernel:
@@ -66,7 +61,3 @@ clean-libs:
 # Cleans Test Driver Build
 clean-test:
 	$(MAKE) -C test clean
-
-# Cleans Benchmarks Build
-clean-bench:
-	$(MAKE) -C bench clean
