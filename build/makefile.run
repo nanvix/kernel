@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# Copyright(c) 2011-2019 The Maintainers of Nanvix
+# Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,34 +22,26 @@
 # SOFTWARE.
 #
 
-#===============================================================================
-# Target Configuration
-#===============================================================================
+# Runs Unit Tests in all clusters
+run:
+	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) all --no-debug
 
-export CFLAGS += -D __optimsoc__     # Target
-export CFLAGS += -D __optimsoc4__    # Processor
-export CFLAGS += -D __or1k_cluster__ # CLuster
-export CFLAGS += -D __or1k__         # Core
-export CFLAGS += -D __mor1kx__       # Core Variant
+# Runs Unit Tests in IO Cluster.
+run-iocluster:
+	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) iocluster --no-debug
 
-#===============================================================================
-# Toolchain Configuration
-#===============================================================================
+# Runs Unit Tests in Compute Cluster.
+run-ccluster:
+	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) ccluster --no-debug
 
-# Toolchain Directory
-export TOOLCHAIN_DIR ?= $(TOOLSDIR)/dev/toolchain/or1k/bin/
+# Runs Unit Tests in all clusters in debug mode.
+debug:
+	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) all --debug
 
-# Toolchain
-export CC = $(TOOLCHAIN_DIR)/or1k-elf-gcc
-export LD = $(TOOLCHAIN_DIR)/or1k-elf-ld
-export AR = $(TOOLCHAIN_DIR)/or1k-elf-ar
+# Runs Unit Tests in IO Cluster in debug mode.
+debug-iocluster:
+	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) iocluster --debug
 
-# Compiler Options
-export CFLAGS  += -Wstack-usage=4096
-export CFLAGS  += -nostdlib -nostdinc
-
-# Linker Options
-export LDFLAGS  += -nostdlib -nostdinc
-
-# Suffix for Objects
-export OBJ_SUFFIX=optimsoc
+# Runs Unit Tests in Compute Cluster in debug mode.
+debug-ccluster:
+	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) ccluster --debug

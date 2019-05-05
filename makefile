@@ -29,8 +29,8 @@
 # Verbose Build?
 export VERBOSE ?= no
 
-# Object suffix for heterogeneous architectures.
-export OBJ_SUFFIX :=
+# Installation Prefix
+export PREFIX ?= $(HOME)
 
 #===============================================================================
 # Directories
@@ -72,7 +72,7 @@ include $(MAKEDIR)/makefile
 # Toolchain Configuration
 #===============================================================================
 
-# Compiler Options.
+# Compiler Options
 export CFLAGS  += -std=c99 -fno-builtin
 export CFLAGS  += -pedantic-errors
 export CFLAGS  += -Wall -Wextra -Werror -Wa,--warn
@@ -82,7 +82,9 @@ export CFLAGS  += -Wno-unused-function
 export CFLAGS  += -fno-stack-protector
 export CFLAGS  += -Wvla # -Wredundant-decls
 export CFLAGS  += -I $(INCDIR)
-include $(BUILDDIR)/makefile.oflags
+
+# Additional C Flags
+include $(BUILDDIR)/makefile.cflags
 
 # Archiver Options
 export ARFLAGS = rc
@@ -96,16 +98,16 @@ export IMAGE_BENCHMARKS = nanvix-benchmarks.img
 # Builds everything.
 all: image-tests image-benchmarks
 
+# Make Directories
+make-dirs:
+	@mkdir -p $(BINDIR)
+	@mkdir -p $(LIBDIR)
+
 image-tests: | make-dirs all-target
 	bash $(TOOLSDIR)/image/build-image.sh $(BINDIR) $(IMAGE)
 
 image-benchmarks: | make-dirs all-target
 	bash $(TOOLSDIR)/image/build-image.sh $(BINDIR) $(IMAGE_BENCHMARKS)
-
-# Make Directories
-make-dirs:
-	@mkdir -p $(BINDIR)
-	@mkdir -p $(LIBDIR)
 
 # Cleans builds.
 clean: clean-target
@@ -115,34 +117,20 @@ distclean: | clean-target
 	 @rm -f $(BINDIR)/*
 	 @find $(SRCDIR) -name "*.o" -exec rm -rf {} \;
 
-# Builds contrib.
-contrib: make-dirs
-	$(MAKE) -C $(CONTRIBDIR)/hal install PREFIX=$(ROOTDIR)
+#===============================================================================
+# Contrib Install and Uninstall Rules
+#===============================================================================
 
-# Cleans the HAL.
-contrib-uninstall:
-	$(MAKE) -C $(CONTRIBDIR)/hal uninstall PREFIX=$(ROOTDIR)
+include $(BUILDDIR)/makefile.contrib
 
-# Runs Unit Tests in all clusters
-run:
-	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) all --no-debug
+#===============================================================================
+# Install and Uninstall Rules
+#===============================================================================
 
-# Runs Unit Tests in IO Cluster.
-run-iocluster:
-	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) iocluster --no-debug
+include $(BUILDDIR)/makefile.install
 
-# Runs Unit Tests in Compute Cluster.
-run-ccluster:
-	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) ccluster --no-debug
+#===============================================================================
+# Debug and Run Rules
+#===============================================================================
 
-# Runs Unit Tests in all clusters in debug mode.
-debug:
-	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) all --debug
-
-# Runs Unit Tests in IO Cluster in debug mode.
-debug-iocluster:
-	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) iocluster --debug
-
-# Runs Unit Tests in Compute Cluster in debug mode.
-debug-ccluster:
-	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) ccluster --debug
+include $(BUILDDIR)/makefile.run

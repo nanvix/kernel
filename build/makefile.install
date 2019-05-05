@@ -1,0 +1,84 @@
+#
+# MIT License
+#
+# Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+
+#===============================================================================
+# Build Options
+#===============================================================================
+
+# Installation Prefix
+export PREFIX ?= $(HOME)
+
+#===============================================================================
+# Artifacts
+#===============================================================================
+
+export ARTIFACTS := $(shell find $(INCDIR) -name *.h -type f)
+
+#===============================================================================
+
+# Install
+install: | all-target copy-artifacts
+	@mkdir -p $(PREFIX)/lib
+	@cp -f $(LIBDIR)/libhal*.a $(PREFIX)/lib
+	@echo [CP] $(LIBDIR)/libhal*.a
+	@cp -f $(LIBDIR)/libkernel*.a $(PREFIX)/lib
+	@echo [CP] $(LIBDIR)/libkernel*.a
+	@cp -f $(LIBDIR)/libnanvix*.a $(PREFIX)/lib
+	@echo [CP] $(LIBDIR)/libnanvix*.a
+	@echo "==============================================================================="
+	@echo "Nanvix Microkernel Successfully Installed into $(PREFIX)"
+	@echo "==============================================================================="
+
+# Uninstall
+uninstall: | distclean delete-artifacts
+	@rm -f $(PREFIX)/lib/libhal*.a
+	@echo [RM] $(PREFIX)/lib/libhal*.a
+	@rm -f $(PREFIX)/lib/libkernel*.a
+	@echo [RM] $(PREFIX)/lib/libkernel*.a
+	@rm -f $(PREFIX)/lib/libnanvix*.a
+	@echo [RM] $(PREFIX)/lib/libnanvix*.a
+	@echo "==============================================================================="
+	@echo "Nanvix Microkernel Successfully Uninstalled from $(PREFIX)"
+	@echo "==============================================================================="
+
+# Copies All Artifacts
+copy-artifacts: $(patsubst $(CURDIR)/%, copy/%, $(ARTIFACTS))
+
+# Copy a Single Artifact
+copy/%: %
+	$(eval file := $(<F))
+	$(eval dir := $(<D))
+	@echo [CP] $(dir)/$(file)
+	@mkdir -p $(PREFIX)/$(dir)
+	@cp -f $< $(PREFIX)/$(dir)/$(file)
+	@chmod 444 $(PREFIX)/$(dir)/$(file)
+
+# Deletes All Artifacts
+delete-artifacts: $(patsubst $(CURDIR)/%, delete/%, $(ARTIFACTS))
+
+# Deletes a Single Artifact
+delete/%:
+	$(eval file := $(patsubst delete/%, %, $@))
+	@echo [RM] $(file)
+	@rm -f $(PREFIX)/$(file)
