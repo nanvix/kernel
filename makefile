@@ -29,11 +29,8 @@
 # Verbose Build?
 export VERBOSE ?= no
 
-# Object suffix for heterogeneous architectures.
-export OBJ_SUFFIX :=
-
 # Installation Prefix
-export PREFIX ?= $HOME
+export PREFIX ?= $(HOME)
 
 #===============================================================================
 # Directories
@@ -72,16 +69,10 @@ export EXEC_BENCH := $(BINDIR)/benchmarks
 include $(MAKEDIR)/makefile
 
 #===============================================================================
-# Artifacts
-#===============================================================================
-
-export ARTIFACTS := $(shell find $(INCDIR) -name *.h -type f)
-
-#===============================================================================
 # Toolchain Configuration
 #===============================================================================
 
-# Compiler Options.
+# Compiler Options
 export CFLAGS  += -std=c99 -fno-builtin
 export CFLAGS  += -pedantic-errors
 export CFLAGS  += -Wall -Wextra -Werror -Wa,--warn
@@ -91,7 +82,9 @@ export CFLAGS  += -Wno-unused-function
 export CFLAGS  += -fno-stack-protector
 export CFLAGS  += -Wvla # -Wredundant-decls
 export CFLAGS  += -I $(INCDIR)
-include $(BUILDDIR)/makefile.oflags
+
+# Additional C Flags
+include $(BUILDDIR)/makefile.cflags
 
 # Archiver Options
 export ARFLAGS = rc
@@ -105,16 +98,16 @@ export IMAGE_BENCHMARKS = nanvix-benchmarks.img
 # Builds everything.
 all: image-tests image-benchmarks
 
+# Make Directories
+make-dirs:
+	@mkdir -p $(BINDIR)
+	@mkdir -p $(LIBDIR)
+
 image-tests: | make-dirs all-target
 	bash $(TOOLSDIR)/image/build-image.sh $(BINDIR) $(IMAGE)
 
 image-benchmarks: | make-dirs all-target
 	bash $(TOOLSDIR)/image/build-image.sh $(BINDIR) $(IMAGE_BENCHMARKS)
-
-# Make Directories
-make-dirs:
-	@mkdir -p $(BINDIR)
-	@mkdir -p $(LIBDIR)
 
 # Cleans builds.
 clean: clean-target
@@ -124,76 +117,20 @@ distclean: | clean-target
 	 @rm -f $(BINDIR)/*
 	 @find $(SRCDIR) -name "*.o" -exec rm -rf {} \;
 
-# Install
-install: | all-target copy-artifacts
-	@mkdir -p $(PREFIX)/lib
-	@cp -f $(LIBDIR)/libhal*.a $(PREFIX)/lib
-	@echo [CP] $(LIBDIR)/libhal*.a
-	@cp -f $(LIBDIR)/libkernel*.a $(PREFIX)/lib
-	@echo [CP] $(LIBDIR)/libkernel*.a
-	@echo "==============================================================================="
-	@echo "Nanvix Microkernel Successfully Installed into $(PREFIX)"
-	@echo "==============================================================================="
+#===============================================================================
+# Contrib Install and Uninstall Rules
+#===============================================================================
 
-# Uninstall
-uninstall: | distclean delete-artifacts
-	@rm -f $(PREFIX)/lib/libhal*.a
-	@echo [RM] $(PREFIX)/lib/libhal*.a
-	@rm -f $(PREFIX)/lib/libkernel*.a
-	@echo [RM] $(PREFIX)/lib/libkernel*.a
-	@echo "==============================================================================="
-	@echo "Nanvix Microkernel Successfully Uninstalled from $(PREFIX)"
-	@echo "==============================================================================="
+include $(BUILDDIR)/makefile.contrib
 
-# Copies All Artifacts
-copy-artifacts: $(patsubst $(CURDIR)/%, copy/%, $(ARTIFACTS))
+#===============================================================================
+# Install and Uninstall Rules
+#===============================================================================
 
-# Copy a Single Artifact
-copy/%: %
-	$(eval file := $(<F))
-	$(eval dir := $(<D))
-	@echo [CP] $(dir)/$(file)
-	@mkdir -p $(PREFIX)/$(dir)
-	@cp -f $< $(PREFIX)/$(dir)/$(file)
-	@chmod 444 $(PREFIX)/$(dir)/$(file)
+include $(BUILDDIR)/makefile.install
 
-# Deletes All Artifacts
-delete-artifacts: $(patsubst $(CURDIR)/%, delete/%, $(ARTIFACTS))
+#===============================================================================
+# Debug and Run Rules
+#===============================================================================
 
-# Deletes a Single Artifact
-delete/%:
-	$(eval file := $(patsubst delete/%, %, $@))
-	@echo [RM] $(file)
-	@rm -f $(PREFIX)/$(file)
-
-# Builds contrib.
-contrib: make-dirs
-	$(MAKE) -C $(CONTRIBDIR)/hal install PREFIX=$(ROOTDIR)
-
-# Cleans the HAL.
-contrib-uninstall:
-	$(MAKE) -C $(CONTRIBDIR)/hal uninstall PREFIX=$(ROOTDIR)
-
-# Runs Unit Tests in all clusters
-run:
-	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) all --no-debug
-
-# Runs Unit Tests in IO Cluster.
-run-iocluster:
-	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) iocluster --no-debug
-
-# Runs Unit Tests in Compute Cluster.
-run-ccluster:
-	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) ccluster --no-debug
-
-# Runs Unit Tests in all clusters in debug mode.
-debug:
-	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) all --debug
-
-# Runs Unit Tests in IO Cluster in debug mode.
-debug-iocluster:
-	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) iocluster --debug
-
-# Runs Unit Tests in Compute Cluster in debug mode.
-debug-ccluster:
-	bash $(TOOLSDIR)/utils/nanvix-run.sh $(IMAGE) $(EXEC) $(TARGET) ccluster --debug
+include $(BUILDDIR)/makefile.run
