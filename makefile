@@ -32,6 +32,9 @@ export VERBOSE ?= no
 # Object suffix for heterogeneous architectures.
 export OBJ_SUFFIX :=
 
+# Installation Prefix
+export PREFIX ?= $HOME
+
 #===============================================================================
 # Directories
 #===============================================================================
@@ -67,6 +70,12 @@ export EXEC_BENCH := $(BINDIR)/benchmarks
 #===============================================================================
 
 include $(MAKEDIR)/makefile
+
+#===============================================================================
+# Artifacts
+#===============================================================================
+
+export ARTIFACTS := $(shell find $(INCDIR) -name *.h -type f)
 
 #===============================================================================
 # Toolchain Configuration
@@ -114,6 +123,48 @@ clean: clean-target
 distclean: | clean-target
 	 @rm -f $(BINDIR)/*
 	 @find $(SRCDIR) -name "*.o" -exec rm -rf {} \;
+
+# Install
+install: | all-target copy-artifacts
+	@mkdir -p $(PREFIX)/lib
+	@cp -f $(LIBDIR)/libhal*.a $(PREFIX)/lib
+	@echo [CP] $(LIBDIR)/libhal*.a
+	@cp -f $(LIBDIR)/libkernel*.a $(PREFIX)/lib
+	@echo [CP] $(LIBDIR)/libkernel*.a
+	@echo "==============================================================================="
+	@echo "Nanvix Microkernel Successfully Installed into $(PREFIX)"
+	@echo "==============================================================================="
+
+# Uninstall
+uninstall: | distclean delete-artifacts
+	@rm -f $(PREFIX)/lib/libhal*.a
+	@echo [RM] $(PREFIX)/lib/libhal*.a
+	@rm -f $(PREFIX)/lib/libkernel*.a
+	@echo [RM] $(PREFIX)/lib/libkernel*.a
+	@echo "==============================================================================="
+	@echo "Nanvix Microkernel Successfully Uninstalled from $(PREFIX)"
+	@echo "==============================================================================="
+
+# Copies All Artifacts
+copy-artifacts: $(patsubst $(CURDIR)/%, copy/%, $(ARTIFACTS))
+
+# Copy a Single Artifact
+copy/%: %
+	$(eval file := $(<F))
+	$(eval dir := $(<D))
+	@echo [CP] $(dir)/$(file)
+	@mkdir -p $(PREFIX)/$(dir)
+	@cp -f $< $(PREFIX)/$(dir)/$(file)
+	@chmod 444 $(PREFIX)/$(dir)/$(file)
+
+# Deletes All Artifacts
+delete-artifacts: $(patsubst $(CURDIR)/%, delete/%, $(ARTIFACTS))
+
+# Deletes a Single Artifact
+delete/%:
+	$(eval file := $(patsubst delete/%, %, $@))
+	@echo [RM] $(file)
+	@rm -f $(PREFIX)/$(file)
 
 # Builds contrib.
 contrib: make-dirs
