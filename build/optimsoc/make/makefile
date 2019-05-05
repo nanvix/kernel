@@ -50,3 +50,6 @@ export CFLAGS  += -nostdlib -nostdinc
 
 # Linker Options
 export LDFLAGS  += -nostdlib -nostdinc
+
+# Suffix for Objects
+export OBJ_SUFFIX=optimsoc

@@ -53,6 +53,9 @@ export CFLAGS += -Wno-error=type-limits
 # Linker Options
 export LDFLAGS  += -nostdlib -nostdinc
 
+# Suffix for Objects
+export OBJ_SUFFIX=qemu-openrisc
+
 #===============================================================================
 # Libraries
 #===============================================================================

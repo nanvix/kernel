@@ -56,6 +56,9 @@ export LDFLAGS += -nostdlib -nostdinc
 export LDFLAGS += -march=rv32imac -mabi=ilp32 -mcmodel=medany
 export LDFLAGS += -Wl,--nmagic -Wl,--gc-sections
 
+# Suffix for Objects
+export OBJ_SUFFIX=qemu-riscv32
+
 #===============================================================================
 # Libraries
 #===============================================================================
