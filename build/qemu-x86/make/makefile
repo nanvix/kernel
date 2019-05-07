@@ -26,7 +26,7 @@
 # Target Configuration
 #===============================================================================
 
-export CFLAGS += -D __qemu_x86__    # Target
+export CFLAGS  = -D __qemu_x86__    # Target
 export CFLAGS += -D __x86__         # Processor
 export CFLAGS += -D __x86_cluster__ # Cluster
 export CFLAGS += -D __i486__        # Core

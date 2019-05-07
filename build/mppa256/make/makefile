@@ -26,7 +26,7 @@
 # Target Configuration
 #===============================================================================
 
-export CFLAGS += -D __mppa256__ # Target
+export CFLAGS  = -D __mppa256__ # Target
 export CFLAGS += -D __bostan__  # Processor
 export CFLAGS += -D __k1b__     # Cluster and Core
 
