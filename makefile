@@ -47,7 +47,7 @@ export DOCDIR     := $(ROOTDIR)/doc
 export INCDIR     := $(ROOTDIR)/include
 export LIBDIR     := $(ROOTDIR)/lib
 export SRCDIR     := $(ROOTDIR)/src
-export TOOLSDIR   := $(ROOTDIR)/tools
+export TOOLSDIR   := $(ROOTDIR)/utils
 
 #===============================================================================
 # Libraries and Binaries
@@ -59,8 +59,7 @@ export LIBKERNEL = $(LIBDIR)/libkernel-$(TARGET).a
 export LIBNANVIX = $(LIBDIR)/libnanvix-$(TARGET).a
 
 # Binaries
-export EXEC := $(BINDIR)/test-driver
-export EXEC_BENCH := $(BINDIR)/benchmarks
+export EXEC := test-driver
 
 #===============================================================================
 # Target-Specific Make Rules
@@ -103,7 +102,7 @@ make-dirs:
 	@mkdir -p $(LIBDIR)
 
 image-tests: | make-dirs all-target
-	bash $(TOOLSDIR)/image/build-image.sh $(BINDIR) $(IMAGE)
+	bash $(TOOLSDIR)/nanvix-build-image.sh $(IMAGE) $(BINDIR) $(EXEC)
 
 # Cleans builds.
 clean: clean-target
