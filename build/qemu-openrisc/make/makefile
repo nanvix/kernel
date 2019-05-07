@@ -68,6 +68,10 @@ export THEIR_LIBS := -lgcc
 all-target:
 	$(MAKE) -C $(SRCDIR) all
 
-# Cleans everything.
+# Cleans objects.
 clean-target:
 	$(MAKE) -C $(SRCDIR) clean
+
+# Cleans everything.
+distclean-target: clean-target
+	$(MAKE) -C $(SRCDIR) distclean

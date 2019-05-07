@@ -66,7 +66,7 @@ ifeq ($(VERBOSE), no)
 	@echo [CLEAN] $(BINDIR)/$(EXEC)
 	@rm -rf $(BINDIR)/$(EXEC)
 else
-	rm -rf $(BINDIR)/$(EXEC))
+	rm -rf $(BINDIR)/$(EXEC)
 endif
 
 # Builds a C Source file

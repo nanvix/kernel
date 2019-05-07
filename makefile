@@ -108,8 +108,9 @@ image-tests: | make-dirs all-target
 clean: clean-target
 
 # Cleans everything.
-distclean: | clean-target
-	 @rm -f $(BINDIR)/*
+distclean: distclean-target
+	 @rm -f $(LIBDIR)/libkernel-* $(LIBDIR)/libnanvix-**
+	 @rm -rf $(BINDIR)
 	 @find $(SRCDIR) -name "*.o" -exec rm -rf {} \;
 
 #===============================================================================
