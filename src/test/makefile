@@ -45,10 +45,10 @@ OBJ = $(SRC:.c=.$(OBJ_SUFFIX).o)
 # Builds All Object Files
 all: $(OBJ)
 ifeq ($(VERBOSE), no)
-	@echo [CC] $(EXEC)
-	@$(CC) $(LDFLAGS) -L $(LINKERDIR)/ -T link.ld -o $(EXEC) $(OBJ) $(LIBS)
+	@echo [CC] $(BINDIR)/$(EXEC)
+	@$(CC) $(LDFLAGS) -L $(LINKERDIR)/ -T link.ld -o $(BINDIR)/$(EXEC) $(OBJ) $(LIBS)
 else
-	$(CC) $(LDFLAGS) -L $(LINKERDIR)/ -T link.ld -o $(EXEC) $(OBJ) $(LIBS)
+	$(CC) $(LDFLAGS) -L $(LINKERDIR)/ -T link.ld -o $(BINDIR)/$(EXEC) $(OBJ) $(LIBS)
 endif
 
 # Cleans All Object Files
@@ -63,10 +63,10 @@ endif
 # Cleans Everything
 distclean: clean
 ifeq ($(VERBOSE), no)
-	@echo [CLEAN] $(EXEC)
-	@rm -rf $(EXEC)
+	@echo [CLEAN] $(BINDIR)/$(EXEC)
+	@rm -rf $(BINDIR)/$(EXEC)
 else
-	rm -rf $(EXEC))
+	rm -rf $(BINDIR)/$(EXEC)
 endif
 
 # Builds a C Source file

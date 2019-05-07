@@ -26,21 +26,21 @@
 #include <nanvix/const.h>
 
 /**
- * @brief Clock frequency.
+ * @brief Timer frequency.
  */
-#define CLOCK_FREQ 30
+#define TIMER_FREQ 30
 
 /**
- * @brief Clock interrupts since system initialization.
+ * @brief Timer interrupts since system initialization.
  */
 PRIVATE unsigned ticks = 0;
 
 /**
- * @brief Handles a clock interrupt.
+ * @brief Handles a timer interrupt.
  *
  * @param num Number of interrupt (currently unused).
  */
-PRIVATE void do_clock(int num)
+PRIVATE void do_timer(int num)
 {
 	UNUSED(num);
 
@@ -56,6 +56,6 @@ PRIVATE void do_clock(int num)
  */
 PUBLIC void dev_init(void)
 {
-	clock_init(CLOCK_FREQ);
-	KASSERT(interrupt_register(INTERRUPT_CLOCK, do_clock) == 0);
+	timer_init(TIMER_FREQ);
+	KASSERT(interrupt_register(INTERRUPT_TIMER, do_timer) == 0);
 }

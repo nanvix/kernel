@@ -47,17 +47,32 @@ libs: kernel
 test: libs kernel
 	$(MAKE) -C test all
 
-# Cleans Everything
+# Cleans Build Objects
 clean: clean-kernel clean-libs clean-test
 
-# Cleans Kernel Build
+# Cleans Kernel Build Objects
 clean-kernel:
 	$(MAKE) -C kernel clean
 
-# Cleans User Libraries Build
+# Cleans User Libraries Build Objects
 clean-libs:
 	$(MAKE) -C libs clean
 
-# Cleans Test Driver Build
+# Cleans Test Driver Build Objects
 clean-test:
 	$(MAKE) -C test clean
+
+# Cleans Everything
+distclean: distclean-kernel distclean-libs distclean-test
+
+# Cleans Kernel Build
+distclean-kernel:
+	$(MAKE) -C kernel distclean
+
+# Cleans User Libraries Build
+distclean-libs:
+	$(MAKE) -C libs distclean
+
+# Cleans Test Driver Build
+distclean-test:
+	$(MAKE) -C test distclean

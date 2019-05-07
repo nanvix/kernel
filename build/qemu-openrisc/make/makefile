@@ -26,7 +26,7 @@
 # Target Configuration
 #===============================================================================
 
-export CFLAGS += -D __qemu_openrisc__ # Target
+export CFLAGS  = -D __qemu_openrisc__ # Target
 export CFLAGS += -D __openrisc__      # Processor
 export CFLAGS += -D __or1k_cluster__  # Cluster
 export CFLAGS += -D __or1k__          # Core
@@ -68,6 +68,10 @@ export THEIR_LIBS := -lgcc
 all-target:
 	$(MAKE) -C $(SRCDIR) all
 
-# Cleans everything.
+# Cleans objects.
 clean-target:
 	$(MAKE) -C $(SRCDIR) clean
+
+# Cleans everything.
+distclean-target: clean-target
+	$(MAKE) -C $(SRCDIR) distclean

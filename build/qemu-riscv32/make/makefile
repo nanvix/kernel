@@ -26,7 +26,7 @@
 # Target Configuration
 #===============================================================================
 
-export CFLAGS += -D __qemu_riscv32__    # Target
+export CFLAGS  = -D __qemu_riscv32__    # Target
 export CFLAGS += -D __riscv32__         # Processor
 export CFLAGS += -D __riscv32_cluster__ # Cluster
 export CFLAGS += -D __rv32gc__          # Core
@@ -71,6 +71,10 @@ export THEIR_LIBS := -lgcc
 all-target:
 	$(MAKE) -C $(SRCDIR) all
 
-# Cleans everything.
+# Cleans objects.
 clean-target:
 	$(MAKE) -C $(SRCDIR) clean
+
+# Cleans everything.
+distclean-target: clean-target
+	$(MAKE) -C $(SRCDIR) distclean

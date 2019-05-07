@@ -26,7 +26,7 @@
 # Target Configuration
 #===============================================================================
 
-export CFLAGS += -D __qemu_x86__    # Target
+export CFLAGS  = -D __qemu_x86__    # Target
 export CFLAGS += -D __x86__         # Processor
 export CFLAGS += -D __x86_cluster__ # Cluster
 export CFLAGS += -D __i486__        # Core
@@ -66,6 +66,10 @@ export THEIR_LIBS := -lgcc
 all-target:
 	$(MAKE) -C $(SRCDIR) all
 
-# Cleans everything.
+# Cleans objects.
 clean-target:
 	$(MAKE) -C $(SRCDIR) clean
+
+# Cleans everything.
+distclean-target: clean-target
+	$(MAKE) -C $(SRCDIR) distclean
