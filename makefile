@@ -29,6 +29,9 @@
 # Verbose Build?
 export VERBOSE ?= no
 
+# Release Version?
+export RELEASE ?= no
+
 # Installation Prefix
 export PREFIX ?= $(HOME)
 
