@@ -48,8 +48,14 @@ int nanvix_mutex_init(struct nanvix_mutex *m)
 
 	m->locked = false;
 	m->lock = SPINLOCK_UNLOCKED;
-	for (int i = 0; i < THREAD_MAX; i++)
-		m->tids[i] = -1;
+
+	#ifdef __NANVIX_MUTEX_SLEEP
+
+		for (int i = 0; i < THREAD_MAX; i++)
+			m->tids[i] = -1;
+
+	#endif /* __NANVIX_MUTEX_SLEEP */
+
 	dcache_invalidate();
 
 	return (0);
@@ -69,29 +75,41 @@ int nanvix_mutex_init(struct nanvix_mutex *m)
  */
 int nanvix_mutex_lock(struct nanvix_mutex *m)
 {
-	kthread_t tid;
+	#ifdef __NANVIX_MUTEX_SLEEP
+
+		kthread_t tid;
+
+	#endif /* __NANVIX_MUTEX_SLEEP */
 
 	/* Invalid mutex. */
 	if (m == NULL)
 		return (-EINVAL);
 
-	tid = kthread_self();
+	#ifdef __NANVIX_MUTEX_SLEEP
+
+		tid = kthread_self();
+
+	#endif /* __NANVIX_MUTEX_SLEEP */
 
 	do
 	{
 		spinlock_lock(&m->lock);
 
-			/* Dequeue kernel thread. */
-			for (int i = 0; i < THREAD_MAX; i++)
-			{
-				if (m->tids[i] == tid)
+			#ifdef __NANVIX_MUTEX_SLEEP
+
+				/* Dequeue kernel thread. */
+				for (int i = 0; i < THREAD_MAX; i++)
 				{
-					for (int j = i; j < (THREAD_MAX - 1); j++)
-						m->tids[j] = m->tids[j + 1];
-					m->tids[THREAD_MAX - 1] = -1;
-					break;
+					if (m->tids[i] == tid)
+					{
+						for (int j = i; j < (THREAD_MAX - 1); j++)
+							m->tids[j] = m->tids[j + 1];
+						m->tids[THREAD_MAX - 1] = -1;
+						break;
+					}
 				}
-			}
+
+			#endif /* __NANVIX_MUTEX_SLEEP */
 
 			/* Lock. */
 			if (!m->locked)
@@ -101,19 +119,27 @@ int nanvix_mutex_lock(struct nanvix_mutex *m)
 				break;
 			}
 
-			/* Enqueue kernel thread. */
-			for (int i = 0; i < THREAD_MAX; i++)
-			{
-				if (m->tids[i] == -1)
+			#ifdef __NANVIX_MUTEX_SLEEP
+
+				/* Enqueue kernel thread. */
+				for (int i = 0; i < THREAD_MAX; i++)
 				{
-					m->tids[i] = tid;
-					break;
+					if (m->tids[i] == -1)
+					{
+						m->tids[i] = tid;
+						break;
+					}
 				}
-			}
+
+			#endif /* __NANVIX_MUTEX_SLEEP */
 
 		spinlock_unlock(&m->lock);
 
-		sleep();
+		#ifdef __NANVIX_MUTEX_SLEEP
+
+			sleep();
+
+		#endif /* __NANVIX_MUTEX_SLEEP */
 	} while (true);
 
 	return (0);
@@ -137,18 +163,24 @@ int nanvix_mutex_unlock(struct nanvix_mutex *m)
 	if (m == NULL)
 		return (-EINVAL);
 
+#ifdef __NANVIX_MUTEX_SLEEP
+
 again:
+
+#endif /* __NANVIX_MUTEX_SLEEP */
 
 	spinlock_lock(&m->lock);
 
-		if (m->tids[0] != -1)
-		{
-			if (wakeup(m->tids[0]) != 0)
+		#ifdef __NANVIX_MUTEX_SLEEP
+			if (m->tids[0] != -1)
 			{
-				spinlock_unlock(&m->lock);
-				goto again;
+				if (wakeup(m->tids[0]) != 0)
+				{
+					spinlock_unlock(&m->lock);
+					goto again;
+				}
 			}
-		}
+		#endif /* __NANVIX_MUTEX_SLEEP */
 
 		m->locked = false;
 

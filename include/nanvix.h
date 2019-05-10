@@ -180,7 +180,12 @@
 	{
 		bool locked;                /**< Locked?           */
 		spinlock_t lock;            /**< Lock.             */
-		kthread_t tids[THREAD_MAX]; /**< Sleeping threads. */
+
+		#ifdef __NANVIX_MUTEX_SLEEP
+
+			kthread_t tids[THREAD_MAX]; /**< Sleeping threads. */
+
+		#endif /* __NANVIX_MUTEX_SLEEP */
 	};
 
 	/**
