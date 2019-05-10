@@ -168,6 +168,54 @@
 
 #endif /* CORES_NUM > 1 */
 
+/*============================================================================*
+ * Semaphore                                                                  *
+ *============================================================================*/
+
+	#if (CORES_NUM > 1)
+
+		/**
+		 * @brief Semaphore.
+		 */
+		struct nanvix_semaphore
+		{
+			int val;                    /**< Semaphore value.  */
+			spinlock_t lock;            /**< Lock.             */
+			kthread_t tids[THREAD_MAX]; /**< Sleeping threads. */
+		};
+
+		/**
+		 * @brief Initializes a semaphore.
+		 *
+		 * @param m Target semaphore.
+		 *
+		 * @param Upon sucessful completion, zero is returned. Upon failure, a
+		 * negative error code is returned instead.
+		 */
+		extern int nanvix_semaphore_init(struct nanvix_semaphore *sem, int val);
+
+		/**
+		 * @brief Performs a down operation on a semaphore.
+		 *
+		 * @param m Target semaphore.
+		 *
+		 * @param Upon sucessful completion, zero is returned. Upon failure, a
+		 * negative error code is returned instead.
+		 */
+		extern int nanvix_semaphore_down(struct nanvix_semaphore *sem);
+
+		/**
+		 * @brief Performs an up operation on a semaphore.
+		 *
+		 * @param m Target semaphore.
+		 *
+		 * @param Upon sucessful completion, zero is returned. Upon failure, a
+		 * negative error code is returned instead.
+		 */
+		extern int nanvix_semaphore_up(struct nanvix_semaphore *sem);
+
+	#endif
+
 /**@}*/
 
 #endif /* NANVIX_H_ */
