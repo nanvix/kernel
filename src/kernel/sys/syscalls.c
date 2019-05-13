@@ -109,6 +109,13 @@ PUBLIC void do_syscall2(void)
 
 #endif
 
+			case NR_sigclt:
+				ret = sys_sigclt(
+					(int) sysboard[coreid].arg0,
+					(struct sigaction *) sysboard[coreid].arg1
+				);
+				break;
+
 			default:
 				break;
 		}
@@ -198,6 +205,26 @@ PUBLIC int do_syscall(
 			ret64 = sys_perf_read((int) arg0);
 			ret = (int)(ret64 & 0xffffffff);
 		} break;
+
+		case NR_alarm:
+			ret = sys_alarm((int) arg0);
+			break;
+
+		case NR_sigsend:
+			ret = sys_sigsend(
+				(int) arg0,
+				(int) arg1
+			);
+			break;
+
+		case NR_sigwait:
+			ret = sys_sigwait((int) arg0);
+			break;
+
+		case NR_sigreturn:
+			sys_sigreturn();
+			ret = 0;
+			break;
 
 		/* Forward system call. */
 		default:

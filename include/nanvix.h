@@ -121,6 +121,16 @@
 	extern uint64_t nanvix_perf_read(int perf);
 
 /*============================================================================*
+ * Signal                                                                     *
+ *============================================================================*/
+
+	extern int ksigclt(int signum, struct sigaction * sigact);
+	extern int kalarm(int seconds);
+	extern int ksigsend(int signum, int tid);
+	extern int ksigwait(int signum);
+	extern int ksigreturn(void);
+
+/*============================================================================*
  * Mutex                                                                      *
  *============================================================================*/
 
