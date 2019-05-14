@@ -40,6 +40,14 @@
 /**@{*/
 
 	/**
+	 * @name Memory area identification
+	 */
+	/**@{*/
+	#define KMEM_AREA 0 /**< Kernel memory area. */
+	#define UMEM_AREA 1 /**< User memory area.   */
+	/**@}*/
+
+	/**
 	 * @brief Initializes the Memory Management (MM) system.
 	 */
 	EXTERN void mm_init(void);
@@ -73,6 +81,31 @@
 			((vaddr >= KBASE_VIRT) && (vaddr < (KBASE_VIRT + KMEM_SIZE)))  ||
 			((vaddr >= KPOOL_VIRT) && (vaddr < (KPOOL_VIRT + KPOOL_SIZE)))
 		);
+	}
+
+	/**
+	 * @brief Checks access permissions to a memory area.
+	 * 
+	 * @param addr Address to be checked.
+	 * @param size Size of memory area.
+	 * @param area User memory area.
+	 * 
+	 * @returns Non-zero if access is authorized, and zero otherwise.
+	 */
+	static inline int mm_check_area(vaddr_t vaddr, uint64_t size, int area)
+	{
+	#ifndef __mppa256__
+		if (area == UMEM_AREA)
+			return mm_is_uaddr(vaddr) && mm_is_uaddr(vaddr + size);
+		else
+			return mm_is_kaddr(vaddr) && mm_is_kaddr(vaddr + size);
+	#else
+		UNUSED(vaddr);
+		UNUSED(size);
+		UNUSED(area);
+
+		return (1);
+	#endif
 	}
 
 /**@}*/

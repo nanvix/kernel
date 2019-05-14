@@ -43,7 +43,7 @@
 	 *
 	 * @note This should be set to the highest system call number.
 	 */
-	#define NR_SYSCALLS 18
+	#define NR_SYSCALLS 19
 
 	/**
 	 * @name System Call Numbers
@@ -69,6 +69,10 @@
 	#define NR_sigreturn    18 /**< sys_perf_read()     */
 	/**@}*/
 
+/*============================================================================*
+ *                            Thread system syscalls                          *
+ *============================================================================*/
+
 	EXTERN void sys_exit(int);
 	EXTERN ssize_t sys_write(int, const char *, size_t);
 	EXTERN int sys_thread_get_id(void);
@@ -85,6 +89,10 @@
 	 * return.Upon failure, a negative error code is returned instead.
 	 */
 	EXTERN int sys_shutdown(void);
+
+/*============================================================================*
+ *                              Perf System syscalls                          *
+ *============================================================================*/
 
 	/**
 	 * @brief Queries a performance event.
@@ -130,10 +138,63 @@
 	 */
 	EXTERN uint64_t sys_perf_read(int perf);
 
+/*============================================================================*
+ *                           Signal system syscalls                           *
+ *============================================================================*/
+
+	/**
+	 * @brief Controls the behavior of a signal.
+	 *
+	 * The sigclt() function modifies the treatment of a signal.
+     * 
+     * @param signum Signal ID.
+     * @param sigact Behavior descriptor.
+	 *
+	 * @returns Zero if successfully changes the behavior, non zero otherwise.
+	 */
 	EXTERN int sys_sigclt(int signum, struct sigaction * sigact);
+
+	/**
+	 * @brief Schedules an alarm signal.
+	 *
+	 * The alarm() function schedule an alarm signal to trigger when
+     * the @seconds seconds pass.
+     *
+     * @param seconds Time in seconds.
+	 *
+	 * @returns Zero if successfully register the alarm, non zero otherwise.
+	 */
 	EXTERN int sys_alarm(int seconds);
+
+	/**
+	 * @brief Sends a signal.
+	 *
+	 * The sigsend() function sends a signal @signum to another thread @tid.
+     * 
+     * @param signum Signal ID.
+     * @param tid    Thread ID.
+	 *
+	 * @returns Zero if successfully sends the signal, non zero otherwise.
+	 */
 	EXTERN int sys_sigsend(int signum, int tid);
+
+	/**
+	 * @brief Waits for the receipt of a signal.
+	 *
+	 * The sigwait() function waits for the receipt of a @signum signal.
+     *
+     * @param signum Signal ID.
+	 *
+	 * @returns Zero if successfully receives the signal, non zero otherwise.
+	 */
 	EXTERN int sys_sigwait(int signum);
+
+	/**
+	 * @brief Returns from a signal handler.
+	 *
+	 * The sigreturn() function returns from a signal handler, restoring the
+     * execution stream.
+	 */
 	EXTERN void sys_sigreturn(void);
 
 /**@}*/

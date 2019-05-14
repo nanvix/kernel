@@ -24,44 +24,70 @@
 
 #include <nanvix/hal/hal.h>
 #include <nanvix/const.h>
+#include <nanvix/mm.h>
 #include <nanvix/signal.h>
 #include <errno.h>
 
+/**
+ * @brief Signal Handlers Table lock.
+ */
+spinlock_t sigtab_lock = SPINLOCK_UNLOCKED;
 
 /**
- * @brief Information about signal.
+ * @brief Table information about signals.
  */
 EXTENSION PRIVATE struct signal_info
 {
-	sa_handler handler; /**< Handler */
-} ALIGN(sizeof(dword_t)) signals[EXCEPTIONS_NUM] = {
-	[0 ... (EXCEPTIONS_NUM - 1)] = {
-		.handler = NULL
-	},
+	sa_handler handler; /**< Signal handler */
+} ALIGN(CACHE_LINE_SIZE) signals[EXCEPTIONS_NUM] = {
+	[0 ... (EXCEPTIONS_NUM - 1)] = { .handler = NULL },
 };
 
+/*============================================================================*
+ * signal_handler()                                                           *
+ *============================================================================*/
+
 /**
- * @brief Signal handler
+ * @brief Wrapper to receive exceptions passed by the HAL.
+ *
+ * The signal_handler() function deal with exceptions from HAL and
+ * pass them to userspace by upcall.
+ *
+ * @param excp Exception emitted.
+ * @param ctx  Interrupted context.
  */
 PRIVATE void signal_handler(
 	const struct exception *excp,
 	const struct context *ctx
 )
 {
-	word_t signum;
+	dword_t signum;
 
 	signum = excp->num;
 
-	if (signals[signum].handler)
-	{
-		/* Forge upcall. */
-		upcall_forge(
-			(struct context *) ctx,
-			signals[signum].handler,
-			&signum,
-			sizeof(word_t)
-		);
-	}
+	spinlock_lock(&sigtab_lock);
+
+		/* Concurrent anomaly? */
+		if (signals[signum].handler == NULL)
+		{
+			spinlock_unlock(&sigtab_lock);
+
+			kpanic("Forwards a signal to an undefined user handler");
+
+			UNREACHABLE();
+		}
+
+		sa_handler handler = signals[signum].handler;
+
+	spinlock_unlock(&sigtab_lock);
+
+	/* Forge upcall. */
+	upcall_forge(
+		(struct context *) ctx,
+		handler,
+		&signum,
+		sizeof(dword_t)
+	);
 }
 
 /*============================================================================*
@@ -81,31 +107,43 @@ PRIVATE void signal_handler(
 PUBLIC int sigclt(int signum, struct sigaction * sigact)
 {
 	int ret;
+	int without_handler;
 
 	/* Invalid signal ID. */
-	if ((signum < 0) || (signum >= EXCEPTIONS_NUM))
+	if (!WITHIN(signum, 0, EXCEPTIONS_NUM))
 		return (-EINVAL);
 
 	/* Unchanged the signal. */
 	if (sigact == NULL)
 		return (-EAGAIN);
 
+	/* Registration operation? */
 	if (sigact->handler != NULL)
 	{
 		ret = 0;
 
-		if (signals[signum].handler == NULL)
+		spinlock_lock(&sigtab_lock);
+
+			without_handler = (signals[signum].handler == NULL);
+
+		spinlock_unlock(&sigtab_lock);
+
+		if (without_handler)
 			ret = exception_register(signum, signal_handler);
 	}
 	else
 		ret = exception_unregister(signum);
 
+	/* Did it fail in some operation? */
 	if (ret != 0)
 		return (ret);
 
-	signals[signum].handler = sigact->handler;
+	spinlock_lock(&sigtab_lock);
 
-	dcache_invalidate();
+		/* Sets signal handler */
+		signals[signum].handler = sigact->handler;
 
-	return 0;
+	spinlock_unlock(&sigtab_lock);
+
+	return (0);
 }

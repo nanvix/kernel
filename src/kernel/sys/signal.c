@@ -23,6 +23,7 @@
  */
 
 #include <nanvix/const.h>
+#include <nanvix/mm.h>
 #include <nanvix/signal.h>
 #include <errno.h>
 
@@ -33,8 +34,16 @@
 PUBLIC int sys_sigclt(int signum, struct sigaction * sigact)
 {
 	if (sigact == NULL)
-		return (-EINVAL);
-	
+		return (-EAGAIN);
+
+	/* Bad struct location. */
+	if (!mm_check_area(VADDR(sigact), sizeof(struct sigaction), UMEM_AREA))
+		return (-EFAULT);
+
+	/* Bad handler address. */
+	if (!mm_check_area(VADDR(sigact->handler), 0, UMEM_AREA))
+		return (-EFAULT);
+
 	return sigclt(signum, sigact);
 }
 

@@ -60,16 +60,16 @@
 	 */
 	struct sigaction
 	{
-        sa_handler handler; /**< Pointer to a signal-catching function. */
+		sa_handler handler; /**< Pointer to a signal-catching function. */
 	};
 
 	/**
 	 * @brief Controls the behavior of a signal.
 	 *
 	 * The sigclt() function modifies the treatment of a signal.
-     * 
-     * @param signum Signal ID.
-     * @param sigact Behavior descriptor.
+	 *
+	 * @param signum Signal ID.
+	 * @param sigact Behavior descriptor.
 	 *
 	 * @returns Zero if successfully changes the behavior, non zero otherwise.
 	 */
@@ -79,63 +79,63 @@
 	 * @brief Schedules an alarm signal.
 	 *
 	 * The alarm() function schedule an alarm signal to trigger when
-     * the @seconds seconds pass.
-     *
-     * @param seconds Time in seconds.
+	 * the @seconds seconds pass.
+	 *
+	 * @param seconds Time in seconds.
 	 *
 	 * @returns Zero if successfully register the alarm, non zero otherwise.
 	 */
 	static int alarm(int seconds)
-    {
-        UNUSED(seconds);
+	{
+		UNUSED(seconds);
 
-        return (0);
-    }
+		return (0);
+	}
 
 	/**
 	 * @brief Sends a signal.
 	 *
 	 * The sigsend() function sends a signal @signum to another thread @tid.
-     * 
-     * @param signum Signal ID.
-     * @param tid    Thread ID.
+	 *
+	 * @param signum Signal ID.
+	 * @param tid    Thread ID.
 	 *
 	 * @returns Zero if successfully sends the signal, non zero otherwise.
 	 */
 	static int sigsend(int signum, int tid)
-    {
-        UNUSED(signum);
-        UNUSED(tid);
+	{
+		UNUSED(signum);
+		UNUSED(tid);
 
-        return (0);
-    }
+		return (0);
+	}
 
 	/**
 	 * @brief Waits for the receipt of a signal.
 	 *
 	 * The sigwait() function waits for the receipt of a @signum signal.
-     *
-     * @param signum Signal ID.
+	 *
+	 * @param signum Signal ID.
 	 *
 	 * @returns Zero if successfully receives the signal, non zero otherwise.
 	 */
 	static inline int sigwait(int signum)
-    {
-        UNUSED(signum);
+	{
+		UNUSED(signum);
 
-        return (0);
-    }
+		return (0);
+	}
 
 	/**
 	 * @brief Returns from a signal handler.
 	 *
 	 * The sigreturn() function returns from a signal handler, restoring the
-     * execution stream.
+	 * execution stream.
 	 */
-	static inline void sigreturn()
-    {
+	static inline void sigreturn(void)
+	{
 
-    }
+	}
 
 #endif /* NANVIX_SIGNAL_H_ */
 

@@ -44,9 +44,9 @@
  *
  * @author João Vicente Souto
  */
-static void dummy_handler(void * arg)
+void dummy_handler(void * arg)
 {
-	int signum = *((int *) arg);
+	dword_t signum = *((dword_t *) arg);
 
 	KASSERT(signum == SIGPGFAULT);
 }
@@ -65,10 +65,10 @@ void test_api_signal_action(void)
 	KASSERT(ksigclt(SIGPGFAULT, &sigact) == 0);
 
 #if (SIGNAL_DESTRUCTIVE_TEST)
-	
+
 	int b;
 	int *a = (int *) 0xdeadbeef;
-	
+
 	/* Page fault (Infinite loop) */
 	b = *a;
 
