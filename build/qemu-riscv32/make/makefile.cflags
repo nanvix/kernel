@@ -24,18 +24,7 @@
 
 ifeq ($(RELEASE), true)
 
-	# Turn Off Debug Sections
-	export CFLAGS += -D NDEBUG
-
-	# Target-Specific Optimization Flags
-	include $(MAKEDIR)/makefile.cflags
-
-else
-
-	# Build with Level 0 Optimization
-	export CFLAGS += -O0
-
-	# Further Help on Debugging
-	export CFLAGS += -g
+	# Switch to Level 3 Optimizations
+	export CFLAGS += -O3
 
 endif
