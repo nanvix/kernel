@@ -1,10 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
- *              2015-2017 Davidson Francis     <davidsondfgl@gmail.com>
- *              2016-2016 Subhra S. Sarkar     <rurtle.coder@gmail.com>
- *              2017-2017 Romane Gallier       <romanegallier@gmail.com>
+ * Copyright(c) 2011-2019 The Maintainers of Nanvix
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
