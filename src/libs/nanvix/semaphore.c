@@ -50,7 +50,7 @@ int nanvix_semaphore_init(struct nanvix_semaphore *sem, int val)
 	sem->val = val;
 	sem->lock = SPINLOCK_UNLOCKED;
 
-	#ifdef __NANVIX_SEMAPHORE_SLEEP
+	#if (__NANVIX_SEMAPHORE_SLEEP)
 
 		for (int i = 0; i < THREAD_MAX; i++)
 			sem->tids[i] = -1;
@@ -74,7 +74,7 @@ int nanvix_semaphore_init(struct nanvix_semaphore *sem, int val)
  */
 int nanvix_semaphore_down(struct nanvix_semaphore *sem)
 {
-	#ifdef __NANVIX_SEMAPHORE_SLEEP
+	#if (__NANVIX_SEMAPHORE_SLEEP)
 
 		kthread_t tid;
 
@@ -84,7 +84,7 @@ int nanvix_semaphore_down(struct nanvix_semaphore *sem)
 	if (sem == NULL)
 		return (-EINVAL);
 
-	#ifdef __NANVIX_SEMAPHORE_SLEEP
+	#if (__NANVIX_SEMAPHORE_SLEEP)
 
 		tid = kthread_self();
 
@@ -94,7 +94,7 @@ int nanvix_semaphore_down(struct nanvix_semaphore *sem)
 	{
 		spinlock_lock(&sem->lock);
 
-			#ifdef __NANVIX_SEMAPHORE_SLEEP
+			#if (__NANVIX_SEMAPHORE_SLEEP)
 
 				/* Dequeue kernel thread. */
 				for (int i = 0; i < THREAD_MAX; i++)
@@ -118,7 +118,7 @@ int nanvix_semaphore_down(struct nanvix_semaphore *sem)
 				break;
 			}
 
-			#ifdef __NANVIX_SEMAPHORE_SLEEP
+			#if (__NANVIX_SEMAPHORE_SLEEP)
 
 				/* Enqueue kernel thread. */
 				for (int i = 0; i < THREAD_MAX; i++)
@@ -135,7 +135,7 @@ int nanvix_semaphore_down(struct nanvix_semaphore *sem)
 		spinlock_unlock(&sem->lock);
 
 
-		#ifdef __NANVIX_SEMAPHORE_SLEEP
+		#if (__NANVIX_SEMAPHORE_SLEEP)
 
 			sleep();
 
@@ -162,7 +162,7 @@ int nanvix_semaphore_up(struct nanvix_semaphore *sem)
 	if (sem == NULL)
 		return (-EINVAL);
 
-#ifdef __NANVIX_SEMAPHORE_SLEEP
+#if (__NANVIX_SEMAPHORE_SLEEP)
 
 again:
 
@@ -170,7 +170,7 @@ again:
 
 	spinlock_lock(&sem->lock);
 
-		#ifdef __NANVIX_SEMAPHORE_SLEEP
+		#if (__NANVIX_SEMAPHORE_SLEEP)
 
 			if (sem->tids[0] != -1)
 			{

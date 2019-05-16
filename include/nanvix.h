@@ -34,12 +34,10 @@
 #define NANVIX_H_
 
 	#include <nanvix/syscall.h>
+	#include <nanvix/config.h>
 	#include <sys/types.h>
 	#include <stdbool.h>
 	#include <stdint.h>
-
-	#define __NANVIX_MUTEX_SLEEP
-	#define __NANVIX_SEMAPHORE_SLEEP
 
 /*============================================================================*
  * Kernel Threads                                                             *
@@ -188,7 +186,7 @@
 		bool locked;                /**< Locked?           */
 		spinlock_t lock;            /**< Lock.             */
 
-		#ifdef __NANVIX_MUTEX_SLEEP
+		#if (__NANVIX_MUTEX_SLEEP)
 
 			kthread_t tids[THREAD_MAX]; /**< Sleeping threads. */
 
@@ -241,11 +239,11 @@
 			int val;                    /**< Semaphore value.  */
 			spinlock_t lock;            /**< Lock.             */
 
-			#ifdef __NANVIX_MUTEX_SLEEP
+			#if (__NANVIX_SEMAPHORE_SLEEP)
 
 				kthread_t tids[THREAD_MAX]; /**< Sleeping threads. */
 
-			#endif /* __NANVIX_MUTEX_SLEEP */
+			#endif /* __NANVIX_SEMAPHORE_SLEEP */
 		};
 
 		/**
