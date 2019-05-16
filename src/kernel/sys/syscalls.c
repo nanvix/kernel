@@ -183,29 +183,6 @@ PUBLIC int do_syscall(
 			ret = sys_shutdown();
 			break;
 
-		case NR_perf_query:
-			ret = sys_perf_query((int) arg0);
-			break;
-
-		case NR_perf_start:
-			ret = sys_perf_start(
-				(int) arg0,
-				(int) arg1
-			);
-			break;
-
-		case NR_perf_stop:
-			ret = sys_perf_stop((int) arg0);
-			break;
-
-		case NR_perf_read:
-		{
-			uint64_t ret64;
-
-			ret64 = sys_perf_read((int) arg0);
-			ret = (int)(ret64 & 0xffffffff);
-		} break;
-
 		case NR_alarm:
 			ret = sys_alarm((int) arg0);
 			break;

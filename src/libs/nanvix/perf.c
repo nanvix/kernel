@@ -23,7 +23,7 @@
  * SOFTWARE.
  */
 
-#include <nanvix/syscall.h>
+#include <nanvix/hal/hal.h>
 #include <stdint.h>
 
 /**
@@ -31,21 +31,7 @@
  */
 PUBLIC int nanvix_perf_query(int event)
 {
-	int ret;
-
-	ret = syscall1(
-		NR_perf_query,
-		(word_t) event
-	);
-
-	/* System call failed. */
-	if (ret < 0)
-	{
-		errno = -ret;
-		return (-1);
-	}
-
-	return (ret);
+	return (perf_query(event));
 }
 
 /**
@@ -53,22 +39,7 @@ PUBLIC int nanvix_perf_query(int event)
  */
 PUBLIC int nanvix_perf_start(int perf, int event)
 {
-	int ret;
-
-	ret = syscall2(
-		NR_perf_start,
-		(word_t) perf,
-		(word_t) event
-	);
-
-	/* System call failed. */
-	if (ret < 0)
-	{
-		errno = -ret;
-		return (-1);
-	}
-
-	return (ret);
+	return (perf_start(perf, event));
 }
 
 /**
@@ -76,21 +47,7 @@ PUBLIC int nanvix_perf_start(int perf, int event)
  */
 PUBLIC int nanvix_perf_stop(int perf)
 {
-	int ret;
-
-	ret = syscall1(
-		NR_perf_stop,
-		(word_t) perf
-	);
-
-	/* System call failed. */
-	if (ret < 0)
-	{
-		errno = -ret;
-		return (-1);
-	}
-
-	return (ret);
+	return (perf_stop(perf));
 }
 
 /**
@@ -98,12 +55,5 @@ PUBLIC int nanvix_perf_stop(int perf)
  */
 PUBLIC uint64_t nanvix_perf_read(int perf)
 {
-	uint32_t ret;
-
-	ret = syscall1(
-		NR_perf_read,
-		(word_t) perf
-	);
-
-	return (ret);
+	return (perf_read(perf));
 }
