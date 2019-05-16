@@ -48,7 +48,7 @@ PRIVATE struct sysboard
 	int ret;                 /**< Return value of system call.     */
 	struct semaphore syssem; /**< Semaphore.                       */
 	int pending;
-} __attribute__((aligned(CACHE_LINE_SIZE))) sysboard[CORES_NUM];
+} ALIGN(CACHE_LINE_SIZE) sysboard[CORES_NUM];
 
 /**
  * @brief Handles a system call IPI.
