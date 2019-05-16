@@ -34,7 +34,7 @@ SECTIONS
 	/* Bootstrap section. */
 	.bootstrap :
 	{
-		*boot.o *(.bootstrap)
+		*boot*.o *(.bootstrap)
 	}
 
 	. += 0xc0000000;
