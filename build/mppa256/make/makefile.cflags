@@ -35,7 +35,7 @@ ifeq ($(RELEASE), true)
 	export CFLAGS += -fcprop-registers
 	export CFLAGS += -fdce
 	export CFLAGS += -fdefer-pop
-	# export CFLAGS += -fdelayed-branch
+	# export CFLAGS += -fdelayed-branch                              # Not Supported in MPPA-256
 	export CFLAGS += -fdse
 	export CFLAGS += -fforward-propagate
 	export CFLAGS += -fguess-branch-probability
@@ -45,16 +45,16 @@ ifeq ($(RELEASE), true)
 	export CFLAGS += -fipa-profile
 	export CFLAGS += -fipa-pure-const
 	export CFLAGS += -fipa-reference
-	# export CFLAGS += -fipa-reference-addressable
+	# export CFLAGS += -fipa-reference-addressable                   # Not Supported in MPPA-256
 	export CFLAGS += -fmerge-constants
 	export CFLAGS += -fmove-loop-invariants
 	export CFLAGS += -fomit-frame-pointer
 	export CFLAGS += -freorder-blocks
 	export CFLAGS += -fshrink-wrap
-	# export CFLAGS += -fshrink-wrap-separate
+	# export CFLAGS += -fshrink-wrap-separate                        # Not Supported in MPPA-256
 	export CFLAGS += -fsplit-wide-types
-	# export CFLAGS += -fssa-backprop
-	# export CFLAGS += -fssa-phiopt
+	# export CFLAGS += -fssa-backprop                                # Not Supported in MPPA-256
+	# export CFLAGS += -fssa-phiopt                                  # Not Supported in MPPA-256
 	export CFLAGS += -ftree-bit-ccp
 	export CFLAGS += -ftree-ccp
 	export CFLAGS += -ftree-ch
@@ -78,7 +78,7 @@ ifeq ($(RELEASE), true)
 	export CFLAGS += -falign-functions -falign-jumps
 	export CFLAGS += -falign-labels -falign-loops
 	export CFLAGS += -fcaller-saves
-	# export CFLAGS += -fcode-hoisting
+	# export CFLAGS += -fcode-hoisting                               # Not Supported in MPPA-256
 	export CFLAGS += -fcrossjumping
 	export CFLAGS += -fcse-follow-jumps -fcse-skip-blocks
 	export CFLAGS += -fdelete-null-pointer-checks
@@ -88,25 +88,26 @@ ifeq ($(RELEASE), true)
 	export CFLAGS += -fhoist-adjacent-loads
 	export CFLAGS += -finline-small-functions
 	export CFLAGS += -findirect-inlining
-	# export CFLAGS += -fipa-bit-cp
+	# export CFLAGS += -fipa-bit-cp                                  # Not Supported in MPPA-256
 	export CFLAGS += -fipa-cp
-	# export CFLAGS += -fipa-icf
-	# export CFLAGS += -fipa-ra
+	# export CFLAGS += -fipa-icf                                     # Not Supported in MPPA-256
+	# export CFLAGS += -fipa-ra                                      # Not Supported in MPPA-256
 	export CFLAGS += -fipa-sra
-	# export CFLAGS += -fipa-vrp
+	# export CFLAGS += -fipa-vrp                                     # Not Supported in MPPA-256
 	export CFLAGS += -fisolate-erroneous-paths-dereference
-	# export CFLAGS += -flra-remat
+	# export CFLAGS += -flra-remat                                   # Not Supported in MPPA-256
 	export CFLAGS += -foptimize-sibling-calls
 	export CFLAGS += -foptimize-strlen
 	export CFLAGS += -fpartial-inlining
 	export CFLAGS += -fpeephole2
-	# export CFLAGS += -freorder-blocks-algorithm=stc
-	export CFLAGS += -freorder-blocks-and-partition -freorder-functions
+	# export CFLAGS += -freorder-blocks-algorithm=stc                # Not Supported in MPPA-256
+	# export CFLAGS += -freorder-blocks-and-partition                # Not Supported in MPPA-256
+	export CFLAGS += -freorder-functions
 	export CFLAGS += -frerun-cse-after-loop
 	export CFLAGS += -fschedule-insns -fschedule-insns2
 	export CFLAGS += -fsched-interblock -fsched-spec
-	# export CFLAGS += -fstore-merging
-	# export CFLAGS += -fstrict-aliasing
+	# export CFLAGS += -fstore-merging                               # Not Supported in MPPA-256
+	# export CFLAGS += -fstrict-aliasing                             # Not Supported in MPPA-256
 	export CFLAGS += -fthread-jumps
 	export CFLAGS += -ftree-builtin-call-dce
 	export CFLAGS += -ftree-pre
@@ -117,8 +118,8 @@ ifeq ($(RELEASE), true)
 	export CFLAGS += -fgcse-after-reload
 	export CFLAGS += -finline-functions
 	export CFLAGS += -fipa-cp-clone
-	# export CFLAGS += -floop-interchange
-	# export CFLAGS += -floop-unroll-and-jam
+	# export CFLAGS += -floop-interchange                            # Not Supported in MPPA-256
+	# export CFLAGS += -floop-unroll-and-jam                         # Not Supported in MPPA-256
 	export CFLAGS += -fpeel-loops
 	export CFLAGS += -fpredictive-commoning
 	# export CFLAGS += -fsplit-paths
@@ -129,6 +130,6 @@ ifeq ($(RELEASE), true)
 	export CFLAGS += -ftree-slp-vectorize
 	export CFLAGS += -funswitch-loops
 	export CFLAGS += -fvect-cost-model
-	# export CFLAGS += -fversion-loops-for-strides
+	# export CFLAGS += -fversion-loops-for-strides                   # Not Supported in MPPA-256
 
 endif
