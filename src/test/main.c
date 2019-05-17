@@ -93,6 +93,7 @@ static struct
 	{ test_nanvix_perf_api_read, "[test][user][api] read performance monitor       [passed]\n"  },
 #endif
 	{ test_api_signal_action,    "[test][user][api] signal (un)register behavior   [passed]\n"  },
+	{ test_fault_signal_action,  "[test][user][fault] signal (un)register behavior [passed]\n"  },
 	{ NULL,                       NULL                                                          },
 };
 

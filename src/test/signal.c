@@ -80,6 +80,34 @@ void test_api_signal_action(void)
 	KASSERT(ksigclt(SIGPGFAULT, &sigact) == 0);
 }
 
+/**
+ * @brief Fault Test: Register and unregister a handler
+ *
+ * @author João Vicente Souto
+ */
+void test_fault_signal_action(void)
+{
+	struct sigaction sigact;
+
+	sigact.handler = NULL;
+
+	/* Invalid Signal ID */
+	KASSERT(ksigclt(-1, &sigact) < 0);
+	KASSERT(ksigclt(EXCEPTIONS_NUM, &sigact) < 0);
+	KASSERT(ksigclt(EXCEPTIONS_NUM+1, &sigact) < 0);
+
+	/* Invalid sigaction */
+	KASSERT(ksigclt(SIGPGFAULT, NULL) < 0);
+
+	sigact.handler = dummy_handler;
+	KASSERT(ksigclt(SIGPGFAULT, &sigact) == 0);
+	KASSERT(ksigclt(SIGPGFAULT, NULL) < 0);
+
+	sigact.handler = NULL;
+	KASSERT(ksigclt(SIGPGFAULT, &sigact) == 0);
+	KASSERT(ksigclt(SIGPGFAULT, NULL) < 0);
+}
+
 /*============================================================================*/
 
 /**@endcond*/
