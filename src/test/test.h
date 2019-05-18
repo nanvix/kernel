@@ -52,6 +52,8 @@
 	extern void test_fault_sleep_wakeup(void);
 	extern void test_stress_sleep_wakeup(void);
 	extern void test_nanvix_perf_api_read(void);
+	extern void test_api_signal_action(void);
+	extern void test_fault_signal_action(void);
 	/**@}*/
 
 	/**
