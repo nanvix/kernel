@@ -43,7 +43,7 @@
 	 *
 	 * @note This should be set to the highest system call number.
 	 */
-	#define NR_SYSCALLS 14
+	#define NR_SYSCALLS 19
 
 	/**
 	 * @name System Call Numbers
@@ -62,6 +62,11 @@
 	#define NR_perf_start   11 /**< sys_perf_start()    */
 	#define NR_perf_stop    12 /**< sys_perf_stop()     */
 	#define NR_perf_read    13 /**< sys_perf_read()     */
+	#define NR_sigclt       14 /**< sys_perf_read()     */
+	#define NR_alarm        15 /**< sys_perf_read()     */
+	#define NR_sigsend      16 /**< sys_perf_read()     */
+	#define NR_sigwait      17 /**< sys_perf_read()     */
+	#define NR_sigreturn    18 /**< sys_perf_read()     */
 	/**@}*/
 
 	EXTERN void sys_exit(int);
