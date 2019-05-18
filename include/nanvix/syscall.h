@@ -69,6 +69,10 @@
 	#define NR_sigreturn    18 /**< sys_perf_read()     */
 	/**@}*/
 
+/*============================================================================*
+ * Thread system syscalls                                                     *
+ *============================================================================*/
+
 	EXTERN void sys_exit(int);
 	EXTERN ssize_t sys_write(int, const char *, size_t);
 	EXTERN int sys_thread_get_id(void);
@@ -85,6 +89,10 @@
 	 * return.Upon failure, a negative error code is returned instead.
 	 */
 	EXTERN int sys_shutdown(void);
+
+/*============================================================================*
+ * Perf System syscalls                                                       *
+ *============================================================================*/
 
 	/**
 	 * @brief Queries a performance event.
