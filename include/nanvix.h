@@ -121,6 +121,53 @@
 	extern uint64_t nanvix_perf_read(int perf);
 
 /*============================================================================*
+ * Signal                                                                     *
+ *============================================================================*/
+
+	/**
+	 * @brief Controls the behavior of a signal.
+	 *
+	 * @param signum Signal ID.
+	 * @param sigact Behavior descriptor.
+	 *
+	 * @returns Zero if successfully changes the behavior, non zero otherwise.
+	 */
+	extern int ksigclt(int signum, struct sigaction * sigact);
+
+	/**
+	 * @brief Schedules an alarm signal.
+	 *
+	 * @param seconds Time in seconds.
+	 *
+	 * @returns Zero if successfully register the alarm, non zero otherwise.
+	 */
+	extern int kalarm(int seconds);
+
+	/**
+	 * @brief Sends a signal.
+	 *
+	 * @param signum Signal ID.
+	 * @param tid    Thread ID.
+	 *
+	 * @returns Zero if successfully sends the signal, non zero otherwise.
+	 */
+	extern int ksigsend(int signum, int tid);
+
+	/**
+	 * @brief Waits for the receipt of a signal.
+	 *
+	 * @param signum Signal ID.
+	 *
+	 * @returns Zero if successfully receives the signal, non zero otherwise.
+	 */
+	extern int ksigwait(int signum);
+
+	/**
+	 * @brief Returns from a signal handler.
+	 */
+	extern int ksigreturn(void);
+
+/*============================================================================*
  * Mutex                                                                      *
  *============================================================================*/
 

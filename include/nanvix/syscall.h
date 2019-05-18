@@ -30,6 +30,7 @@
 
 	#include <nanvix/const.h>
 	#include <nanvix/thread.h>
+	#include <nanvix/signal.h>
 
 /**
  * @addtogroup kernel-syscalls System Calls
@@ -42,7 +43,7 @@
 	 *
 	 * @note This should be set to the highest system call number.
 	 */
-	#define NR_SYSCALLS 14
+	#define NR_SYSCALLS 19
 
 	/**
 	 * @name System Call Numbers
@@ -61,7 +62,16 @@
 	#define NR_perf_start   11 /**< sys_perf_start()    */
 	#define NR_perf_stop    12 /**< sys_perf_stop()     */
 	#define NR_perf_read    13 /**< sys_perf_read()     */
+	#define NR_sigclt       14 /**< sys_perf_read()     */
+	#define NR_alarm        15 /**< sys_perf_read()     */
+	#define NR_sigsend      16 /**< sys_perf_read()     */
+	#define NR_sigwait      17 /**< sys_perf_read()     */
+	#define NR_sigreturn    18 /**< sys_perf_read()     */
 	/**@}*/
+
+/*============================================================================*
+ * Thread system syscalls                                                     *
+ *============================================================================*/
 
 	EXTERN void sys_exit(int);
 	EXTERN ssize_t sys_write(int, const char *, size_t);
@@ -79,6 +89,10 @@
 	 * return.Upon failure, a negative error code is returned instead.
 	 */
 	EXTERN int sys_shutdown(void);
+
+/*============================================================================*
+ * Perf System syscalls                                                       *
+ *============================================================================*/
 
 	/**
 	 * @brief Queries a performance event.
@@ -123,6 +137,53 @@
 	 * converted to uint64_t is returned instead.
 	 */
 	EXTERN uint64_t sys_perf_read(int perf);
+
+/*============================================================================*
+ * Signal system syscalls                                                     *
+ *============================================================================*/
+
+	/**
+	 * @brief Controls the behavior of a signal.
+	 *
+	 * @param signum Signal ID.
+	 * @param sigact Behavior descriptor.
+	 *
+	 * @returns Zero if successfully changes the behavior, non zero otherwise.
+	 */
+	EXTERN int sys_sigclt(int signum, struct sigaction * sigact);
+
+	/**
+	 * @brief Schedules an alarm signal.
+	 *
+	 * @param seconds Time in seconds.
+	 *
+	 * @returns Zero if successfully register the alarm, non zero otherwise.
+	 */
+	EXTERN int sys_alarm(int seconds);
+
+	/**
+	 * @brief Sends a signal.
+	 *
+	 * @param signum Signal ID.
+	 * @param tid    Thread ID.
+	 *
+	 * @returns Zero if successfully sends the signal, non zero otherwise.
+	 */
+	EXTERN int sys_sigsend(int signum, int tid);
+
+	/**
+	 * @brief Waits for the receipt of a signal.
+	 *
+	 * @param signum Signal ID.
+	 *
+	 * @returns Zero if successfully receives the signal, non zero otherwise.
+	 */
+	EXTERN int sys_sigwait(int signum);
+
+	/**
+	 * @brief Returns from a signal handler.
+	 */
+	EXTERN void sys_sigreturn(void);
 
 /**@}*/
 

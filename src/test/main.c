@@ -92,6 +92,8 @@ static struct
 #if (CORE_HAS_PERF)
 	{ test_nanvix_perf_api_read, "[test][user][api] read performance monitor       [passed]\n"  },
 #endif
+	{ test_api_signal_action,    "[test][user][api] signal register/unregister     [passed]\n"  },
+	{ test_fault_signal_action,  "[test][user][fault] signal register/unregister   [passed]\n"  },
 	{ NULL,                       NULL                                                          },
 };
 
