@@ -30,6 +30,7 @@
 
 	#include <nanvix/const.h>
 	#include <nanvix/thread.h>
+	#include <nanvix/signal.h>
 
 /**
  * @addtogroup kernel-syscalls System Calls
@@ -123,6 +124,53 @@
 	 * converted to uint64_t is returned instead.
 	 */
 	EXTERN uint64_t sys_perf_read(int perf);
+
+/*============================================================================*
+ * Signal system syscalls                                                     *
+ *============================================================================*/
+
+	/**
+	 * @brief Controls the behavior of a signal.
+	 *
+	 * @param signum Signal ID.
+	 * @param sigact Behavior descriptor.
+	 *
+	 * @returns Zero if successfully changes the behavior, non zero otherwise.
+	 */
+	EXTERN int sys_sigclt(int signum, struct sigaction * sigact);
+
+	/**
+	 * @brief Schedules an alarm signal.
+	 *
+	 * @param seconds Time in seconds.
+	 *
+	 * @returns Zero if successfully register the alarm, non zero otherwise.
+	 */
+	EXTERN int sys_alarm(int seconds);
+
+	/**
+	 * @brief Sends a signal.
+	 *
+	 * @param signum Signal ID.
+	 * @param tid    Thread ID.
+	 *
+	 * @returns Zero if successfully sends the signal, non zero otherwise.
+	 */
+	EXTERN int sys_sigsend(int signum, int tid);
+
+	/**
+	 * @brief Waits for the receipt of a signal.
+	 *
+	 * @param signum Signal ID.
+	 *
+	 * @returns Zero if successfully receives the signal, non zero otherwise.
+	 */
+	EXTERN int sys_sigwait(int signum);
+
+	/**
+	 * @brief Returns from a signal handler.
+	 */
+	EXTERN void sys_sigreturn(void);
 
 /**@}*/
 
