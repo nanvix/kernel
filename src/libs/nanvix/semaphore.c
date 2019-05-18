@@ -49,8 +49,14 @@ int nanvix_semaphore_init(struct nanvix_semaphore *sem, int val)
 
 	sem->val = val;
 	sem->lock = SPINLOCK_UNLOCKED;
-	for (int i = 0; i < THREAD_MAX; i++)
-		sem->tids[i] = -1;
+
+	#ifdef __NANVIX_SEMAPHORE_SLEEP
+
+		for (int i = 0; i < THREAD_MAX; i++)
+			sem->tids[i] = -1;
+
+	#endif /* __NANVIX_SEMAPHORE_SLEEP */
+
 	dcache_invalidate();
 
 	return (0);
@@ -68,29 +74,41 @@ int nanvix_semaphore_init(struct nanvix_semaphore *sem, int val)
  */
 int nanvix_semaphore_down(struct nanvix_semaphore *sem)
 {
-	kthread_t tid;
+	#ifdef __NANVIX_SEMAPHORE_SLEEP
+
+		kthread_t tid;
+
+	#endif /* __NANVIX_SEMAPHORE_SLEEP */
 
 	/* Invalid semaphore. */
 	if (sem == NULL)
 		return (-EINVAL);
 
-	tid = kthread_self();
+	#ifdef __NANVIX_SEMAPHORE_SLEEP
+
+		tid = kthread_self();
+
+	#endif /* __NANVIX_SEMAPHORE_SLEEP */
 
 	do
 	{
 		spinlock_lock(&sem->lock);
 
-			/* Dequeue kernel thread. */
-			for (int i = 0; i < THREAD_MAX; i++)
-			{
-				if (sem->tids[i] == tid)
+			#ifdef __NANVIX_SEMAPHORE_SLEEP
+
+				/* Dequeue kernel thread. */
+				for (int i = 0; i < THREAD_MAX; i++)
 				{
-					for (int j = i; j < (THREAD_MAX - 1); j++)
-						sem->tids[j] = sem->tids[j + 1];
-					sem->tids[THREAD_MAX - 1] = -1;
-					break;
+					if (sem->tids[i] == tid)
+					{
+						for (int j = i; j < (THREAD_MAX - 1); j++)
+							sem->tids[j] = sem->tids[j + 1];
+						sem->tids[THREAD_MAX - 1] = -1;
+						break;
+					}
 				}
-			}
+
+			#endif /* __NANVIX_SEMAPHORE_SLEEP */
 
 			/* Lock. */
 			if (sem->val > 0)
@@ -100,19 +118,29 @@ int nanvix_semaphore_down(struct nanvix_semaphore *sem)
 				break;
 			}
 
-			/* Enqueue kernel thread. */
-			for (int i = 0; i < THREAD_MAX; i++)
-			{
-				if (sem->tids[i] == -1)
+			#ifdef __NANVIX_SEMAPHORE_SLEEP
+
+				/* Enqueue kernel thread. */
+				for (int i = 0; i < THREAD_MAX; i++)
 				{
-					sem->tids[i] = tid;
-					break;
+					if (sem->tids[i] == -1)
+					{
+						sem->tids[i] = tid;
+						break;
+					}
 				}
-			}
+
+			#endif /* __NANVIX_SEMAPHORE_SLEEP */
 
 		spinlock_unlock(&sem->lock);
 
-		sleep();
+
+		#ifdef __NANVIX_SEMAPHORE_SLEEP
+
+			sleep();
+
+		#endif /* __NANVIX_SEMAPHORE_SLEEP */
+
 	} while (true);
 
 	return (0);
@@ -134,19 +162,26 @@ int nanvix_semaphore_up(struct nanvix_semaphore *sem)
 	if (sem == NULL)
 		return (-EINVAL);
 
+#ifdef __NANVIX_SEMAPHORE_SLEEP
+
 again:
+
+#endif /* __NANVIX_SEMAPHORE_SLEEP */
 
 	spinlock_lock(&sem->lock);
 
-		if (sem->tids[0] != -1)
-		{
-			if (wakeup(sem->tids[0]) != 0)
-			{
-				spinlock_unlock(&sem->lock);
-				goto again;
-			}
-		}
+		#ifdef __NANVIX_SEMAPHORE_SLEEP
 
+			if (sem->tids[0] != -1)
+			{
+				if (wakeup(sem->tids[0]) != 0)
+				{
+					spinlock_unlock(&sem->lock);
+					goto again;
+				}
+			}
+
+		#endif /* __NANVIX_SEMAPHORE_SLEEP */
 
 		sem->val++;
 
