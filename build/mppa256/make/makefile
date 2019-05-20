@@ -45,6 +45,7 @@ export AR = $(TOOLCHAIN_DIR)/bin/k1-ar
 # Compiler Options
 export CFLAGS += -D __HAS_HW_DIVISION
 export CFLAGS += -mos=bare -march=k1b -mboard=developer
+export CFLAGS += -I $(INCDIR)/posix
 
 # Linker Options
 export LDFLAGS = -Wl,--allow-multiple-definition

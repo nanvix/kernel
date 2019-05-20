@@ -47,6 +47,7 @@ export AR = $(TOOLCHAIN_DIR)/i486-elf-ar
 export CFLAGS  += -D __HAS_HW_DIVISION
 export CFLAGS  += -Wstack-usage=4096
 export CFLAGS  += -nostdlib -nostdinc
+export CFLAGS += -I $(INCDIR)/posix
 
 # Linker Options
 export LDFLAGS += -nostdlib -nostdinc

@@ -50,6 +50,7 @@ export CFLAGS += -nostdlib -nostdinc
 export CFAGS  += -march=rv32imac -mabi=ilp32 -mcmodel=medany
 export CFLAGS += -ffunction-sections -fdata-sections
 export CFLAGS += -Wno-error=type-limits
+export CFLAGS += -I $(INCDIR)/posix
 
 # Linker Options
 export LDFLAGS += -nostdlib -nostdinc

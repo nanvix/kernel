@@ -47,6 +47,7 @@ export AR = $(TOOLCHAIN_DIR)/or1k-elf-ar
 # Compiler Options
 export CFLAGS  += -Wstack-usage=4096
 export CFLAGS  += -nostdlib -nostdinc
+export CFLAGS += -I $(INCDIR)/posix
 
 # Linker Options
 export LDFLAGS  += -nostdlib -nostdinc
