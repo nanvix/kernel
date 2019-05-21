@@ -52,6 +52,14 @@ PUBLIC int nanvix_perf_stop(int perf)
 /**
  * @todo TODO provide a detailed description for this function.
  */
+PUBLIC int nanvix_perf_restart(int perf)
+{
+	return (perf_restart(perf));
+}
+
+/**
+ * @todo TODO provide a detailed description for this function.
+ */
 PUBLIC uint64_t nanvix_perf_read(int perf)
 {
 	return (perf_read(perf));

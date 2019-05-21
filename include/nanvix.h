@@ -112,6 +112,16 @@
 	extern int nanvix_perf_stop(int perf);
 
 	/**
+	 * @brief Restarts a performance monitor.
+	 *
+	 * @param perf Target performance monitor.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 */
+	extern int nanvix_perf_restart(int perf);
+
+	/**
 	 * @brief Reads a PM register.
 	 *
 	 * @param perf Target performance monitor.
