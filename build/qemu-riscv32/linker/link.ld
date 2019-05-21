@@ -58,7 +58,7 @@ SECTIONS
 	.bootstrap :
 	{
 		__BOOTSTRAP_START = .;
-		*boot.o (.*)
+		*boot*.o (.*)
 		__BOOTSTRAP_END = .;
 	} > ram
 
