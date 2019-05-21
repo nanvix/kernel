@@ -38,6 +38,9 @@
 	#include <stdbool.h>
 	#include <stdint.h>
 
+	#define __NANVIX_MUTEX_SLEEP
+	#define __NANVIX_SEMAPHORE_SLEEP
+
 /*============================================================================*
  * Kernel Threads                                                             *
  *============================================================================*/
