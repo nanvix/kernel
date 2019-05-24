@@ -26,6 +26,8 @@
 #include <stdint.h>
 #include "test.h"
 
+#if (CORE_HAS_PERF)
+
 /**
  * @brief Launch verbose tests?
  */
@@ -36,27 +38,67 @@
  *============================================================================*/
 
 /**
- * @brief API Test: Read Performance Monitor
+ * @brief API Test: Query Performance Monitoring Capabilities
  */
-void test_nanvix_perf_api_read(void)
+void test_api_nanvix_perf_query(void)
 {
-#if (CORE_HAS_PERF)
-	uint64_t cycles;
-
-	/* Query performance monitoring capabilities. */
 	test_assert(PERF_EVENTS_MAX >= 1);
 	test_assert(nanvix_perf_query(PERF_CYCLES) == 0);
+}
 
-	/* Start performance monitors. */
+/**
+ * @brief API Test: Start/Stop Performance Monitor
+ */
+void test_api_nanvix_perf_start_stop(void)
+{
 	test_assert(nanvix_perf_start(0, PERF_CYCLES) == 0);
-
-	/* Stop performance monitors. */
 	test_assert(nanvix_perf_stop(0) == 0);
+}
 
-	/* Dump performance information. */
-	cycles = nanvix_perf_read(0);
+/**
+ * @brief API Test: Read Performance Monitor
+ */
+void test_api_nanvix_perf_read(void)
+{
+	/* Read performance monitor. */
+	test_assert(nanvix_perf_start(0, PERF_CYCLES) == 0);
+	test_assert(nanvix_perf_stop(0) == 0);
+	nanvix_perf_read(0);
+}
 
-	UNUSED(cycles);
+/**
+ * @brief API tests.
+ */
+static struct test perf_tests_api[] = {
+	{ test_api_nanvix_perf_query,      "[test][perf][api] query performance monitoring capabilities [passed]\n" },
+	{ test_api_nanvix_perf_start_stop, "[test][perf][api] start/stop performance monitor            [passed]\n" },
+	{ test_api_nanvix_perf_read,       "[test][perf][api] read performance monitor                  [passed]\n" },
+	{ NULL,                             NULL                                                                    },
+};
+
+#endif
+
+/*============================================================================*
+ * Test Driver                                                                *
+ *============================================================================*/
+
+/**
+ * The test_perf() function launches testing units on the performance
+ * monitoring interface.
+ *
+ * @author Pedro Henrique Penna
+ */
+void test_perf(void)
+{
+#if (CORE_HAS_PERF)
+
+	/* API Tests */
+	kprintf("--------------------------------------------------------------------------------");
+	for (int i = 0; perf_tests_api[i].test_fn != NULL; i++)
+	{
+		perf_tests_api[i].test_fn();
+		puts(perf_tests_api[i].name);
+	}
 
 #endif
 }

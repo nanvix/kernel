@@ -27,10 +27,6 @@
 #include "test.h"
 
 /**
- * @cond release_test
- */
-
-/**
  * @brief Enable destructive testing.
  */
 #define SIGNAL_DESTRUCTIVE_TEST 0
@@ -81,6 +77,19 @@ void test_api_signal_action(void)
 }
 
 /**
+ * @brief API tests.
+ */
+static struct test signal_tests_api[] = {
+	{ test_api_signal_action, "[test][signal][api] signal register/unregister [passed]\n" },
+	{ NULL,                    NULL                                                       },
+};
+
+/*============================================================================*
+ * Fault Injection Testing Units                                              *
+ *============================================================================*/
+
+
+/**
  * @brief Fault Test: Register and unregister a handler
  *
  * @author João Vicente Souto
@@ -108,6 +117,39 @@ void test_fault_signal_action(void)
 	KASSERT(ksigclt(SIGPGFAULT, NULL) < 0);
 }
 
+/**
+ * @brief API tests.
+ */
+static struct test signal_tests_fault[] = {
+	{ test_fault_signal_action, "[test][signal][fault] signal register/unregister [passed]\n" },
+	{ NULL,                      NULL                                                         },
+};
+
+
 /*============================================================================*/
 
-/**@endcond*/
+/**
+ * The test_perf() function launches testing units on the performance
+ * monitoring interface.
+ *
+ * @author Pedro Henrique Penna
+ */
+void test_signal(void)
+{
+
+	/* API Tests */
+	kprintf("--------------------------------------------------------------------------------");
+	for (int i = 0; signal_tests_api[i].test_fn != NULL; i++)
+	{
+		signal_tests_api[i].test_fn();
+		puts(signal_tests_api[i].name);
+	}
+
+	/* API Tests */
+	kprintf("--------------------------------------------------------------------------------");
+	for (int i = 0; signal_tests_fault[i].test_fn != NULL; i++)
+	{
+		signal_tests_fault[i].test_fn();
+		puts(signal_tests_fault[i].name);
+	}
+}
