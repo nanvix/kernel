@@ -26,12 +26,26 @@
 #define _TEST_H_
 
 	/**
-	 * @brief Number of iterations for stress tests.
+	 * @brief Number of iterations in stress tests.
 	 */
 	#define NITERATIONS 10
 
+	/**
+	 * @brief Number of threads to spawn in stress tests.
+	 */
+	#define NTHREADS (THREAD_MAX - 1)
+
 	#define ___STRINGIFY(x) #x
 	#define ___TOSTRING(x) ___STRINGIFY(x)
+
+	/**
+	 * @brief Unit test.
+	 */
+	struct test
+	{
+		void (*test_fn)(void); /**< Test function. */
+		const char *name;      /**< Test name.     */
+	};
 
 	/**
 	 * @brief Writes a string to the standard output device.
@@ -44,16 +58,10 @@
 	 * @name User-Level Testing Units
 	 */
 	/**@{*/
-	extern void test_api_kthread_self(void);
-	extern void test_api_kthread_create(void);
-	extern void test_fault_kthread_create(void);
-	extern void test_stress_kthread_create(void);
-	extern void test_api_sleep_wakeup(void);
-	extern void test_fault_sleep_wakeup(void);
-	extern void test_stress_sleep_wakeup(void);
-	extern void test_nanvix_perf_api_read(void);
-	extern void test_api_signal_action(void);
-	extern void test_fault_signal_action(void);
+	extern void test_thread_mgmt(void);
+	extern void test_thread_sync(void);
+	extern void test_perf(void);
+	extern void test_signal(void);
 	/**@}*/
 
 	/**
@@ -72,4 +80,4 @@
 		}                                             \
 	}
 
-#endif
+#endif /* _TEST_H_  */

@@ -22,15 +22,8 @@
  * SOFTWARE.
  */
 
-#include <nanvix/mm.h>
-#include <nanvix/thread.h>
 #include <nanvix.h>
 #include "test.h"
-
-/**
- * @brief Number of threads to spawn.
- */
-#define NTHREADS (THREAD_MAX - 1)
 
 /**
  * @name Extra Tests
@@ -61,51 +54,72 @@ static void *task(void *arg)
 /**
  * @brief API test for thread identification.
  */
-void test_api_kthread_self(void)
+static void test_api_kthread_self(void)
 {
 	test_assert(kthread_self() == 1);
 }
 
-#if (THREAD_MAX > 2)
-
 /**
  * @brief API test for thread creation/termination.
  */
-void test_api_kthread_create(void)
+static void test_api_kthread_create(void)
 {
-	kthread_t tid[NTHREADS];
+#if (THREAD_MAX > 1)
 
-	/* Spawn threads. */
-	for (int i = 0; i < NTHREADS; i++)
-		test_assert(kthread_create(&tid[i], task, NULL) == 0);
+	kthread_t tid;
 
-	/* Wait for threads. */
-	for (int i = 0; i < NTHREADS; i++)
-		test_assert(kthread_join(tid[i], NULL) == 0);
-}
+	/* Spawn thread. */
+	test_assert(kthread_create(&tid, task, NULL) == 0);
+
+	/* Wait for thread. */
+	test_assert(kthread_join(tid, NULL) == 0);
 
 #endif
+}
+
+/**
+ * @brief API tests.
+ */
+static struct test thread_mgmt_tests_api[] = {
+	{ test_api_kthread_self,   "[test][thread][api] thread identification       [passed]\n" },
+	{ test_api_kthread_create, "[test][thread][api] thread creation/termination [passed]\n" },
+	{ NULL,                     NULL                                                        },
+};
 
 /*============================================================================*
  * Fault Injection Testing Units                                              *
  *============================================================================*/
 
+/**
+ * @brief Fault Injection Test: Invalid Thread Create
+ */
+static void test_fault_kthread_create_invalid(void)
+{
 #if (THREAD_MAX > 1)
 
-/**
- * @brief Fault Injection test for thread creation/termination.
- */
-void test_fault_kthread_create(void)
-{
-	kthread_t tid[NTHREADS + 1];
+	kthread_t tid;
 
 	/* Invalid start routine. */
-	test_assert(kthread_create(&tid[0], NULL, NULL) < 0);
+	test_assert(kthread_create(&tid, NULL, NULL) < 0);
+
+#endif
+}
+
+/**
+ * @brief Fault Injection Test: Bad Thread Create
+ */
+static void test_fault_kthread_create_bad(void)
+{
+#if (THREAD_MAX > 1)
+
+	kthread_t tid;
+
+	UNUSED(tid);
 
 	/* Bad starting routine. */
 #if (defined(UTEST_KTHREAD_BAD_START) && (UTEST_KTHREAD_BAD_START == 1))
-	test_assert(kthread_create(&tid[0], (void *(*)(void *)) KBASE_VIRT, NULL) < 0);
-	test_assert(kthread_create(&tid[0], (void *(*)(void *)) (UBASE_VIRT - PAGE_SIZE), NULL) < 0);
+	test_assert(kthread_create(&tid, (void *(*)(void *)) KBASE_VIRT, NULL) < 0);
+	test_assert(kthread_create(&tid, (void *(*)(void *)) (UBASE_VIRT - PAGE_SIZE), NULL) < 0);
 #endif
 
 	/* Bad argument. */
@@ -114,51 +128,89 @@ void test_fault_kthread_create(void)
 	test_assert(kthread_create(&tid[0], task, (void *(*)(void *)) (UBASE_VIRT - PAGE_SIZE)) < 0);
 #endif
 
-	/* Spawn too many threads. */
+#endif
+}
+
+/**
+ * @brief Fault Injection Test: Invalid Thread Join
+ */
+static void test_fault_kthread_join_invalid(void)
+{
+#if (THREAD_MAX > 1)
+
+	test_assert(kthread_join(-1, NULL) < 0);
+	test_assert(kthread_join(0, NULL) < 0);
+	test_assert(kthread_join(1, NULL) < 0);
+
+#endif
+}
+
+/**
+ * @brief Fault Injection Test: Bad Thread Join
+ */
+static void test_fault_kthread_join_bad(void)
+{
+#if (THREAD_MAX > 1)
+
+	kthread_t tid;
+
+	/* Join bad thread. */
+	test_assert(kthread_create(&tid, task, NULL) == 0);
+	test_assert(kthread_join(2, NULL) < 0);
+	test_assert(kthread_join(tid, NULL) == 0);
+
+	/* Join with bad return value. */
+#if (defined(UTEST_KTHREAD_BAD_JOIN) && (UTEST_KTHREAD_BAD_JOIN == 1))
+	test_assert(kthread_create(&tid, task, NULL) == 0);
+	test_assert(kthread_join(tid, (void *)(KBASE_VIRT)) < 0);
+	test_assert(kthread_join(tid, (void *)(UBASE_VIRT - PAGE_SIZE)) < 0);
+	test_assert(kthread_join(tid, NULL) == 0);
+#endif
+
+#endif
+}
+
+/**
+ * @brief Fault Injection Test: Create Too Many Threads
+ */
+static void test_fault_kthread_create_overflow(void)
+{
+#if (THREAD_MAX > 1)
+
+	kthread_t tid[NTHREADS + 1];
+
 	for (int i = 0; i < NTHREADS; i++)
 		test_assert(kthread_create(&tid[i], task, NULL) == 0);
 	test_assert(kthread_create(&tid[NTHREADS], task, NULL) < 0);
 	for (int i = 0; i < NTHREADS; i++)
 		test_assert(kthread_join(tid[i], NULL) == 0);
 
-	/* Join invalid thread. */
-	test_assert(kthread_join(-1, NULL) < 0);
-	test_assert(kthread_join(0, NULL) < 0);
-	test_assert(kthread_join(1, NULL) < 0);
-
-	/* Join bad thread. */
-	test_assert(kthread_create(&tid[0], task, NULL) == 0);
-	test_assert(kthread_join(2, NULL) < 0);
-	test_assert(kthread_join(tid[0], NULL) == 0);
-
-	/* Join with bad return value. */
-#if (defined(UTEST_KTHREAD_BAD_JOIN) && (UTEST_KTHREAD_BAD_JOIN == 1))
-	test_assert(kthread_create(&tid[0], task, NULL) == 0);
-	test_assert(kthread_join(tid[0], (void *)(KBASE_VIRT)) < 0);
-	test_assert(kthread_join(tid[0], (void *)(UBASE_VIRT - PAGE_SIZE)) < 0);
-	test_assert(kthread_join(tid[0], NULL) == 0);
-#endif
-
-	/* Exit with bad return value. */
-#if (defined(UTEST_KTHREAD_BAD_EXIT) && (UTEST_KTHREAD_BAD_EXIT == 1))
-	test_assert(kthread_exit((void *)(KBASE_VIRT)) < 0);
-	test_assert(kthread_exit((void *)(UBASE_VIRT - PAGE_SIZE)) < 0);
 #endif
 }
 
-#endif
+/**
+ * @brief Fault injection tests.
+ */
+static struct test thread_mgmt_tests_fault[] = {
+	{ test_fault_kthread_create_invalid,  "[test][thread][fault] invalid thread create    [passed]\n" },
+	{ test_fault_kthread_create_bad,      "[test][thread][fault] bad thread create        [passed]\n" },
+	{ test_fault_kthread_join_invalid,    "[test][thread][fault] invalid thread join      [passed]\n" },
+	{ test_fault_kthread_join_bad,        "[test][thread][fault] bad thread join          [passed]\n" },
+	{ test_fault_kthread_create_overflow, "[test][thread][fault] thread creation overflow [passed]\n" },
+	{ NULL,                                NULL                                                       },
+};
 
 /*============================================================================*
  * Stress Testing Units                                                       *
  *============================================================================*/
 
-#if (THREAD_MAX > 2)
-
 /**
  * @brief Stress test for thread creation/termination.
  */
-void test_stress_kthread_create(void)
+static void test_stress_kthread_create(void)
 {
+#if (THREAD_MAX > 2)
+
 	for (int j = 0; j < NITERATIONS; j++)
 	{
 		kthread_t tid[NTHREADS];
@@ -171,6 +223,50 @@ void test_stress_kthread_create(void)
 		for (int i = 0; i < NTHREADS; i++)
 			test_assert(kthread_join(tid[i], NULL) == 0);
 	}
-}
 
 #endif
+}
+
+/**
+ * @brief Stress tests.
+ */
+static struct test thread_mgmt_tests_stress[] = {
+	{ test_stress_kthread_create, "[test][thread][stress] thread creation/termination [passed]\n" },
+	{ NULL,                        NULL                                                           },
+};
+
+/*============================================================================*
+ * Test Driver                                                                *
+ *============================================================================*/
+
+/**
+ * The test_thread_mgmt() function launches testing units on thread manager.
+ *
+ * @author Pedro Henrique Penna
+ */
+void test_thread_mgmt(void)
+{
+	/* API Tests */
+	kprintf("--------------------------------------------------------------------------------");
+	for (int i = 0; thread_mgmt_tests_api[i].test_fn != NULL; i++)
+	{
+		thread_mgmt_tests_api[i].test_fn();
+		puts(thread_mgmt_tests_api[i].name);
+	}
+
+	/* Fault Injection Tests */
+	kprintf("--------------------------------------------------------------------------------");
+	for (int i = 0; thread_mgmt_tests_fault[i].test_fn != NULL; i++)
+	{
+		thread_mgmt_tests_fault[i].test_fn();
+		puts(thread_mgmt_tests_fault[i].name);
+	}
+
+	/* Stress Tests */
+	kprintf("--------------------------------------------------------------------------------");
+	for (int i = 0; thread_mgmt_tests_stress[i].test_fn != NULL; i++)
+	{
+		thread_mgmt_tests_stress[i].test_fn();
+		puts(thread_mgmt_tests_stress[i].name);
+	}
+}

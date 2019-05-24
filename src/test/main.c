@@ -69,35 +69,6 @@ void puts(const char *str)
  *============================================================================*/
 
 /**
- * @brief User-land testing units.
- */
-static struct
-{
-	void (*test_fn)(void); /**< Test function. */
-	const char *name;      /**< Test Name.     */
-} user_tests[] = {
-	{ test_api_kthread_self,      "[test][user][api]    thread identification       [passed]\n" },
-#if (THREAD_MAX > 1)
-#if (THREAD_MAX > 2)
-	{ test_api_kthread_create,    "[test][user][api]    thread creation/termination [passed]\n" },
-#endif
-	{ test_fault_kthread_create,  "[test][user][fault]  thread creation/termination [passed]\n" },
-#if (THREAD_MAX > 2)
-	{ test_stress_kthread_create, "[test][user][stress] thread creation/termination [passed]\n" },
-	{ test_api_sleep_wakeup,      "[test][user][api]    thread sleep/wakeup         [passed]\n" },
-	{ test_fault_sleep_wakeup,    "[test][user][fault]  thread sleep/wakeup         [passed]\n" },
-	{ test_stress_sleep_wakeup,   "[test][user][stress] thread sleep/wakeup         [passed]\n" },
-#endif
-#endif
-#if (CORE_HAS_PERF)
-	{ test_nanvix_perf_api_read, "[test][user][api] read performance monitor       [passed]\n"  },
-#endif
-	{ test_api_signal_action,    "[test][user][api] signal register/unregister     [passed]\n"  },
-	{ test_fault_signal_action,  "[test][user][fault] signal register/unregister   [passed]\n"  },
-	{ NULL,                       NULL                                                          },
-};
-
-/**
  * @brief Lunches user-land testing units.
  *
  * @param argc Argument counter.
@@ -108,12 +79,10 @@ int main(int argc, const char *argv[])
 	((void) argc);
 	((void) argv);
 
-	/* Launch tests. */
-	for (int i = 0; user_tests[i].test_fn != NULL; i++)
-	{
-		user_tests[i].test_fn();
-		puts(user_tests[i].name);
-	}
+	test_thread_mgmt();
+	test_thread_sync();
+	test_perf();
+	test_signal();
 
 	/* Halt. */
 	shutdown();

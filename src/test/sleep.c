@@ -25,9 +25,6 @@
 #include <nanvix.h>
 #include "test.h"
 
-
-#if (THREAD_MAX > 2)
-
 /**
  * @brief Number of threads to spawn.
  */
@@ -37,6 +34,8 @@
  * @brief Number of trials.
  */
 #define NTRIALS 1000
+
+#if (THREAD_MAX > 2)
 
 /**
  * @brief Mutex for shared variable.
@@ -75,7 +74,7 @@ static void *task1(void *arg)
 /**
  * @brief API Test: Sleep/Wakeup
  */
-void test_api_sleep_wakeup(void)
+static void test_api_sleep_wakeup(void)
 {
 	kthread_t tids[NTHREADS];
 
@@ -92,6 +91,14 @@ void test_api_sleep_wakeup(void)
 
 	test_assert(var == NTRIALS*NTHREADS);
 }
+
+/**
+ * @brief API tests.
+ */
+static struct test thread_sync_tests_api[] = {
+	{ test_api_sleep_wakeup, "[test][thread][api] thread sleep/wakeup [passed]\n" },
+	{ NULL,                   NULL                                              },
+};
 
 /*============================================================================*
  * Fault Injection Testing Units                                              *
@@ -112,7 +119,7 @@ static void *task2(void *arg)
 /**
  * @brief Fault Injection Test: Sleep/Wakeup
  */
-void test_fault_sleep_wakeup(void)
+static void test_fault_sleep_wakeup(void)
 {
 	kthread_t mytid;
 	kthread_t tid;
@@ -134,6 +141,14 @@ void test_fault_sleep_wakeup(void)
 	/* Wakeup bad thread. */
 	test_assert(wakeup(tid) < 0);
 }
+
+/**
+ * @brief Fault injection tests.
+ */
+static struct test thread_sync_tests_fault[] = {
+	{ test_fault_sleep_wakeup, "[test][thread][fault] thread sleep/wakeup [passed]\n" },
+	{ NULL,                     NULL                                                },
+};
 
 /*============================================================================*
  * API Testing Units                                                          *
@@ -162,7 +177,7 @@ static void *task3(void *arg)
 /**
  * @brief Stress Test: Sleep/Wakeup
  */
-void test_stress_sleep_wakeup(void)
+static void test_stress_sleep_wakeup(void)
 {
 	kthread_t tids[NTHREADS];
 	nanvix_mutex_init(&mutex);
@@ -183,4 +198,53 @@ void test_stress_sleep_wakeup(void)
 	}
 }
 
+/**
+ * @brief Stress tests.
+ */
+static struct test thread_sync_tests_stress[] = {
+	{ test_stress_sleep_wakeup, "[test][thread][stress] thread sleep/wakeup [passed]\n" },
+	{ NULL,                      NULL                                                   },
+};
+
 #endif
+
+/*============================================================================*
+ * Test Driver                                                                *
+ *============================================================================*/
+
+/**
+ * The test_thread_sync() function launches testing units on the
+ * syncrhonization primitives of the thread manager.
+ *
+ * @author Pedro Henrique Penna
+ */
+void test_thread_sync(void)
+{
+#if (THREAD_MAX > 2)
+
+	/* API Tests */
+	kprintf("--------------------------------------------------------------------------------");
+	for (int i = 0; thread_sync_tests_api[i].test_fn != NULL; i++)
+	{
+		thread_sync_tests_api[i].test_fn();
+		puts(thread_sync_tests_api[i].name);
+	}
+
+	/* Fault Injection Tests */
+	kprintf("--------------------------------------------------------------------------------");
+	for (int i = 0; thread_sync_tests_fault[i].test_fn != NULL; i++)
+	{
+		thread_sync_tests_fault[i].test_fn();
+		puts(thread_sync_tests_fault[i].name);
+	}
+
+	/* Stress Tests */
+	kprintf("--------------------------------------------------------------------------------");
+	for (int i = 0; thread_sync_tests_stress[i].test_fn != NULL; i++)
+	{
+		thread_sync_tests_stress[i].test_fn();
+		puts(thread_sync_tests_stress[i].name);
+	}
+
+#endif
+}
