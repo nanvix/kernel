@@ -22,9 +22,209 @@
 # SOFTWARE.
 #
 
+export CFLAGS += -O0
+
 ifeq ($(RELEASE), true)
 
-	# Switch to Level 3 Optimizations
-	export CFLAGS += -O0
+	# Level 1 Optimization Flags
+	export CFLAGS += -fauto-inc-dec
+	export CFLAGS += -fbranch-count-reg
+	export CFLAGS += -fcombine-stack-adjustments
+	export CFLAGS += -fcompare-elim
+	export CFLAGS += -fcprop-registers
+	export CFLAGS += -fdce
+	export CFLAGS += -fdefer-pop
+	export CFLAGS += -fdelayed-branch
+	export CFLAGS += -fdse
+	export CFLAGS += -fforward-propagate
+	export CFLAGS += -fguess-branch-probability
+	export CFLAGS += -fif-conversion
+	export CFLAGS += -fif-conversion2
+	export CFLAGS += -finline-functions-called-once
+	export CFLAGS += -fipa-profile
+	export CFLAGS += -fipa-pure-const
+	export CFLAGS += -fipa-reference
+	# export CFLAGS += -fipa-reference-addressable                   # Not Supported in OpenRISC
+	export CFLAGS += -fmerge-constants
+	export CFLAGS += -fmove-loop-invariants
+	export CFLAGS += -fomit-frame-pointer
+	export CFLAGS += -freorder-blocks
+	export CFLAGS += -fshrink-wrap
+	export CFLAGS += -fshrink-wrap-separate
+	export CFLAGS += -fsplit-wide-types
+	export CFLAGS += -fssa-backprop
+	export CFLAGS += -fssa-phiopt
+	export CFLAGS += -ftree-bit-ccp
+	export CFLAGS += -ftree-ccp
+	export CFLAGS += -ftree-ch
+	export CFLAGS += -ftree-coalesce-vars
+	export CFLAGS += -ftree-copy-prop
+	export CFLAGS += -ftree-dce
+	export CFLAGS += -ftree-dominator-opts
+	export CFLAGS += -ftree-dse
+	export CFLAGS += -ftree-forwprop
+	export CFLAGS += -ftree-fre
+	export CFLAGS += -ftree-phiprop
+	export CFLAGS += -ftree-pta
+	export CFLAGS += -ftree-scev-cprop
+	export CFLAGS += -ftree-sink
+	export CFLAGS += -ftree-slsr
+	export CFLAGS += -ftree-sra
+	export CFLAGS += -ftree-ter
+	export CFLAGS += -funit-at-a-time
+
+	# Level 2 Optimization Flags
+	export CFLAGS += -falign-functions -falign-jumps
+	export CFLAGS += -falign-labels -falign-loops
+	export CFLAGS += -fcaller-saves
+	export CFLAGS += -fcode-hoisting
+	export CFLAGS += -fcrossjumping
+	export CFLAGS += -fcse-follow-jumps -fcse-skip-blocks
+	export CFLAGS += -fdelete-null-pointer-checks
+	export CFLAGS += -fdevirtualize -fdevirtualize-speculatively
+	export CFLAGS += -fexpensive-optimizations
+	export CFLAGS += -fgcse -fgcse-lm
+	export CFLAGS += -fhoist-adjacent-loads
+	export CFLAGS += -finline-small-functions
+	export CFLAGS += -findirect-inlining
+	export CFLAGS += -fipa-bit-cp
+	export CFLAGS += -fipa-cp
+	export CFLAGS += -fipa-icf
+	export CFLAGS += -fipa-ra
+	export CFLAGS += -fipa-sra
+	export CFLAGS += -fipa-vrp
+	export CFLAGS += -fisolate-erroneous-paths-dereference
+	export CFLAGS += -flra-remat
+	export CFLAGS += -foptimize-sibling-calls
+	export CFLAGS += -foptimize-strlen
+	export CFLAGS += -fpartial-inlining
+	export CFLAGS += -fpeephole2
+	export CFLAGS += -freorder-blocks-algorithm=stc
+	export CFLAGS += -freorder-blocks-and-partition
+	export CFLAGS += -freorder-functions
+	export CFLAGS += -frerun-cse-after-loop
+	export CFLAGS += -fschedule-insns -fschedule-insns2
+	export CFLAGS += -fsched-interblock -fsched-spec
+	export CFLAGS += -fstore-merging
+	# export CFLAGS += -fstrict-aliasing                             # Not Used
+	export CFLAGS += -fthread-jumps
+	export CFLAGS += -ftree-builtin-call-dce
+	export CFLAGS += -ftree-pre
+	export CFLAGS += -ftree-switch-conversion -ftree-tail-merge
+	export CFLAGS += -ftree-vrp
+
+	# Level 3 Optimization Flags
+	export CFLAGS += -fgcse-after-reload
+	export CFLAGS += -finline-functions
+	export CFLAGS += -fipa-cp-clone
+	export CFLAGS += -floop-interchange
+	export CFLAGS += -floop-unroll-and-jam
+	export CFLAGS += -fpeel-loops
+	export CFLAGS += -fpredictive-commoning
+	export CFLAGS += -fsplit-paths
+	export CFLAGS += -ftree-loop-distribute-patterns
+	export CFLAGS += -ftree-loop-distribution
+	export CFLAGS += -ftree-loop-vectorize
+	export CFLAGS += -ftree-partial-pre
+	export CFLAGS += -ftree-slp-vectorize
+	export CFLAGS += -funswitch-loops
+	export CFLAGS += -fvect-cost-model
+	# export CFLAGS += -fversion-loops-for-strides                   # Not Supported in OpenRISC
+
+	# Extra Optimizations
+	export CFLAGS += -faggressive-loop-optimizations
+	export CFLAGS += -fasynchronous-unwind-tables
+	export CFLAGS += -fbranch-probabilities
+	export CFLAGS += -fbranch-target-load-optimize
+	export CFLAGS += -fbranch-target-load-optimize2
+	export CFLAGS += -fbtr-bb-exclusive
+	export CFLAGS += -fcommon
+	export CFLAGS += -fconserve-stack
+	export CFLAGS += -fcx-fortran-rules
+	export CFLAGS += -fcx-limited-range
+	export CFLAGS += -fdata-sections
+	export CFLAGS += -fearly-inlining
+	export CFLAGS += -fexceptions
+	export CFLAGS += -ffinite-math-only
+	export CFLAGS += -ffloat-store
+	export CFLAGS += -fforward-propagate
+	export CFLAGS += -fgcse-las
+	export CFLAGS += -fgcse-sm
+	export CFLAGS += -fpeephole
+	export CFLAGS += -fjump-tables
+	export CFLAGS += -fnon-call-exceptions
+	# export CFLAGS += -fprefetch-loop-arrays                        # Not Supported in OpenRISC
+	export CFLAGS += -freg-struct-return
+	export CFLAGS += -frename-registers
+	export CFLAGS += -freschedule-modulo-scheduled-loops
+	export CFLAGS += -frounding-math
+	export CFLAGS += -fsched-critical-path-heuristic
+	export CFLAGS += -fsched-dep-count-heuristic
+	export CFLAGS += -fsched-group-heuristic
+	export CFLAGS += -fsched-last-insn-heuristic
+	export CFLAGS += -fsched-pressure
+	export CFLAGS += -fira-hoist-pressure
+	export CFLAGS += -fira-loop-pressure
+	export CFLAGS += -fgraphite-identity
+	export CFLAGS += -floop-block
+	export CFLAGS += -floop-parallelize-all
+	export CFLAGS += -floop-strip-mine
+	export CFLAGS += -finline
+	export CFLAGS += -finline-atomics
+	export CFLAGS += -fipa-pta
+	export CFLAGS += -fisolate-erroneous-paths-attribute
+	export CFLAGS += -fivopts
+	export CFLAGS += -flifetime-dse
+	export CFLAGS += -flive-range-shrinkage
+	export CFLAGS += -floop-nest-optimize
+	export CFLAGS += -fmath-errno
+	export CFLAGS += -fmerge-all-constants
+	export CFLAGS += -fmodulo-sched
+	# export CFLAGS += -fpack-struct                                 # === BREAKS CODE GENERATION ===
+	export CFLAGS += -fsched-rank-heuristic
+	export CFLAGS += -fsched-spec
+	export CFLAGS += -fsched-spec-insn-heuristic
+	export CFLAGS += -fsched-spec-load
+	export CFLAGS += -fsched-spec-load-dangerous
+	export CFLAGS += -fsched-stalled-insns
+	export CFLAGS += -fsched-stalled-insns-dep
+	export CFLAGS += -fsched2-use-superblocks
+	export CFLAGS += -fsel-sched-pipelining
+	export CFLAGS += -fsel-sched-pipelining-outer-loops
+	export CFLAGS += -fsel-sched-reschedule-pipelined
+	export CFLAGS += -fselective-scheduling
+	export CFLAGS += -fselective-scheduling2
+	export CFLAGS += -fshort-enums
+	export CFLAGS += -fshort-wchar
+	export CFLAGS += -fsignaling-nans
+	export CFLAGS += -fsigned-zeros
+	export CFLAGS += -fsingle-precision-constant
+	export CFLAGS += -fsplit-ivs-in-unroller
+	export CFLAGS += -ftoplevel-reorder
+	export CFLAGS += -ftrapping-math
+	export CFLAGS += -ftrapv
+	export CFLAGS += -ftree-coalesce-inlined-vars
+	export CFLAGS += -ftree-copyrename
+	export CFLAGS += -ftree-cselim
+	export CFLAGS += -ftree-fre
+	export CFLAGS += -ftree-loop-if-convert
+	export CFLAGS += -ftree-loop-if-convert-stores
+	export CFLAGS += -ftree-loop-im
+	export CFLAGS += -ftree-loop-ivcanon
+	export CFLAGS += -ftree-loop-optimize
+	export CFLAGS += -ftree-lrs
+	export CFLAGS += -ftree-phiprop
+	export CFLAGS += -ftree-reassoc
+	export CFLAGS += -ftree-vectorize
+	export CFLAGS += -funroll-all-loops
+	export CFLAGS += -funroll-loops
+	export CFLAGS += -funsafe-loop-optimizations
+	# export CFLAGS += -funsafe-math-optimizations                   # === BREAKS COMPILATION ===
+	export CFLAGS += -funwind-tables
+	export CFLAGS += -fvariable-expansion-in-unroller
+	export CFLAGS += -fvpt
+	export CFLAGS += -fweb
+	# export CFLAGS += -fwhole-program                               # === BREAKS COMPILATION ===
+	export CFLAGS += -fwrapv
 
 endif
