@@ -180,6 +180,80 @@
 	extern int ksigreturn(void);
 
 /*============================================================================*
+ * Fast Mutex                                                                 *
+ *============================================================================*/
+
+#if (CORES_NUM > 1)
+
+	/**
+	 * @brief Fast mutex.
+	 */
+	struct nanvix_fmutex
+	{
+		spinlock_t lock;
+	};
+
+	/**
+	 * @brief Initializes a fast mutex.
+	 *
+	 * @param m Target fmutex.
+	 *
+	 * @param Upon sucessful completion, zero is returned. Upon failure, a
+	 * negative error code is returned instead.
+	 */
+	static inline int nanvix_fmutex_init(struct nanvix_fmutex *m)
+	{
+		/* Invalid mutex. */
+		if (m == NULL)
+			return (-EINVAL);
+
+		spinlock_init(&m->lock);
+
+		return (0);
+	}
+
+	/**
+	 * @brief Locks a fast mutex.
+	 *
+	 * @param m Target fmutex.
+	 *
+	 * @param Upon sucessful completion, zero is returned. Upon failure, a
+	 * negative error code is returned instead.
+	 */
+	static inline int nanvix_fmutex_lock(struct nanvix_fmutex *m)
+	{
+		/* Invalid mutex. */
+		if (UNLIKELY(m == NULL))
+			return (-EINVAL);
+
+		spinlock_lock(&m->lock);
+
+		return (0);
+	}
+
+	/**
+	 * @brief Unlocks a fast mutex.
+	 *
+	 * @param m Target fmutex.
+	 *
+	 * @param Upon sucessful completion, zero is returned. Upon failure, a
+	 * negative error code is returned instead.
+	 */
+	static inline int nanvix_fmutex_unlock(struct nanvix_fmutex *m)
+	{
+		/* Invalid mutex. */
+		if (UNLIKELY(m == NULL))
+			return (-EINVAL);
+
+		spinlock_unlock(&m->lock);
+
+		return (0);
+	}
+
+#endif /* CORES_NUM > 1 */
+
+
+/*============================================================================*
  * Mutex                                                                      *
  *============================================================================*/
 
