@@ -48,16 +48,19 @@ PRIVATE void *init(void *arg)
 	UNUSED(status);
 
 #if (CORES_NUM > 2)
+
 	status = main(argc, argv, NULL);
+
 #else
+
 	UNUSED(argc);
 	UNUSED(argv);
+
 #endif
 
-	/* Halt. */
-	kprintf("halting...");
-	while (true)
-		noop();
+	/* Power down. */
+	shutdown();
+	UNREACHABLE();
 
 	return (NULL);
 }
@@ -84,12 +87,16 @@ PUBLIC void kmain(int argc, const char *argv[])
 	interrupts_enable();
 
 #if (CLUSTER_IS_MULTICORE)
+
 	thread_create(&tid, init, NULL);
 	while (true)
 		do_syscall2();
+
 #else
-	kprintf("halting...");
-	while (true)
-		noop();
+
+	/* Power down. */
+	shutdown();
+	UNREACHABLE();
+
 #endif
 }
