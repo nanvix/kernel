@@ -37,8 +37,8 @@ export ARTIFACTS := $(shell find $(INCDIR) -name *.h -type f)
 
 #===============================================================================
 
-# Install
-install: | all-target copy-artifacts
+# Install Everything
+install: | all-target install-headers
 	@mkdir -p $(PREFIX)/lib
 	@cp -f $(LIBDIR)/libhal*.a $(PREFIX)/lib
 	@echo [CP] $(LIBDIR)/libhal*.a
@@ -47,11 +47,17 @@ install: | all-target copy-artifacts
 	@cp -f $(LIBDIR)/libnanvix*.a $(PREFIX)/lib
 	@echo [CP] $(LIBDIR)/libnanvix*.a
 	@echo "==============================================================================="
-	@echo "Nanvix Microkernel Successfully Installed into $(PREFIX)"
+	@echo "Nanvix Microkernel Libraries Successfully Installed into $(PREFIX)"
 	@echo "==============================================================================="
 
-# Uninstall
-uninstall: | distclean delete-artifacts
+# Install Headers
+install-headers: copy-artifacts
+	@echo "==============================================================================="
+	@echo "Nanvix Microkernel Headers Successfully Installed into $(PREFIX)"
+	@echo "==============================================================================="
+
+# Uninstall Everything
+uninstall: | distclean uninstall-headers
 	@rm -f $(PREFIX)/lib/libhal*.a
 	@echo [RM] $(PREFIX)/lib/libhal*.a
 	@rm -f $(PREFIX)/lib/libkernel*.a
@@ -59,7 +65,13 @@ uninstall: | distclean delete-artifacts
 	@rm -f $(PREFIX)/lib/libnanvix*.a
 	@echo [RM] $(PREFIX)/lib/libnanvix*.a
 	@echo "==============================================================================="
-	@echo "Nanvix Microkernel Successfully Uninstalled from $(PREFIX)"
+	@echo "Nanvix Microkernel Libraries Successfully Uninstalled from $(PREFIX)"
+	@echo "==============================================================================="
+
+# Uninstall Headers
+uninstall-headers: delete-artifacts
+	@echo "==============================================================================="
+	@echo "Nanvix Microkernel Headers Successfully Uninstalled from $(PREFIX)"
 	@echo "==============================================================================="
 
 # Copies All Artifacts
