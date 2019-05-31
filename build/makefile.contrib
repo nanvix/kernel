@@ -26,6 +26,14 @@
 contrib: make-dirs
 	$(MAKE) -C $(CONTRIBDIR)/hal install PREFIX=$(ROOTDIR) RELEASE=true
 
+# Builds contrib.
+contrib-headers: make-dirs
+	$(MAKE) -C $(CONTRIBDIR)/hal install-headers PREFIX=$(ROOTDIR) RELEASE=true
+
 # Cleans the HAL.
 contrib-uninstall:
 	$(MAKE) -C $(CONTRIBDIR)/hal uninstall PREFIX=$(ROOTDIR) RELEASE=true
+
+# Cleans the HAL.
+contrib-uninstall-headers:
+	$(MAKE) -C $(CONTRIBDIR)/hal uninstall-headers PREFIX=$(ROOTDIR) RELEASE=true
