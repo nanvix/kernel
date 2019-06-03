@@ -64,3 +64,20 @@ export LDFLAGS =
 export LIBKERNEL = libhal-$(TARGET).a
 export LIBS = $(LIBDIR)/$(LIBKERNEL)
 export LIB_THEIRS = -lpthread
+
+#===============================================================================
+
+# Builds everything.
+all-target:
+	@$(MAKE) -C $(SRCDIR) all
+
+# Cleans object files.
+clean-target:
+	@$(MAKE) -C $(SRCDIR) clean
+
+# Cleans everything.
+distclean-target:
+
+# Cleans everything for node cluster variant.
+distclean-k1bdp: clean-target
+	@$(MAKE) -C $(SRCDIR) clean

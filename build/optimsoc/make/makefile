@@ -54,3 +54,20 @@ export LDFLAGS  += -nostdlib -nostdinc
 
 # Suffix for Objects
 export OBJ_SUFFIX=optimsoc
+
+#===============================================================================
+
+# Builds everything.
+all-target:
+	@$(MAKE) -C $(SRCDIR) all
+
+# Cleans object files.
+clean-target:
+	@$(MAKE) -C $(SRCDIR) clean
+
+# Cleans everything.
+distclean-target:
+
+# Cleans everything for node cluster variant.
+distclean-k1bdp: clean-target
+	@$(MAKE) -C $(SRCDIR) clean

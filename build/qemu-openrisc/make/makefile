@@ -67,12 +67,15 @@ export THEIR_LIBS := -lgcc
 
 # Builds everything.
 all-target:
-	$(MAKE) -C $(SRCDIR) all
+	@$(MAKE) -C $(SRCDIR) all
 
-# Cleans objects.
+# Cleans object files.
 clean-target:
-	$(MAKE) -C $(SRCDIR) clean
+	@$(MAKE) -C $(SRCDIR) clean
 
 # Cleans everything.
-distclean-target: clean-target
-	$(MAKE) -C $(SRCDIR) distclean
+distclean-target:
+
+# Cleans everything for node cluster variant.
+distclean-k1bdp: clean-target
+	@$(MAKE) -C $(SRCDIR) clean
