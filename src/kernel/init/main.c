@@ -31,7 +31,7 @@
 #include <nanvix.h>
 
 EXTERN void do_syscall2(void);
-EXTERN int main(int argc, const char *argv[], char **envp);
+EXTERN void ___start(int argc, const char *argv[], char **envp);
 
 #if (CLUSTER_IS_MULTICORE)
 
@@ -40,16 +40,14 @@ EXTERN int main(int argc, const char *argv[], char **envp);
  */
 PRIVATE void *init(void *arg)
 {
-	int status;
 	int argc = 1;
 	const char *argv[] = { "init", NULL };
 
 	UNUSED(arg);
-	UNUSED(status);
 
 #if (CORES_NUM > 2)
 
-	status = main(argc, argv, NULL);
+	___start(argc, argv, NULL);
 
 #else
 
