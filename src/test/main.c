@@ -25,6 +25,21 @@
 #include <nanvix.h>
 #include "test.h"
 
+#ifdef __mppa256__
+
+/**
+ * @brief Stub main().
+ */
+int main(int argc, const char *argv[])
+{
+	UNUSED(argc);
+	UNUSED(argv);
+
+	return (0);
+}
+
+#endif /* __mppa256__ */
+
 /*============================================================================*
  * strlen()                                                                   *
  *============================================================================*/
@@ -74,7 +89,7 @@ void puts(const char *str)
  * @param argc Argument counter.
  * @param argv Argument variables.
  */
-int main(int argc, const char *argv[])
+void ___start(int argc, const char *argv[])
 {
 	((void) argc);
 	((void) argv);
@@ -87,6 +102,4 @@ int main(int argc, const char *argv[])
 	/* Halt. */
 	shutdown();
 	UNREACHABLE();
-
-	return (0);
 }
