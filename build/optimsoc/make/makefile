@@ -28,7 +28,7 @@
 
 export CFLAGS  = -D __optimsoc__     # Target
 export CFLAGS += -D __optimsoc4__    # Processor
-export CFLAGS += -D __or1k_cluster__ # CLuster
+export CFLAGS += -D __optimsoc_cluster__ # CLuster
 export CFLAGS += -D __or1k__         # Core
 export CFLAGS += -D __mor1kx__       # Core Variant
 
