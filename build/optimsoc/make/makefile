@@ -28,7 +28,7 @@
 
 export CFLAGS  = -D __optimsoc__     # Target
 export CFLAGS += -D __optimsoc4__    # Processor
-export CFLAGS += -D __or1k_cluster__ # CLuster
+export CFLAGS += -D __optimsoc_cluster__ # CLuster
 export CFLAGS += -D __or1k__         # Core
 export CFLAGS += -D __mor1kx__       # Core Variant
 
@@ -47,7 +47,8 @@ export AR = $(TOOLCHAIN_DIR)/or1k-elf-ar
 # Compiler Options
 export CFLAGS  += -Wstack-usage=4096
 export CFLAGS  += -nostdlib -nostdinc
-export CFLAGS += -I $(INCDIR)/posix
+export CFLAGS  += -Wno-type-limits
+export CFLAGS  += -I $(INCDIR)/posix
 
 # Linker Options
 export LDFLAGS  += -nostdlib -nostdinc

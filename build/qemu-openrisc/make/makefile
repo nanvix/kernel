@@ -48,7 +48,7 @@ export AR = $(TOOLCHAIN_DIR)/or1k-elf-ar
 export CFLAGS += -D __HAS_HW_DIVISION
 export CFLAGS += -Wstack-usage=4096
 export CFLAGS += -nostdlib -nostdinc
-export CFLAGS += -Wno-error=type-limits
+export CFLAGS += -Wno-type-limits
 export CFLAGS += -I $(INCDIR)/posix
 
 # Linker Options
