@@ -390,6 +390,12 @@ PUBLIC int do_kcall(
 			);
 			break;
 
+		case NR_stats:
+			perf_stop(1);
+			ret  = perf_read(1);
+			perf_start(1, arg0);
+			break;
+
 		/* Forward system call. */
 		default:
 		{
