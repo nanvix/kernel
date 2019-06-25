@@ -28,6 +28,7 @@
 
 # C Source Files
 SRC = $(wildcard dev/*.c)  \
+	  $(wildcard dev/net/*.c)  \
       $(wildcard init/*.c) \
       $(wildcard mm/*.c)   \
       $(wildcard pm/*.c)   \

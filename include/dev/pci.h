@@ -33,16 +33,14 @@
 
 union pci_dev {
     uint32_t bits;
-    struct
-    {
-        uint32_t always_zero : 2;
-        uint32_t field_num : 6;
-        uint32_t function_num : 3;
-        uint32_t device_num : 5;
-        uint32_t bus_num : 8;
-        uint32_t reserved : 7;
-        uint32_t enable : 1;
-    };
+    
+    uint32_t always_zero : 2;
+    uint32_t field_num : 6;
+    uint32_t function_num : 3;
+    uint32_t device_num : 5;
+    uint32_t bus_num : 8;
+    uint32_t reserved : 7;
+    uint32_t enable : 1;
 };
 
 // Ports
@@ -85,17 +83,17 @@ union pci_dev {
 #define DEVICE_PER_BUS 32
 #define FUNCTION_PER_DEVICE 8 // 32
 
-uint32_t pci_read(pci_dev dev, uint32_t field);
-void pci_write(pci_dev dev, uint32_t field, uint32_t value);
+uint32_t dev_pci_read(union pci_dev dev, uint32_t field);
+void dev_pci_write(union pci_dev dev, uint32_t field, uint32_t value);
 
-uint32_t get_device_type(pci_dev dev);
-uint32_t get_secondary_bus(pci_dev dev);
-uint32_t pci_reach_end(pci_dev dev);
+uint32_t dev_pci_get_device_type(union pci_dev dev);
+uint32_t dev_pci_get_secondary_bus(union pci_dev dev);
+uint32_t dev_pci_reach_end(union pci_dev dev);
 
-pci_dev pci_scan_function(uint16_t vendor_id, uint16_t device_id, uint32_t bus, uint32_t device, uint32_t function, int device_type);
-pci_dev pci_scan_device(uint16_t vendor_id, uint16_t device_id, uint32_t bus, uint32_t device, int device_type);
-pci_dev pci_scan_bus(uint16_t vendor_id, uint16_t device_id, uint32_t bus, int device_type);
-pci_dev pci_get_device(uint16_t vendor_id, uint16_t device_id, int device_type);
+union pci_dev dev_pci_scan_function(uint16_t vendor_id, uint16_t device_id, uint32_t bus, uint32_t device, uint32_t function, uint32_t device_type);
+union pci_dev dev_pci_scan_device(uint16_t vendor_id, uint16_t device_id, uint32_t bus, uint32_t device, uint32_t device_type);
+union pci_dev dev_pci_scan_bus(uint16_t vendor_id, uint16_t device_id, uint32_t bus, uint32_t device_type);
+union pci_dev dev_pci_get_device(uint16_t vendor_id, uint16_t device_id, uint32_t device_type);
 
 void pci_init();
 
