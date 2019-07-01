@@ -99,13 +99,13 @@ struct rtl8139_dev
 	uint32_t mem_base;
 	int eeprom_exist;
 	uint8_t mac_addr[6];
-	char *rx_buffer;
+	char rx_buffer[8192 + 16 + 1500];
 	int tx_cur;
 };
 
 void net_rtl8139_send_packet(void *data, uint32_t len);
 
-void net_rtl8139_handler();
+void net_rtl8139_handler(int num);
 
 void net_rtl8139_init();
 
