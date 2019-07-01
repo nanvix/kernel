@@ -26,39 +26,52 @@
  * PCI Init, filling size for each field in config space
  * */
 #include <dev/pci.h>
-#include <pmio.h>
+#include <nanvix/hal/hal.h>
 
 uint32_t pci_size_map[100];
-union pci_dev dev_zero = {0};
+struct pci_dev dev_zero = {0};
+
+PRIVATE uint32_t dev_pci_bits_from_fields(struct pci_dev dev) {
+    uint32_t bits = 0;
+
+    bits |= (dev.enable) << 31;
+    bits |= (dev.reserved) << 24;
+    bits |= (dev.bus_num) << 16;
+    bits |= (dev.device_num) << 11;
+    bits |= (dev.function_num) << 8;
+    bits |= (dev.field_num) << 2;
+    bits |= (dev.always_zero);
+    return bits;
+}
 
 /*
  * Given a pci device(32-bit vars containing info about bus, device number, and function number), a field(what u want to read from the config space)
  * Read it for me !
  * */
-uint32_t dev_pci_read(union pci_dev dev, uint32_t field)
+uint32_t dev_pci_read(struct pci_dev dev, uint32_t field)
 {
     // Only most significant 6 bits of the field
     dev.field_num = (field & 0xFC) >> 2;
     dev.enable = 1;
-    outportl(PCI_CONFIG_ADDRESS, dev.bits);
+    i486_output32(PCI_CONFIG_ADDRESS, dev_pci_bits_from_fields(dev));
 
     // What size is this field supposed to be ?
     uint32_t size = pci_size_map[field];
     if (size == 1)
     {
         // Get the first byte only, since it's in little endian, it's actually the 3rd byte
-        uint8_t t = inportb(PCI_CONFIG_DATA + (field & 3));
+        uint8_t t = i486_input8(PCI_CONFIG_DATA + (field & 3));
         return t;
     }
     else if (size == 2)
     {
-        uint16_t t = inports(PCI_CONFIG_DATA + (field & 2));
+        uint16_t t = i486_input16(PCI_CONFIG_DATA + (field & 2));
         return t;
     }
     else if (size == 4)
     {
         // Read entire 4 bytes
-        uint32_t t = inportl(PCI_CONFIG_DATA);
+        uint32_t t = i486_input32(PCI_CONFIG_DATA);
         return t;
     }
     return 0xffff;
@@ -67,20 +80,20 @@ uint32_t dev_pci_read(union pci_dev dev, uint32_t field)
 /*
  * Write pci field
  * */
-void dev_pci_write(union pci_dev dev, uint32_t field, uint32_t value)
+void dev_pci_write(struct pci_dev dev, uint32_t field, uint32_t value)
 {
     dev.field_num = (field & 0xFC) >> 2;
     dev.enable = 1;
     // Tell where we want to write
-    outportl(PCI_CONFIG_ADDRESS, dev.bits);
+    i486_output32(PCI_CONFIG_ADDRESS, dev_pci_bits_from_fields(dev));
     // Value to write
-    outportl(PCI_CONFIG_DATA, value);
+    i486_output32(PCI_CONFIG_DATA, value);
 }
 
 /*
  * Get device type (i.e, is it a bridge, ide controller ? mouse controller? etc)
  * */
-uint32_t dev_pci_get_device_type(union pci_dev dev)
+uint32_t dev_pci_get_device_type(struct pci_dev dev)
 {
     uint32_t t = dev_pci_read(dev, PCI_CLASS) << 8;
     return t | dev_pci_read(dev, PCI_SUBCLASS);
@@ -89,7 +102,7 @@ uint32_t dev_pci_get_device_type(union pci_dev dev)
 /*
  * Get secondary bus from a PCI bridge device
  * */
-uint32_t dev_pci_get_secondary_bus(union pci_dev dev)
+uint32_t dev_pci_get_secondary_bus(struct pci_dev dev)
 {
     return dev_pci_read(dev, PCI_SECONDARY_BUS);
 }
@@ -97,7 +110,7 @@ uint32_t dev_pci_get_secondary_bus(union pci_dev dev)
 /*
  * Is current device an end point ? PCI_HEADER_TYPE 0 is end point
  * */
-uint32_t dev_pci_reach_end(union pci_dev dev)
+uint32_t dev_pci_reach_end(struct pci_dev dev)
 {
     uint32_t t = dev_pci_read(dev, PCI_HEADER_TYPE);
     return !t;
@@ -113,9 +126,9 @@ uint32_t dev_pci_reach_end(union pci_dev dev)
 /*
  * Scan function
  * */
-union pci_dev dev_pci_scan_function(uint16_t vendor_id, uint16_t device_id, uint32_t bus, uint32_t device, uint32_t function, uint32_t device_type)
+struct pci_dev dev_pci_scan_function(uint16_t vendor_id, uint16_t device_id, uint32_t bus, uint32_t device, uint32_t function, uint32_t device_type)
 {
-    union pci_dev dev = {0};
+    struct pci_dev dev = {0};
     dev.bus_num = bus;
     dev.device_num = device;
     dev.function_num = function;
@@ -123,11 +136,11 @@ union pci_dev dev_pci_scan_function(uint16_t vendor_id, uint16_t device_id, uint
     // If it's a PCI Bridge device, get the bus it's connected to and keep searching
     if (dev_pci_get_device_type(dev) == PCI_TYPE_BRIDGE)
     {
-        dev_pci_scan_bus(vendor_id, device_id, get_secondary_bus(dev), device_type);
+        dev_pci_scan_bus(vendor_id, device_id, dev_pci_get_secondary_bus(dev), device_type);
     }
 
     // If type matches, we've found the device, just return it
-    if (device_type == -1 || device_type == get_device_type(dev))
+    if (device_type == (uint32_t)-1 || device_type == dev_pci_get_device_type(dev))
     {
         uint32_t devid = dev_pci_read(dev, PCI_DEVICE_ID);
         uint32_t vendid = dev_pci_read(dev, PCI_VENDOR_ID);
@@ -140,17 +153,17 @@ union pci_dev dev_pci_scan_function(uint16_t vendor_id, uint16_t device_id, uint
 /*
  * Scan device
  * */
-union pci_dev dev_pci_scan_device(uint16_t vendor_id, uint16_t device_id, uint32_t bus, uint32_t device, uint32_t device_type)
+struct pci_dev dev_pci_scan_device(uint16_t vendor_id, uint16_t device_id, uint32_t bus, uint32_t device, uint32_t device_type)
 {
-    union pci_dev dev = {0};
+    struct pci_dev dev = {0};
     dev.bus_num = bus;
     dev.device_num = device;
 
     if (dev_pci_read(dev, PCI_VENDOR_ID) == PCI_NONE)
         return dev_zero;
 
-    union pci_dev t = dev_pci_scan_function(vendor_id, device_id, bus, device, 0, device_type);
-    if (t.bits)
+    struct pci_dev t = dev_pci_scan_function(vendor_id, device_id, bus, device, 0, device_type);
+    if (dev_pci_bits_from_fields(t))
         return t;
 
     if (dev_pci_reach_end(dev))
@@ -161,7 +174,7 @@ union pci_dev dev_pci_scan_device(uint16_t vendor_id, uint16_t device_id, uint32
         if (dev_pci_read(dev, PCI_VENDOR_ID) != PCI_NONE)
         {
             t = dev_pci_scan_function(vendor_id, device_id, bus, device, function, device_type);
-            if (t.bits)
+            if (dev_pci_bits_from_fields(t))
                 return t;
         }
     }
@@ -170,12 +183,12 @@ union pci_dev dev_pci_scan_device(uint16_t vendor_id, uint16_t device_id, uint32
 /*
  * Scan bus
  * */
-union pci_dev dev_pci_scan_bus(uint16_t vendor_id, uint16_t device_id, uint32_t bus, uint32_t device_type)
+struct pci_dev dev_pci_scan_bus(uint16_t vendor_id, uint16_t device_id, uint32_t bus, uint32_t device_type)
 {
     for (int device = 0; device < DEVICE_PER_BUS; device++)
     {
-        union pci_dev t = dev_pci_scan_device(vendor_id, device_id, bus, device, device_type);
-        if (t.bits)
+        struct pci_dev t = dev_pci_scan_device(vendor_id, device_id, bus, device, device_type);
+        if (dev_pci_bits_from_fields(t))
             return t;
     }
     return dev_zero;
@@ -184,29 +197,29 @@ union pci_dev dev_pci_scan_bus(uint16_t vendor_id, uint16_t device_id, uint32_t 
 /*
  * Device driver use this function to get its device object(given unique vendor id and device id)
  * */
-union pci_dev dev_pci_get_device(uint16_t vendor_id, uint16_t device_id, uint32_t device_type)
+struct pci_dev dev_pci_get_device(uint16_t vendor_id, uint16_t device_id, uint32_t device_type)
 {
 
-    union pci_dev t = dev_pci_scan_bus(vendor_id, device_id, 0, device_type);
-    if (t.bits)
+    struct pci_dev t = dev_pci_scan_bus(vendor_id, device_id, 0, device_type);
+    if (dev_pci_bits_from_fields(t))
         return t;
 
     // Handle multiple pci host controllers
 
     if (dev_pci_reach_end(dev_zero)) // ?
     {
-        printf("PCI Get device failed...\n");
+        kprintf("PCI Get device failed...\n");
     }
 
     for (int bus = 1; bus < NUMBER_OF_BUSES; bus++)
     {
-        /*         union pci_dev dev = {0};
+        /*         struct pci_dev dev = {0};
         dev.function_num = function;
 
         if (pci_read(dev, PCI_VENDOR_ID) == PCI_NONE)
             break; */
         t = dev_pci_scan_bus(vendor_id, device_id, bus, device_type);
-        if (t.bits)
+        if (dev_pci_bits_from_fields(t))
             return t;
     }
     return dev_zero;
