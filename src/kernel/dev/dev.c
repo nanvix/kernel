@@ -63,6 +63,4 @@ PUBLIC void dev_init(void)
 
 	dev_pci_init();
 	net_rtl8139_init();
-	char* message = "TOTO";
-	net_rtl8139_send_packet(message, 4);
 }
