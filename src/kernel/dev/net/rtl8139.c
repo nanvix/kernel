@@ -39,25 +39,26 @@ uint32_t current_packet_ptr;
 void receive_packet()
 {
     uint16_t *t = (uint16_t *)(rtl8139_device.rx_buffer + current_packet_ptr);
+    
+    uint32_t tmp = (uint32_t) mmio_get((paddr_t)(rtl8139_device.rx_buffer + current_packet_ptr));
+    kprintf("%d %d\n", rtl8139_device.rx_buffer + current_packet_ptr, tmp);
+
     // Skip packet header, get packet length
-    uint16_t packet_length = *(t + 1);
+    // uint16_t packet_length = *(t + 8);
 
     // Skip, packet header and packet length, now t points to the packet data
-    t = t + 2;
-    //qemu_printf("Printing packet at addr 0x%x\n", (uint32_t)t);
-    //xxd(t, packet_length);
+    // t = t + 2;
 
     // Now, ethernet layer starts to handle the packet(be sure to make a copy of the packet, insteading of using the buffer)
-    // and probabbly this should be done in a separate thread...
-    
+    // and probabbly this should be done in a separate thread...    
     // void *packet = kmalloc(packet_length);
     // memcpy(packet, t, packet_length);
     // ethernet_handle_packet(packet, packet_length);
-    for(int i = 0; i < packet_length; i++) {
-        kprintf("%x\n", t[i]);
+    for(int i = 0; i < 100; i++) {
+        kprintf("%x", t[i]);
     }
 
-    current_packet_ptr = (current_packet_ptr + packet_length + 4 + 3) & RX_READ_POINTER_MASK;
+    // current_packet_ptr = (current_packet_ptr + packet_length + 4 + 3) & RX_READ_POINTER_MASK;
 
     if (current_packet_ptr > RX_BUF_SIZE)
         current_packet_ptr -= RX_BUF_SIZE;
@@ -73,6 +74,10 @@ void net_rtl8139_send_packet(void *data, uint32_t len)
 
     // Second, fill in physical address of data, and length
     i486_output32(rtl8139_device.io_base + TSAD_array[rtl8139_device.tx_cur], (uint32_t)data);
+        
+    uint32_t tmp = (uint32_t) mmio_get((paddr_t)(data));
+    kprintf("%d %d\n", data, tmp);
+
     i486_output32(rtl8139_device.io_base + TSD_array[rtl8139_device.tx_cur++], len | 0x003f0000);
     if (rtl8139_device.tx_cur > 3)
         rtl8139_device.tx_cur = 0;
@@ -80,7 +85,8 @@ void net_rtl8139_send_packet(void *data, uint32_t len)
 
 void net_rtl8139_handler(int num)
 {
-    kprintf("RTL8139 interript was fired !!!! %d \n", num);
+    i486_output16(rtl8139_device.io_base + 0x3C, 0x0);
+    kprintf("RTL8139 interrupt was fired !!!! %d \n", num);
     uint16_t status = i486_input16(rtl8139_device.io_base + 0x3e);
 
     if (status & TOK)
@@ -94,6 +100,7 @@ void net_rtl8139_handler(int num)
     }
 
     i486_output16(rtl8139_device.io_base + 0x3C, 0x4 | 0x01);
+    i486_output16(rtl8139_device.io_base + 0x3E, 0x4 | 0x01);
 }
 
 void read_mac_addr()
@@ -117,7 +124,8 @@ void read_mac_addr()
 void net_rtl8139_init()
 {
     current_packet_ptr = 0;
-    // First get the network device using PCI
+
+    /* Find the network device using the PCI driver and the Vendor ID and Device ID of the card */
     pci_rtl8139_device = dev_pci_get_device(RTL8139_VENDOR_ID, RTL8139_DEVICE_ID, -1);
     uint32_t ret = dev_pci_read(pci_rtl8139_device, PCI_BAR0);
     rtl8139_device.bar_type = ret & 0x1;
@@ -149,7 +157,9 @@ void net_rtl8139_init()
 
     // Allocate receive buffer
     // rtl8139_device.rx_buffer = malloc(8192 + 16 + 1500);
-    kmemset(rtl8139_device.rx_buffer, 0x0, 8192 + 16 + 1500);
+    uint8_t tmp_buffer[8192 / 4 + 16 + 1500];
+    rtl8139_device.rx_buffer = tmp_buffer;
+    kmemset(rtl8139_device.rx_buffer, 0x0, 8192 / 4 + 16 + 1500);
     // i486_output32(rtl8139_device.io_base + 0x30, (uint32_t)virtual2phys(kpage_dir, rtl8139_device.rx_buffer));
     i486_output32(rtl8139_device.io_base + 0x30, (uint32_t) rtl8139_device.rx_buffer);
 
@@ -162,7 +172,7 @@ void net_rtl8139_init()
     // Sets the RE and TE bits high
     i486_output8(rtl8139_device.io_base + 0x37, 0x0C);
 
-    // Register and enable network interrupts
+    // Register network interrupts
     uint32_t irq_num = dev_pci_read(pci_rtl8139_device, PCI_INTERRUPT_LINE);
     int tmp =  12;
     tmp = interrupt_register(irq_num, net_rtl8139_handler);
