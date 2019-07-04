@@ -99,7 +99,7 @@ struct rtl8139_dev
 	uint32_t mem_base;
 	int eeprom_exist;
 	uint8_t mac_addr[6];
-	char rx_buffer[8192 + 16 + 1500];
+	uint8_t* rx_buffer;
 	int tx_cur;
 };
 
