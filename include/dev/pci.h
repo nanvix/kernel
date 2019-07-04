@@ -41,13 +41,11 @@ struct pci_dev {
     uint32_t enable;
 };
 
-// Ports
+/* Base adresses */
 #define PCI_CONFIG_ADDRESS 0xCF8
 #define PCI_CONFIG_DATA 0xCFC
 
-// Config Address Register
-
-// Offset
+/*Config offsets */
 #define PCI_VENDOR_ID 0x00
 #define PCI_DEVICE_ID 0x02
 #define PCI_COMMAND 0x04
@@ -69,7 +67,7 @@ struct pci_dev {
 #define PCI_INTERRUPT_LINE 0x3C
 #define PCI_SECONDARY_BUS 0x09
 
-// Device type
+/* Device types */
 #define PCI_HEADER_TYPE_DEVICE 0
 #define PCI_HEADER_TYPE_BRIDGE 1
 #define PCI_HEADER_TYPE_CARDBUS 2
@@ -79,9 +77,8 @@ struct pci_dev {
 
 #define NUMBER_OF_BUSES 256
 #define DEVICE_PER_BUS 32
-#define FUNCTION_PER_DEVICE 8 // 32
+#define FUNCTION_PER_DEVICE 8
 
-/* PUBLIC functions */
 uint32_t dev_pci_read(struct pci_dev dev, uint32_t field);
 void dev_pci_write(struct pci_dev dev, uint32_t field, uint32_t value);
 struct pci_dev dev_pci_get_device(uint16_t vendor_id, uint16_t device_id, uint32_t device_type);
