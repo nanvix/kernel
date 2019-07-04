@@ -36,8 +36,6 @@
 #include <dev/pci.h>
 #include <nanvix/hal/hal.h>
 
-struct pci_dev dev_zero = {0};
-
 /* PRIVATE functions */
 PRIVATE uint32_t dev_pci_get_device_type(struct pci_dev dev);
 PRIVATE uint32_t dev_pci_get_secondary_bus(struct pci_dev dev);
@@ -49,6 +47,8 @@ PRIVATE struct pci_dev dev_pci_scan_bus(uint16_t vendor_id, uint16_t device_id, 
 
 PRIVATE uint32_t dev_pci_bits_from_fields(struct pci_dev dev);
 PRIVATE uint32_t pci_size_map(uint32_t field);
+
+PRIVATE struct pci_dev dev_zero = {0};
 
 /**
  * @brief Given a pci_dev and a chosen field, read and return its value
@@ -102,9 +102,6 @@ PUBLIC void dev_pci_write(struct pci_dev dev, uint32_t register_offset, uint32_t
     i486_output32(PCI_CONFIG_DATA, value);
 }
 
-/*
- * Device driver use this function to get its device object(given unique vendor id and device id)
- * */
 /**
  * @brief Given a vendor_id and device_id find and return the corresponding device.
  * A device_type can also be given, if the given device_type is -1 then only the 
@@ -115,27 +112,9 @@ PUBLIC void dev_pci_write(struct pci_dev dev, uint32_t register_offset, uint32_t
  */
 PUBLIC struct pci_dev dev_pci_get_device(uint16_t vendor_id, uint16_t device_id, uint32_t device_type)
 {
-
-    // struct pci_dev t = dev_pci_scan_bus(vendor_id, device_id, 0, device_type);
-    // if (dev_pci_bits_from_fields(t))
-    //     return t;
-
-    // Handle multiple pci host controllers
-
-/*     if (dev_pci_reach_end(dev_zero)) // ?
-    {
-        kprintf("PCI Get device failed...\n");
-    } */
-
     /* Scan every bus, looking for the device */
     for (int bus = 0; bus < NUMBER_OF_BUSES; bus++)
     {
-        /*         struct pci_dev dev = {0};
-        dev.function_num = function;
-
-        if (pci_read(dev, PCI_VENDOR_ID) == PCI_NONE)
-            break; */
-
         struct pci_dev t = dev_pci_scan_bus(vendor_id, device_id, bus, device_type);
         /* If the device has been found, return it */
         if (dev_pci_bits_from_fields(t))
@@ -177,20 +156,6 @@ PRIVATE struct pci_dev dev_pci_scan_bus(uint16_t vendor_id, uint16_t device_id, 
  */
 PRIVATE struct pci_dev dev_pci_scan_device(uint16_t vendor_id, uint16_t device_id, uint32_t bus, uint32_t device, uint32_t device_type)
 {
-/*     struct pci_dev dev = {0};
-    dev.bus_num = bus;
-    dev.device_num = device; */
-
-    // if (dev_pci_read(dev, PCI_VENDOR_ID) == PCI_NONE)
-    //     return dev_zero;
-
-    // struct pci_dev t = dev_pci_scan_function(vendor_id, device_id, bus, device, 0, device_type);
-    // if (dev_pci_bits_from_fields(t))
-    //     return t;
-
-    // if (dev_pci_reach_end(dev))
-    //     return dev_zero;
-
     /* Scan every function on the device, looking for the device */
     for (int function = 0; function < FUNCTION_PER_DEVICE; function++)
     {
@@ -298,12 +263,3 @@ PRIVATE uint32_t pci_size_map(uint32_t field) {
             return 0;
     }
 }
-
-/*
- * Is current device an end point ? PCI_HEADER_TYPE 0 is end point
- * */
-// uint32_t dev_pci_reach_end(struct pci_dev dev)
-// {
-//     uint32_t t = dev_pci_read(dev, PCI_HEADER_TYPE);
-//     return !t;
-// }
