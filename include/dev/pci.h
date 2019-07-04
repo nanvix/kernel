@@ -33,7 +33,7 @@
 
 struct pci_dev {
     uint32_t always_zero;
-    uint32_t field_num;
+    uint32_t register_offset;
     uint32_t function_num;
     uint32_t device_num;
     uint32_t bus_num;
@@ -81,18 +81,9 @@ struct pci_dev {
 #define DEVICE_PER_BUS 32
 #define FUNCTION_PER_DEVICE 8 // 32
 
+/* PUBLIC functions */
 uint32_t dev_pci_read(struct pci_dev dev, uint32_t field);
 void dev_pci_write(struct pci_dev dev, uint32_t field, uint32_t value);
-
-uint32_t dev_pci_get_device_type(struct pci_dev dev);
-uint32_t dev_pci_get_secondary_bus(struct pci_dev dev);
-uint32_t dev_pci_reach_end(struct pci_dev dev);
-
-struct pci_dev dev_pci_scan_function(uint16_t vendor_id, uint16_t device_id, uint32_t bus, uint32_t device, uint32_t function, uint32_t device_type);
-struct pci_dev dev_pci_scan_device(uint16_t vendor_id, uint16_t device_id, uint32_t bus, uint32_t device, uint32_t device_type);
-struct pci_dev dev_pci_scan_bus(uint16_t vendor_id, uint16_t device_id, uint32_t bus, uint32_t device_type);
 struct pci_dev dev_pci_get_device(uint16_t vendor_id, uint16_t device_id, uint32_t device_type);
-
-void dev_pci_init();
 
 #endif /* PCI_H_ */
