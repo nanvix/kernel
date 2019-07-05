@@ -54,14 +54,14 @@ PRIVATE struct pci_dev dev_zero = {0};
  * @brief Given a pci_dev and a chosen field, read and return its value
  * 
  * @param dev, the pci_dev you want to read a value from
- * @param field 
+ * @param register_offset, the register you want to read 
  * 
  * @return the read register if success, 0xffff if fail 
  */
 PUBLIC uint32_t dev_pci_read(struct pci_dev dev, uint32_t register_offset)
 {
     /* Add the chosen register to the device informations */
-    dev.register_offset = (register_offset & 0xFC) >> 2;
+    dev.register_offset = register_offset;
     dev.enable = 1;
 
     /* Request the information */
@@ -93,12 +93,12 @@ PUBLIC uint32_t dev_pci_read(struct pci_dev dev, uint32_t register_offset)
 PUBLIC void dev_pci_write(struct pci_dev dev, uint32_t register_offset, uint32_t value)
 {
     /* Add the chosen register to the device informations */
-    dev.register_offset = (register_offset & 0xFC) >> 2;
+    dev.register_offset = register_offset;
     dev.enable = 1;
 
-    // Tell where we want to write
+    /* Indicate wich register of wich device we want to write to */
     i486_output32(PCI_CONFIG_ADDRESS, dev_pci_bits_from_fields(dev));
-    // Value to write
+    /* Write the value */
     i486_output32(PCI_CONFIG_DATA, value);
 }
 
@@ -226,8 +226,7 @@ PRIVATE uint32_t dev_pci_bits_from_fields(struct pci_dev dev) {
     bits |= (dev.bus_num) << 16;
     bits |= (dev.device_num) << 11;
     bits |= (dev.function_num) << 8;
-    bits |= (dev.register_offset) << 2;
-    bits |= (dev.always_zero);
+    bits |= (dev.register_offset & 0xFC); /* 2 first bits at zero */
     
     return bits;
 }
