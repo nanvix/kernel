@@ -86,11 +86,11 @@ enum RTL8139_registers
 	PARA7c = 0x7c, // Magic transceiver parameter register
 };
 
-struct tx_desc
-{
-	uint32_t phys_addr;
-	uint32_t packet_size;
-};
+// struct tx_desc
+// {
+// 	uint32_t phys_addr;
+// 	uint32_t packet_size;
+// };
 
 struct rtl8139_dev
 {
@@ -103,16 +103,7 @@ struct rtl8139_dev
 	int tx_cur;
 };
 
-void net_rtl8139_send_packet(void *data, uint32_t len);
-
-void net_rtl8139_handler(int num);
-
-void net_rtl8139_init();
-
-void net_rtl8139_read_mac_addr();
-
-void net_rtl8139_receive_packet();
-
-void net_rtl8139_get_mac_addr();
+void dev_net_rtl8139_init();
+void dev_net_rtl8139_send_packet(void *data, uint32_t len)
 
 #endif /* RTL8139_H_ */
