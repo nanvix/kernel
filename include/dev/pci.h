@@ -32,7 +32,6 @@
 #include <stdint.h>
 
 struct pci_dev {
-    uint32_t always_zero;
     uint32_t register_offset;
     uint32_t function_num;
     uint32_t device_num;
