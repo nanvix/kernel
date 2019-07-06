@@ -98,7 +98,7 @@ PUBLIC void kmain(int argc, const char *argv[])
 	
 	for(int i = 0; i < 10; i ++) {
 		packet[i] = i;
-		net_rtl8139_send_packet(packet, 98);
+		dev_net_rtl8139_send_packet(packet, 98);
 	}
 
 	while(1){};

@@ -35,7 +35,8 @@
 #define RTL8139_VENDOR_ID 0x10EC
 #define RTL8139_DEVICE_ID 0x8139
 
-#define RX_BUF_SIZE 8192
+#define RX_BUF_ALLOC_SIZE 8192 / 4 + 16 + 1500
+#define RX_BUF_SIZE 8192 / 4 + 16
 
 #define CAPR 0x38
 #define RX_READ_POINTER_MASK (~3)
@@ -47,25 +48,25 @@
 
 enum RTL8139_registers
 {
+	COMMAND = 0x37,
+	RX_BUFFER = 0x30,
+	RX_CONFIG = 0x44,
+	CONFIG1 = 0x52,
+	INTERRUPT_MASK = 0x3C,
+	INTERRUPT_STATUS = 0x3E,
 	MAG0 = 0x00,	  // Ethernet hardware address
 	MAR0 = 0x08,	  // Multicast filter
 	TxStatus0 = 0x10, // Transmit status (Four 32bit registers)
 	TxAddr0 = 0x20,   // Tx descriptors (also four 32bit)
-	RxBuf = 0x30,
 	RxEarlyCnt = 0x34,
 	RxEarlyStatus = 0x36,
-	ChipCmd = 0x37,
 	RxBufPtr = 0x38,
 	RxBufAddr = 0x3A,
-	IntrMask = 0x3C,
-	IntrStatus = 0x3E,
 	TxConfig = 0x40,
-	RxConfig = 0x44,
 	Timer = 0x48,	// A general-purpose counter
 	RxMissed = 0x4C, // 24 bits valid, write clears
 	Cfg9346 = 0x50,
 	Config0 = 0x51,
-	Config1 = 0x52,
 	FlashReg = 0x54,
 	GPPinData = 0x58,
 	GPPinDir = 0x59,
@@ -104,6 +105,6 @@ struct rtl8139_dev
 };
 
 void dev_net_rtl8139_init();
-void dev_net_rtl8139_send_packet(void *data, uint32_t len)
+void dev_net_rtl8139_send_packet(void *data, uint32_t len);
 
 #endif /* RTL8139_H_ */
