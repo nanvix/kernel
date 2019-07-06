@@ -61,5 +61,5 @@ PUBLIC void dev_init(void)
 	timer_init(TIMER_FREQ);
 	KASSERT(interrupt_register(INTERRUPT_TIMER, do_timer) == 0);
 
-	net_rtl8139_init();
+	dev_net_rtl8139_init();
 }
