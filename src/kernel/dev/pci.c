@@ -65,23 +65,23 @@ PUBLIC uint32_t dev_pci_read(struct pci_dev dev, uint32_t register_offset)
     dev.enable = 1;
 
     /* Request the information */
-    i486_output32(PCI_CONFIG_ADDRESS, dev_pci_bits_from_fields(dev));
+    output32(PCI_CONFIG_ADDRESS, dev_pci_bits_from_fields(dev));
 
     uint32_t size = pci_size_map(register_offset);
     if (size == 1)
     {
         /* Read the first byte (3rd because of little endian) */
-        uint8_t t = i486_input8(PCI_CONFIG_DATA + (register_offset & 3));
+        uint8_t t = input8(PCI_CONFIG_DATA + (register_offset & 3));
         return t;
     }
     else if (size == 2)
     {
-        uint16_t t = i486_input16(PCI_CONFIG_DATA + (register_offset & 2));
+        uint16_t t = input16(PCI_CONFIG_DATA + (register_offset & 2));
         return t;
     }
     else if (size == 4)
     {
-        uint32_t t = i486_input32(PCI_CONFIG_DATA);
+        uint32_t t = input32(PCI_CONFIG_DATA);
         return t;
     }
     return 0xffff;
@@ -97,9 +97,9 @@ PUBLIC void dev_pci_write(struct pci_dev dev, uint32_t register_offset, uint32_t
     dev.enable = 1;
 
     /* Indicate wich register of wich device we want to write to */
-    i486_output32(PCI_CONFIG_ADDRESS, dev_pci_bits_from_fields(dev));
+    output32(PCI_CONFIG_ADDRESS, dev_pci_bits_from_fields(dev));
     /* Write the value */
-    i486_output32(PCI_CONFIG_DATA, value);
+    output32(PCI_CONFIG_DATA, value);
 }
 
 /**
