@@ -72,25 +72,25 @@ PUBLIC void dev_net_rtl8139_init()
     }
 
     /* Power on the device */
-    i486_output8(rtl8139_device.io_base + CONFIG1, 0x0);
+    output8(rtl8139_device.io_base + CONFIG1, 0x0);
 
     /* Soft reset (clearing buffers) */
-    i486_output8(rtl8139_device.io_base + COMMAND, 0x10);
-    while ((i486_input8(rtl8139_device.io_base + COMMAND) & 0x10) != 0);
+    output8(rtl8139_device.io_base + COMMAND, 0x10);
+    while ((input8(rtl8139_device.io_base + COMMAND) & 0x10) != 0);
 
     /* Initialisation of the receive buffer */
     kmemset(rtl8139_device.rx_buffer, 0x0, RX_BUF_ALLOC_SIZE);
-    i486_output32(rtl8139_device.io_base + RX_BUFFER, (uint32_t) rtl8139_device.rx_buffer - KBASE_VIRT);
+    output32(rtl8139_device.io_base + RX_BUFFER, (uint32_t) rtl8139_device.rx_buffer - KBASE_VIRT);
 
     /* Toggle receive and send interuptions on  */
-    i486_output16(rtl8139_device.io_base + INTERRUPT_MASK, ROK | TOK);
+    output16(rtl8139_device.io_base + INTERRUPT_MASK, ROK | TOK);
 
     /* Accepting all kind of packets (Broadcast, Multicast, ...) and 
     setting up the rx_buffer so that it can overflow (easier to handle this way) */
-    i486_output32(rtl8139_device.io_base + RX_CONFIG, 0xf | (1 << 7));
+    output32(rtl8139_device.io_base + RX_CONFIG, 0xf | (1 << 7));
 
     /* Enabling Transmitter and Receiver */
-    i486_output8(rtl8139_device.io_base + COMMAND, 0x0C);
+    output8(rtl8139_device.io_base + COMMAND, 0x0C);
 
     /* Register an interrupt that will be fired on packet reception and sending */
     uint32_t irq_num = dev_pci_read(pci_rtl8139_device, PCI_INTERRUPT_LINE);
@@ -112,8 +112,8 @@ PUBLIC void dev_net_rtl8139_send_packet(void *data, uint32_t len)
 
     /* Write data (starting adress of contiguous data) and lenght to the current 
     descriptors. */
-    i486_output32(rtl8139_device.io_base + TSAD_array[rtl8139_device.tx_cur], (uint32_t)data);
-    i486_output32(rtl8139_device.io_base + TSD_array[rtl8139_device.tx_cur], len | 0x003f0000);
+    output32(rtl8139_device.io_base + TSAD_array[rtl8139_device.tx_cur], (uint32_t)data);
+    output32(rtl8139_device.io_base + TSD_array[rtl8139_device.tx_cur], len | 0x003f0000);
     
     /* Go to the next descriptor (if > 3 -> 0)*/
     rtl8139_device.tx_cur = (rtl8139_device.tx_cur + 1) & 0x3;
@@ -145,12 +145,12 @@ PRIVATE void dev_net_rtl8139_receive_packet()
 
         current_packet_ptr_offset = ((current_packet_ptr_offset + packet_length + 4 + 3) & RX_READ_POINTER_MASK);
 
-        i486_output16(rtl8139_device.io_base + CAPR, current_packet_ptr_offset - 0x10);
+        output16(rtl8139_device.io_base + CAPR, current_packet_ptr_offset - 0x10);
 
         if (current_packet_ptr_offset > RX_BUF_SIZE)
             current_packet_ptr_offset -= (RX_BUF_SIZE - 16);
 
-    } while (!(i486_input8(rtl8139_device.io_base + COMMAND) & 1));
+    } while (!(input8(rtl8139_device.io_base + COMMAND) & 1));
 }
 
 /**
@@ -162,9 +162,9 @@ PRIVATE void dev_net_rtl8139_handler(int num)
     UNUSED(num);
     
     /* Switch off interruptions during the time of the function */
-    i486_output16(rtl8139_device.io_base + INTERRUPT_MASK, 0x0);
+    output16(rtl8139_device.io_base + INTERRUPT_MASK, 0x0);
 
-    uint16_t status = i486_input16(rtl8139_device.io_base + 0x3e);
+    uint16_t status = input16(rtl8139_device.io_base + 0x3e);
     if (status & TOK)
     {
         kprintf("Packet sent\n");
@@ -176,8 +176,8 @@ PRIVATE void dev_net_rtl8139_handler(int num)
     }
 
     /* Switch interruptions back on and clear them */
-    i486_output16(rtl8139_device.io_base + INTERRUPT_MASK, ROK | TOK);
-    i486_output16(rtl8139_device.io_base + INTERRUPT_STATUS, ROK | TOK);
+    output16(rtl8139_device.io_base + INTERRUPT_MASK, ROK | TOK);
+    output16(rtl8139_device.io_base + INTERRUPT_STATUS, ROK | TOK);
 }
 
 /**
@@ -185,8 +185,8 @@ PRIVATE void dev_net_rtl8139_handler(int num)
  */
 PRIVATE void dev_net_rtl8139_read_mac_addr()
 {
-    uint32_t mac_part1 = i486_input32(rtl8139_device.io_base + 0x00);
-    uint16_t mac_part2 = i486_input16(rtl8139_device.io_base + 0x04);
+    uint32_t mac_part1 = input32(rtl8139_device.io_base + 0x00);
+    uint16_t mac_part2 = input16(rtl8139_device.io_base + 0x04);
     rtl8139_device.mac_addr[0] = mac_part1 >> 0;
     rtl8139_device.mac_addr[1] = mac_part1 >> 8;
     rtl8139_device.mac_addr[2] = mac_part1 >> 16;
