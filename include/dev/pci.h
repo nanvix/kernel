@@ -80,6 +80,7 @@ struct pci_dev {
 
 uint32_t dev_pci_read(struct pci_dev dev, uint32_t field);
 void dev_pci_write(struct pci_dev dev, uint32_t field, uint32_t value);
-struct pci_dev dev_pci_get_device(uint16_t vendor_id, uint16_t device_id, uint32_t device_type);
+struct pci_dev dev_pci_get_device(uint16_t vendor_id, uint16_t device_id, 
+                                uint32_t device_type);
 
 #endif /* PCI_H_ */
