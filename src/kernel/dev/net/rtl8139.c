@@ -33,13 +33,13 @@
  * Packets are received and (work in progress) forwarded to the lwIP stack.
  * Raw packets can be sent using the dev_net_rtl8139_send_packet function.
  */
+
 PRIVATE void dev_net_rtl8139_handler(int num);
 PRIVATE void dev_net_rtl8139_read_mac_addr();
 
 PRIVATE struct pci_dev pci_rtl8139_device;
 PRIVATE struct rtl8139_dev rtl8139_device;
 
-// Four TXAD register, you must use a different one to send packet each time(for example, use the first one, second... fourth and back to the first)
 PRIVATE uint8_t TSAD_array[4] = {0x20, 0x24, 0x28, 0x2C};
 PRIVATE uint8_t TSD_array[4] = {0x10, 0x14, 0x18, 0x1C};
 
@@ -58,14 +58,14 @@ PUBLIC void dev_net_rtl8139_init()
     /* Retrieve important information such as the io_base adress */
     uint32_t ret = dev_pci_read(pci_rtl8139_device, PCI_BAR0);
     rtl8139_device.io_base = ret & (~0x3);
-    rtl8139_device.bar_type = ret & 0x1;
-    rtl8139_device.mem_base = ret & (~0xf);
+    // rtl8139_device.bar_type = ret & 0x1;
+    // rtl8139_device.mem_base = ret & (~0xf);
 
     /* Each packet will be send to a different transmit descriptor than the previous 
     one, starting at index 0 */
     rtl8139_device.tx_cur = 0;
 
-    /* Enable PCI bus mastering. Allow DMA */
+    /* Enable PCI bus mastering: allow DMA */
     uint32_t pci_command_reg = dev_pci_read(pci_rtl8139_device, PCI_COMMAND);
     if (!(pci_command_reg & (1 << 2)))
     {
@@ -91,9 +91,10 @@ PUBLIC void dev_net_rtl8139_init()
     rtl8139_device.rx_buffer = tmp_buffer;
     kmemset(rtl8139_device.rx_buffer, 0x0, RX_BUF_ALLOC_SIZE);
     i486_output32(rtl8139_device.io_base + RX_BUFFER, (uint32_t) rtl8139_device.rx_buffer);
-
+    // kprintf("%d %d",(paddr_t)rtl8139_device.rx_buffer, mmio_get((paddr_t)rtl8139_device.rx_buffer));
+    
     /* Toggle receive and send interuptions on  */
-    i486_output16(rtl8139_device.io_base + INTERRUPT_MASK, 0x1 | (0x1 << 2));
+    i486_output16(rtl8139_device.io_base + INTERRUPT_MASK, ROK | TOK);
 
     /* Accepting all kind of packets (Broadcast, Multicast, ...) and 
     setting up the rx_buffer so that it can overflow (easier to handle this way) */
@@ -136,29 +137,31 @@ PUBLIC void dev_net_rtl8139_send_packet(void *data, uint32_t len)
  */
 PRIVATE void dev_net_rtl8139_receive_packet()
 {
-    uint16_t *t = (uint16_t *)(rtl8139_device.rx_buffer + current_packet_ptr_offset);
-    
-    // Skip packet header, get packet length
-    // uint16_t packet_length = *(t + 8);
+    do 
+    {
+        uint16_t *t = (uint16_t *)(rtl8139_device.rx_buffer + current_packet_ptr_offset);
+        
+        // Skip packet header, get packet length
+        uint16_t packet_length = *(t + 1);
+        kprintf("%d", packet_length);
 
-    // Skip, packet header and packet length, now t points to the packet data
-    // t = t + 2;
+        // Skip, packet header and packet length, now t points to the packet data
+        // t = t + 2;
 
-    // Now, ethernet layer starts to handle the packet(be sure to make a copy of the packet, insteading of using the buffer)
-    // and probabbly this should be done in a separate thread...    
-    // void *packet = kmalloc(packet_length);
-    // memcpy(packet, t, packet_length);
-    // ethernet_handle_packet(packet, packet_length);
-    for(int i = 0; i < 100; i++) {
-        kprintf("%x", t[i]);
-    }
+        // Now, ethernet layer starts to handle the packet(be sure to make a copy of the packet, insteading of using the buffer)
+        // and probabbly this should be done in a separate thread...    
+        // void *packet = kmalloc(packet_length);
+        // memcpy(packet, t, packet_length);
+        // ethernet_handle_packet(packet, packet_length);
 
-    // current_packet_ptr_offset = (current_packet_ptr_offset + packet_length + 4 + 3) & RX_READ_POINTER_MASK;
+        current_packet_ptr_offset = ((current_packet_ptr_offset + packet_length + 4 + 3) & RX_READ_POINTER_MASK);
 
-    if (current_packet_ptr_offset > RX_BUF_SIZE)
-        current_packet_ptr_offset -= RX_BUF_SIZE;
+        i486_output16(rtl8139_device.io_base + CAPR, current_packet_ptr_offset - 0x10);
+        // i486_output32(rtl8139_device.io_base + RX_BUFFER, (uint32_t) rtl8139_device.rx_buffer);
 
-    i486_output16(rtl8139_device.io_base + CAPR, current_packet_ptr_offset - 0x10);
+        if (current_packet_ptr_offset > RX_BUF_SIZE)
+            current_packet_ptr_offset -= RX_BUF_SIZE;
+    } while (!(i486_input8(rtl8139_device.io_base + COMMAND) & 1));
 }
 
 /**
@@ -167,9 +170,10 @@ PRIVATE void dev_net_rtl8139_receive_packet()
  */
 PRIVATE void dev_net_rtl8139_handler(int num)
 {
+    UNUSED(num);
+    
     /* Switch off interruptions during the time of the function */
     i486_output16(rtl8139_device.io_base + INTERRUPT_MASK, 0x0);
-    kprintf("RTL8139 interrupt was fired !!!! %d \n", num);
 
     uint16_t status = i486_input16(rtl8139_device.io_base + 0x3e);
     if (status & TOK)
@@ -183,8 +187,8 @@ PRIVATE void dev_net_rtl8139_handler(int num)
     }
 
     /* Switch interruptions back on and clear them */
-    i486_output16(rtl8139_device.io_base + INTERRUPT_MASK, 0x4 | 0x01);
-    i486_output16(rtl8139_device.io_base + INTERRUPT_STATUS, 0x4 | 0x01);
+    i486_output16(rtl8139_device.io_base + INTERRUPT_MASK, ROK | TOK);
+    i486_output16(rtl8139_device.io_base + INTERRUPT_STATUS, ROK | TOK);
 }
 
 /**
