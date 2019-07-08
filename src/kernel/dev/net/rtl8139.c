@@ -58,8 +58,6 @@ PUBLIC void dev_net_rtl8139_init()
     /* Retrieve important information such as the io_base adress */
     uint32_t ret = dev_pci_read(pci_rtl8139_device, PCI_BAR0);
     rtl8139_device.io_base = ret & (~0x3);
-    // rtl8139_device.bar_type = ret & 0x1;
-    // rtl8139_device.mem_base = ret & (~0xf);
 
     /* Each packet will be send to a different transmit descriptor than the previous 
     one, starting at index 0 */
@@ -81,20 +79,11 @@ PUBLIC void dev_net_rtl8139_init()
     while ((i486_input8(rtl8139_device.io_base + COMMAND) & 0x10) != 0);
 
     /* Initialisation of the receive buffer */
-    /* Using a tmp_buffer instead of defining the size directly inside the 
-    structure so that the buffer is alocated in the stack.
-    We need this buffer to be allocated in this stack because when we write to the
-    card to indicate the adress, it has to be a physical adress. And, it seems 
-    that virtual adress are equal to physical adress only with the stack, otherwise,
-    a conversion would be needed. */
-    uint8_t tmp_buffer[RX_BUF_ALLOC_SIZE];
-    rtl8139_device.rx_buffer = tmp_buffer;
     kmemset(rtl8139_device.rx_buffer, 0x0, RX_BUF_ALLOC_SIZE);
-    i486_output32(rtl8139_device.io_base + RX_BUFFER, (uint32_t) rtl8139_device.rx_buffer);
-    // kprintf("%d %d",(paddr_t)rtl8139_device.rx_buffer, mmio_get((paddr_t)rtl8139_device.rx_buffer));
-    
+    i486_output32(rtl8139_device.io_base + RX_BUFFER, (uint32_t) rtl8139_device.rx_buffer - KBASE_VIRT);
+
     /* Toggle receive and send interuptions on  */
-    i486_output16(rtl8139_device.io_base + INTERRUPT_MASK, ROK | TOK);
+    i486_output16(rtl8139_device.io_base + INTERRUPT_MASK, ROK | TOK);
 
     /* Accepting all kind of packets (Broadcast, Multicast, ...) and 
     setting up the rx_buffer so that it can overflow (easier to handle this way) */
@@ -143,7 +132,7 @@ PRIVATE void dev_net_rtl8139_receive_packet()
         
         // Skip packet header, get packet length
         uint16_t packet_length = *(t + 1);
-        kprintf("%d", packet_length);
+        kprintf("%d \t %d", packet_length, current_packet_ptr_offset);
 
         // Skip, packet header and packet length, now t points to the packet data
         // t = t + 2;
@@ -157,10 +146,10 @@ PRIVATE void dev_net_rtl8139_receive_packet()
         current_packet_ptr_offset = ((current_packet_ptr_offset + packet_length + 4 + 3) & RX_READ_POINTER_MASK);
 
         i486_output16(rtl8139_device.io_base + CAPR, current_packet_ptr_offset - 0x10);
-        // i486_output32(rtl8139_device.io_base + RX_BUFFER, (uint32_t) rtl8139_device.rx_buffer);
 
         if (current_packet_ptr_offset > RX_BUF_SIZE)
-            current_packet_ptr_offset -= RX_BUF_SIZE;
+            current_packet_ptr_offset -= (RX_BUF_SIZE - 16);
+
     } while (!(i486_input8(rtl8139_device.io_base + COMMAND) & 1));
 }
 
