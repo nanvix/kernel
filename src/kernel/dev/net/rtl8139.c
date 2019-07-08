@@ -106,10 +106,6 @@ PUBLIC void dev_net_rtl8139_init()
  */
 PUBLIC void dev_net_rtl8139_send_packet(void *data, uint32_t len)
 {
-    // First, copy the data to a physically contiguous chunk of memory
-    // void *transfer_data = kmalloc(len);
-    // kmemcpy(transfer_data, data, len);
-
     /* Write data (starting adress of contiguous data) and lenght to the current 
     descriptors. */
     output32(rtl8139_device.io_base + TSAD_array[rtl8139_device.tx_cur], (uint32_t)data);
@@ -126,29 +122,30 @@ PUBLIC void dev_net_rtl8139_send_packet(void *data, uint32_t len)
  */
 PRIVATE void dev_net_rtl8139_receive_packet()
 {
-    do 
-    {
-        uint16_t *t = (uint16_t *)(rtl8139_device.rx_buffer + current_packet_ptr_offset);
-        
-        // Skip packet header, get packet length
-        uint16_t packet_length = *(t + 1);
-        kprintf("%d \t %d", packet_length, current_packet_ptr_offset);
+	do 
+	{
+		uint16_t *t = (uint16_t *)(rtl8139_device.rx_buffer + current_packet_ptr_offset);
+		
+		// Skip packet header, get packet length
+		uint16_t packet_length = *(t + 1);
+		kprintf("%d \t %d", packet_length, current_packet_ptr_offset);
 
-        // Skip, packet header and packet length, now t points to the packet data
-        // t = t + 2;
+		// Skip, packet header and packet length, now t points to the packet data
+		// t = t + 2;
 
-        // Now, ethernet layer starts to handle the packet(be sure to make a copy of the packet, insteading of using the buffer)
-        // and probabbly this should be done in a separate thread...    
-        // void *packet = kmalloc(packet_length);
-        // memcpy(packet, t, packet_length);
-        // ethernet_handle_packet(packet, packet_length);
+		// Now, ethernet layer starts to handle the packet(be sure to make a copy of the packet, insteading of using the buffer)
+		// and probabbly this should be done in a separate thread...    
+		// void *packet = kmalloc(packet_length);
+		// memcpy(packet, t, packet_length);
+		// ethernet_handle_packet(packet, packet_length);
 
-        current_packet_ptr_offset = ((current_packet_ptr_offset + packet_length + 4 + 3) & RX_READ_POINTER_MASK);
+		current_packet_ptr_offset = (current_packet_ptr_offset + packet_length + 4 + 3) 
+		& RX_READ_POINTER_MASK;
 
         output16(rtl8139_device.io_base + CAPR, current_packet_ptr_offset - 0x10);
 
-        if (current_packet_ptr_offset > RX_BUF_SIZE)
-            current_packet_ptr_offset -= (RX_BUF_SIZE - 16);
+		if (current_packet_ptr_offset > RX_BUF_SIZE)
+			current_packet_ptr_offset -= (RX_BUF_SIZE - 16);
 
     } while (!(input8(rtl8139_device.io_base + COMMAND) & 1));
 }
