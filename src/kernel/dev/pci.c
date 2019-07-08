@@ -41,9 +41,12 @@ PRIVATE uint32_t dev_pci_get_device_type(struct pci_dev dev);
 PRIVATE uint32_t dev_pci_get_secondary_bus(struct pci_dev dev);
 PRIVATE uint32_t dev_pci_reach_end(struct pci_dev dev);
 
-PRIVATE struct pci_dev dev_pci_scan_function(uint16_t vendor_id, uint16_t device_id, uint32_t bus, uint32_t device, uint32_t function, uint32_t device_type);
-PRIVATE struct pci_dev dev_pci_scan_device(uint16_t vendor_id, uint16_t device_id, uint32_t bus, uint32_t device, uint32_t device_type);
-PRIVATE struct pci_dev dev_pci_scan_bus(uint16_t vendor_id, uint16_t device_id, uint32_t bus, uint32_t device_type);
+PRIVATE struct pci_dev dev_pci_scan_function(uint16_t vendor_id, uint16_t device_id, 
+        uint32_t bus, uint32_t device, uint32_t function, uint32_t device_type);
+PRIVATE struct pci_dev dev_pci_scan_device(uint16_t vendor_id, uint16_t device_id, 
+        uint32_t bus, uint32_t device, uint32_t device_type);
+PRIVATE struct pci_dev dev_pci_scan_bus(uint16_t vendor_id, uint16_t device_id, 
+        uint32_t bus, uint32_t device_type);
 
 PRIVATE uint32_t dev_pci_bits_from_fields(struct pci_dev dev);
 PRIVATE uint32_t pci_size_map(uint32_t field);
@@ -60,6 +63,7 @@ PRIVATE struct pci_dev dev_zero = {0};
  */
 PUBLIC uint32_t dev_pci_read(struct pci_dev dev, uint32_t register_offset)
 {
+    uint32_t size;
     /* Add the chosen register to the device informations */
     dev.register_offset = register_offset;
     dev.enable = 1;
@@ -67,22 +71,19 @@ PUBLIC uint32_t dev_pci_read(struct pci_dev dev, uint32_t register_offset)
     /* Request the information */
     output32(PCI_CONFIG_ADDRESS, dev_pci_bits_from_fields(dev));
 
-    uint32_t size = pci_size_map(register_offset);
+    size = pci_size_map(register_offset);
     if (size == 1)
     {
         /* Read the first byte (3rd because of little endian) */
-        uint8_t t = input8(PCI_CONFIG_DATA + (register_offset & 3));
-        return t;
+        return i486_input8(PCI_CONFIG_DATA + (register_offset & 3));
     }
     else if (size == 2)
     {
-        uint16_t t = input16(PCI_CONFIG_DATA + (register_offset & 2));
-        return t;
+        return i486_input16(PCI_CONFIG_DATA + (register_offset & 2));
     }
     else if (size == 4)
     {
-        uint32_t t = input32(PCI_CONFIG_DATA);
-        return t;
+        return i486_input32(PCI_CONFIG_DATA);
     }
     return 0xffff;
 }
@@ -108,7 +109,7 @@ PUBLIC void dev_pci_write(struct pci_dev dev, uint32_t register_offset, uint32_t
  * device_id and vendor_id are used for finding the device.
  * 
  * @return a pci_dev struct containing all needed information if the device has
- * been found. An empty pci_dev struct otherwise.
+ * been found, an empty pci_dev struct otherwise.
  */
 PUBLIC struct pci_dev dev_pci_get_device(uint16_t vendor_id, uint16_t device_id, uint32_t device_type)
 {
@@ -168,7 +169,6 @@ PRIVATE struct pci_dev dev_pci_scan_device(uint16_t vendor_id, uint16_t device_i
     /* If no device were found, return an empty one */
     return dev_zero;
 }
-
 
 /*
  * @brief scan a function, looking for a device with matching vendor_id and device_id.
