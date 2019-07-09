@@ -94,13 +94,21 @@
 	 */
 	static inline int mm_check_area(vaddr_t vaddr, uint64_t size, int area)
 	{
-	#ifndef __mppa256__
+	#if !defined(__mppa256__)       && \
+		!defined(__optimsoc__)      && \
+		!defined(__qemu_openrisc__)
 
 		return (
 			(area == UMEM_AREA) ?
 				mm_is_uaddr(vaddr) && mm_is_uaddr(vaddr + size) :
 				mm_is_kaddr(vaddr) && mm_is_kaddr(vaddr + size)
 		);
+
+	#elif defined(__optimsoc__)    || \
+		defined(__qemu_openrisc__)
+
+		UNUSED(area);
+		return (mm_is_kaddr(vaddr) && mm_is_kaddr(vaddr + size));
 
 	#else
 
