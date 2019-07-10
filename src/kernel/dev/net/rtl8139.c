@@ -45,6 +45,18 @@ PRIVATE uint8_t TSD_array[4] = {0x10, 0x14, 0x18, 0x1C};
 
 PRIVATE uint32_t current_packet_ptr_offset;
 
+/*   RTL RX Header          802.3 Ethernet Frame          32 bit Align
+	* <---------------><------------------------------------><---------->
+	*  -----------------------------------------------------------------
+	* | STATUS | SIZE | DMAC | SMAC | LEN/TYPE | DATA | FCS | ALIGNMENT |
+	*  -----------------------------------------------------------------
+	*     2       2       6      6       2       /~/     4      [0;3] 
+	* simple structure used for clarity */
+// struct packet_header {
+// 	uint16_t status;
+// 	uint16_t size;
+// };
+
 /**
  * Initialize the rtl8139 card driver : power on, interruption, ...
  */
@@ -116,6 +128,22 @@ PUBLIC void dev_net_rtl8139_send_packet(void *data, uint32_t len)
 }
 
 /**
+ * @brief return a pointer to the rtl8139 device (used for testing)
+ */
+PUBLIC struct rtl8139_dev* dev_net_rtl8139_get_device()
+{
+	return &rtl8139_device;
+}
+
+/**
+ * @brief return the current packet pointer (used for testing)
+ */
+PUBLIC uint32_t dev_net_rtl8139_get_packet_ptr()
+{
+	return current_packet_ptr_offset;
+}
+
+/**
  * @brief Function called by the handler when a packet is received. Should forward
  * the packet to the lwIP stack
  * WORK IN PROGRESS
@@ -125,7 +153,7 @@ PRIVATE void dev_net_rtl8139_receive_packet()
 	do 
 	{
 		uint16_t *t = (uint16_t *)(rtl8139_device.rx_buffer + current_packet_ptr_offset);
-		
+		// struct packet_header* rcv_packet_header = (struct packet_header *) t;
 		// Skip packet header, get packet length
 		uint16_t packet_length = *(t + 1);
 		kprintf("%d \t %d", packet_length, current_packet_ptr_offset);

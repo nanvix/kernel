@@ -30,6 +30,7 @@
 #define RTL8139_H_
 
 #include <stdint.h>
+#include <nanvix/hal/hal.h>
 
 #define RTL8139_VENDOR_ID 0x10EC
 #define RTL8139_DEVICE_ID 0x8139
@@ -45,6 +46,7 @@
 #define RX_BUFFER 0x30
 #define COMMAND 0x37
 #define CAPR 0x38
+#define TX_CONFIG 0x40
 #define RX_CONFIG 0x44
 #define CONFIG1 0x52
 #define INTERRUPT_MASK 0x3C
@@ -58,7 +60,13 @@ struct rtl8139_dev
 	int tx_cur;
 };
 
+EXTERN void network_test_driver();
+
 void dev_net_rtl8139_init();
 void dev_net_rtl8139_send_packet(void *data, uint32_t len);
+
+struct rtl8139_dev* dev_net_rtl8139_get_device();
+uint32_t dev_net_rtl8139_get_packet_ptr();
+
 
 #endif /* RTL8139_H_ */
