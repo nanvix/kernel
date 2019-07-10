@@ -36,7 +36,8 @@
 #define RTL8139_DEVICE_ID 0x8139
 
 #define RX_BUF_SIZE 8192 + 16
-#define RX_BUF_ALLOC_SIZE RX_BUF_SIZE + 1500 /* Adding 1500 bytes to prevent overflows */
+/* Adding 1500 bytes when allocating to prevent overflows */
+#define RX_BUF_ALLOC_SIZE RX_BUF_SIZE + 1500 
 
 #define RX_READ_POINTER_MASK (~3)
 #define ROK (1 << 0)
@@ -57,7 +58,8 @@ struct rtl8139_dev
 	uint16_t io_base;
 	uint8_t mac_addr[6];
 	uint8_t rx_buffer[RX_BUF_ALLOC_SIZE];
-	int tx_cur;
+	uint8_t tx_cur;
+	uint32_t rx_cur;
 };
 
 EXTERN void network_test_driver();
@@ -66,7 +68,8 @@ void dev_net_rtl8139_init();
 void dev_net_rtl8139_send_packet(void *data, uint32_t len);
 
 struct rtl8139_dev* dev_net_rtl8139_get_device();
-uint32_t dev_net_rtl8139_get_packet_ptr();
+
+bool dev_net_rtl8139_packet_status_valid(uint16_t status);
 
 
 #endif /* RTL8139_H_ */
