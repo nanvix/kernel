@@ -86,6 +86,8 @@ PUBLIC void kmain(int argc, const char *argv[])
 	interrupts_enable();
 	
 	network_test_driver();
+	/* Prevent shutting down while testing receive/send */
+	while(true){};
 
 #if (CLUSTER_IS_MULTICORE)
 

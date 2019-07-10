@@ -54,9 +54,8 @@ PRIVATE void test_receive_packet_simple()
 
 	for(int i = 0; i < 10; i ++) {
 		uint32_t old_ptr_offset = rtl8139_device->rx_cur;
-
 		dev_net_rtl8139_send_packet(packet, 43);
-
+		
 		uint16_t rcv_packet_status = (uint16_t) *(rtl8139_device->rx_buffer +  old_ptr_offset);
 		/* If the received packet is valid */
 		if (dev_net_rtl8139_packet_status_valid(rcv_packet_status)) {
@@ -70,7 +69,7 @@ PRIVATE void test_receive_packet_simple()
 }
 
 /**
- * @brief Testing the sending and receiving of many packets to test
+ * @brief Testing the sending and receiving of many packets to test 
  * the buffer ring wrap
  */
 PRIVATE void test_receive_packet_rx_overflow()
@@ -90,7 +89,6 @@ PRIVATE void test_receive_packet_rx_overflow()
 	0x4e, 0x4f, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55,	0x56, 0x57, 0x58, 0x59,
 	0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f, 0x60, 0x61, 0x62, 0x63
 	};
-
 	struct rtl8139_dev* rtl8139_device = dev_net_rtl8139_get_device();
 
 	for(int i = 0; i < 100; i ++) {
@@ -130,7 +128,6 @@ PRIVATE void test_receive_packet_multiple_sizes()
 	0x4e, 0x4f, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55,	0x56, 0x57, 0x58, 0x59,
 	0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f, 0x60, 0x61, 0x62, 0x63
 	};
-
 	struct rtl8139_dev* rtl8139_device = dev_net_rtl8139_get_device();
 
 	for(int i = 43; i < 142; i ++) {
