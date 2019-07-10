@@ -32,12 +32,12 @@
 #include <stdint.h>
 
 struct pci_dev {
-    uint32_t register_offset;
-    uint32_t function_num;
-    uint32_t device_num;
-    uint32_t bus_num;
-    uint32_t reserved;
-    uint32_t enable;
+	uint32_t register_offset;
+	uint32_t function_num;
+	uint32_t device_num;
+	uint32_t bus_num;
+	uint32_t reserved;
+	uint32_t enable;
 };
 
 /* Base adresses */
@@ -81,6 +81,6 @@ struct pci_dev {
 uint32_t dev_pci_read(struct pci_dev dev, uint32_t field);
 void dev_pci_write(struct pci_dev dev, uint32_t field, uint32_t value);
 struct pci_dev dev_pci_get_device(uint16_t vendor_id, uint16_t device_id, 
-                                uint32_t device_type);
+								uint32_t device_type);
 
 #endif /* PCI_H_ */
