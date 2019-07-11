@@ -43,7 +43,7 @@ PRIVATE const uint8_t TSD_array[4] = {0x10, 0x14, 0x18, 0x1C};
 PRIVATE const uint8_t TSAD_array[4] = {0x20, 0x24, 0x28, 0x2C};
 
 /* PRIVATE global variables */
-/* Those variables are global for an easier implementation, but, in the case of 
+/* Those variables are global for an easier implementation, but, in the case of
 using multiple rtl8139 cards, an "argument passing" implementation is required */
 PRIVATE struct pci_dev pci_rtl8139_device;
 PRIVATE struct rtl8139_dev rtl8139_device;
@@ -53,7 +53,7 @@ PRIVATE struct rtl8139_dev rtl8139_device;
 	*  -----------------------------------------------------------------
 	* | STATUS | SIZE | DMAC | SMAC | LEN/TYPE | DATA | FCS | ALIGNMENT |
 	*  -----------------------------------------------------------------
-	*     2       2       6      6       2       /~/     4      [0;3] 
+	*     2       2       6      6       2       /~/     4      [0;3]
 	* simple structure used for clarity */
 struct packet_header {
 	uint16_t status;
@@ -68,14 +68,14 @@ PUBLIC void dev_net_rtl8139_init()
 	uint32_t pci_command_reg = 0;
 	uint32_t irq_num = 0;
 
-	/* Find the network device using the PCI driver and the Vendor ID and 
+	/* Find the network device using the PCI driver and the Vendor ID and
 	Device ID of the card */
 	pci_rtl8139_device = dev_pci_get_device(RTL8139_VENDOR_ID, RTL8139_DEVICE_ID, -1);
-	
+
 	/* Retrieve important information such as the io_base adress */
 	rtl8139_device.io_base = dev_pci_read(pci_rtl8139_device, PCI_BAR0) & (~0x3);
 
-	/* Each packet will be send to a different transmit descriptor than the previous 
+	/* Each packet will be send to a different transmit descriptor than the previous
 	one, starting at index 0 */
 	rtl8139_device.tx_cur = 0;
 
@@ -101,14 +101,14 @@ PUBLIC void dev_net_rtl8139_init()
 	/* Initialisation of the receive buffer */
 	kmemset(rtl8139_device.rx_buffer, 0x0, RX_BUF_ALLOC_SIZE);
 	/* - KBASE_VIRT to translate from virtual to physical adress */
-	output32(rtl8139_device.io_base + RX_BUFFER, 
+	output32(rtl8139_device.io_base + RX_BUFFER,
 				(uint32_t) rtl8139_device.rx_buffer - KBASE_VIRT);
 
 	/* Toggle receive and send interuptions on  */
 	output16(rtl8139_device.io_base + INTERRUPT_MASK, ROK | TOK);
 
-	/* Accepting all kind of packets (Broadcast, Multicast, ...) and 
-	setting up the rx_buffer so that it can overflow (WRAP 1) 
+	/* Accepting all kind of packets (Broadcast, Multicast, ...) and
+	setting up the rx_buffer so that it can overflow (WRAP 1)
 	(easier to handle this way) */
 	output32(rtl8139_device.io_base + RX_CONFIG, 0xf | (1 << 7));
 
@@ -117,7 +117,7 @@ PUBLIC void dev_net_rtl8139_init()
 
 	/* Make sure to disable Loopback mode */
 	output32(rtl8139_device.io_base + TX_CONFIG, 0);
-	
+
 	/* Register an interrupt that will be fired on packet reception and sending */
 	irq_num = dev_pci_read(pci_rtl8139_device, PCI_INTERRUPT_LINE);
 	interrupt_register(irq_num, dev_net_rtl8139_handler);
@@ -126,17 +126,17 @@ PUBLIC void dev_net_rtl8139_init()
 }
 
 /**
- * @brief Send a packet containing data data of lenght len. This function should 
+ * @brief Send a packet containing data data of lenght len. This function should
  * be called by the lwIP stack
  * WORK IN PROGRESS
  */
 PUBLIC void dev_net_rtl8139_send_packet(void *data, uint32_t len)
 {
-    /* Write data (starting adress of contiguous data) and lenght to the current 
+    /* Write data (starting adress of contiguous data) and lenght to the current
     descriptors. */
     output32(rtl8139_device.io_base + TSAD_array[rtl8139_device.tx_cur], (uint32_t)data);
     output32(rtl8139_device.io_base + TSD_array[rtl8139_device.tx_cur], len | 0x003f0000);
-    
+
     /* Go to the next descriptor (if > 3 -> 0)*/
     rtl8139_device.tx_cur = (rtl8139_device.tx_cur + 1) & 0x3;
 }
@@ -151,10 +151,10 @@ PUBLIC struct rtl8139_dev* dev_net_rtl8139_get_device()
 
 /**
  * @brief Determine if the given status correspond to a valid or invalid packet
- * 
+ *
  * @return true if the status correspond to a valid packet, false otherwise
  */
-PUBLIC bool dev_net_rtl8139_packet_status_valid(uint16_t status) 
+PUBLIC bool dev_net_rtl8139_packet_status_valid(uint16_t status)
 {
 	bool valid = true;
 	if(!status || status & (1 << 5) || status & (1 << 2) || status & (1 << 1)) {
@@ -171,10 +171,10 @@ PUBLIC bool dev_net_rtl8139_packet_status_valid(uint16_t status)
 PRIVATE void dev_net_rtl8139_receive_packet()
 {
 	/* do ... while the receive buffer is not empty  */
-	do 
+	do
 	{
 		/* Find the beginning of the packet */
-		struct packet_header* rcv_packet_header = (struct packet_header *) 
+		struct packet_header* rcv_packet_header = (struct packet_header *)
 		(rtl8139_device.rx_buffer + rtl8139_device.rx_cur);
 		kprintf("%d \t %d", rcv_packet_header->size, rtl8139_device.rx_cur);
 
@@ -190,11 +190,11 @@ PRIVATE void dev_net_rtl8139_receive_packet()
 		/* Work in progress */
 
 		/* Update the offset */
-		rtl8139_device.rx_cur = (rtl8139_device.rx_cur + rcv_packet_header->size + 4 + 3) 
+		rtl8139_device.rx_cur = (rtl8139_device.rx_cur + rcv_packet_header->size + 4 + 3)
 		& RX_READ_POINTER_MASK;
         output16(rtl8139_device.io_base + CAPR, rtl8139_device.rx_cur - 0x10);
 
-		/* Is the offset is at the end of the ring buffer, 
+		/* Is the offset is at the end of the ring buffer,
 		go back to the beginning of the buffer */
 		if (rtl8139_device.rx_cur > RX_BUF_SIZE)
 			rtl8139_device.rx_cur -= (RX_BUF_SIZE - 16);
@@ -209,7 +209,7 @@ PRIVATE void dev_net_rtl8139_receive_packet()
 PRIVATE void dev_net_rtl8139_handler(int num)
 {
     UNUSED(num);
-    
+
     /* Switch off interruptions during the time of the function */
     output16(rtl8139_device.io_base + INTERRUPT_MASK, 0x0);
 
@@ -242,8 +242,8 @@ PRIVATE void dev_net_rtl8139_reset_rx()
 	/* Receive enable */
 	output8(rtl8139_device.io_base + COMMAND, tmp);
 
-	/* Accepting all kind of packets (Broadcast, Multicast, ...) and 
-	setting up the rx_buffer so that it can overflow (WRAP 1) 
+	/* Accepting all kind of packets (Broadcast, Multicast, ...) and
+	setting up the rx_buffer so that it can overflow (WRAP 1)
 	(easier to handle this way) */
 	output32(rtl8139_device.io_base + RX_CONFIG, 0xf | (1 << 7));
 
