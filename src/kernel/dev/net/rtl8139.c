@@ -36,8 +36,8 @@
 
 /* PRIVATE functions */
 PRIVATE void dev_net_rtl8139_handler(int num);
-PRIVATE void dev_net_rtl8139_read_mac_addr();
-PRIVATE void dev_net_rtl8139_reset_rx();
+PRIVATE void dev_net_rtl8139_read_mac_addr(void);
+PRIVATE void dev_net_rtl8139_reset_rx(void);
 
 PRIVATE const uint8_t TSD_array[4] = {0x10, 0x14, 0x18, 0x1C};
 PRIVATE const uint8_t TSAD_array[4] = {0x20, 0x24, 0x28, 0x2C};
@@ -63,7 +63,7 @@ struct packet_header {
 /**
  * Initialize the rtl8139 card driver : power on, interruption, ...
  */
-PUBLIC void dev_net_rtl8139_init()
+PUBLIC void dev_net_rtl8139_init(void)
 {
 	uint32_t pci_command_reg = 0;
 	uint32_t irq_num = 0;
@@ -144,7 +144,7 @@ PUBLIC void dev_net_rtl8139_send_packet(void *data, uint32_t len)
 /**
  * @brief return a pointer to the rtl8139 device (used for testing)
  */
-PUBLIC struct rtl8139_dev* dev_net_rtl8139_get_device()
+PUBLIC struct rtl8139_dev* dev_net_rtl8139_get_device(void)
 {
 	return &rtl8139_device;
 }
@@ -168,7 +168,7 @@ PUBLIC bool dev_net_rtl8139_packet_status_valid(uint16_t status)
  * the packet to the lwIP stack
  * WORK IN PROGRESS
  */
-PRIVATE void dev_net_rtl8139_receive_packet()
+PRIVATE void dev_net_rtl8139_receive_packet(void)
 {
 	/* do ... while the receive buffer is not empty  */
 	do
@@ -176,7 +176,6 @@ PRIVATE void dev_net_rtl8139_receive_packet()
 		/* Find the beginning of the packet */
 		struct packet_header* rcv_packet_header = (struct packet_header *)
 		(rtl8139_device.rx_buffer + rtl8139_device.rx_cur);
-		kprintf("%d \t %d", rcv_packet_header->size, rtl8139_device.rx_cur);
 
 		/* Check if the packet is valid or not */
 		if(!dev_net_rtl8139_packet_status_valid(rcv_packet_header->status))
@@ -216,11 +215,11 @@ PRIVATE void dev_net_rtl8139_handler(int num)
     uint16_t status = input16(rtl8139_device.io_base + 0x3e);
     if (status & TOK)
     {
-        kprintf("Packet sent");
+        /* Packet sent */
     }
     if (status & ROK)
     {
-        kprintf("Received packet");
+        /* Packet received */
         dev_net_rtl8139_receive_packet();
     }
 
@@ -232,7 +231,7 @@ PRIVATE void dev_net_rtl8139_handler(int num)
 /**
  * @brief Reset the Receive buffer
  */
-PRIVATE void dev_net_rtl8139_reset_rx()
+PRIVATE void dev_net_rtl8139_reset_rx(void)
 {
 	uint8_t tmp;
 	tmp = input8(rtl8139_device.io_base + COMMAND);
@@ -254,7 +253,7 @@ PRIVATE void dev_net_rtl8139_reset_rx()
 /**
  * @brief Retrieve the mac_addr of the device
  */
-PRIVATE void dev_net_rtl8139_read_mac_addr()
+PRIVATE void dev_net_rtl8139_read_mac_addr(void)
 {
     uint32_t mac_part1 = input32(rtl8139_device.io_base + 0x00);
     uint16_t mac_part2 = input16(rtl8139_device.io_base + 0x04);
@@ -266,5 +265,8 @@ PRIVATE void dev_net_rtl8139_read_mac_addr()
     rtl8139_device.mac_addr[4] = mac_part2 >> 0;
     rtl8139_device.mac_addr[5] = mac_part2 >> 8;
 
-    kprintf("MAC Address: %x:%x:%x:%x:%x:%x\n", rtl8139_device.mac_addr[0], rtl8139_device.mac_addr[1], rtl8139_device.mac_addr[2], rtl8139_device.mac_addr[3], rtl8139_device.mac_addr[4], rtl8139_device.mac_addr[5]);
+    kprintf("MAC Address: %x:%x:%x:%x:%x:%x\n",
+	rtl8139_device.mac_addr[0], rtl8139_device.mac_addr[1],
+	rtl8139_device.mac_addr[2], rtl8139_device.mac_addr[3],
+	rtl8139_device.mac_addr[4], rtl8139_device.mac_addr[5]);
 }

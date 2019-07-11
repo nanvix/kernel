@@ -62,12 +62,12 @@ struct rtl8139_dev
 	uint32_t rx_cur;
 };
 
-EXTERN void network_test_driver();
+EXTERN void network_test_driver(void);
 
-void dev_net_rtl8139_init();
+void dev_net_rtl8139_init(void);
 void dev_net_rtl8139_send_packet(void *data, uint32_t len);
 
-struct rtl8139_dev* dev_net_rtl8139_get_device();
+struct rtl8139_dev* dev_net_rtl8139_get_device(void);
 
 bool dev_net_rtl8139_packet_status_valid(uint16_t status);
 
