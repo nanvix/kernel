@@ -86,15 +86,11 @@ PUBLIC void kmain(int argc, const char *argv[])
 	interrupts_enable();
 	
 	network_test_driver();
-	/* Prevent shutting down while testing receive/send */
-	while(true){};
 
 #if (CLUSTER_IS_MULTICORE)
-
 	thread_create(&tid, init, NULL);
 	while (true)
 		do_syscall2();
-
 #else
 
 	/* Power down. */
