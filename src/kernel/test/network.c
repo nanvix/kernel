@@ -38,7 +38,7 @@
 /**
  * @brief Testing the sending and receiving of multiple simple packets
  */
-PRIVATE void test_receive_packet_simple()
+PRIVATE void test_receive_packet_simple(void)
 {
 	uint8_t packet[43] =
 	{
@@ -72,7 +72,7 @@ PRIVATE void test_receive_packet_simple()
  * @brief Testing the sending and receiving of many packets to test
  * the buffer ring wrap
  */
-PRIVATE void test_receive_packet_rx_overflow()
+PRIVATE void test_receive_packet_rx_overflow(void)
 {
 	uint8_t packet[142] =
 	{
@@ -111,7 +111,7 @@ PRIVATE void test_receive_packet_rx_overflow()
  * @brief Testing the sending and receiving of packets with size variation to
  * make sure that the receive buffer pointer is updated correctly
  */
-PRIVATE void test_receive_packet_multiple_sizes()
+PRIVATE void test_receive_packet_multiple_sizes(void)
 {
 	uint8_t packet[142] =
 	{
@@ -169,7 +169,7 @@ PRIVATE struct
  * rtl8139 network interface card.
  *
  */
-PUBLIC void network_test_driver()
+PUBLIC void network_test_driver(void)
 {
 	struct rtl8139_dev* rtl8139_device = dev_net_rtl8139_get_device();
     /* Only receive packets send by the card itself */
