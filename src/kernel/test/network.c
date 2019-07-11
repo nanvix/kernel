@@ -55,7 +55,7 @@ PRIVATE void test_receive_packet_simple()
 	for(int i = 0; i < 10; i ++) {
 		uint32_t old_ptr_offset = rtl8139_device->rx_cur;
 		dev_net_rtl8139_send_packet(packet, 43);
-		
+
 		uint16_t rcv_packet_status = (uint16_t) *(rtl8139_device->rx_buffer +  old_ptr_offset);
 		/* If the received packet is valid */
 		if (dev_net_rtl8139_packet_status_valid(rcv_packet_status)) {
@@ -69,7 +69,7 @@ PRIVATE void test_receive_packet_simple()
 }
 
 /**
- * @brief Testing the sending and receiving of many packets to test 
+ * @brief Testing the sending and receiving of many packets to test
  * the buffer ring wrap
  */
 PRIVATE void test_receive_packet_rx_overflow()
