@@ -26,6 +26,8 @@
  * it seems that I should add some doxygen stuff here, but I don't know what
  */
 
+#ifdef __qemu_x86__
+
 #ifndef PCI_H_
 #define PCI_H_
 
@@ -84,3 +86,5 @@ struct pci_dev dev_pci_get_device(uint16_t vendor_id, uint16_t device_id,
 								uint32_t device_type);
 
 #endif /* PCI_H_ */
+
+#endif /* __qemu_x86__ */

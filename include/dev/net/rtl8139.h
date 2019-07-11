@@ -21,10 +21,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#ifdef __qemu_x86__
 
 /**
  * it seems that I should add some doxygen stuff here, but I don't know what
  */
+
 
 #ifndef RTL8139_H_
 #define RTL8139_H_
@@ -73,3 +75,5 @@ bool dev_net_rtl8139_packet_status_valid(uint16_t status);
 
 
 #endif /* RTL8139_H_ */
+
+#endif /* __qemu_x86__ */

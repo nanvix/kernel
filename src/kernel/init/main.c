@@ -85,7 +85,9 @@ PUBLIC void kmain(int argc, const char *argv[])
 	kprintf("enabling hardware interrupts");
 	interrupts_enable();
 	
+#ifdef __qemu_x86__
 	network_test_driver();
+#endif
 
 #if (CLUSTER_IS_MULTICORE)
 	thread_create(&tid, init, NULL);
