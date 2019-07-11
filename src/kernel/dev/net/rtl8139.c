@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#ifdef __qemu_x86__
 
 #include <dev/pci.h>
 #include <dev/net/rtl8139.h>
@@ -270,3 +271,7 @@ PRIVATE void dev_net_rtl8139_read_mac_addr(void)
 	rtl8139_device.mac_addr[2], rtl8139_device.mac_addr[3],
 	rtl8139_device.mac_addr[4], rtl8139_device.mac_addr[5]);
 }
+
+#else
+void empty(void){}
+#endif /* __qemu_x86__ */
