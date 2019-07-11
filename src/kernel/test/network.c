@@ -191,5 +191,5 @@ PUBLIC void network_test_driver(void)
 }
 
 #else
-void empty(void){}
+extern int make_iso_compilers_happy;
 #endif /* __qemu_x86__ */

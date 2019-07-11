@@ -88,5 +88,5 @@ struct pci_dev dev_pci_get_device(uint16_t vendor_id, uint16_t device_id,
 #endif /* PCI_H_ */
 
 #else
-void empty(void){}
+extern int make_iso_compilers_happy;
 #endif /* __qemu_x86__ */

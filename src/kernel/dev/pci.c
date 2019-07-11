@@ -274,5 +274,5 @@ PRIVATE uint32_t pci_size_map(uint32_t field) {
 }
 
 #else
-void empty(void){}
+extern int make_iso_compilers_happy;
 #endif /* __qemu_x86__ */

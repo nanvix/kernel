@@ -273,5 +273,5 @@ PRIVATE void dev_net_rtl8139_read_mac_addr(void)
 }
 
 #else
-void empty(void){}
+extern int make_iso_compilers_happy;
 #endif /* __qemu_x86__ */

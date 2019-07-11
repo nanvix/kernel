@@ -77,5 +77,5 @@ bool dev_net_rtl8139_packet_status_valid(uint16_t status);
 #endif /* RTL8139_H_ */
 
 #else
-void empty(void){}
+extern int make_iso_compilers_happy;
 #endif /* __qemu_x86__ */
