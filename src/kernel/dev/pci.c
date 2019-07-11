@@ -32,7 +32,6 @@
  * to the real, contiguous, 32-bit register is done using the
  * dev_pci_bits_from_fields function.
  */
-#ifdef __qemu_x86__
 
 #include <dev/pci.h>
 #include <nanvix/hal/hal.h>
@@ -272,5 +271,3 @@ PRIVATE uint32_t pci_size_map(uint32_t field) {
 			return 0;
 	}
 }
-
-#endif /* __qemu_x86__ */

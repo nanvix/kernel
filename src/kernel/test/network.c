@@ -25,7 +25,6 @@
 /**
  * @cond release_test
  */
-#ifdef __qemu_x86__
 
 #include <nanvix/const.h>
 #include <dev/net/rtl8139.h>
@@ -189,5 +188,3 @@ PUBLIC void network_test_driver(void)
     /* Disable loopback mode */
 	output32(rtl8139_device->io_base + TX_CONFIG, 0);
 }
-
-#endif /* __qemu_x86__ */
