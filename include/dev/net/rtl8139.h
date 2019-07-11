@@ -21,83 +21,61 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-#include <nanvix/hal/hal.h>
-#include <nanvix/const.h>
-#include <nanvix/dev.h>
-#include <nanvix/klib.h>
-#include <nanvix/mm.h>
-#include <nanvix/thread.h>
-#include <nanvix.h>
-#include <dev/net/rtl8139.h>
-
-EXTERN void do_syscall2(void);
-EXTERN void ___start(int argc, const char *argv[], char **envp);
-
-#if (CLUSTER_IS_MULTICORE)
-
-/**
- * @brief Init thread.
- */
-PRIVATE void *init(void *arg)
-{
-	int argc = 1;
-	const char *argv[] = { "init", NULL };
-
-	UNUSED(arg);
-
-#if (CORES_NUM > 2)
-
-	___start(argc, argv, NULL);
-
-#else
-
-	UNUSED(argc);
-	UNUSED(argv);
-
-#endif
-
-	/* Power down. */
-	shutdown();
-	UNREACHABLE();
-
-	return (NULL);
-}
-
-#endif
-
-/**
- * @brief Initializes the kernel.
- */
-PUBLIC void kmain(int argc, const char *argv[])
-{
-#if (CLUSTER_IS_MULTICORE)
-	int tid;
-#endif
-
-	UNUSED(argc);
-	UNUSED(argv);
-
-	hal_init();
-	dev_init();
-	mm_init();
-
-	kprintf("enabling hardware interrupts");
-	interrupts_enable();
-	
 #ifdef __qemu_x86__
-	network_test_driver();
-#endif
 
-#if (CLUSTER_IS_MULTICORE)
-	thread_create(&tid, init, NULL);
-	while (true)
-		do_syscall2();
+/**
+ * it seems that I should add some doxygen stuff here, but I don't know what
+ */
+
+
+#ifndef RTL8139_H_
+#define RTL8139_H_
+
+#include <stdint.h>
+#include <nanvix/hal/hal.h>
+
+#define RTL8139_VENDOR_ID 0x10EC
+#define RTL8139_DEVICE_ID 0x8139
+
+#define RX_BUF_SIZE 8192 + 16
+/* Adding 1500 bytes when allocating to prevent overflows */
+#define RX_BUF_ALLOC_SIZE RX_BUF_SIZE + 1500 
+
+#define RX_READ_POINTER_MASK (~3)
+#define ROK (1 << 0)
+#define TOK (1 << 2)
+
+/* Register offests */
+#define RX_BUFFER 0x30
+#define COMMAND 0x37
+#define CAPR 0x38
+#define TX_CONFIG 0x40
+#define RX_CONFIG 0x44
+#define CONFIG1 0x52
+#define INTERRUPT_MASK 0x3C
+#define INTERRUPT_STATUS 0x3E
+
+struct rtl8139_dev
+{
+	uint16_t io_base;
+	uint8_t mac_addr[6];
+	uint8_t rx_buffer[RX_BUF_ALLOC_SIZE];
+	uint8_t tx_cur;
+	uint32_t rx_cur;
+};
+
+EXTERN void network_test_driver(void);
+
+void dev_net_rtl8139_init(void);
+void dev_net_rtl8139_send_packet(void *data, uint32_t len);
+
+struct rtl8139_dev* dev_net_rtl8139_get_device(void);
+
+bool dev_net_rtl8139_packet_status_valid(uint16_t status);
+
+
+#endif /* RTL8139_H_ */
+
 #else
-
-	/* Power down. */
-	shutdown();
-	UNREACHABLE();
-
-#endif
-}
+extern int make_iso_compilers_happy;
+#endif /* __qemu_x86__ */

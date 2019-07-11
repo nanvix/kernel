@@ -24,6 +24,8 @@
 
 #include <nanvix/hal/hal.h>
 #include <nanvix/const.h>
+#include <dev/pci.h>
+#include <dev/net/rtl8139.h>
 
 /**
  * @brief Timer frequency.
@@ -58,4 +60,8 @@ PUBLIC void dev_init(void)
 {
 	timer_init(TIMER_FREQ);
 	KASSERT(interrupt_register(INTERRUPT_TIMER, do_timer) == 0);
+
+#ifdef __qemu_x86__
+	dev_net_rtl8139_init();
+#endif
 }
