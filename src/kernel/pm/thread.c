@@ -69,6 +69,38 @@ PRIVATE int next_tid = (KTHREAD_MASTER_TID + 1);
 PRIVATE spinlock_t lock_tm = SPINLOCK_UNLOCKED;
 
 /*============================================================================*
+ * thread_get_curr()                                                          *
+ *============================================================================*/
+
+/**
+* @brief Gets the currently running thread.
+*
+* The thread_get() function returns a pointer to the thread
+* that is running in the underlying core.
+*
+* @returns A pointer to the thread that is running in the
+* underlying core.
+*/
+PUBLIC struct thread *thread_get_curr(void)
+{
+	int mycoreid; /* Core ID. */
+
+	mycoreid = core_get_id();
+
+	for (int i = 0; i < KTHREAD_MAX; i++)
+	{
+		/* Found. */
+		if (threads[i].coreid == mycoreid)
+		{
+			return (&threads[i]);
+		}
+	}
+
+	/* Should not happen. */
+	return (NULL);
+}
+
+/*============================================================================*
  * thread_alloc()                                                             *
  *============================================================================*/
 
@@ -95,6 +127,7 @@ PRIVATE struct thread *thread_alloc(void)
 		{
 			struct thread *new_thread;
 			new_thread = &threads[i];
+			new_thread->coreid = i;
 			new_thread->state = THREAD_STARTED;
 			nthreads++;
 

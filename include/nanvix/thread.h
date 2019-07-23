@@ -77,6 +77,7 @@
 	struct thread
 	{
 		int tid;               /**< Thread ID.              */
+		int coreid;            /**< Core ID.                */
 		int state;             /**< State.                  */
 		void *arg;             /**< Argument.               */
 		void *(*start)(void*); /**< Starting routine.       */
@@ -112,10 +113,14 @@
 	 * @returns A pointer to the thread that is running in the
 	 * underlying core.
 	 */
+	#if CLUSTER_IS_MULTICORE
+	EXTERN struct thread *thread_get_curr(void);
+	#else
 	static inline struct thread *thread_get_curr(void)
 	{
-		return (&threads[core_get_id()]);
+		return (KTHREAD_MASTER);
 	}
+	#endif
 
 	/**
 	 * @brief Gets the core ID of a thread.
@@ -129,7 +134,7 @@
 	 */
 	static inline int thread_get_coreid(const struct thread *t)
 	{
-		return (t - threads);
+		return (t->coreid);
 	}
 
 	/**
