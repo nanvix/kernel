@@ -29,39 +29,35 @@ language: C
 services:
 - docker
 
-env:
-  global:
-      - MOUNT_DIR=/root/nanvix/hal
-
 jobs:
   include:
     # Build Debug
     - stage: "Build Debug"
       name: "QEMU OpenRISC"
-      script: docker run -v"$(pwd):$MOUNTDIR/hal" -p4567:4567 nanvix/toolchain-openrisc /bin/sh -c "cd $MOUNTDIR/hal && export TARGET=qemu-openrisc && export TOOLCHAIN_DIR=/root/toolchain/or1k/bin && make distclean && make contrib && make all"
-    - stage: "Build Debug"
-      name: "OpTiMSoC"
-      script: docker run -v"$(pwd):$MOUNTDIR/hal" -p4567:4567 nanvix/toolchain-openrisc /bin/sh -c "cd $MOUNTDIR/hal && export TARGET=optimsoc && export TOOLCHAIN_DIR=/root/toolchain/or1k/bin && make distclean && make contrib && make all"
+      script: docker run -v "$(pwd):/mnt" -p 4567:4567 nanvix/ubuntu:qemu-openrisc /bin/bash -l -c "cd /mnt && make distclean && make contrib && make all"
     - stage: "Build Debug"
       name: "QEMU x86"
-      script: docker run -v"$(pwd):$MOUNTDIR/hal" -p4567:4567 nanvix/toolchain-i486 /bin/sh -c "cd $MOUNTDIR/hal && export TARGET=qemu-x86 && export TOOLCHAIN_DIR=/root/toolchain/i486/bin && make distclean && make contrib && make all"
+      script: docker run -v "$(pwd):/mnt" -p 4567:4567 nanvix/ubuntu:qemu-x86      /bin/bash -l -c "cd /mnt && make distclean && make contrib && make all"
     - stage: "Build Debug"
-      name: "QEMU RISC-V 32-Bit"
-      script: docker run -v"$(pwd):$MOUNTDIR/hal" -p4567:4567 nanvix/toolchain-riscv32 /bin/sh -c "cd $MOUNTDIR/hal && export TARGET=qemu-riscv32 && export TOOLCHAIN_DIR=/root/toolchain/riscv32/bin && make distclean && make contrib && make all"
+      name: "QEMU RISC-V 32-bit"
+      script: docker run -v "$(pwd):/mnt" -p 4567:4567 nanvix/ubuntu:qemu-riscv32  /bin/bash -l -c "cd /mnt && make distclean && make contrib && make all"
+    - stage: "Build Debug"
+      name: "OpTiMSoC"
+      script: docker run -v "$(pwd):/mnt" -p 4567:4567 nanvix/ubuntu:qemu-openrisc /bin/bash -l -c "cd /mnt && export TARGET=optimsoc && make distclean && make contrib && make all"
 
     # Build Release
     - stage: "Build Release"
       name: "QEMU OpenRISC"
-      script: docker run -v"$(pwd):$MOUNTDIR/hal" -p4567:4567 nanvix/toolchain-openrisc /bin/sh -c "cd $MOUNTDIR/hal && export TARGET=qemu-openrisc && export TOOLCHAIN_DIR=/root/toolchain/or1k/bin && export RELEASE=true && make distclean && make contrib && make all"
-    - stage: "Build Release"
-      name: "OpTiMSoC"
-      script: docker run -v"$(pwd):$MOUNTDIR/hal" -p4567:4567 nanvix/toolchain-openrisc /bin/sh -c "cd $MOUNTDIR/hal && export TARGET=optimsoc && export TOOLCHAIN_DIR=/root/toolchain/or1k/bin && export RELEASE=true && make distclean && make contrib && make all"
+      script: docker run -v "$(pwd):/mnt" -p 4567:4567 nanvix/ubuntu:qemu-openrisc /bin/bash -l -c "cd /mnt && export RELEASE=true && make distclean && make contrib && make all"
     - stage: "Build Release"
       name: "QEMU x86"
-      script: docker run -v"$(pwd):$MOUNTDIR/hal" -p4567:4567 nanvix/toolchain-i486 /bin/sh -c "cd $MOUNTDIR/hal && export TARGET=qemu-x86 && export TOOLCHAIN_DIR=/root/toolchain/i486/bin && export RELEASE=true && make distclean && make contrib && make all"
+      script: docker run -v "$(pwd):/mnt" -p 4567:4567 nanvix/ubuntu:qemu-x86      /bin/bash -l -c "cd /mnt && export RELEASE=true && make distclean && make contrib && make all"
     - stage: "Build Release"
-      name: "QEMU RISC-V 32-Bit"
-      script: docker run -v"$(pwd):$MOUNTDIR/hal" -p4567:4567 nanvix/toolchain-riscv32 /bin/sh -c "cd $MOUNTDIR/hal && export TARGET=qemu-riscv32 && export TOOLCHAIN_DIR=/root/toolchain/riscv32/bin && export RELEASE=true && make distclean && make contrib && make all"
+      name: "QEMU RISC-V 32-bit"
+      script: docker run -v "$(pwd):/mnt" -p 4567:4567 nanvix/ubuntu:qemu-riscv32  /bin/bash -l -c "cd /mnt && export RELEASE=true && make distclean && make contrib && make all"
+    - stage: "Build Release"
+      name: "OpTiMSoC"
+      script: docker run -v "$(pwd):/mnt" -p 4567:4567 nanvix/ubuntu:qemu-openrisc /bin/bash -l -c "cd /mnt && export TARGET=optimsoc && export RELEASE=true && make distclean && make contrib && make all"
 
 notifications:
   slack: nanvix:31ePVjsrXynUajPUDqy6I0hp
