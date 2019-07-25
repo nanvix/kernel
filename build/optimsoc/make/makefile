@@ -48,6 +48,7 @@ export AR = $(TOOLCHAIN_DIR)/or1k-elf-ar
 export CFLAGS  += -Wstack-usage=4096
 export CFLAGS  += -nostdlib -nostdinc
 export CFLAGS  += -Wno-type-limits
+export CFLAGS += -Wno-missing-profile
 export CFLAGS  += -I $(INCDIR)/posix
 
 # Linker Options
