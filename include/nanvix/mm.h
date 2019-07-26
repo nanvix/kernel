@@ -77,10 +77,15 @@
 	 */
 	static inline int mm_is_kaddr(vaddr_t vaddr)
 	{
+	#if !defined(__qemu_x86__)
 		return (
 			((vaddr >= KBASE_VIRT) && (vaddr < (KBASE_VIRT + KMEM_SIZE)))  ||
 			((vaddr >= KPOOL_VIRT) && (vaddr < (KPOOL_VIRT + KPOOL_SIZE)))
 		);
+	#else
+		UNUSED(vaddr);
+		return (1);
+	#endif
 	}
 
 	/**

@@ -34,38 +34,46 @@ SECTIONS
 	/* Bootstrap section. */
 	.bootstrap :
 	{
+		__BOOTSTRAP_START = .;
 		*boot*.o *(.bootstrap)
+		__BOOTSTRAP_END = .;
 	}
 
-	. += 0xc0000000;
+	. =ALIGN(4096);
 
 	/* Kernel code section. */
-	.text ALIGN(4096) : AT(ADDR(.text) - 0xc0000000)
-   {
-       *(.text)
-       *(.rodata)
-   }
+	.text ALIGN(4096) : AT(ADDR(.text))
+	{
+		__TEXT_START = .;
+		*(.text)
+		*(.rodata)
+		__TEXT_END = .;
+	}
 
-   /* Initialized kernel data section. */
-   .data ALIGN(4096) : AT(ADDR(.data) - 0xc0000000)
-   {
-       *(.data)
-   }
+	/* Initialized kernel data section. */
+	.data ALIGN(4096) : AT(ADDR(.data))
+	{
+		__DATA_START = .;
+		*(.data)
+		__DATA_END = .;
+	}
 
-   /* Uninitialized kernel data section. */
-   .bss : AT(ADDR(.bss) - 0xc0000000)
-   {
-       *(.bss)
-   }
+	/* Uninitialized kernel data section. */
+	.bss : AT(ADDR(.bss))
+	{
+		__BSS_START = .;
+		*(.bss)
+		__BSS_END = .;
+	}
 
-   . =ALIGN(4096);
+	. =ALIGN(4096);
 
-   KDATA_END = .;
+	KDATA_END = .;
 
-   /* Discarded. */
-   /DISCARD/ :
-   {
-        *(.comment)
-        *(.note)
-   }
+	/* Discarded. */
+	/DISCARD/ :
+	{
+		*(.comment)
+		*(.note)
+	}
 }
