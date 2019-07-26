@@ -44,6 +44,9 @@ export CC = $(TOOLCHAIN_DIR)/or1k-elf-gcc
 export LD = $(TOOLCHAIN_DIR)/or1k-elf-ld
 export AR = $(TOOLCHAIN_DIR)/or1k-elf-ar
 
+# Timeout Variable
+export TIMEOUT ?= 300
+
 # Compiler Options
 export CFLAGS += -D __HAS_HW_DIVISION
 export CFLAGS += -Wstack-usage=4096

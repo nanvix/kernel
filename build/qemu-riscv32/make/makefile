@@ -43,6 +43,9 @@ export CC = $(TOOLCHAIN_DIR)/riscv32-elf-gcc
 export LD = $(TOOLCHAIN_DIR)/riscv32-elf-ld
 export AR = $(TOOLCHAIN_DIR)/riscv32-elf-ar
 
+# Timeout Variable
+export TIMEOUT ?= 5
+
 # Compiler Options
 export CFLAGS += -D __HAS_HW_DIVISION
 export CFLAGS += -Wstack-usage=4096

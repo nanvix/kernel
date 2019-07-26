@@ -34,6 +34,10 @@ run-iocluster:
 run-ccluster:
 	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(EXEC) $(TARGET) ccluster --no-debug
 
+# Runs Unit Tests in Compute Cluster.
+test-ccluster:
+	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(EXEC) $(TARGET) ccluster --no-debug $(TIMEOUT)
+
 # Runs Unit Tests in all clusters in debug mode.
 debug:
 	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(EXEC) $(TARGET) all --debug
