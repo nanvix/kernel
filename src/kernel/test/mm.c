@@ -31,6 +31,15 @@
  * @cond release_test
  */
 
+/**
+ * @name Test Driver Features
+ */
+/**@{*/
+#define TEST_FRAME_STRESS  1 /**< Launch stress tests on frame subsystem? */
+#define TEST_KPOOL_STRESS  0 /**< Launch stress tests on kpool subsystem? */
+#define TEST_UPOOL_STRESS  0 /**< Launch stress tests on upool subsystem? */
+/**@}*/
+
 /*============================================================================*
  * Frame Allocator Unit Tests                                                 *
  *============================================================================*/
@@ -108,12 +117,14 @@ PRIVATE void test_fault_frame_double_free(void)
 	KASSERT(frame_free(frame) == -EFAULT);
 }
 
+#if TEST_FRAME_STRESS
+
 /**
- * @brief Fault Injection Test: Page Frame Allocation Overflow
+ * @brief Stress Test: Page Frame Allocation Overflow
  *
  * @author Pedro Henrique Penna
  */
-PRIVATE void test_fault_frame_allocation_overflow(void)
+PRIVATE void test_stress_frame_allocation_overflow(void)
 {
 	/* Allocate all page frames. */
 	for (frame_t i = 0; i < NUM_UFRAMES; i++)
@@ -143,6 +154,8 @@ PRIVATE void test_stress_frame_allocation(void)
 		KASSERT(frame_free(frame_id_to_num(i)) == 0);
 }
 
+#endif
+
 /**
  * @brief Page Frame unit tests.
  *
@@ -156,15 +169,17 @@ PRIVATE struct
 	const char *type;      /**< Name of test type. */
 	const char *name;      /**< Test Name.         */
 } frame_tests[] = {
-	{ test_api_frame_translation,           "api",    "frame address translation"         },
-	{ test_api_frame_allocation,            "api",    "frame allocation"                  },
-	{ test_fault_frame_invalid_translation, "fault",  "invalid frame address translation" },
-	{ test_fault_frame_invalid_free,        "fault",  "invalid frame release"             },
-	{ test_fault_frame_bad_free,            "fault",  "bad frame release"                 },
-	{ test_fault_frame_double_free,         "fault",  "double frame release"              },
-	{ test_stress_frame_allocation,         "stress", "frame allocation"                  },
-	{ test_fault_frame_allocation_overflow, "fault",  "frame allocation overflow"         },
-	{ NULL,                                 NULL,     NULL                                },
+	{ test_api_frame_translation,            "api",    "frame address translation"         },
+	{ test_api_frame_allocation,             "api",    "frame allocation"                  },
+	{ test_fault_frame_invalid_translation,  "fault",  "invalid frame address translation" },
+	{ test_fault_frame_invalid_free,         "fault",  "invalid frame release"             },
+	{ test_fault_frame_bad_free,             "fault",  "bad frame release"                 },
+	{ test_fault_frame_double_free,          "fault",  "double frame release"              },
+#if TEST_FRAME_STRESS
+	{ test_stress_frame_allocation,          "stress", "frame allocation"                  },
+	{ test_stress_frame_allocation_overflow, "stress", "frame allocation overflow"         },
+#endif
+	{ NULL,                                   NULL,     NULL                               },
 };
 
 /**
@@ -299,12 +314,14 @@ PRIVATE void test_fault_kpage_double_free(void)
 	KASSERT(kpage_put(kpg) == -EFAULT);
 }
 
+#if TEST_KPOOL_STRESS
+
 /**
- * @brief Fault Injection Test: Kernel Page Allocation Overflow
+ * @brief Stress Test: Kernel Page Allocation Overflow
  *
  * @author Pedro Henrique Penna
  */
-PRIVATE void test_fault_kpage_allocation_overflow(void)
+PRIVATE void test_stress_kpage_allocation_overflow(void)
 {
 	unsigned *kpg;
 
@@ -369,6 +386,8 @@ PRIVATE void test_stress_kpage_write(void)
 	}
 }
 
+#endif
+
 /**
  * @brief Kernel Pool unit tests.
  *
@@ -382,17 +401,19 @@ PRIVATE struct
 	const char *type;      /**< Name of test type. */
 	const char *name;      /**< Test Name.         */
 } kpool_tests[] = {
-	{ test_api_kpage_translation,           "api",    "kernel page address translation" },
-	{ test_api_kpage_allocation,            "api",    "kernel page allocation"          },
-	{ test_api_kpage_write,                 "api",    "kernel page write"               },
-	{ test_api_kpage_clean_allocation,      "api",    "kernel page clean allocation"    },
-	{ test_fault_kpage_invalid_free,        "fault",  "kernel page invalid release"     },
-	{ test_fault_kpage_bad_free,            "fault",  "kernel page bad release"         },
-	{ test_fault_kpage_double_free,         "fault",  "kernel page double release"      },
-	{ test_stress_kpage_allocation,         "stress", "kernel page allocation"          },
-	{ test_fault_kpage_allocation_overflow, "fault",  "kernel page allocation overflow" },
-	{ test_stress_kpage_write,              "stress", "kernel page write"               },
-	{ NULL,                                 NULL,     NULL                              },
+	{ test_api_kpage_translation,            "api",    "kernel page address translation" },
+	{ test_api_kpage_allocation,             "api",    "kernel page allocation"          },
+	{ test_api_kpage_write,                  "api",    "kernel page write"               },
+	{ test_api_kpage_clean_allocation,       "api",    "kernel page clean allocation"    },
+	{ test_fault_kpage_invalid_free,         "fault",  "kernel page invalid release"     },
+	{ test_fault_kpage_bad_free,             "fault",  "kernel page bad release"         },
+	{ test_fault_kpage_double_free,          "fault",  "kernel page double release"      },
+#if TEST_KPOOL_STRESS
+	{ test_stress_kpage_allocation,          "stress", "kernel page allocation"          },
+	{ test_stress_kpage_allocation_overflow, "stress", "kernel page allocation overflow" },
+	{ test_stress_kpage_write,               "stress", "kernel page write"               },
+#endif
+	{ NULL,                                   NULL,     NULL                             },
 };
 
 /**
@@ -510,12 +531,14 @@ PRIVATE void test_fault_upage_double_free(void)
 	KASSERT(upage_free(root_pgdir, UBASE_VIRT) == -EFAULT);
 }
 
+#if TEST_UPOOL_STRESS
+
 /**
- * @brief Fault Injection Test: User Page Allocation Overflow
+ * @brief Stress Test: User Page Allocation Overflow
  *
  * @author Pedro Henrique Penna
  */
-PRIVATE void test_fault_upage_allocation_overflow(void)
+PRIVATE void test_stress_upage_allocation_overflow(void)
 {
 	/* Allocate pages. */
 	for (unsigned i = 0; i < NUM_UPAGES; i++)
@@ -587,6 +610,8 @@ PRIVATE void test_stress_upage_write(void)
 	}
 }
 
+#endif
+
 /**
  * @brief User Page Pool unit tests.
  *
@@ -600,17 +625,19 @@ PRIVATE struct
 	const char *type;      /**< Name of test type. */
 	const char *name;      /**< Test Name.         */
 } upool_tests[] = {
-	{ test_api_upage_allocation,            "api",    "user page allocation"          },
-	{ test_api_upage_write,                 "api",    "user page write"               },
-	{ test_fault_upage_invalid_allocation,  "fault",  "user page invalid allocation"  },
-	{ test_fault_upage_double_allocation,   "fault",  "user page double allocation"   },
-	{ test_fault_upage_invalid_free,        "fault",  "user page invalid free"        },
-	{ test_fault_upage_bad_free,            "fault",  "user page bad free"            },
-	{ test_fault_upage_double_free,         "fault",  "user page double free"         },
-	{ test_stress_upage_allocation,         "stress", "user page allocation"          },
-	{ test_fault_upage_allocation_overflow, "fault",  "user page allocation overflow" },
-	{ test_stress_upage_write,              "stress", "user page write"               },
-	{ NULL,                                 NULL,     NULL                            },
+	{ test_api_upage_allocation,             "api",    "user page allocation"          },
+	{ test_api_upage_write,                  "api",    "user page write"               },
+	{ test_fault_upage_invalid_allocation,   "fault",  "user page invalid allocation"  },
+	{ test_fault_upage_double_allocation,    "fault",  "user page double allocation"   },
+	{ test_fault_upage_invalid_free,         "fault",  "user page invalid free"        },
+	{ test_fault_upage_bad_free,             "fault",  "user page bad free"            },
+	{ test_fault_upage_double_free,          "fault",  "user page double free"         },
+#if TEST_UPOOL_STRESS
+	{ test_stress_upage_allocation,          "stress", "user page allocation"          },
+	{ test_stress_upage_allocation_overflow, "stress", "user page allocation overflow" },
+	{ test_stress_upage_write,               "stress", "user page write"               },
+#endif
+	{ NULL,                                   NULL,     NULL                           },
 };
 
 /**
