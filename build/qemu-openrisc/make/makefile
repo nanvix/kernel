@@ -45,7 +45,7 @@ export LD = $(TOOLCHAIN_DIR)/or1k-elf-ld
 export AR = $(TOOLCHAIN_DIR)/or1k-elf-ar
 
 # Timeout Variable
-export TIMEOUT ?= 300
+export TIMEOUT ?= 120
 
 # Compiler Options
 export CFLAGS += -D __HAS_HW_DIVISION
