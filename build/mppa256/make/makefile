@@ -42,6 +42,9 @@ export CC = $(TOOLCHAIN_DIR)/bin/k1-gcc
 export LD = $(TOOLCHAIN_DIR)/bin/k1-gcc
 export AR = $(TOOLCHAIN_DIR)/bin/k1-ar
 
+# Timeout Variable
+export TIMEOUT ?= 5
+
 # Compiler Options
 export CFLAGS += -D __HAS_HW_DIVISION
 export CFLAGS += -mos=bare -march=k1b -mboard=developer

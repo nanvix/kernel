@@ -42,6 +42,9 @@ export CC = gcc
 export LD = ld
 export AR = ar
 
+# Timeout Variable
+export TIMEOUT ?= 5
+
 # Compiler Options
 export CFLAGS  = -D __unix64__ -D__linux64__
 #export CFLAGS += -nostdlib -nostdinc
