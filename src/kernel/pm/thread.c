@@ -33,7 +33,7 @@
 EXTENSION PUBLIC struct thread threads[KTHREAD_MAX] = {
 	[0]                       = {.tid = KTHREAD_MASTER_TID, .state = THREAD_RUNNING},
 #if CLUSTER_IS_MULTICORE
-	[1 ... (KTHREAD_MAX - 1)] = {.state = THREAD_NOT_STARTED}
+	[1 ... (KTHREAD_MAX - 1)] = {.tid = KTHREAD_NULL_TID, .state = THREAD_NOT_STARTED}
 #endif
 } ;
 
@@ -158,6 +158,7 @@ PRIVATE void thread_free(struct thread *t)
 	KASSERT(t <= &threads[KTHREAD_MAX - 1]);
 
 	t->state = THREAD_NOT_STARTED;
+	t->tid = KTHREAD_NULL_TID;
 	nthreads--;
 }
 
@@ -228,6 +229,9 @@ PUBLIC NORETURN void thread_exit(void *retval)
  */
 PRIVATE struct thread *thread_get(int tid)
 {
+	/* Sanity check. */
+	KASSERT(tid > KTHREAD_NULL_TID);
+
 	/* Search for target thread. */
 	for (int i = 0; i < KTHREAD_MAX; i++)
 	{
@@ -353,7 +357,7 @@ PUBLIC int thread_join(int tid, void **retval)
 	int ret = -EINVAL;
 
 	/* Sanity check. */
-	KASSERT(tid >= 0);
+	KASSERT(tid > KTHREAD_NULL_TID);
 	KASSERT(tid != thread_get_id(thread_get_curr()));
 	KASSERT(tid != KTHREAD_MASTER_TID);
 
