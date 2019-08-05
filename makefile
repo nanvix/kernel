@@ -26,6 +26,9 @@
 # Build Options
 #===============================================================================
 
+# Use Docker?
+export DOCKER ?= no
+
 # Verbose Build?
 export VERBOSE ?= no
 
@@ -68,7 +71,9 @@ export EXEC := test-driver
 # Target-Specific Make Rules
 #===============================================================================
 
+ifeq ($(DOCKER),no)
 include $(MAKEDIR)/makefile
+endif
 
 #===============================================================================
 # Toolchain Configuration
@@ -104,6 +109,7 @@ make-dirs:
 	@mkdir -p $(BINDIR)
 	@mkdir -p $(LIBDIR)
 
+ifeq ($(DOCKER),no)
 image-tests: | make-dirs all-target
 	bash $(TOOLSDIR)/nanvix-build-image.sh $(IMAGE) $(BINDIR) $(EXEC)
 
@@ -115,6 +121,20 @@ distclean: distclean-target
 	 @rm -f $(LIBDIR)/libkernel-* $(LIBDIR)/libnanvix-** $(LIBDIR)/liblwip-*
 	 @rm -rf $(BINDIR)
 	 @find $(SRCDIR) -name "*.o" -exec rm -rf {} \;
+
+# Run Docker containers.
+else
+image-tests:
+	cd $(ROOTDIR)/docker && docker-compose -f image-tests.yml up $(TARGET)
+
+# Cleans builds.
+clean:
+	cd $(ROOTDIR)/docker && docker-compose -f clean.yml up $(TARGET)
+
+# Cleans everything.
+distclean:
+	cd $(ROOTDIR)/docker && docker-compose -f distclean.yml up $(TARGET)
+endif
 
 #===============================================================================
 # Contrib Install and Uninstall Rules
