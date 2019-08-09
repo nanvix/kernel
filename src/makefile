@@ -29,6 +29,7 @@
 .PHONY: kernel
 .PHONY: libs
 .PHONY: test
+.PHONY: lwip
 
 #===============================================================================
 
@@ -36,19 +37,29 @@
 all: kernel test
 
 # Builds the Kernel
-kernel:
+kernel: lwip
 	$(MAKE) -C kernel all
 
 # Builds User Libraries
 libs: kernel
 	$(MAKE) -C libs all
 
+
+# Builds LwIP
+ifeq ($(TARGET),$(filter $(TARGET),qemu-x86 qemu-openrisc))
+lwip:
+	$(MAKE) -C lwip all
+else
+lwip:
+	echo "nothing to do"
+endif
+
 # Builds The Test Driver
-test: libs kernel
+test: libs kernel lwip
 	$(MAKE) -C test all
 
 # Cleans Build Objects
-clean: clean-kernel clean-libs clean-test
+clean: clean-kernel clean-libs clean-test clean-lwip
 
 # Cleans Kernel Build Objects
 clean-kernel:
@@ -62,8 +73,12 @@ clean-libs:
 clean-test:
 	$(MAKE) -C test clean
 
+# Cleans Test Driver Build Objects
+clean-lwip:
+	$(MAKE) -C lwip clean
+
 # Cleans Everything
-distclean: distclean-kernel distclean-libs distclean-test
+distclean: distclean-kernel distclean-libs distclean-test distclean-lwip
 
 # Cleans Kernel Build
 distclean-kernel:
@@ -76,3 +91,7 @@ distclean-libs:
 # Cleans Test Driver Build
 distclean-test:
 	$(MAKE) -C test distclean
+
+# Cleans lwip Build
+distclean-lwip:
+	$(MAKE) -C lwip distclean

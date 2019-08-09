@@ -58,6 +58,7 @@ export LDFLAGS = -Wl,--allow-multiple-definition
 #===============================================================================
 
 export THEIR_LIBS = -lvbsp -lmppanoc -lmpparouting -mhypervisor
+export LIBLWIP =
 
 #===============================================================================
 

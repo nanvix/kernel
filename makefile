@@ -84,6 +84,7 @@ export CFLAGS  += -Wno-unused-function
 export CFLAGS  += -fno-stack-protector
 export CFLAGS  += -Wvla # -Wredundant-decls
 export CFLAGS  += -I $(INCDIR)
+export CFLAGS += -I $(ROOTDIR)/src/lwip/src/include
 
 # Additional C Flags
 include $(BUILDDIR)/makefile.cflags
@@ -112,7 +113,7 @@ clean: clean-target
 
 # Cleans everything.
 distclean: distclean-target
-	 @rm -f $(LIBDIR)/libkernel-* $(LIBDIR)/libnanvix-**
+	 @rm -f $(LIBDIR)/libkernel-* $(LIBDIR)/libnanvix-** $(LIBDIR)/liblwip-*
 	 @rm -rf $(BINDIR)
 	 @find $(SRCDIR) -name "*.o" -exec rm -rf {} \;
 
