@@ -22,33 +22,45 @@
  * SOFTWARE.
  */
 
+#include <dev/net/net.h>
+#include <nanvix/const.h>
+#include <nanvix/klib.h>
+
+#if __NANVIX_HAS_NETWORK
+
+#include <arch/nic_driver_if.h>
+#include <lwip/init.h>
+#include <lwip/netif.h>
+
 /**
- * @defgroup kernel-config Kconfig
- * @ingroup kernel
- *
- * @brief Kernel Configuration
+ * @brinef Network interface
  */
+PUBLIC struct netif netif;
 
-#ifndef NANVIX_CONFIG_H_
-#define NANVIX_CONFIG_H_
+/**
+ * The network_setup() function initializes the network stack. It
+ * initializes the underlying network interface and assigns an IP
+ * address to the target.
+ */
+PUBLIC void network_setup(void)
+{
+	ip_addr_t ip;
+	ip_addr_t netmask;
+	ip_addr_t gateway;
 
-	/**
-	 * @name Synchronization Primitives
-	 */
-	/**@{*/
-	#define __NANVIX_MUTEX_SLEEP     1 /**< Blocking Mutexes?    */
-	#define __NANVIX_SEMAPHORE_SLEEP 1 /**< Blocking Semaphores? */
-	/**@}*/
+	lwip_init();
 
-	/**
-	 * @brief Network Capabilities
-	 */
-	#if defined(__qemu_x86__) || defined(__qemu_openrisc__)
-		#define __NANVIX_HAS_NETWORK 1
-	#else
-		#define __NANVIX_HAS_NETWORK 0
-	#endif
+	/* Setup interface. */
+	ip4addr_aton(NETWORK_DEFAULT_IPADDR, &ip);
+	ip4addr_aton(NETWORK_DEFAULT_NETMASK, &netmask);
+	ip4addr_aton(NETWORK_DEFAULT_GATEWAY, &gateway);
+	netif_add(&netif, &ip, &netmask, &gateway, NULL, nic_driver_if_init, netif_input);
 
-/**@}*/
+	/* Bring the interface up. */
+	netif_set_default(&netif);
+	netif_set_up(&netif);
 
-#endif /* NANVIX_CONFIG_H_ */
+	network_test_driver();
+}
+
+#endif
