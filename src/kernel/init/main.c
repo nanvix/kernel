@@ -29,7 +29,8 @@
 #include <nanvix/mm.h>
 #include <nanvix/thread.h>
 #include <nanvix.h>
-#include <dev/net/rtl8139.h>
+
+#include <dev/net/net.h>
 
 EXTERN void do_syscall2(void);
 EXTERN void ___start(int argc, const char *argv[], char **envp);
@@ -82,11 +83,11 @@ PUBLIC void kmain(int argc, const char *argv[])
 	dev_init();
 	mm_init();
 
-	kprintf("enabling hardware interrupts");
+	kprintf("[kernel] enabling hardware interrupts");
 	interrupts_enable();
-	
-#ifdef __qemu_x86__
-	network_test_driver();
+
+#if __NANVIX_HAS_NETWORK
+	network_setup();
 #endif
 
 #if (CLUSTER_IS_MULTICORE)
