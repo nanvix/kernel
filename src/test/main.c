@@ -99,6 +99,10 @@ void ___start(int argc, const char *argv[])
 	test_perf();
 	test_signal();
 
+#if __NANVIX_HAS_NETWORK
+	test_network();
+#endif
+
 	/* Halt. */
 	shutdown();
 	UNREACHABLE();

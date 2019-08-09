@@ -27,7 +27,7 @@
 #===============================================================================
 
 # Libraries
-LIBS  = -Wl,--whole-archive $(LIBNANVIX) $(LIBKERNEL) $(LIBHAL)
+LIBS  = -Wl,--whole-archive $(LIBNANVIX) $(LIBKERNEL) $(LIBHAL) $(LIBLWIP)
 LIBS += -Wl,--no-whole-archive $(THEIR_LIBS)
 
 #===============================================================================
@@ -39,6 +39,18 @@ SRC = $(wildcard *.c)
 
 # Object Files
 OBJ = $(SRC:.c=.$(OBJ_SUFFIX).o)
+
+#===============================================================================
+# Sources (Target Specific)
+#===============================================================================
+
+ifeq ($(TARGET),qemu-x86)
+SRC += $(wildcard lwip/*.c)
+endif
+
+ifeq ($(TARGET),qemu-openrisc)
+SRC += $(wildcard lwip/*.c)
+endif
 
 #===============================================================================
 
