@@ -24,8 +24,6 @@
 
 #include <nanvix/hal/hal.h>
 #include <nanvix/const.h>
-#include <dev/pci.h>
-#include <dev/net/rtl8139.h>
 
 /**
  * @brief Timer frequency.
@@ -38,6 +36,12 @@
 PRIVATE unsigned ticks = 0;
 
 /**
+ * A public tick counter that can be exported and used by other files.
+ * Used in src/lwip/src/arch/sys_arch.c
+ */
+unsigned lwip_now = 0;
+
+/**
  * @brief Handles a timer interrupt.
  *
  * @param num Number of interrupt (currently unused).
@@ -45,10 +49,10 @@ PRIVATE unsigned ticks = 0;
 PRIVATE void do_timer(int num)
 {
 	UNUSED(num);
-
 	if (core_get_id() == 0)
 	{
 		ticks++;
+		lwip_now++;
 		dcache_invalidate();
 	}
 }
@@ -60,8 +64,11 @@ PUBLIC void dev_init(void)
 {
 	timer_init(TIMER_FREQ);
 	KASSERT(interrupt_register(INTERRUPT_TIMER, do_timer) == 0);
-
-#ifdef __qemu_x86__
-	dev_net_rtl8139_init();
-#endif
 }
+
+// 	/* Only initialize the network device here if you are not using lwip.
+// 	If you are using lwip, the network device will be initialized
+// 	the with netif_add function*/
+// #if defined(__qemu_x86__) || defined(__qemu_openrisc__)
+// 	// dev_net_init(NULL);
+// #endif

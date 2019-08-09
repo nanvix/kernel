@@ -40,6 +40,15 @@
 	#define __NANVIX_SEMAPHORE_SLEEP 1 /**< Blocking Semaphores? */
 	/**@}*/
 
+	/**
+	 * @brief Network Capabilities
+	 */
+	#if defined(__qemu_x86__) || defined(__qemu_openrisc__)
+		#define __NANVIX_HAS_NETWORK 1
+	#else
+		#define __NANVIX_HAS_NETWORK 0
+	#endif
+
 /**@}*/
 
 #endif /* NANVIX_CONFIG_H_ */

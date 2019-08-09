@@ -21,61 +21,79 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifdef __qemu_x86__
 
-/**
- * it seems that I should add some doxygen stuff here, but I don't know what
- */
+#ifndef DEV_NET_RTL8139_H_
+#define DEV_NET_RTL8139_H_
 
+	#ifndef __NEED_RTL8139
+		#error "do not include this file"
+	#endif
 
-#ifndef RTL8139_H_
-#define RTL8139_H_
+	#include <dev/net/net.h>
+	#include <stdint.h>
 
-#include <stdint.h>
-#include <nanvix/hal/hal.h>
+	#define RTL8139_VENDOR_ID 0x10EC
+	#define RTL8139_DEVICE_ID 0x8139
 
-#define RTL8139_VENDOR_ID 0x10EC
-#define RTL8139_DEVICE_ID 0x8139
+	/* Minimum possible size for the rtl8139 cards */
+	#define RTL8139_RX_BUF_SIZE 8192 + 16
 
-#define RX_BUF_SIZE 8192 + 16
-/* Adding 1500 bytes when allocating to prevent overflows */
-#define RX_BUF_ALLOC_SIZE RX_BUF_SIZE + 1500 
+	/* Adding 1500 bytes when allocating to prevent overflows */
+	#define RTL8139_RX_BUF_ALLOC_SIZE RTL8139_RX_BUF_SIZE + 1500
 
-#define RX_READ_POINTER_MASK (~3)
-#define ROK (1 << 0)
-#define TOK (1 << 2)
+	#define RTL8139_RX_READ_POINTER_MASK (~3)
+	#define RTL8139_ROK (1 << 0)
+	#define RTL8139_TOK (1 << 2)
 
-/* Register offests */
-#define RX_BUFFER 0x30
-#define COMMAND 0x37
-#define CAPR 0x38
-#define TX_CONFIG 0x40
-#define RX_CONFIG 0x44
-#define CONFIG1 0x52
-#define INTERRUPT_MASK 0x3C
-#define INTERRUPT_STATUS 0x3E
+	/**
+	 * @name Register Offsets
+	 */
+	/**@{*/
+	#define RTL8139_RX_BUFFER        0x30
+	#define RTL8139_COMMAND          0x37
+	#define RTL8139_CAPR             0x38
+	#define RTL8139_TX_CONFIG        0x40
+	#define RTL8139_RX_CONFIG        0x44
+	#define RTL8139_CONFIG1          0x52
+	#define RTL8129_INTERRUPT_MASK   0x3c
+	#define RTL8129_INTERRUPT_STATUS 0x3e
+	/**@}*/
 
-struct rtl8139_dev
-{
-	uint16_t io_base;
-	uint8_t mac_addr[6];
-	uint8_t rx_buffer[RX_BUF_ALLOC_SIZE];
-	uint8_t tx_cur;
-	uint32_t rx_cur;
-};
+	/**
+	 * @brief Packet array length.
+	 */
+	#define PACKET_ARRAY_LENGTH 16
 
-EXTERN void network_test_driver(void);
+	/**
+	 * @brief RTL 8139 device information.
+	 */
+	struct rtl8139_dev
+	{
+		uint16_t io_base;
+		uint8_t mac_addr[6];
+		uint8_t rx_buffer[RTL8139_RX_BUF_ALLOC_SIZE];
+		uint8_t tx_cur;
+		uint32_t rx_cur;
+		bool lwip_forwarding;
+	};
 
-void dev_net_rtl8139_init(void);
-void dev_net_rtl8139_send_packet(void *data, uint32_t len);
+	/**
+	 * @brief Packet header.
+	 */
+	struct rtl8139_packet_header
+	{
+		uint16_t status;
+		uint16_t size;
+	};
 
-struct rtl8139_dev* dev_net_rtl8139_get_device(void);
+	/**
+	 * @brief Packet array.
+	 */
+	struct rtl8139_packet_array
+	{
+		struct packet packets[PACKET_ARRAY_LENGTH];
+		uint8_t read_pos;
+		uint8_t write_pos;
+	};
 
-bool dev_net_rtl8139_packet_status_valid(uint16_t status);
-
-
-#endif /* RTL8139_H_ */
-
-#else
-extern int make_iso_compilers_happy;
-#endif /* __qemu_x86__ */
+#endif /* !DEV_NET_RTL8139_H_ */

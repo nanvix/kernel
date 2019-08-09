@@ -27,16 +27,31 @@
 #===============================================================================
 
 # C Source Files
-SRC = $(wildcard dev/*.c)  \
-	  $(wildcard dev/net/*.c)  \
-      $(wildcard init/*.c) \
-      $(wildcard mm/*.c)   \
-      $(wildcard pm/*.c)   \
-      $(wildcard sys/*.c)  \
-      $(wildcard test/*.c) \
+SRC = $(wildcard dev/*.c)       \
+      $(wildcard dev/net/net.c) \
+      $(wildcard init/*.c)      \
+      $(wildcard mm/*.c)        \
+      $(wildcard pm/*.c)        \
+      $(wildcard sys/*.c)       \
+      $(wildcard test/mm.c)
 
 # Object Files
 OBJ = $(SRC:.c=.$(OBJ_SUFFIX).o)
+
+#===============================================================================
+# Sources (Target Specific)
+#===============================================================================
+
+ifeq ($(TARGET),qemu-x86)
+SRC += $(wildcard dev/net/rtl8139.c)
+SRC += $(wildcard dev/bus/pci.c)
+SRC += $(wildcard test/network.c)
+endif
+
+ifeq ($(TARGET),qemu-openrisc)
+SRC += $(wildcard dev/net/ethoc.c)
+SRC += $(wildcard test/network.c)
+endif
 
 #===============================================================================
 
