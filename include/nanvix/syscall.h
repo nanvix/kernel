@@ -27,6 +27,7 @@
 
 	#include <nanvix/const.h>
 	#include <nanvix/thread.h>
+	#include <nanvix/sync.h>
 	#include <nanvix/signal.h>
 
 /**
@@ -40,26 +41,32 @@
 	 *
 	 * @note This should be set to the highest system call number.
 	 */
-	#define NR_SYSCALLS 15
+	#define NR_SYSCALLS 21
 
 	/**
 	 * @name System Call Numbers
 	 */
 	/**@{*/
-	#define NR__exit         1 /**< kernel_exit()          */
-	#define NR_write         2 /**< kernel_write()         */
-	#define NR_thread_get_id 3 /**< kernel_thread_get_id() */
-	#define NR_thread_create 4 /**< kernel_thread_create() */
-	#define NR_thread_exit   5 /**< kernel_thread_exit()   */
-	#define NR_thread_join   6 /**< kernel_thread_join()   */
-	#define NR_sleep         7 /**< kernel_sleep()         */
-	#define NR_wakeup        8 /**< kernel_wakeup()        */
-	#define NR_shutdown      9 /**< kernel_shutdown()      */
-	#define NR_sigctl       10 /**< kernel_perf_read()     */
-	#define NR_alarm        11 /**< kernel_perf_read()     */
-	#define NR_sigsend      12 /**< kernel_perf_read()     */
-	#define NR_sigwait      13 /**< kernel_perf_read()     */
-	#define NR_sigreturn    14 /**< kernel_perf_read()     */
+	#define NR__exit           1 /**< kernel_exit()           */
+	#define NR_write           2 /**< kernel_write()          */
+	#define NR_thread_get_id   3 /**< kernel_thread_get_id()  */
+	#define NR_thread_create   4 /**< kernel_thread_create()  */
+	#define NR_thread_exit     5 /**< kernel_thread_exit()    */
+	#define NR_thread_join     6 /**< kernel_thread_join()    */
+	#define NR_sleep           7 /**< kernel_sleep()          */
+	#define NR_wakeup          8 /**< kernel_wakeup()         */
+	#define NR_shutdown        9 /**< kernel_shutdown()       */
+	#define NR_sigctl         10 /**< kernel_perf_read()      */
+	#define NR_alarm          11 /**< kernel_perf_read()      */
+	#define NR_sigsend        12 /**< kernel_perf_read()      */
+	#define NR_sigwait        13 /**< kernel_perf_read()      */
+	#define NR_sigreturn      14 /**< kernel_perf_read()      */
+	#define NR_sync_create    15 /**< kernel_sync_create()    */
+	#define NR_sync_open      16 /**< kernel_sync_open()      */
+	#define NR_sync_wait      17 /**< kernel_sync_wait()      */
+	#define NR_sync_signal    18 /**< kernel_sync_signal()    */
+	#define NR_sync_close     19 /**< kernel_sync_close()     */
+	#define NR_sync_unlink    20 /**< kernel_sync_unlink()    */
 	/**@}*/
 
 /*============================================================================*
@@ -130,6 +137,17 @@
 	 * @brief Returns from a signal handler.
 	 */
 	EXTERN void kernel_sigreturn(void);
+
+/*============================================================================*
+ * Sync Kernel Calls                                                          *
+ *============================================================================*/
+
+	EXTERN int kernel_sync_create(const int *, int, int);
+	EXTERN int kernel_sync_open(const int *, int, int);
+	EXTERN int kernel_sync_unlink(int);
+	EXTERN int kernel_sync_close(int);
+	EXTERN int kernel_sync_wait(int);
+	EXTERN int kernel_sync_signal(int);
 
 /**@}*/
 

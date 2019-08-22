@@ -133,6 +133,22 @@
 	extern uint64_t nanvix_perf_read(int perf);
 
 /*============================================================================*
+ * Sync Service                                                               *
+ *============================================================================*/
+
+	/**
+	 * @name Sync Kernel Calls
+	 */
+	/**@{*/
+	extern int ksync_create(const int *, int, int);
+	extern int ksync_open(const int *, int, int);
+	extern int ksync_wait(int);
+	extern int ksync_signal(int);
+	extern int ksync_close(int);
+	extern int ksync_unlink(int);
+	/**@}*/
+
+/*============================================================================*
  * Signal                                                                     *
  *============================================================================*/
 

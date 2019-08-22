@@ -98,6 +98,7 @@ void ___start(int argc, const char *argv[])
 	test_thread_sync();
 	test_perf();
 	test_signal();
+	test_sync();
 
 #if __NANVIX_HAS_NETWORK
 	test_network();

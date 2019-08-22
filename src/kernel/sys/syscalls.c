@@ -120,6 +120,40 @@ PUBLIC void do_kcall2(void)
 				);
 				break;
 
+			case NR_sync_create:
+				ret = kernel_sync_create(
+					(const int *)(long) sysboard[coreid].arg0,
+					(int) sysboard[coreid].arg1,
+					(int) sysboard[coreid].arg2
+				);
+				break;
+
+			case NR_sync_open:
+				ret = kernel_sync_open(
+					(const int *)(long) sysboard[coreid].arg0,
+					(int) sysboard[coreid].arg1,
+					(int) sysboard[coreid].arg2
+				);
+				break;
+
+			case NR_sync_unlink:
+				ret = kernel_sync_unlink(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+
+			case NR_sync_close:
+				ret = kernel_sync_close(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+
+			case NR_sync_signal:
+				ret = kernel_sync_signal(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+
 			default:
 				break;
 		}
@@ -201,6 +235,12 @@ PUBLIC int do_kcall(
 		case NR_sigreturn:
 			kernel_sigreturn();
 			ret = 0;
+			break;
+
+		case NR_sync_wait:
+			ret = kernel_sync_wait(
+				(int) arg0
+			);
 			break;
 
 		/* Forward system call. */
