@@ -25,11 +25,11 @@
 #include <nanvix/hal/hal.h>
 
 /**
- * The sys_shutdown() function shutdowns the kernel.
+ * The kernel_shutdown() function shutdowns the kernel.
  *
  * @author Pedro Henrique Penna
  */
-int sys_shutdown(void)
+int kernel_shutdown(void)
 {
 	core_poweroff();
 

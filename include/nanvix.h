@@ -62,8 +62,8 @@
 	 * @name Thread Synchronization Kernel Calls
 	 */
 	/**@{*/
-	extern int sleep(void);
-	extern int wakeup(kthread_t);
+	extern int ksleep(void);
+	extern int kwakeup(kthread_t);
 	/**@}*/
 
 	/**
@@ -72,7 +72,7 @@
 	 * @returns Upon successful completion, this function does not
 	 * return.Upon failure, a negative error code is returned instead.
 	 */
-	extern int shutdown(void);
+	extern int kshutdown(void);
 
 /*============================================================================*
  * Performance Monitoring                                                     *

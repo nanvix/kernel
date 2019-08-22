@@ -80,11 +80,11 @@ PUBLIC void do_kcall2(void)
 		switch (sysboard[coreid].syscall_nr)
 		{
 			case NR__exit:
-				sys_exit((int) sysboard[coreid].arg0);
+				kernel_exit((int) sysboard[coreid].arg0);
 				break;
 
 			case NR_write:
-				ret = sys_write(
+				ret = kernel_write(
 					(int) sysboard[coreid].arg0,
 					(const char *) sysboard[coreid].arg1,
 					(size_t) sysboard[coreid].arg2
@@ -94,7 +94,7 @@ PUBLIC void do_kcall2(void)
 #if (THREAD_MAX > 1)
 
 			case NR_thread_create:
-				ret = sys_thread_create(
+				ret = kernel_thread_create(
 					(int *) sysboard[coreid].arg0,
 					(void *(*)(void *)) sysboard[coreid].arg1,
 					(void *) sysboard[coreid].arg2
@@ -102,7 +102,7 @@ PUBLIC void do_kcall2(void)
 				break;
 
 			case NR_wakeup:
-				ret = sys_wakeup(
+				ret = kernel_wakeup(
 					(int) sysboard[coreid].arg0
 				);
 				break;
@@ -110,7 +110,7 @@ PUBLIC void do_kcall2(void)
 #endif
 
 			case NR_sigctl:
-				ret = sys_sigctl(
+				ret = kernel_sigctl(
 					(int) sysboard[coreid].arg0,
 					(struct ksigaction *) sysboard[coreid].arg1
 				);
@@ -157,49 +157,49 @@ PUBLIC int do_kcall(
 	switch (syscall_nr)
 	{
 		case NR_thread_get_id:
-			ret = sys_thread_get_id();
+			ret = kernel_thread_get_id();
 			break;
 
 #if (THREAD_MAX > 1)
 
 		case NR_thread_exit:
-			sys_thread_exit((void *) arg0);
+			kernel_thread_exit((void *) arg0);
 			break;
 
 		case NR_thread_join:
-			ret = sys_thread_join(
+			ret = kernel_thread_join(
 				(int) arg0,
 				(void **) arg1
 			);
 			break;
 
 		case NR_sleep:
-			ret = sys_sleep();
+			ret = kernel_sleep();
 			break;
 
 #endif
 
 		case NR_shutdown:
-			ret = sys_shutdown();
+			ret = kernel_shutdown();
 			break;
 
 		case NR_alarm:
-			ret = sys_alarm((int) arg0);
+			ret = kernel_alarm((int) arg0);
 			break;
 
 		case NR_sigsend:
-			ret = sys_sigsend(
+			ret = kernel_sigsend(
 				(int) arg0,
 				(int) arg1
 			);
 			break;
 
 		case NR_sigwait:
-			ret = sys_sigwait((int) arg0);
+			ret = kernel_sigwait((int) arg0);
 			break;
 
 		case NR_sigreturn:
-			sys_sigreturn();
+			kernel_sigreturn();
 			ret = 0;
 			break;
 

@@ -27,6 +27,7 @@
 #include <nanvix/dev.h>
 #include <nanvix/klib.h>
 #include <nanvix/mm.h>
+#include <nanvix/syscall.h>
 #include <nanvix/thread.h>
 #include <nanvix.h>
 
@@ -59,7 +60,7 @@ PRIVATE void *init(void *arg)
 #endif
 
 	/* Power down. */
-	shutdown();
+	kernel_shutdown();
 	UNREACHABLE();
 
 	return (NULL);
@@ -97,7 +98,7 @@ PUBLIC void kmain(int argc, const char *argv[])
 #else
 
 	/* Power down. */
-	shutdown();
+	kernel_shutdown();
 	UNREACHABLE();
 
 #endif

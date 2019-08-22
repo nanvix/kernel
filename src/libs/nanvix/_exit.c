@@ -31,7 +31,7 @@
  *
  * @note This function does not return.
  */
-void _exit(int status)
+void _kexit(int status)
 {
 	kcall1(NR__exit, status);
 }

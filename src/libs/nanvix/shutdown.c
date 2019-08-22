@@ -29,7 +29,7 @@
  *
  * @author Pedro Henrique Penna
  */
-int shutdown(void)
+int kshutdown(void)
 {
 	int ret;
 

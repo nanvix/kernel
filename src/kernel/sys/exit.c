@@ -31,7 +31,7 @@
  *
  * @note This function does not return.
  */
-void sys_exit(int status)
+void kernel_exit(int status)
 {
 	core_shutdown(status);
 }

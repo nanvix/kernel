@@ -28,13 +28,13 @@
 #include <errno.h>
 
 /*============================================================================*
- * sys_sigctl()                                                               *
+ * kernel_sigctl()                                                            *
  *============================================================================*/
 
 /**
- * The sigctl() function modifies the treatment of a signal.
+ * The kernel_sigctl() function modifies the treatment of a signal.
  */
-PUBLIC int sys_sigctl(int signum, struct ksigaction *sigact)
+PUBLIC int kernel_sigctl(int signum, struct ksigaction *sigact)
 {
 	if (sigact == NULL)
 		return (-EAGAIN);
@@ -51,57 +51,57 @@ PUBLIC int sys_sigctl(int signum, struct ksigaction *sigact)
 }
 
 /*============================================================================*
- * sys_alarm()                                                                *
+ * kernel_alarm()                                                             *
  *============================================================================*/
 
 /**
- * The alarm() function schedule an alarm signal to trigger when
+ * The kernel_alarm() function schedule an alarm signal to trigger when
  * the @seconds seconds pass.
  *
  * @todo: TODO check parameters.
  */
-PUBLIC int sys_alarm(int seconds)
+PUBLIC int kernel_alarm(int seconds)
 {
 	return signal_alarm(seconds);
 }
 
 /*============================================================================*
- * sys_sigsend()                                                              *
+ * kernel_sigsend()                                                           *
  *============================================================================*/
 
 /**
- * The sigsend() function sends a signal @signum to another thread @tid.
+ * The kernel_sigsend() function sends a signal @signum to another thread @tid.
  *
  * @todo: TODO check parameters.
  */
-PUBLIC int sys_sigsend(int signum, int tid)
+PUBLIC int kernel_sigsend(int signum, int tid)
 {
 	return signal_send(signum, tid);
 }
 
 /*============================================================================*
- * sys_sigwait()                                                              *
+ * kernel_sigwait()                                                           *
  *============================================================================*/
 
 /**
- * The sigwait() function waits for the receipt of a @signum signal.
+ * The kernel_sigwait() function waits for the receipt of a @signum signal.
  *
  * @todo: TODO check parameters.
  */
-PUBLIC int sys_sigwait(int signum)
+PUBLIC int kernel_sigwait(int signum)
 {
 	return signal_wait(signum);
 }
 
 /*============================================================================*
- * sys_sigreturn()                                                            *
+ * kernel_sigreturn()                                                         *
  *============================================================================*/
 
 /**
- * The sigreturn() function returns from a signal handler, restoring the
+ * The kernel_sigreturn() function returns from a signal handler, restoring the
  * execution stream.
  */
-PUBLIC void sys_sigreturn(void)
+PUBLIC void kernel_sigreturn(void)
 {
 	signal_return();
 }

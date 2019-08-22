@@ -30,7 +30,7 @@
 /**
  * @brief Writes to a device.
  */
-PUBLIC ssize_t sys_write(int fd, const char *buf, size_t n)
+PUBLIC ssize_t kernel_write(int fd, const char *buf, size_t n)
 {
 	UNUSED(fd);
 

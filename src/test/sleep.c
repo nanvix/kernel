@@ -130,16 +130,16 @@ static void test_fault_sleep_wakeup(void)
 	test_assert(kthread_create(&tid, task2, NULL) == 0);
 
 		/* Wakeup invalid thread. */
-		test_assert(wakeup(-1) < 0);
+		test_assert(kwakeup(-1) < 0);
 
 		/* Wakeup bad thread. */
-		test_assert(wakeup(mytid) < 0);
+		test_assert(kwakeup(mytid) < 0);
 
 	/* Wait for thread. */
 	test_assert(kthread_join(tid, NULL) == 0);
 
 	/* Wakeup bad thread. */
-	test_assert(wakeup(tid) < 0);
+	test_assert(kwakeup(tid) < 0);
 }
 
 /**

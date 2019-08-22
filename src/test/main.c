@@ -104,6 +104,6 @@ void ___start(int argc, const char *argv[])
 #endif
 
 	/* Halt. */
-	shutdown();
+	kshutdown();
 	UNREACHABLE();
 }

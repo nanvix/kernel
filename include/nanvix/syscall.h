@@ -46,34 +46,34 @@
 	 * @name System Call Numbers
 	 */
 	/**@{*/
-	#define NR__exit         1 /**< _exit()             */
-	#define NR_write         2 /**< sys_write()         */
-	#define NR_thread_get_id 3 /**< sys_thread_get_id() */
-	#define NR_thread_create 4 /**< sys_thread_create() */
-	#define NR_thread_exit   5 /**< sys_thread_exit()   */
-	#define NR_thread_join   6 /**< sys_thread_join()   */
-	#define NR_sleep         7 /**< sys_sleep()         */
-	#define NR_wakeup        8 /**< sys_wakeup()        */
-	#define NR_shutdown      9 /**< sys_shutdown()      */
-	#define NR_sigctl       10 /**< sys_perf_read()     */
-	#define NR_alarm        11 /**< sys_perf_read()     */
-	#define NR_sigsend      12 /**< sys_perf_read()     */
-	#define NR_sigwait      13 /**< sys_perf_read()     */
-	#define NR_sigreturn    14 /**< sys_perf_read()     */
+	#define NR__exit         1 /**< kernel_exit()          */
+	#define NR_write         2 /**< kernel_write()         */
+	#define NR_thread_get_id 3 /**< kernel_thread_get_id() */
+	#define NR_thread_create 4 /**< kernel_thread_create() */
+	#define NR_thread_exit   5 /**< kernel_thread_exit()   */
+	#define NR_thread_join   6 /**< kernel_thread_join()   */
+	#define NR_sleep         7 /**< kernel_sleep()         */
+	#define NR_wakeup        8 /**< kernel_wakeup()        */
+	#define NR_shutdown      9 /**< kernel_shutdown()      */
+	#define NR_sigctl       10 /**< kernel_perf_read()     */
+	#define NR_alarm        11 /**< kernel_perf_read()     */
+	#define NR_sigsend      12 /**< kernel_perf_read()     */
+	#define NR_sigwait      13 /**< kernel_perf_read()     */
+	#define NR_sigreturn    14 /**< kernel_perf_read()     */
 	/**@}*/
 
 /*============================================================================*
  * Thread Kernel Calls                                                        *
  *============================================================================*/
 
-	EXTERN void sys_exit(int);
-	EXTERN ssize_t sys_write(int, const char *, size_t);
-	EXTERN int sys_thread_get_id(void);
-	EXTERN int sys_thread_create(int *, void*(*)(void*), void *);
-	EXTERN void sys_thread_exit(void *);
-	EXTERN int sys_thread_join(int, void **);
-	EXTERN int sys_sleep(void);
-	EXTERN int sys_wakeup(int);
+	EXTERN void kernel_exit(int);
+	EXTERN ssize_t kernel_write(int, const char *, size_t);
+	EXTERN int kernel_thread_get_id(void);
+	EXTERN int kernel_thread_create(int *, void*(*)(void*), void *);
+	EXTERN void kernel_thread_exit(void *);
+	EXTERN int kernel_thread_join(int, void **);
+	EXTERN int kernel_sleep(void);
+	EXTERN int kernel_wakeup(int);
 
 	/**
 	 * @brief Shutdowns the kernel.
@@ -81,7 +81,7 @@
 	 * @returns Upon successful completion, this function does not
 	 * return.Upon failure, a negative error code is returned instead.
 	 */
-	EXTERN int sys_shutdown(void);
+	EXTERN int kernel_shutdown(void);
 
 
 /*============================================================================*
@@ -96,7 +96,7 @@
 	 *
 	 * @returns Zero if successfully changes the behavior, non zero otherwise.
 	 */
-	EXTERN int sys_sigctl(int signum, struct ksigaction *sigact);
+	EXTERN int kernel_sigctl(int signum, struct ksigaction *sigact);
 
 	/**
 	 * @brief Schedules an alarm signal.
@@ -105,7 +105,7 @@
 	 *
 	 * @returns Zero if successfully register the alarm, non zero otherwise.
 	 */
-	EXTERN int sys_alarm(int seconds);
+	EXTERN int kernel_alarm(int seconds);
 
 	/**
 	 * @brief Sends a signal.
@@ -115,7 +115,7 @@
 	 *
 	 * @returns Zero if successfully sends the signal, non zero otherwise.
 	 */
-	EXTERN int sys_sigsend(int signum, int tid);
+	EXTERN int kernel_sigsend(int signum, int tid);
 
 	/**
 	 * @brief Waits for the receipt of a signal.
@@ -124,12 +124,12 @@
 	 *
 	 * @returns Zero if successfully receives the signal, non zero otherwise.
 	 */
-	EXTERN int sys_sigwait(int signum);
+	EXTERN int kernel_sigwait(int signum);
 
 	/**
 	 * @brief Returns from a signal handler.
 	 */
-	EXTERN void sys_sigreturn(void);
+	EXTERN void kernel_sigreturn(void);
 
 /**@}*/
 
