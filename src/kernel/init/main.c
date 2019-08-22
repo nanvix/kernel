@@ -32,7 +32,7 @@
 
 #include <dev/net/net.h>
 
-EXTERN void do_syscall2(void);
+EXTERN void do_kcall2(void);
 EXTERN void ___start(int argc, const char *argv[], char **envp);
 
 #if (CLUSTER_IS_MULTICORE)
@@ -93,7 +93,7 @@ PUBLIC void kmain(int argc, const char *argv[])
 #if (CLUSTER_IS_MULTICORE)
 	thread_create(&tid, init, NULL);
 	while (true)
-		do_syscall2();
+		do_kcall2();
 #else
 
 	/* Power down. */

@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include <nanvix/syscall.h>
+#include <nanvix.h>
 
 /**
  * The shutdown() kernel call shutdowns the kernel.
@@ -33,7 +33,7 @@ int shutdown(void)
 {
 	int ret;
 
-	ret = syscall0(NR_shutdown);
+	ret = kcall0(NR_shutdown);
 
 	/* System call failed. */
 	if (ret < 0)

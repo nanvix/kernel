@@ -34,7 +34,7 @@
  */
 kthread_t kthread_self(void)
 {
-	return (syscall0(NR_thread_get_id));
+	return (kcall0(NR_thread_get_id));
 }
 
 /*============================================================================*
@@ -52,7 +52,7 @@ int kthread_create(
 {
 	int ret;
 
-	ret = syscall3(
+	ret = kcall3(
 		NR_thread_create,
 		(word_t) tid,
 		(word_t) start,
@@ -80,7 +80,7 @@ int kthread_exit(void *retval)
 {
 	int ret;
 
-	ret = syscall1(
+	ret = kcall1(
 		NR_thread_exit,
 		(word_t) retval
 	);
@@ -109,7 +109,7 @@ int kthread_join(
 {
 	int ret;
 
-	ret = syscall2(
+	ret = kcall2(
 		NR_thread_join,
 		(word_t) tid,
 		(word_t) retval
@@ -136,7 +136,7 @@ int sleep(void)
 {
 	int ret;
 
-	ret = syscall0(NR_sleep);
+	ret = kcall0(NR_sleep);
 
 	/* System call failed. */
 	if (ret < 0)
@@ -159,7 +159,7 @@ int wakeup(kthread_t tid)
 {
 	int ret;
 
-	ret = syscall1(
+	ret = kcall1(
 		NR_wakeup,
 		(word_t) tid
 	);

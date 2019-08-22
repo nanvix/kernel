@@ -40,7 +40,7 @@ int ksigclt(
 {
 	int ret;
 
-	ret = syscall2(
+	ret = kcall2(
 		NR_sigclt,
 		(word_t) signum,
 		(word_t) sigact
@@ -70,7 +70,7 @@ int kalarm(int seconds)
 {
 	int ret;
 
-	ret = syscall1(
+	ret = kcall1(
 		NR_alarm,
 		(word_t) seconds
 	);
@@ -96,7 +96,7 @@ int ksigsend(int signum, int tid)
 {
 	int ret;
 
-	ret = syscall2(
+	ret = kcall2(
 		NR_sigsend,
 		(word_t) signum,
         (word_t) tid
@@ -125,7 +125,7 @@ int ksigwait(
 {
 	int ret;
 
-	ret = syscall1(
+	ret = kcall1(
 		NR_sigwait,
 		(word_t) signum
 	);
@@ -152,7 +152,7 @@ int ksigreturn(void)
 {
 	int ret;
 
-	ret = syscall0(
+	ret = kcall0(
 		NR_sigreturn
 	);
 

@@ -53,7 +53,7 @@ PRIVATE struct sysboard
 /**
  * @brief Handles a system call IPI.
  */
-PUBLIC void do_syscall2(void)
+PUBLIC void do_kcall2(void)
 {
 	int coreid = 0 ;
 	int ret = -ENOSYS;
@@ -143,7 +143,7 @@ PUBLIC void do_syscall2(void)
  * @returns Upon successful completion, zero is returned. Upon
  * failure, a negative error code is returned instead.
  */
-PUBLIC int do_syscall(
+PUBLIC int do_kcall(
 	unsigned arg0,
 	unsigned arg1,
 	unsigned arg2,
