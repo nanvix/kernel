@@ -66,6 +66,7 @@
 	extern void test_signal(void);
 	extern void test_network(void);
 	extern void test_sync(void);
+	extern void test_mailbox(void);
 
 	/**@}*/
 

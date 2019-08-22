@@ -154,6 +154,46 @@ PUBLIC void do_kcall2(void)
 				);
 				break;
 
+			case NR_mailbox_create:
+				ret = kernel_mailbox_create(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+
+			case NR_mailbox_open:
+				ret = kernel_mailbox_open(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+
+			case NR_mailbox_unlink:
+				ret = kernel_mailbox_unlink(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+
+			case NR_mailbox_close:
+				ret = kernel_mailbox_close(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+
+			case NR_mailbox_aread:
+				ret = kernel_mailbox_aread(
+					(int) sysboard[coreid].arg0,
+					(void *)(long) sysboard[coreid].arg1,
+					(size_t) sysboard[coreid].arg2
+				);
+				break;
+
+			case NR_mailbox_awrite:
+				ret = kernel_mailbox_awrite(
+					(int) sysboard[coreid].arg0,
+					(const void *)(long) sysboard[coreid].arg1,
+					(size_t) sysboard[coreid].arg2
+				);
+				break;
+
 			default:
 				break;
 		}
@@ -239,6 +279,12 @@ PUBLIC int do_kcall(
 
 		case NR_sync_wait:
 			ret = kernel_sync_wait(
+				(int) arg0
+			);
+			break;
+
+		case NR_mailbox_wait:
+			ret = kernel_mailbox_wait(
 				(int) arg0
 			);
 			break;

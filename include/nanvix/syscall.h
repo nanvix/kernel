@@ -28,6 +28,7 @@
 	#include <nanvix/const.h>
 	#include <nanvix/thread.h>
 	#include <nanvix/sync.h>
+	#include <nanvix/mailbox.h>
 	#include <nanvix/signal.h>
 
 /**
@@ -41,7 +42,7 @@
 	 *
 	 * @note This should be set to the highest system call number.
 	 */
-	#define NR_SYSCALLS 21
+	#define NR_SYSCALLS 28
 
 	/**
 	 * @name System Call Numbers
@@ -67,6 +68,13 @@
 	#define NR_sync_signal    18 /**< kernel_sync_signal()    */
 	#define NR_sync_close     19 /**< kernel_sync_close()     */
 	#define NR_sync_unlink    20 /**< kernel_sync_unlink()    */
+	#define NR_mailbox_create 21 /**< kernel_mailbox_create() */
+	#define NR_mailbox_open   22 /**< kernel_mailbox_open()   */
+	#define NR_mailbox_unlink 23 /**< kernel_mailbox_unlink() */
+	#define NR_mailbox_close  24 /**< kernel_mailbox_close()  */
+	#define NR_mailbox_awrite 25 /**< kernel_mailbox_awrite() */
+	#define NR_mailbox_aread  26 /**< kernel_mailbox_aread()  */
+	#define NR_mailbox_wait   27 /**< kernel_mailbox_wait()   */
 	/**@}*/
 
 /*============================================================================*
@@ -148,6 +156,18 @@
 	EXTERN int kernel_sync_close(int);
 	EXTERN int kernel_sync_wait(int);
 	EXTERN int kernel_sync_signal(int);
+
+/*============================================================================*
+ * Mailbox Kernel Calls                                                       *
+ *============================================================================*/
+
+	EXTERN int kernel_mailbox_create(int);
+	EXTERN int kernel_mailbox_open(int);
+	EXTERN int kernel_mailbox_unlink(int);
+	EXTERN int kernel_mailbox_close(int);
+	EXTERN int kernel_mailbox_aread(int, void *, size_t);
+	EXTERN int kernel_mailbox_awrite(int, const void *, size_t);
+	EXTERN int kernel_mailbox_wait(int);
 
 /**@}*/
 

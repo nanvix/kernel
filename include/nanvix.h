@@ -149,6 +149,23 @@
 	/**@}*/
 
 /*============================================================================*
+ * Mailbox Service                                                            *
+ *============================================================================*/
+
+	/**
+	 * @name Mailbox Kernel Calls
+	 */
+	/**@{*/
+	extern int kmailbox_create(int);
+	extern int kmailbox_open(int);
+	extern int kmailbox_unlink(int);
+	extern int kmailbox_close(int);
+	extern int kmailbox_awrite(int, const void *, size_t);
+	extern int kmailbox_aread(int, void *, size_t);
+	extern int kmailbox_wait(int);
+	/**@}*/
+
+/*============================================================================*
  * Signal                                                                     *
  *============================================================================*/
 
