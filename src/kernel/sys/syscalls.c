@@ -80,14 +80,14 @@ PUBLIC void do_kcall2(void)
 		switch (sysboard[coreid].syscall_nr)
 		{
 			case NR__exit:
-				kernel_exit((int) sysboard[coreid].arg0);
+				kernel_exit((int)(long) sysboard[coreid].arg0);
 				break;
 
 			case NR_write:
 				ret = kernel_write(
-					(int) sysboard[coreid].arg0,
-					(const char *) sysboard[coreid].arg1,
-					(size_t) sysboard[coreid].arg2
+					(int)(long) sysboard[coreid].arg0,
+					(const char *)(long) sysboard[coreid].arg1,
+					(size_t)(long) sysboard[coreid].arg2
 				);
 				break;
 
@@ -95,15 +95,15 @@ PUBLIC void do_kcall2(void)
 
 			case NR_thread_create:
 				ret = kernel_thread_create(
-					(int *) sysboard[coreid].arg0,
-					(void *(*)(void *)) sysboard[coreid].arg1,
-					(void *) sysboard[coreid].arg2
+					(int *)(long) sysboard[coreid].arg0,
+					(void *(*)(void *))(long) sysboard[coreid].arg1,
+					(void *)(long) sysboard[coreid].arg2
 				);
 				break;
 
 			case NR_wakeup:
 				ret = kernel_wakeup(
-					(int) sysboard[coreid].arg0
+					(int)(long) sysboard[coreid].arg0
 				);
 				break;
 
@@ -111,8 +111,8 @@ PUBLIC void do_kcall2(void)
 
 			case NR_sigctl:
 				ret = kernel_sigctl(
-					(int) sysboard[coreid].arg0,
-					(struct ksigaction *) sysboard[coreid].arg1
+					(int)(long) sysboard[coreid].arg0,
+					(struct ksigaction *)(long) sysboard[coreid].arg1
 				);
 				break;
 
@@ -163,13 +163,13 @@ PUBLIC int do_kcall(
 #if (THREAD_MAX > 1)
 
 		case NR_thread_exit:
-			kernel_thread_exit((void *) arg0);
+			kernel_thread_exit((void *)(long) arg0);
 			break;
 
 		case NR_thread_join:
 			ret = kernel_thread_join(
 				(int) arg0,
-				(void **) arg1
+				(void **)(long) arg1
 			);
 			break;
 
