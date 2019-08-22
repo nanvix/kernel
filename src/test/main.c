@@ -63,14 +63,14 @@ size_t strlen(const char *str)
 }
 
 /*============================================================================*
- * puts()                                                                     *
+ * nanvix_puts()                                                              *
  *============================================================================*/
 
 /**
- * The puts() function writes to the standard output device the string
+ * The nanvix_puts() function writes to the standard output device the string
  * pointed to by @p str.
  */
-void puts(const char *str)
+void nanvix_puts(const char *str)
 {
 	size_t len;
 

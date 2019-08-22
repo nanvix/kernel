@@ -142,7 +142,7 @@ void test_signal(void)
 	for (int i = 0; signal_tests_api[i].test_fn != NULL; i++)
 	{
 		signal_tests_api[i].test_fn();
-		puts(signal_tests_api[i].name);
+		nanvix_puts(signal_tests_api[i].name);
 	}
 
 	/* API Tests */
@@ -150,6 +150,6 @@ void test_signal(void)
 	for (int i = 0; signal_tests_fault[i].test_fn != NULL; i++)
 	{
 		signal_tests_fault[i].test_fn();
-		puts(signal_tests_fault[i].name);
+		nanvix_puts(signal_tests_fault[i].name);
 	}
 }

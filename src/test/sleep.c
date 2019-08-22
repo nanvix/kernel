@@ -227,7 +227,7 @@ void test_thread_sync(void)
 	for (int i = 0; thread_sync_tests_api[i].test_fn != NULL; i++)
 	{
 		thread_sync_tests_api[i].test_fn();
-		puts(thread_sync_tests_api[i].name);
+		nanvix_puts(thread_sync_tests_api[i].name);
 	}
 
 	/* Fault Injection Tests */
@@ -235,7 +235,7 @@ void test_thread_sync(void)
 	for (int i = 0; thread_sync_tests_fault[i].test_fn != NULL; i++)
 	{
 		thread_sync_tests_fault[i].test_fn();
-		puts(thread_sync_tests_fault[i].name);
+		nanvix_puts(thread_sync_tests_fault[i].name);
 	}
 
 	/* Stress Tests */
@@ -243,7 +243,7 @@ void test_thread_sync(void)
 	for (int i = 0; thread_sync_tests_stress[i].test_fn != NULL; i++)
 	{
 		thread_sync_tests_stress[i].test_fn();
-		puts(thread_sync_tests_stress[i].name);
+		nanvix_puts(thread_sync_tests_stress[i].name);
 	}
 
 #endif

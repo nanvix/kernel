@@ -52,7 +52,7 @@
 	 *
 	 * @param str Target string.
 	 */
-	extern void puts(const char *str);
+	extern void nanvix_puts(const char *str);
 
 	/**
 	 * @name User-Level Testing Units
@@ -75,7 +75,7 @@
 	{                                                 \
 		if (!(x))                                     \
 		{                                             \
-			puts("assertation failed at "             \
+			nanvix_puts("assertation failed at "      \
 				__FILE__":" ___TOSTRING(__LINE__)"\n" \
 			);                                        \
 			while (1) /* noop */;                     \
