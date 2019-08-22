@@ -25,11 +25,16 @@
 OUTPUT_FORMAT("elf32-i386")
 ENTRY(start)
 
+/*
+ * Page Size (4 KB)
+ */
+PAGE_SIZE = 0x1000;
+
 SECTIONS
 {
 	. = 0x100000;
 
-	KSTART = .;
+	KSTART_CODE_START = .;
 
 	/* Bootstrap section. */
 	.bootstrap :
@@ -39,10 +44,10 @@ SECTIONS
 		__BOOTSTRAP_END = .;
 	}
 
-	. =ALIGN(4096);
+	. =ALIGN(PAGE_SIZE);
 
 	/* Kernel code section. */
-	.text ALIGN(4096) : AT(ADDR(.text))
+	.text ALIGN(PAGE_SIZE) : AT(ADDR(.text))
 	{
 		__TEXT_START = .;
 		*(.text)
@@ -50,8 +55,14 @@ SECTIONS
 		__TEXT_END = .;
 	}
 
+	KERNEL_CODE_END = .;
+
+	. = ALIGN(PAGE_SIZE);
+
+	KERNEL_DATA_START = .;
+
 	/* Initialized kernel data section. */
-	.data ALIGN(4096) : AT(ADDR(.data))
+	.data ALIGN(PAGE_SIZE) : AT(ADDR(.data))
 	{
 		__DATA_START = .;
 		*(.data)
@@ -66,9 +77,9 @@ SECTIONS
 		__BSS_END = .;
 	}
 
-	. =ALIGN(4096);
+	KERNEL_DATA_END = .;
 
-	KDATA_END = .;
+	. =ALIGN(PAGE_SIZE);
 
 	/* Discarded. */
 	/DISCARD/ :
