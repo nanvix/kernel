@@ -46,8 +46,8 @@ export AR = $(TOOLCHAIN_DIR)/bin/k1-ar
 export TIMEOUT ?= 120
 
 # Compiler Options
-export CFLAGS += -D __HAS_HW_DIVISION
 export CFLAGS += -mos=bare -march=k1b -mboard=developer
+export CFLAGS += -D __HAS_HW_DIVISION
 export CFLAGS += -I $(INCDIR)/posix
 
 # Linker Options

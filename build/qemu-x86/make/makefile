@@ -47,13 +47,14 @@ export AR = $(TOOLCHAIN_DIR)/i486-elf-ar
 export TIMEOUT ?= 5
 
 # Compiler Options
-export CFLAGS  += -D __HAS_HW_DIVISION
-export CFLAGS  += -Wstack-usage=4096
-export CFLAGS  += -nostdlib -nostdinc
+export CFLAGS += -nostdlib -nostdinc -ffreestanding
+export CFLAGS += -ansi -pedantic-errors
+export CFLAGS += -Wstack-usage=4096
+export CFLAGS += -D __HAS_HW_DIVISION
 export CFLAGS += -I $(INCDIR)/posix
 
 # Linker Options
-export LDFLAGS += -nostdlib -nostdinc
+export LDFLAGS += -nostdlib -nostdinc -ffreestanding
 
 # Suffix for Objects
 export OBJ_SUFFIX=qemu-x86

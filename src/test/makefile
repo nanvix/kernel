@@ -54,13 +54,19 @@ endif
 
 #===============================================================================
 
+ifeq ($(TARGET),unix64)
+LINKER_SCRIPT=
+else
+LINKER_SCRIPT = -L $(LINKERDIR)/ -T link.ld
+endif
+
 # Builds All Object Files
 all: $(OBJ)
 ifeq ($(VERBOSE), no)
 	@echo [CC] $(BINDIR)/$(EXEC)
-	@$(CC) $(LDFLAGS) -L $(LINKERDIR)/ -T link.ld -o $(BINDIR)/$(EXEC) $(OBJ) $(LIBS)
+	@$(CC) $(LDFLAGS) $(LINKER_SCRIPT) -o $(BINDIR)/$(EXEC) $(OBJ) $(LIBS)
 else
-	$(CC) $(LDFLAGS) -L $(LINKERDIR)/ -T link.ld -o $(BINDIR)/$(EXEC) $(OBJ) $(LIBS)
+	$(CC) $(LDFLAGS) $(LINKER_SCRIPT) -o $(BINDIR)/$(EXEC) $(OBJ) $(LIBS)
 endif
 
 # Cleans All Object Files
