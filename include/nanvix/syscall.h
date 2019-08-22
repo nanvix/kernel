@@ -29,6 +29,7 @@
 	#include <nanvix/thread.h>
 	#include <nanvix/sync.h>
 	#include <nanvix/mailbox.h>
+	#include <nanvix/portal.h>
 	#include <nanvix/signal.h>
 
 /**
@@ -42,7 +43,7 @@
 	 *
 	 * @note This should be set to the highest system call number.
 	 */
-	#define NR_SYSCALLS 28
+	#define NR_SYSCALLS 36
 
 	/**
 	 * @name System Call Numbers
@@ -75,6 +76,14 @@
 	#define NR_mailbox_awrite 25 /**< kernel_mailbox_awrite() */
 	#define NR_mailbox_aread  26 /**< kernel_mailbox_aread()  */
 	#define NR_mailbox_wait   27 /**< kernel_mailbox_wait()   */
+	#define NR_portal_create  28 /**< kernel_portal_create()  */
+	#define NR_portal_allow   29 /**< kernel_portal_allow()   */
+	#define NR_portal_open    30 /**< kernel_portal_open()    */
+	#define NR_portal_unlink  31 /**< kernel_portal_unlink()  */
+	#define NR_portal_close   32 /**< kernel_portal_close()   */
+	#define NR_portal_awrite  33 /**< kernel_portal_awrite()  */
+	#define NR_portal_aread   34 /**< kernel_portal_aread()   */
+	#define NR_portal_wait    35 /**< kernel_portal_wait()    */
 	/**@}*/
 
 /*============================================================================*
@@ -168,6 +177,19 @@
 	EXTERN int kernel_mailbox_aread(int, void *, size_t);
 	EXTERN int kernel_mailbox_awrite(int, const void *, size_t);
 	EXTERN int kernel_mailbox_wait(int);
+
+/*============================================================================*
+ * Portal Kernel Calls                                                       *
+ *============================================================================*/
+
+	EXTERN int kernel_portal_create(int);
+	EXTERN int kernel_portal_allow(int, int);
+	EXTERN int kernel_portal_open(int, int);
+	EXTERN int kernel_portal_unlink(int);
+	EXTERN int kernel_portal_close(int);
+	EXTERN int kernel_portal_aread(int, void *, size_t);
+	EXTERN int kernel_portal_awrite(int, const void *, size_t);
+	EXTERN int kernel_portal_wait(int);
 
 /**@}*/
 

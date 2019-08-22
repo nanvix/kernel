@@ -100,6 +100,7 @@ void ___start(int argc, const char *argv[])
 	test_signal();
 	test_sync();
 	test_mailbox();
+	test_portal();
 
 #if __NANVIX_HAS_NETWORK
 	test_network();

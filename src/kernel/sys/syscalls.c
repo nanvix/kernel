@@ -194,6 +194,55 @@ PUBLIC void do_kcall2(void)
 				);
 				break;
 
+
+			case NR_portal_create:
+				ret = kernel_portal_create(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+
+			case NR_portal_allow:
+				ret = kernel_portal_allow(
+					(int) sysboard[coreid].arg0,
+					(int) sysboard[coreid].arg1
+				);
+				break;
+
+			case NR_portal_open:
+				ret = kernel_portal_open(
+					(int) sysboard[coreid].arg0,
+					(int) sysboard[coreid].arg1
+				);
+				break;
+
+			case NR_portal_unlink:
+				ret = kernel_portal_unlink(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+
+			case NR_portal_close:
+				ret = kernel_portal_close(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+
+			case NR_portal_aread:
+				ret = kernel_portal_aread(
+					(int) sysboard[coreid].arg0,
+					(void *)(long) sysboard[coreid].arg1,
+					(size_t) sysboard[coreid].arg2
+				);
+				break;
+
+			case NR_portal_awrite:
+				ret = kernel_portal_awrite(
+					(int) sysboard[coreid].arg0,
+					(const void *)(long) sysboard[coreid].arg1,
+					(size_t) sysboard[coreid].arg2
+				);
+				break;
+
 			default:
 				break;
 		}
@@ -285,6 +334,12 @@ PUBLIC int do_kcall(
 
 		case NR_mailbox_wait:
 			ret = kernel_mailbox_wait(
+				(int) arg0
+			);
+			break;
+
+		case NR_portal_wait:
+			ret = kernel_portal_wait(
 				(int) arg0
 			);
 			break;

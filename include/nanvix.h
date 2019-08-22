@@ -166,6 +166,24 @@
 	/**@}*/
 
 /*============================================================================*
+ * Portal Service                                                             *
+ *============================================================================*/
+
+	/**
+	 * @name Portal Kernel Calls
+	 */
+	/**@{*/
+	extern int kportal_create(int);
+	extern int kportal_allow(int, int);
+	extern int kportal_open(int, int);
+	extern int kportal_unlink(int);
+	extern int kportal_close(int);
+	extern int kportal_awrite(int, const void *, size_t);
+	extern int kportal_aread(int, void *, size_t);
+	extern int kportal_wait(int);
+	/**@}*/
+
+/*============================================================================*
  * Signal                                                                     *
  *============================================================================*/
 
