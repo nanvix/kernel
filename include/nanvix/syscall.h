@@ -55,7 +55,7 @@
 	#define NR_sleep         7 /**< sys_sleep()         */
 	#define NR_wakeup        8 /**< sys_wakeup()        */
 	#define NR_shutdown      9 /**< sys_shutdown()      */
-	#define NR_sigclt       10 /**< sys_perf_read()     */
+	#define NR_sigctl       10 /**< sys_perf_read()     */
 	#define NR_alarm        11 /**< sys_perf_read()     */
 	#define NR_sigsend      12 /**< sys_perf_read()     */
 	#define NR_sigwait      13 /**< sys_perf_read()     */
@@ -96,7 +96,7 @@
 	 *
 	 * @returns Zero if successfully changes the behavior, non zero otherwise.
 	 */
-	EXTERN int sys_sigclt(int signum, struct sigaction * sigact);
+	EXTERN int sys_sigctl(int signum, struct ksigaction *sigact);
 
 	/**
 	 * @brief Schedules an alarm signal.

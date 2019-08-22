@@ -27,21 +27,21 @@
 #include <errno.h>
 
 /*============================================================================*
- * ksigclt()                                                                  *
+ * ksigctl()                                                                  *
  *============================================================================*/
 
 /**
- * The ksigclt() function modifies the treatment of a signal.
+ * The ksigctl() function modifies the treatment of a signal.
  */
-int ksigclt(
+int ksigctl(
 	int signum,
-	struct sigaction * sigact
+	struct ksigaction *sigact
 )
 {
 	int ret;
 
 	ret = kcall2(
-		NR_sigclt,
+		NR_sigctl,
 		(word_t) signum,
 		(word_t) sigact
 	);

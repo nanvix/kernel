@@ -28,26 +28,26 @@
 #include <errno.h>
 
 /*============================================================================*
- * sys_sigclt()                                                               *
+ * sys_sigctl()                                                               *
  *============================================================================*/
 
 /**
- * The sigclt() function modifies the treatment of a signal.
+ * The sigctl() function modifies the treatment of a signal.
  */
-PUBLIC int sys_sigclt(int signum, struct sigaction * sigact)
+PUBLIC int sys_sigctl(int signum, struct ksigaction *sigact)
 {
 	if (sigact == NULL)
 		return (-EAGAIN);
 
 	/* Bad struct location. */
-	if (!mm_check_area(VADDR(sigact), sizeof(struct sigaction), UMEM_AREA))
+	if (!mm_check_area(VADDR(sigact), sizeof(struct ksigaction), UMEM_AREA))
 		return (-EFAULT);
 
 	/* Bad handler address. */
 	if (!mm_check_area(VADDR(sigact->handler), 0, UMEM_AREA))
 		return (-EFAULT);
 
-	return (sigclt(signum, sigact));
+	return (signal_control(signum, sigact));
 }
 
 /*============================================================================*
@@ -62,7 +62,7 @@ PUBLIC int sys_sigclt(int signum, struct sigaction * sigact)
  */
 PUBLIC int sys_alarm(int seconds)
 {
-	return alarm(seconds);
+	return signal_alarm(seconds);
 }
 
 /*============================================================================*
@@ -76,7 +76,7 @@ PUBLIC int sys_alarm(int seconds)
  */
 PUBLIC int sys_sigsend(int signum, int tid)
 {
-	return sigsend(signum, tid);
+	return signal_send(signum, tid);
 }
 
 /*============================================================================*
@@ -90,7 +90,7 @@ PUBLIC int sys_sigsend(int signum, int tid)
  */
 PUBLIC int sys_sigwait(int signum)
 {
-	return sigwait(signum);
+	return signal_wait(signum);
 }
 
 /*============================================================================*
@@ -103,5 +103,5 @@ PUBLIC int sys_sigwait(int signum)
  */
 PUBLIC void sys_sigreturn(void)
 {
-	sigreturn();
+	signal_return();
 }

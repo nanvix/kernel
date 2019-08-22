@@ -144,7 +144,7 @@
 	 *
 	 * @returns Zero if successfully changes the behavior, non zero otherwise.
 	 */
-	extern int ksigclt(int signum, struct sigaction * sigact);
+	extern int ksigctl(int signum, struct ksigaction *sigact);
 
 	/**
 	 * @brief Schedules an alarm signal.

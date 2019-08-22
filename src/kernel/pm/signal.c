@@ -38,7 +38,7 @@ spinlock_t sigtab_lock = SPINLOCK_UNLOCKED;
  */
 EXTENSION PRIVATE struct signal_info
 {
-	sa_handler handler; /**< Signal handler */
+	ksa_handler handler; /**< Signal handler */
 } ALIGN(CACHE_LINE_SIZE) signals[EXCEPTIONS_NUM] = {
 	[0 ... (EXCEPTIONS_NUM - 1)] = { .handler = NULL },
 };
@@ -77,7 +77,7 @@ PRIVATE void signal_handler(
 			UNREACHABLE();
 		}
 
-		sa_handler handler = signals[signum].handler;
+		ksa_handler handler = signals[signum].handler;
 
 	spinlock_unlock(&sigtab_lock);
 
@@ -91,13 +91,13 @@ PRIVATE void signal_handler(
 }
 
 /*============================================================================*
- * sigclt()                                                                   *
+ * signal_control()                                                           *
  *============================================================================*/
 
 /**
- * The sigclt() function modifies the treatment of a signal.
+ * The signal_control() function modifies the treatment of a signal.
  */
-PUBLIC int sigclt(int signum, struct sigaction * sigact)
+PUBLIC int signal_control(int signum, struct ksigaction *sigact)
 {
 	int ret;
 	int without_handler;

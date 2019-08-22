@@ -109,10 +109,10 @@ PUBLIC void do_kcall2(void)
 
 #endif
 
-			case NR_sigclt:
-				ret = sys_sigclt(
+			case NR_sigctl:
+				ret = sys_sigctl(
 					(int) sysboard[coreid].arg0,
-					(struct sigaction *) sysboard[coreid].arg1
+					(struct ksigaction *) sysboard[coreid].arg1
 				);
 				break;
 
