@@ -113,7 +113,7 @@ PRIVATE inline struct pde *pgtab_map(struct pde *pgdir, vaddr_t vaddr)
 	 * because the actual way of cleaning
 	 * PTEs is platform dependent.
 	 */
-	for (int i = 0; i < PAGE_SIZE/PDE_SIZE; i++)
+	for (unsigned long i = 0; i < PAGE_SIZE/PDE_SIZE; i++)
 		pte_clear(&pgtab[i]);
 
 	return (pde);
@@ -166,7 +166,7 @@ PRIVATE int pgtab_unmap(struct pde *pgdir, vaddr_t vaddr)
 	pgtab = (struct pte *) kpool_frame_to_addr(frame);
 
 	/* Check if the page table is yet in use. */
-	for (int i = 0; i < PAGE_SIZE/PDE_SIZE; i++)
+	for (unsigned long i = 0; i < PAGE_SIZE/PDE_SIZE; i++)
 	{
 		/* Yes. */
 		if (pte_is_present(&pgtab[i]))
