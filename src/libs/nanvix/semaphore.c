@@ -48,7 +48,7 @@ int nanvix_semaphore_init(struct nanvix_semaphore *sem, int val)
 		return (-EINVAL);
 
 	sem->val = val;
-	sem->lock = SPINLOCK_UNLOCKED;
+	spinlock_init(&sem->lock);
 
 	#if (__NANVIX_SEMAPHORE_SLEEP)
 

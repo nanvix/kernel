@@ -47,7 +47,7 @@ int nanvix_mutex_init(struct nanvix_mutex *m)
 		return (-EINVAL);
 
 	m->locked = false;
-	m->lock = SPINLOCK_UNLOCKED;
+	spinlock_init(&m->lock);
 
 	#if (__NANVIX_MUTEX_SLEEP)
 
