@@ -24,6 +24,8 @@
 
 #include <dev/net/net.h>
 
+#if __NANVIX_HAS_NETWORK
+
 /**
  * @name Destructive Tests for Networking
  */
@@ -261,3 +263,5 @@ PUBLIC void network_test_driver(void)
 		kprintf("[test][%s] %s [passed]", network_tests[i].type, network_tests[i].name);
 	}
 }
+
+#endif
