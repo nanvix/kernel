@@ -39,13 +39,13 @@ PRIVATE struct semaphore syssem = SEMAPHORE_INITIALIZER(0);
  */
 PRIVATE struct sysboard
 {
-	int arg0;                /**< First argument of system call.   */
-	int arg1;                /**< Second argument of system call.  */
-	int arg2;                /**< Third argument of system call.   */
-	int arg3;                /**< Fourth argument of system call.  */
-	int arg4;                /**< Fifth argument of system call.   */
-	int syscall_nr;          /**< System call number.              */
-	int ret;                 /**< Return value of system call.     */
+	word_t arg0;             /**< First argument of system call.   */
+	word_t arg1;             /**< Second argument of system call.  */
+	word_t arg2;             /**< Third argument of system call.   */
+	word_t arg3;             /**< Fourth argument of system call.  */
+	word_t arg4;             /**< Fifth argument of system call.   */
+	word_t syscall_nr;       /**< System call number.              */
+	word_t ret;              /**< Return value of system call.     */
 	struct semaphore syssem; /**< Semaphore.                       */
 	int pending;
 } ALIGN(CACHE_LINE_SIZE) sysboard[CORES_NUM];
@@ -70,7 +70,7 @@ PUBLIC void do_kcall2(void)
 		}
 
 		/* Invalid system call number. */
-		if ((sysboard[coreid].syscall_nr < 0) || (sysboard[coreid].syscall_nr >= NR_SYSCALLS))
+		if (sysboard[coreid].syscall_nr >= NR_SYSCALLS)
 		{
 			ret = -EINVAL;
 			goto out;
@@ -271,12 +271,12 @@ PUBLIC void do_kcall2(void)
  * failure, a negative error code is returned instead.
  */
 PUBLIC int do_kcall(
-	unsigned arg0,
-	unsigned arg1,
-	unsigned arg2,
-	unsigned arg3,
-	unsigned arg4,
-	unsigned syscall_nr)
+	word_t arg0,
+	word_t arg1,
+	word_t arg2,
+	word_t arg3,
+	word_t arg4,
+	word_t syscall_nr)
 {
 	int ret = -EINVAL;
 
