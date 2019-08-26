@@ -60,7 +60,7 @@ PRIVATE void *init(void *arg)
 #endif
 
 	/* Power down. */
-	kernel_shutdown();
+	kshutdown();
 	UNREACHABLE();
 
 	return (NULL);

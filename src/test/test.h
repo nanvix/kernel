@@ -25,6 +25,8 @@
 #ifndef _TEST_H_
 #define _TEST_H_
 
+	#include <nanvix.h>
+
 	/**
 	 * @brief Number of iterations in stress tests.
 	 */
@@ -78,7 +80,7 @@
 			nanvix_puts("assertation failed at "      \
 				__FILE__":" ___TOSTRING(__LINE__)"\n" \
 			);                                        \
-			while (1) /* noop */;                     \
+			kshutdown() /* noop */;                   \
 		}                                             \
 	}
 

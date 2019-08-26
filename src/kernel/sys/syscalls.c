@@ -79,6 +79,10 @@ PUBLIC void do_kcall2(void)
 		/* Parse system call number. */
 		switch (sysboard[coreid].syscall_nr)
 		{
+			case NR_shutdown:
+				ret = kernel_shutdown();
+				break;
+
 			case NR__exit:
 				kernel_exit((int)(long) sysboard[coreid].arg0);
 				break;
@@ -178,10 +182,6 @@ PUBLIC int do_kcall(
 			break;
 
 #endif
-
-		case NR_shutdown:
-			ret = kernel_shutdown();
-			break;
 
 		case NR_alarm:
 			ret = kernel_alarm((int) arg0);

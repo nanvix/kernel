@@ -33,6 +33,8 @@
  */
 void kernel_exit(int status)
 {
-	core_shutdown(status);
+	UNUSED(status);
+
+	cluster_poweroff();
 }
 

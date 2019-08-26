@@ -31,7 +31,7 @@
  */
 int kernel_shutdown(void)
 {
-	core_poweroff();
+	target_poweroff();
 
 	return (-EAGAIN);
 }
