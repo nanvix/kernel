@@ -34,7 +34,7 @@
  * @brief Test's parameters
  */
 #define NR_NODES       2
-#define NR_NODES_MAX   NR_NOC_NODES
+#define NR_NODES_MAX   PROCESSOR_NOC_NODES_NUM
 #define MASTER_NODENUM 17
 #define MASTER_NODEID  129
 #define SLAVE_NODENUM  0
@@ -177,11 +177,11 @@ static void test_fault_portal_invalid_create(void)
 {
 	int nodenum;
 
-	nodenum = (processor_node_get_num(processor_node_get_id()) + 1) % PROCESSOR_CLUSTERS_NUM;
+	nodenum = (processor_node_get_num(processor_node_get_id()) + 4) % PROCESSOR_NOC_NODES_NUM;
 
 	test_assert(kportal_create(-1) < 0);
 	test_assert(kportal_create(nodenum) < 0);
-	test_assert(kportal_create(PROCESSOR_CLUSTERS_NUM) < 0);
+	test_assert(kportal_create(PROCESSOR_NOC_NODES_NUM) < 0);
 }
 
 /*============================================================================*
@@ -233,8 +233,8 @@ static void test_fault_portal_invalid_open(void)
 	test_assert(kportal_open(local, -1) < 0);
 	test_assert(kportal_open(-1, local + 1) < 0);
 	test_assert(kportal_open(-1, -1) < 0);
-	test_assert(kportal_open(local, PROCESSOR_CLUSTERS_NUM) < 0);
-	test_assert(kportal_open(PROCESSOR_CLUSTERS_NUM, local + 1) < 0);
+	test_assert(kportal_open(local, PROCESSOR_NOC_NODES_NUM) < 0);
+	test_assert(kportal_open(PROCESSOR_NOC_NODES_NUM, local + 1) < 0);
 	test_assert(kportal_open(local, local) < 0);
 }
 

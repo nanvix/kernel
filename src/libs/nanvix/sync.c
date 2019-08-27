@@ -55,6 +55,9 @@ PRIVATE int ksync_sort(int nodenum, int *_nodes, const int *nodes, int nnodes)
 	/* Build list of RX NoC nodes. */
 	for (int i = 0; i < nnodes; i++)
 	{
+		if (!WITHIN(nodes[i], 0, PROCESSOR_NOC_NODES_NUM))
+			return (-EINVAL);
+
 		if (nodenum == nodes[i])
 		{
 			j = i;
@@ -114,7 +117,7 @@ int ksync_create(const int *nodes, int nnodes, int type)
 		_nodes[0] = nodes[0];
 		for (int i = 1; i < nnodes; i++)
 		{
-			if (nodenum == nodes[i])
+			if (nodenum == nodes[i] || !WITHIN(nodes[i], 0, PROCESSOR_NOC_NODES_NUM))
 				return (-EINVAL);
 
 			_nodes[i] = nodes[i];
@@ -165,7 +168,7 @@ int ksync_open(const int *nodes, int nnodes, int type)
 		_nodes[0] = nodes[0];
 		for (int i = 1; i < nnodes; i++)
 		{
-			if (nodenum == nodes[i])
+			if (nodenum == nodes[i] || !WITHIN(nodes[i], 0, PROCESSOR_NOC_NODES_NUM))
 				return (-EINVAL);
 
 			_nodes[i] = nodes[i];
