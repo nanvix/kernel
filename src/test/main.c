@@ -104,7 +104,9 @@ void ___start(int argc, const char *argv[])
 #if __TARGET_HAS_MAILBOX
 	test_mailbox();
 #endif
+#if __TARGET_HAS_PORTAL
 	test_portal();
+#endif
 
 #if __NANVIX_HAS_NETWORK
 	test_network();

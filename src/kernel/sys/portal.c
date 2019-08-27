@@ -26,8 +26,10 @@
 #include <nanvix/syscall.h>
 #include <errno.h>
 
+#if __TARGET_HAS_PORTAL
+
 /*============================================================================*
- * kernel_portal_create()                                                        *
+ * kernel_portal_create()                                                     *
  *============================================================================*/
 
 /**
@@ -39,7 +41,7 @@ PUBLIC int kernel_portal_create(int local)
 }
 
 /*============================================================================*
- * kernel_portal_allow()                                                         *
+ * kernel_portal_allow()                                                      *
  *============================================================================*/
 
 /**
@@ -51,7 +53,7 @@ PUBLIC int kernel_portal_allow(int portalid, int remote)
 }
 
 /*============================================================================*
- * kernel_portal_open()                                                          *
+ * kernel_portal_open()                                                       *
  *============================================================================*/
 
 /**
@@ -63,7 +65,7 @@ PUBLIC int kernel_portal_open(int local, int remote)
 }
 
 /*============================================================================*
- * kernel_portal_unlink()                                                        *
+ * kernel_portal_unlink()                                                     *
  *============================================================================*/
 
 /**
@@ -75,7 +77,7 @@ PUBLIC int kernel_portal_unlink(int portalid)
 }
 
 /*============================================================================*
- * kernel_portal_close()                                                         *
+ * kernel_portal_close()                                                      *
  *============================================================================*/
 
 /**
@@ -87,7 +89,7 @@ PUBLIC int kernel_portal_close(int portalid)
 }
 
 /*============================================================================*
- * kernel_portal_awrite()                                                        *
+ * kernel_portal_awrite()                                                     *
  *============================================================================*/
 
 /**
@@ -99,7 +101,7 @@ PUBLIC int kernel_portal_awrite(int portalid, const void * buffer, size_t size)
 }
 
 /*============================================================================*
- * kernel_portal_aread()                                                          *
+ * kernel_portal_aread()                                                      *
  *============================================================================*/
 
 /**
@@ -111,7 +113,7 @@ PUBLIC int kernel_portal_aread(int portalid, void * buffer, size_t size)
 }
 
 /*============================================================================*
- * kernel_portal_wait()                                                          *
+ * kernel_portal_wait()                                                       *
  *============================================================================*/
 
 /**
@@ -121,3 +123,5 @@ PUBLIC int kernel_portal_wait(int portalid)
 {
 	return (_portal_wait(portalid));
 }
+
+#endif /* __TARGET_HAS_PORTAL */

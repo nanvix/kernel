@@ -27,6 +27,8 @@
 #include <nanvix/klib.h>
 #include <errno.h>
 
+#if __TARGET_HAS_PORTAL
+
 /*============================================================================*
  * Control Structures.                                                        *
  *============================================================================*/
@@ -219,7 +221,7 @@ PUBLIC int _portal_unlink(int portalid)
 
 	if ((ret = portal_unlink(portaltab[portalid].fd)) < 0)
 		return (ret);
-	
+
 	portaltab[portalid].fd = -1;
 	resource_free(&portalpool, portalid);
 
@@ -305,7 +307,7 @@ PUBLIC int _portal_aread(int portalid, void * buffer, size_t size)
 }
 
 /*============================================================================*
- * _portal_awrite()                                                            *
+ * _portal_awrite()                                                           *
  *============================================================================*/
 
 /**
@@ -345,7 +347,7 @@ PUBLIC int _portal_awrite(int portalid, const void * buffer, size_t size)
 }
 
 /*============================================================================*
- * _portal_wait()                                                            *
+ * _portal_wait()                                                             *
  *============================================================================*/
 
 /**
@@ -367,3 +369,5 @@ PUBLIC int _portal_wait(int portalid)
 	/* Waits. */
 	return portal_wait(portaltab[portalid].fd);
 }
+
+#endif /* __TARGET_HAS_PORTAL */

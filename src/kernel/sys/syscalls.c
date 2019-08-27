@@ -198,6 +198,7 @@ PUBLIC void do_kcall2(void)
 				break;
 #endif /* __TARGET_HAS_MAILBOX */
 
+#if __TARGET_HAS_PORTAL
 			case NR_portal_create:
 				ret = kernel_portal_create(
 					(int) sysboard[coreid].arg0
@@ -245,6 +246,7 @@ PUBLIC void do_kcall2(void)
 					(size_t) sysboard[coreid].arg2
 				);
 				break;
+#endif /* __TARGET_HAS_PORTAL */
 
 			default:
 				break;
@@ -345,11 +347,13 @@ PUBLIC int do_kcall(
 			break;
 #endif
 
+#if __TARGET_HAS_PORTAL
 		case NR_portal_wait:
 			ret = kernel_portal_wait(
 				(int) arg0
 			);
 			break;
+#endif
 
 		/* Forward system call. */
 		default:

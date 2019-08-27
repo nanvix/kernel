@@ -25,6 +25,8 @@
 #include <nanvix.h>
 #include <errno.h>
 
+#if __TARGET_HAS_PORTAL
+
 /*============================================================================*
  * kportal_create()                                                           *
  *============================================================================*/
@@ -182,3 +184,5 @@ int kportal_wait(int portalid)
 
 	return (ret);
 }
+
+#endif /* __TARGET_HAS_PORTAL */
