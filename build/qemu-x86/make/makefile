@@ -54,6 +54,7 @@ export CFLAGS += -D __HAS_HW_DIVISION
 export CFLAGS += -I $(INCDIR)/posix
 
 # Linker Options
+export LDFLAGS  = -Wl,--allow-multiple-definition
 export LDFLAGS += -nostdlib -nostdinc -ffreestanding
 
 # Suffix for Objects
