@@ -26,6 +26,8 @@
 #include <nanvix.h>
 #include <errno.h>
 
+#if __TARGET_HAS_SYNC
+
 /*============================================================================*
  * ksync_sort()                                                               *
  *============================================================================*/
@@ -265,3 +267,5 @@ int ksync_unlink(int syncid)
 
 	return (ret);
 }
+
+#endif /* __TARGET_SYNC */

@@ -98,7 +98,9 @@ void ___start(int argc, const char *argv[])
 	test_thread_sync();
 	test_perf();
 	test_signal();
+#if __TARGET_HAS_SYNC
 	test_sync();
+#endif
 	test_mailbox();
 	test_portal();
 

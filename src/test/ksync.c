@@ -28,6 +28,8 @@
 
 #include "test.h"
 
+#if __TARGET_HAS_SYNC
+
 /**
  * @brief Test's parameters
  */
@@ -705,3 +707,5 @@ void test_sync(void)
 		puts(sync_tests_fault[i].name);
 	}
 }
+
+#endif /* __TARGET_SYNC */

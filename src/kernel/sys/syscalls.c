@@ -120,6 +120,7 @@ PUBLIC void do_kcall2(void)
 				);
 				break;
 
+#if __TARGET_HAS_SYNC
 			case NR_sync_create:
 				ret = kernel_sync_create(
 					(const int *)(long) sysboard[coreid].arg0,
@@ -153,6 +154,7 @@ PUBLIC void do_kcall2(void)
 					(int) sysboard[coreid].arg0
 				);
 				break;
+#endif /* __TARGET_HAS_SYNC */
 
 			case NR_mailbox_create:
 				ret = kernel_mailbox_create(
@@ -326,11 +328,13 @@ PUBLIC int do_kcall(
 			ret = 0;
 			break;
 
+#if __TARGET_HAS_SYNC
 		case NR_sync_wait:
 			ret = kernel_sync_wait(
 				(int) arg0
 			);
 			break;
+#endif
 
 		case NR_mailbox_wait:
 			ret = kernel_mailbox_wait(

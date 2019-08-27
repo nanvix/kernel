@@ -26,6 +26,8 @@
 #include <nanvix/syscall.h>
 #include <errno.h>
 
+#if __TARGET_HAS_SYNC
+
 /*============================================================================*
  * kernel_sync_create()                                                       *
  *============================================================================*/
@@ -89,3 +91,5 @@ PUBLIC int kernel_sync_unlink(int syncid)
 {
 	return (_sync_unlink(syncid));
 }
+
+#endif /* __TARGET_SYNC */

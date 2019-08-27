@@ -27,6 +27,8 @@
 #include <nanvix/klib.h>
 #include <errno.h>
 
+#if __TARGET_HAS_SYNC
+
 /*============================================================================*
  * Control Structures.                                                        *
  *============================================================================*/
@@ -346,3 +348,5 @@ PUBLIC int _sync_signal(int syncid)
 	/* Sends signal. */
 	return sync_signal(synctab.opens[syncid].fd);
 }
+
+#endif /* __TARGET_SYNC */
