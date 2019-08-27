@@ -26,8 +26,10 @@
 #include <nanvix/mailbox.h>
 #include <errno.h>
 
+#if __TARGET_HAS_MAILBOX
+
 /*============================================================================*
- * kernel_mailbox_create()                                                          *
+ * kernel_mailbox_create()                                                    *
  *============================================================================*/
 
 /**
@@ -39,7 +41,7 @@ PUBLIC int kernel_mailbox_create(int local)
 }
 
 /*============================================================================*
- * kernel_mailbox_open()                                                          *
+ * kernel_mailbox_open()                                                      *
  *============================================================================*/
 
 /**
@@ -89,3 +91,5 @@ PUBLIC int kernel_mailbox_wait(int mbxid)
 {
 	return (_mailbox_wait(mbxid));
 }
+
+#endif /* __TARGET_HAS_MAILBOX */

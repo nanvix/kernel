@@ -156,6 +156,7 @@ PUBLIC void do_kcall2(void)
 				break;
 #endif /* __TARGET_HAS_SYNC */
 
+#if __TARGET_HAS_MAILBOX
 			case NR_mailbox_create:
 				ret = kernel_mailbox_create(
 					(int) sysboard[coreid].arg0
@@ -195,7 +196,7 @@ PUBLIC void do_kcall2(void)
 					(size_t) sysboard[coreid].arg2
 				);
 				break;
-
+#endif /* __TARGET_HAS_MAILBOX */
 
 			case NR_portal_create:
 				ret = kernel_portal_create(
@@ -336,11 +337,13 @@ PUBLIC int do_kcall(
 			break;
 #endif
 
+#if __TARGET_HAS_MAILBOX
 		case NR_mailbox_wait:
 			ret = kernel_mailbox_wait(
 				(int) arg0
 			);
 			break;
+#endif
 
 		case NR_portal_wait:
 			ret = kernel_portal_wait(

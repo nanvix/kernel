@@ -101,7 +101,9 @@ void ___start(int argc, const char *argv[])
 #if __TARGET_HAS_SYNC
 	test_sync();
 #endif
+#if __TARGET_HAS_MAILBOX
 	test_mailbox();
+#endif
 	test_portal();
 
 #if __NANVIX_HAS_NETWORK

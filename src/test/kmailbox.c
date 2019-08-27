@@ -28,6 +28,8 @@
 
 #include "test.h"
 
+#if __TARGET_HAS_MAILBOX
+
 /**
  * @brief Test's parameters
  */
@@ -427,3 +429,5 @@ void test_mailbox(void)
 		puts(mailbox_tests_fault[i].name);
 	}
 }
+
+#endif /* __TARGET_HAS_MAILBOX */

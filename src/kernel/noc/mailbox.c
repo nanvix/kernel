@@ -27,6 +27,8 @@
 #include <nanvix/klib.h>
 #include <errno.h>
 
+#if __TARGET_HAS_MAILBOX
+
 /*============================================================================*
  * Control Structures.                                                        *
  *============================================================================*/
@@ -320,3 +322,5 @@ int _mailbox_wait(int mbxid)
 	/* Waits. */
 	return mailbox_wait(mbxtab[mbxid].fd);
 }
+
+#endif /* __TARGET_HAS_MAILBOX */

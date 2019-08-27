@@ -25,6 +25,8 @@
 #include <nanvix.h>
 #include <errno.h>
 
+#if __TARGET_HAS_MAILBOX
+
 /*============================================================================*
  * kmailbox_create()                                                          *
  *============================================================================*/
@@ -161,3 +163,5 @@ int kmailbox_wait(int mbxid)
 
 	return (ret);
 }
+
+#endif /* __TARGET_HAS_MAILBOX */
