@@ -39,13 +39,13 @@ PRIVATE struct semaphore syssem = SEMAPHORE_INITIALIZER(0);
  */
 PRIVATE struct sysboard
 {
-	int arg0;                /**< First argument of system call.   */
-	int arg1;                /**< Second argument of system call.  */
-	int arg2;                /**< Third argument of system call.   */
-	int arg3;                /**< Fourth argument of system call.  */
-	int arg4;                /**< Fifth argument of system call.   */
-	int syscall_nr;          /**< System call number.              */
-	int ret;                 /**< Return value of system call.     */
+	word_t arg0;             /**< First argument of system call.   */
+	word_t arg1;             /**< Second argument of system call.  */
+	word_t arg2;             /**< Third argument of system call.   */
+	word_t arg3;             /**< Fourth argument of system call.  */
+	word_t arg4;             /**< Fifth argument of system call.   */
+	word_t syscall_nr;       /**< System call number.              */
+	word_t ret;              /**< Return value of system call.     */
 	struct semaphore syssem; /**< Semaphore.                       */
 	int pending;
 } ALIGN(CACHE_LINE_SIZE) sysboard[CORES_NUM];
@@ -53,7 +53,7 @@ PRIVATE struct sysboard
 /**
  * @brief Handles a system call IPI.
  */
-PUBLIC void do_syscall2(void)
+PUBLIC void do_kcall2(void)
 {
 	int coreid = 0 ;
 	int ret = -ENOSYS;
@@ -70,7 +70,7 @@ PUBLIC void do_syscall2(void)
 		}
 
 		/* Invalid system call number. */
-		if ((sysboard[coreid].syscall_nr < 0) || (sysboard[coreid].syscall_nr >= NR_SYSCALLS))
+		if (sysboard[coreid].syscall_nr >= NR_SYSCALLS)
 		{
 			ret = -EINVAL;
 			goto out;
@@ -79,42 +79,174 @@ PUBLIC void do_syscall2(void)
 		/* Parse system call number. */
 		switch (sysboard[coreid].syscall_nr)
 		{
+			case NR_shutdown:
+				ret = kernel_shutdown();
+				break;
+
 			case NR__exit:
-				sys_exit((int) sysboard[coreid].arg0);
+				kernel_exit((int)(long) sysboard[coreid].arg0);
 				break;
 
 			case NR_write:
-				ret = sys_write(
-					(int) sysboard[coreid].arg0,
-					(const char *) sysboard[coreid].arg1,
-					(size_t) sysboard[coreid].arg2
+				ret = kernel_write(
+					(int)(long) sysboard[coreid].arg0,
+					(const char *)(long) sysboard[coreid].arg1,
+					(size_t)(long) sysboard[coreid].arg2
 				);
 				break;
 
 #if (THREAD_MAX > 1)
 
 			case NR_thread_create:
-				ret = sys_thread_create(
-					(int *) sysboard[coreid].arg0,
-					(void *(*)(void *)) sysboard[coreid].arg1,
-					(void *) sysboard[coreid].arg2
+				ret = kernel_thread_create(
+					(int *)(long) sysboard[coreid].arg0,
+					(void *(*)(void *))(long) sysboard[coreid].arg1,
+					(void *)(long) sysboard[coreid].arg2
 				);
 				break;
 
 			case NR_wakeup:
-				ret = sys_wakeup(
-					(int) sysboard[coreid].arg0
+				ret = kernel_wakeup(
+					(int)(long) sysboard[coreid].arg0
 				);
 				break;
 
 #endif
 
-			case NR_sigclt:
-				ret = sys_sigclt(
-					(int) sysboard[coreid].arg0,
-					(struct sigaction *) sysboard[coreid].arg1
+			case NR_sigctl:
+				ret = kernel_sigctl(
+					(int)(long) sysboard[coreid].arg0,
+					(struct ksigaction *)(long) sysboard[coreid].arg1
 				);
 				break;
+
+#if __TARGET_HAS_SYNC
+			case NR_sync_create:
+				ret = kernel_sync_create(
+					(const int *)(long) sysboard[coreid].arg0,
+					(int) sysboard[coreid].arg1,
+					(int) sysboard[coreid].arg2
+				);
+				break;
+
+			case NR_sync_open:
+				ret = kernel_sync_open(
+					(const int *)(long) sysboard[coreid].arg0,
+					(int) sysboard[coreid].arg1,
+					(int) sysboard[coreid].arg2
+				);
+				break;
+
+			case NR_sync_unlink:
+				ret = kernel_sync_unlink(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+
+			case NR_sync_close:
+				ret = kernel_sync_close(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+
+			case NR_sync_signal:
+				ret = kernel_sync_signal(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+#endif /* __TARGET_HAS_SYNC */
+
+#if __TARGET_HAS_MAILBOX
+			case NR_mailbox_create:
+				ret = kernel_mailbox_create(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+
+			case NR_mailbox_open:
+				ret = kernel_mailbox_open(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+
+			case NR_mailbox_unlink:
+				ret = kernel_mailbox_unlink(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+
+			case NR_mailbox_close:
+				ret = kernel_mailbox_close(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+
+			case NR_mailbox_aread:
+				ret = kernel_mailbox_aread(
+					(int) sysboard[coreid].arg0,
+					(void *)(long) sysboard[coreid].arg1,
+					(size_t) sysboard[coreid].arg2
+				);
+				break;
+
+			case NR_mailbox_awrite:
+				ret = kernel_mailbox_awrite(
+					(int) sysboard[coreid].arg0,
+					(const void *)(long) sysboard[coreid].arg1,
+					(size_t) sysboard[coreid].arg2
+				);
+				break;
+#endif /* __TARGET_HAS_MAILBOX */
+
+#if __TARGET_HAS_PORTAL
+			case NR_portal_create:
+				ret = kernel_portal_create(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+
+			case NR_portal_allow:
+				ret = kernel_portal_allow(
+					(int) sysboard[coreid].arg0,
+					(int) sysboard[coreid].arg1
+				);
+				break;
+
+			case NR_portal_open:
+				ret = kernel_portal_open(
+					(int) sysboard[coreid].arg0,
+					(int) sysboard[coreid].arg1
+				);
+				break;
+
+			case NR_portal_unlink:
+				ret = kernel_portal_unlink(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+
+			case NR_portal_close:
+				ret = kernel_portal_close(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+
+			case NR_portal_aread:
+				ret = kernel_portal_aread(
+					(int) sysboard[coreid].arg0,
+					(void *)(long) sysboard[coreid].arg1,
+					(size_t) sysboard[coreid].arg2
+				);
+				break;
+
+			case NR_portal_awrite:
+				ret = kernel_portal_awrite(
+					(int) sysboard[coreid].arg0,
+					(const void *)(long) sysboard[coreid].arg1,
+					(size_t) sysboard[coreid].arg2
+				);
+				break;
+#endif /* __TARGET_HAS_PORTAL */
 
 			default:
 				break;
@@ -143,13 +275,13 @@ PUBLIC void do_syscall2(void)
  * @returns Upon successful completion, zero is returned. Upon
  * failure, a negative error code is returned instead.
  */
-PUBLIC int do_syscall(
-	unsigned arg0,
-	unsigned arg1,
-	unsigned arg2,
-	unsigned arg3,
-	unsigned arg4,
-	unsigned syscall_nr)
+PUBLIC int do_kcall(
+	word_t arg0,
+	word_t arg1,
+	word_t arg2,
+	word_t arg3,
+	word_t arg4,
+	word_t syscall_nr)
 {
 	int ret = -EINVAL;
 
@@ -157,51 +289,71 @@ PUBLIC int do_syscall(
 	switch (syscall_nr)
 	{
 		case NR_thread_get_id:
-			ret = sys_thread_get_id();
+			ret = kernel_thread_get_id();
 			break;
 
 #if (THREAD_MAX > 1)
 
 		case NR_thread_exit:
-			sys_thread_exit((void *) arg0);
+			kernel_thread_exit((void *)(long) arg0);
 			break;
 
 		case NR_thread_join:
-			ret = sys_thread_join(
+			ret = kernel_thread_join(
 				(int) arg0,
-				(void **) arg1
+				(void **)(long) arg1
 			);
 			break;
 
 		case NR_sleep:
-			ret = sys_sleep();
+			ret = kernel_sleep();
 			break;
 
 #endif
 
-		case NR_shutdown:
-			ret = sys_shutdown();
-			break;
-
 		case NR_alarm:
-			ret = sys_alarm((int) arg0);
+			ret = kernel_alarm((int) arg0);
 			break;
 
 		case NR_sigsend:
-			ret = sys_sigsend(
+			ret = kernel_sigsend(
 				(int) arg0,
 				(int) arg1
 			);
 			break;
 
 		case NR_sigwait:
-			ret = sys_sigwait((int) arg0);
+			ret = kernel_sigwait((int) arg0);
 			break;
 
 		case NR_sigreturn:
-			sys_sigreturn();
+			kernel_sigreturn();
 			ret = 0;
 			break;
+
+#if __TARGET_HAS_SYNC
+		case NR_sync_wait:
+			ret = kernel_sync_wait(
+				(int) arg0
+			);
+			break;
+#endif
+
+#if __TARGET_HAS_MAILBOX
+		case NR_mailbox_wait:
+			ret = kernel_mailbox_wait(
+				(int) arg0
+			);
+			break;
+#endif
+
+#if __TARGET_HAS_PORTAL
+		case NR_portal_wait:
+			ret = kernel_portal_wait(
+				(int) arg0
+			);
+			break;
+#endif
 
 		/* Forward system call. */
 		default:

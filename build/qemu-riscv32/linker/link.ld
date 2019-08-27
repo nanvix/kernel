@@ -72,10 +72,10 @@ SECTIONS
 		__TEXT_END = .;
 	} > ram
 
+	KERNEL_CODE_END = .;
 
 	. = ALIGN(PAGE_SIZE);
 
-	KERNEL_CODE_END = .;
 	KERNEL_DATA_START = .;
 
 	/* Initialized data. */
@@ -95,9 +95,9 @@ SECTIONS
 		__BSS_END = .;
 	} > ram
 
-	. = ALIGN(PAGE_SIZE);
-
 	KERNEL_DATA_END = .;
+
+	. = ALIGN(PAGE_SIZE);
 
 	/* Discarded. */
 	/DISCARD/ :

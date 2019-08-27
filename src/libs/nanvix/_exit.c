@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include <nanvix/syscall.h>
+#include <nanvix.h>
 
 /**
  * @brief Terminates the calling process.
@@ -31,7 +31,7 @@
  *
  * @note This function does not return.
  */
-void _exit(int status)
+void _kexit(int status)
 {
-	syscall1(NR__exit, status);
+	kcall1(NR__exit, status);
 }

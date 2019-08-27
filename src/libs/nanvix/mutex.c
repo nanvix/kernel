@@ -47,7 +47,7 @@ int nanvix_mutex_init(struct nanvix_mutex *m)
 		return (-EINVAL);
 
 	m->locked = false;
-	m->lock = SPINLOCK_UNLOCKED;
+	spinlock_init(&m->lock);
 
 	#if (__NANVIX_MUTEX_SLEEP)
 
@@ -138,7 +138,7 @@ int nanvix_mutex_lock(struct nanvix_mutex *m)
 
 		#if (__NANVIX_MUTEX_SLEEP)
 
-			sleep();
+			ksleep();
 
 		#endif /* __NANVIX_MUTEX_SLEEP */
 	} while (LIKELY(true));
@@ -177,7 +177,7 @@ again:
 			/* Dequeue thread. */
 			if (m->tids[0] != -1)
 			{
-				if (UNLIKELY(wakeup(m->tids[0]) != 0))
+				if (UNLIKELY(kwakeup(m->tids[0]) != 0))
 				{
 					spinlock_unlock(&m->lock);
 					goto again;

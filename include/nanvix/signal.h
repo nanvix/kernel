@@ -53,14 +53,14 @@
 	/**
 	 * @brief Signal Action handler.
 	 */
-	typedef void (*sa_handler)(void *);
+	typedef void (*ksa_handler)(void *);
 
 	/**
 	 * @brief Signal Action struct (Partial POSIX specification).
 	 */
-	struct sigaction
+	struct ksigaction
 	{
-		sa_handler handler; /**< Pointer to a signal-catching function. */
+		ksa_handler handler; /**< Pointer to a signal-catching function. */
 	};
 
 	/**
@@ -71,7 +71,7 @@
 	 *
 	 * @returns Zero if successfully changes the behavior, non zero otherwise.
 	 */
-	EXTERN int sigclt(int signum, struct sigaction * sigact);
+	EXTERN int signal_control(int signum, struct ksigaction *sigact);
 
 	/**
 	 * @brief Schedules an alarm signal.
@@ -85,7 +85,7 @@
 	 *
 	 * @todo: TODO implement this function.
 	 */
-	static int alarm(int seconds)
+	static int signal_alarm(int seconds)
 	{
 		UNUSED(seconds);
 
@@ -97,7 +97,7 @@
 	/**
 	 * @brief Sends a signal.
 	 *
-	 * The sigsend() function sends a signal @signum to another thread @tid.
+	 * The signal_send() function sends a signal @signum to another thread @tid.
 	 *
 	 * @param signum Signal ID.
 	 * @param tid    Thread ID.
@@ -107,7 +107,7 @@
 	 *
 	 * @todo: TODO implement this function.
 	 */
-	static int sigsend(int signum, int tid)
+	static int signal_send(int signum, int tid)
 	{
 		UNUSED(signum);
 		UNUSED(tid);
@@ -120,7 +120,7 @@
 	/**
 	 * @brief Waits for the receipt of a signal.
 	 *
-	 * The sigwait() function waits for the receipt of a @signum signal.
+	 * The signal_wait() function waits for the receipt of a @signum signal.
 	 *
 	 * @param signum Signal ID.
 	 *
@@ -128,7 +128,7 @@
 	 *
 	 * @todo: TODO implement this function.
 	 */
-	static inline int sigwait(int signum)
+	static inline int signal_wait(int signum)
 	{
 		UNUSED(signum);
 
@@ -140,12 +140,12 @@
 	/**
 	 * @brief Returns from a signal handler.
 	 *
-	 * The sigreturn() function returns from a signal handler, restoring the
+	 * The signal_return() function returns from a signal handler, restoring the
 	 * execution stream.
 	 *
 	 * @todo: TODO implement this function.
 	 */
-	static inline void sigreturn(void)
+	static inline void signal_return(void)
 	{
 
 		// TODO: implement this function.

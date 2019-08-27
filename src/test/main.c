@@ -63,14 +63,14 @@ size_t strlen(const char *str)
 }
 
 /*============================================================================*
- * puts()                                                                     *
+ * nanvix_puts()                                                              *
  *============================================================================*/
 
 /**
- * The puts() function writes to the standard output device the string
+ * The nanvix_puts() function writes to the standard output device the string
  * pointed to by @p str.
  */
-void puts(const char *str)
+void nanvix_puts(const char *str)
 {
 	size_t len;
 
@@ -98,12 +98,21 @@ void ___start(int argc, const char *argv[])
 	test_thread_sync();
 	test_perf();
 	test_signal();
+#if __TARGET_HAS_SYNC
+	test_sync();
+#endif
+#if __TARGET_HAS_MAILBOX
+	test_mailbox();
+#endif
+#if __TARGET_HAS_PORTAL
+	test_portal();
+#endif
 
 #if __NANVIX_HAS_NETWORK
 	test_network();
 #endif
 
 	/* Halt. */
-	shutdown();
+	kshutdown();
 	UNREACHABLE();
 }

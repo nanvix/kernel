@@ -27,12 +27,13 @@
 #include <nanvix/dev.h>
 #include <nanvix/klib.h>
 #include <nanvix/mm.h>
+#include <nanvix/syscall.h>
 #include <nanvix/thread.h>
 #include <nanvix.h>
 
 #include <dev/net/net.h>
 
-EXTERN void do_syscall2(void);
+EXTERN void do_kcall2(void);
 EXTERN void ___start(int argc, const char *argv[], char **envp);
 
 #if (CLUSTER_IS_MULTICORE)
@@ -59,7 +60,7 @@ PRIVATE void *init(void *arg)
 #endif
 
 	/* Power down. */
-	shutdown();
+	kshutdown();
 	UNREACHABLE();
 
 	return (NULL);
@@ -93,11 +94,11 @@ PUBLIC void kmain(int argc, const char *argv[])
 #if (CLUSTER_IS_MULTICORE)
 	thread_create(&tid, init, NULL);
 	while (true)
-		do_syscall2();
+		do_kcall2();
 #else
 
 	/* Power down. */
-	shutdown();
+	kernel_shutdown();
 	UNREACHABLE();
 
 #endif

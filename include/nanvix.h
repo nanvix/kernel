@@ -62,8 +62,8 @@
 	 * @name Thread Synchronization Kernel Calls
 	 */
 	/**@{*/
-	extern int sleep(void);
-	extern int wakeup(kthread_t);
+	extern int ksleep(void);
+	extern int kwakeup(kthread_t);
 	/**@}*/
 
 	/**
@@ -72,7 +72,7 @@
 	 * @returns Upon successful completion, this function does not
 	 * return.Upon failure, a negative error code is returned instead.
 	 */
-	extern int shutdown(void);
+	extern int kshutdown(void);
 
 /*============================================================================*
  * Performance Monitoring                                                     *
@@ -133,6 +133,57 @@
 	extern uint64_t nanvix_perf_read(int perf);
 
 /*============================================================================*
+ * Sync Service                                                               *
+ *============================================================================*/
+
+	/**
+	 * @name Sync Kernel Calls
+	 */
+	/**@{*/
+	extern int ksync_create(const int *, int, int);
+	extern int ksync_open(const int *, int, int);
+	extern int ksync_wait(int);
+	extern int ksync_signal(int);
+	extern int ksync_close(int);
+	extern int ksync_unlink(int);
+	/**@}*/
+
+/*============================================================================*
+ * Mailbox Service                                                            *
+ *============================================================================*/
+
+	/**
+	 * @name Mailbox Kernel Calls
+	 */
+	/**@{*/
+	extern int kmailbox_create(int);
+	extern int kmailbox_open(int);
+	extern int kmailbox_unlink(int);
+	extern int kmailbox_close(int);
+	extern int kmailbox_awrite(int, const void *, size_t);
+	extern int kmailbox_aread(int, void *, size_t);
+	extern int kmailbox_wait(int);
+	/**@}*/
+
+/*============================================================================*
+ * Portal Service                                                             *
+ *============================================================================*/
+
+	/**
+	 * @name Portal Kernel Calls
+	 */
+	/**@{*/
+	extern int kportal_create(int);
+	extern int kportal_allow(int, int);
+	extern int kportal_open(int, int);
+	extern int kportal_unlink(int);
+	extern int kportal_close(int);
+	extern int kportal_awrite(int, const void *, size_t);
+	extern int kportal_aread(int, void *, size_t);
+	extern int kportal_wait(int);
+	/**@}*/
+
+/*============================================================================*
  * Signal                                                                     *
  *============================================================================*/
 
@@ -144,7 +195,7 @@
 	 *
 	 * @returns Zero if successfully changes the behavior, non zero otherwise.
 	 */
-	extern int ksigclt(int signum, struct sigaction * sigact);
+	extern int ksigctl(int signum, struct ksigaction *sigact);
 
 	/**
 	 * @brief Schedules an alarm signal.

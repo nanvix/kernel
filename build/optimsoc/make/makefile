@@ -48,14 +48,15 @@ export AR = $(TOOLCHAIN_DIR)/or1k-elf-ar
 export TIMEOUT ?= 5
 
 # Compiler Options
-export CFLAGS  += -Wstack-usage=4096
-export CFLAGS  += -nostdlib -nostdinc
-export CFLAGS  += -Wno-type-limits
+export CFLAGS += -nostdlib -nostdinc -ffreestanding
+export CFLAGS += -ansi -pedantic-errors
+export CFLAGS += -Wstack-usage=4096
+export CFLAGS += -Wno-type-limits
 export CFLAGS += -Wno-missing-profile
-export CFLAGS  += -I $(INCDIR)/posix
+export CFLAGS += -I $(INCDIR)/posix
 
 # Linker Options
-export LDFLAGS  += -nostdlib -nostdinc
+export LDFLAGS  += -nostdlib -nostdinc -ffreestanding
 
 # Suffix for Objects
 export OBJ_SUFFIX=optimsoc

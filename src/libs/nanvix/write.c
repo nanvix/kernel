@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include <nanvix/syscall.h>
+#include <nanvix.h>
 #include <sys/types.h>
 #include <errno.h>
 
@@ -41,7 +41,7 @@ ssize_t nanvix_write(int fd, const char *buf, size_t n)
 {
 	ssize_t ret;
 
-	ret = syscall3(
+	ret = kcall3(
 		NR_write,
 		(word_t) fd,
 		(word_t) buf,

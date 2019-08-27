@@ -54,11 +54,11 @@ void dummy_handler(void * arg)
  */
 void test_api_signal_action(void)
 {
-	struct sigaction sigact;
+	struct ksigaction sigact;
 
 	sigact.handler = dummy_handler;
 
-	KASSERT(ksigclt(SIGPGFAULT, &sigact) == 0);
+	KASSERT(ksigctl(SIGPGFAULT, &sigact) == 0);
 
 #if (SIGNAL_DESTRUCTIVE_TEST)
 
@@ -73,7 +73,7 @@ void test_api_signal_action(void)
 
 	sigact.handler = NULL;
 
-	KASSERT(ksigclt(SIGPGFAULT, &sigact) == 0);
+	KASSERT(ksigctl(SIGPGFAULT, &sigact) == 0);
 }
 
 /**
@@ -96,25 +96,25 @@ static struct test signal_tests_api[] = {
  */
 void test_fault_signal_action(void)
 {
-	struct sigaction sigact;
+	struct ksigaction sigact;
 
 	sigact.handler = NULL;
 
 	/* Invalid Signal ID */
-	KASSERT(ksigclt(-1, &sigact) < 0);
-	KASSERT(ksigclt(EXCEPTIONS_NUM, &sigact) < 0);
-	KASSERT(ksigclt(EXCEPTIONS_NUM+1, &sigact) < 0);
+	KASSERT(ksigctl(-1, &sigact) < 0);
+	KASSERT(ksigctl(EXCEPTIONS_NUM, &sigact) < 0);
+	KASSERT(ksigctl(EXCEPTIONS_NUM+1, &sigact) < 0);
 
 	/* Invalid sigaction */
-	KASSERT(ksigclt(SIGPGFAULT, NULL) < 0);
+	KASSERT(ksigctl(SIGPGFAULT, NULL) < 0);
 
 	sigact.handler = dummy_handler;
-	KASSERT(ksigclt(SIGPGFAULT, &sigact) == 0);
-	KASSERT(ksigclt(SIGPGFAULT, NULL) < 0);
+	KASSERT(ksigctl(SIGPGFAULT, &sigact) == 0);
+	KASSERT(ksigctl(SIGPGFAULT, NULL) < 0);
 
 	sigact.handler = NULL;
-	KASSERT(ksigclt(SIGPGFAULT, &sigact) == 0);
-	KASSERT(ksigclt(SIGPGFAULT, NULL) < 0);
+	KASSERT(ksigctl(SIGPGFAULT, &sigact) == 0);
+	KASSERT(ksigctl(SIGPGFAULT, NULL) < 0);
 }
 
 /**
@@ -142,7 +142,7 @@ void test_signal(void)
 	for (int i = 0; signal_tests_api[i].test_fn != NULL; i++)
 	{
 		signal_tests_api[i].test_fn();
-		puts(signal_tests_api[i].name);
+		nanvix_puts(signal_tests_api[i].name);
 	}
 
 	/* API Tests */
@@ -150,6 +150,6 @@ void test_signal(void)
 	for (int i = 0; signal_tests_fault[i].test_fn != NULL; i++)
 	{
 		signal_tests_fault[i].test_fn();
-		puts(signal_tests_fault[i].name);
+		nanvix_puts(signal_tests_fault[i].name);
 	}
 }

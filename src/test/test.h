@@ -25,6 +25,8 @@
 #ifndef _TEST_H_
 #define _TEST_H_
 
+	#include <nanvix.h>
+
 	/**
 	 * @brief Number of iterations in stress tests.
 	 */
@@ -52,7 +54,7 @@
 	 *
 	 * @param str Target string.
 	 */
-	extern void puts(const char *str);
+	extern void nanvix_puts(const char *str);
 
 	/**
 	 * @name User-Level Testing Units
@@ -63,6 +65,9 @@
 	extern void test_perf(void);
 	extern void test_signal(void);
 	extern void test_network(void);
+	extern void test_sync(void);
+	extern void test_mailbox(void);
+	extern void test_portal(void);
 
 	/**@}*/
 
@@ -75,10 +80,10 @@
 	{                                                 \
 		if (!(x))                                     \
 		{                                             \
-			puts("assertation failed at "             \
+			nanvix_puts("assertation failed at "      \
 				__FILE__":" ___TOSTRING(__LINE__)"\n" \
 			);                                        \
-			while (1) /* noop */;                     \
+			kshutdown() /* noop */;                   \
 		}                                             \
 	}
 

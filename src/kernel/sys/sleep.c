@@ -46,14 +46,14 @@ EXTENSION PRIVATE struct
 };
 
 /*============================================================================*
- * sys_sleep()                                                                *
+ * kernel_sleep()                                                             *
  *============================================================================*/
 
 /**
- * The sys_sleep() function causes the calling thread to block
+ * The kernel_sleep() function causes the calling thread to block
  * until it receives a wakeup signal from another thread.
  */
-PUBLIC int sys_sleep(void)
+PUBLIC int kernel_sleep(void)
 {
 	int coreid;
 	struct thread *t;
@@ -73,12 +73,12 @@ PUBLIC int sys_sleep(void)
 }
 
 /**
- * The sys_wakeup() function wakes up the thread whose identifier
+ * The kernel_wakeup() function wakes up the thread whose identifier
  * matchers @p tid and it is asleep.
  *
  * @retval -EINVAL Invalid thread ID.
  */
-PUBLIC int sys_wakeup(int tid)
+PUBLIC int kernel_wakeup(int tid)
 {
 	int ret = 0;
 

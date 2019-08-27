@@ -27,13 +27,14 @@
 #===============================================================================
 
 # C Source Files
-SRC = $(wildcard dev/*.c)       \
+SRC = $(wildcard dev/*.c)     \
       $(wildcard dev/net/net.c) \
-      $(wildcard init/*.c)      \
-      $(wildcard mm/*.c)        \
-      $(wildcard pm/*.c)        \
-      $(wildcard sys/*.c)       \
-      $(wildcard test/mm.c)
+      $(wildcard init/*.c)    \
+      $(wildcard mm/*.c)      \
+      $(wildcard noc/*.c)     \
+      $(wildcard pm/*.c)      \
+      $(wildcard sys/*.c)     \
+      $(wildcard test/*.c)
 
 # Object Files
 OBJ = $(SRC:.c=.$(OBJ_SUFFIX).o)

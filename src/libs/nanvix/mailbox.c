@@ -2,7 +2,6 @@
  * MIT License
  *
  * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
- *              2018 Davidson Francis     <davidsondfgl@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,142 +25,143 @@
 #include <nanvix.h>
 #include <errno.h>
 
-/*============================================================================*
- * ksigctl()                                                                  *
- *============================================================================*/
-
-/**
- * The ksigctl() function modifies the treatment of a signal.
- */
-int ksigctl(
-	int signum,
-	struct ksigaction *sigact
-)
-{
-	int ret;
-
-	ret = kcall2(
-		NR_sigctl,
-		(word_t) signum,
-		(word_t) sigact
-	);
-
-	/* System call failed. */
-	if (ret < 0)
-	{
-		errno = -ret;
-		return (-1);
-	}
-
-	dcache_invalidate();
-
-	return (ret);
-}
+#if __TARGET_HAS_MAILBOX
 
 /*============================================================================*
- * kalarm()                                                                   *
+ * kmailbox_create()                                                          *
  *============================================================================*/
 
-/**
- * The kalarm() function schedule an alarm signal to trigger when
- * the @seconds seconds pass.
+/*
+ * @see sys_mailbox_create()
  */
-int kalarm(int seconds)
+int kmailbox_create(int local)
 {
 	int ret;
 
 	ret = kcall1(
-		NR_alarm,
-		(word_t) seconds
+		NR_mailbox_create,
+		(dword_t) local
 	);
-
-	/* System call failed. */
-	if (ret < 0)
-	{
-		errno = -ret;
-		return (-1);
-	}
 
 	return (ret);
 }
 
 /*============================================================================*
- * ksigsend()                                                                 *
+ * kmailbox_open()                                                            *
  *============================================================================*/
 
-/**
- * The ksigsend() function sends a signal @signum to another thread @tid.
+/*
+ * @see sys_mailbox_open()
  */
-int ksigsend(int signum, int tid)
-{
-	int ret;
-
-	ret = kcall2(
-		NR_sigsend,
-		(word_t) signum,
-        (word_t) tid
-	);
-
-	/* System call failed. */
-	if (ret < 0)
-	{
-		errno = -ret;
-		return (-1);
-	}
-
-	return (ret);
-}
-
-/*============================================================================*
- * ksigwait()                                                                 *
- *============================================================================*/
-
-/**
- * The ksigwait() function waits for the receipt of a @signum signal.
- */
-int ksigwait(
-	int signum
-)
+int kmailbox_open(int remote)
 {
 	int ret;
 
 	ret = kcall1(
-		NR_sigwait,
-		(word_t) signum
+		NR_mailbox_open,
+		(dword_t) remote
 	);
-
-	/* System call failed. */
-	if (ret < 0)
-	{
-		errno = -ret;
-		return (-1);
-	}
 
 	return (ret);
 }
 
 /*============================================================================*
- * ksigreturn()                                                               *
+ * kmailbox_unlink()                                                          *
  *============================================================================*/
 
-/**
- * The ksigreturn() function returns from a signal handler, restoring the
- * execution stream.
+/*
+ * @see sys_mailbox_unlink()
  */
-int ksigreturn(void)
+int kmailbox_unlink(int mbxid)
 {
 	int ret;
 
-	ret = kcall0(
-		NR_sigreturn
+	ret = kcall1(
+		NR_mailbox_unlink,
+		(dword_t) mbxid
 	);
-
-	/* System call failed. */
-	if (ret < 0)
-	{
-		errno = -ret;
-		return (-1);
-	}
 
 	return (ret);
 }
+
+/*============================================================================*
+ * kmailbox_close()                                                           *
+ *============================================================================*/
+
+/*
+ * @see sys_mailbox_close()
+ */
+int kmailbox_close(int mbxid)
+{
+	int ret;
+
+	ret = kcall1(
+		NR_mailbox_close,
+		(dword_t) mbxid
+	);
+
+	return (ret);
+}
+
+/*============================================================================*
+ * kmailbox_awrite()                                                          *
+ *============================================================================*/
+
+/*
+ * @see sys_mailbox_awrite()
+ */
+int kmailbox_awrite(int mbxid, const void *buffer, size_t size)
+{
+	int ret;
+
+	ret = kcall3(
+		NR_mailbox_awrite,
+		(dword_t) mbxid,
+		(dword_t) buffer,
+		(dword_t) size
+	);
+
+	return (ret);
+}
+
+/*============================================================================*
+ * kmailbox_aread()                                                           *
+ *============================================================================*/
+
+/*
+ * @see sys_mailbox_aread()
+ */
+int kmailbox_aread(int mbxid, void *buffer, size_t size)
+{
+	int ret;
+
+	ret = kcall3(
+		NR_mailbox_aread,
+		(dword_t) mbxid,
+		(dword_t) buffer,
+		(dword_t) size
+	);
+
+	return (ret);
+}
+
+/*============================================================================*
+ * kmailbox_wait()                                                            *
+ *============================================================================*/
+
+/*
+ * @see sys_mailbox_wait()
+ */
+int kmailbox_wait(int mbxid)
+{
+	int ret;
+
+	ret = kcall1(
+		NR_mailbox_wait,
+		(dword_t) mbxid
+	);
+
+	return (ret);
+}
+
+#endif /* __TARGET_HAS_MAILBOX */

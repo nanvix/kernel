@@ -226,7 +226,7 @@
 	 */
 	static inline void cond_init(struct condvar *cond)
 	{
-		cond->lock = SPINLOCK_UNLOCKED;
+		spinlock_init(&cond->lock);
 		cond->queue = NULL;
 	}
 
@@ -297,7 +297,7 @@
 		KASSERT(sem != NULL);
 
 		sem->count = x;
-		sem->lock = SPINLOCK_UNLOCKED;
+		spinlock_init(&sem->lock);
 		cond_init(&sem->cond);
 	}
 

@@ -97,7 +97,7 @@ void test_perf(void)
 	for (int i = 0; perf_tests_api[i].test_fn != NULL; i++)
 	{
 		perf_tests_api[i].test_fn();
-		puts(perf_tests_api[i].name);
+		nanvix_puts(perf_tests_api[i].name);
 	}
 
 #endif

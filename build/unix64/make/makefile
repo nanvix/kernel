@@ -27,8 +27,10 @@
 # Target Configuration
 #===============================================================================
 
-export TARGET    ?= unix64
-export PROCESSOR := linux64
+export CFLAGS  = -D __unix64__          # Target
+export CFLAGS += -D __linux64__         # Processor
+export CFLAGS += -D __linux64_cluster__ # Cluster
+export CFLAGS += -D __linux64_core__    # Core
 
 #===============================================================================
 # Toolchain Configuration
@@ -46,28 +48,25 @@ export AR = ar
 export TIMEOUT ?= 5
 
 # Compiler Options
-export CFLAGS  = -D __unix64__ -D__linux64__
-#export CFLAGS += -nostdlib -nostdinc
-export CFLAGS += -ansi # -pedantic-errors
+export CFLAGS += -D_GNU_SOURCE
+export CFLAGS += -ansi -pedantic -Wno-error=pedantic
 export CFLAGS += -Wstack-usage=4096
 export CFLAGS += -D __HAS_HW_DIVISION
-#export CFLAGS += -D __INTERFACE_CHECK_CORE_AL
-#export CFLAGS += -D __INTERFACE_CHECK_CLUSTER_AL
-#export CFLAGS += -D __INTERFACE_CHECK_PROCESSOR_AL
-#export CFLAGS += -D __INTERFACE_CHECK_TARGET_AL
+export CFLAGS += -D_POSIX_C_SOURCE=200112L
 
 # Linker Options
 export LDFLAGS =
+
+# Suffix for Objects
+export OBJ_SUFFIX=$(TARGET)
 
 #===============================================================================
 # Libraries and Binaries
 #===============================================================================
 
 # Libraries
-export LIBKERNEL = libhal-$(TARGET).a
-export LIBS = $(LIBDIR)/$(LIBKERNEL)
 export LIBLWIP =
-export LIB_THEIRS = -lpthread
+export THEIR_LIBS= -lpthread -lm -lrt
 
 #===============================================================================
 

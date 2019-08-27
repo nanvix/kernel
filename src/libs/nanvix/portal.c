@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2011-2019 The Maintainers of Nanvix
+ * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,151 +25,164 @@
 #include <nanvix.h>
 #include <errno.h>
 
+#if __TARGET_HAS_PORTAL
+
 /*============================================================================*
- * kthread_self()                                                             *
+ * kportal_create()                                                           *
  *============================================================================*/
 
 /*
- * @see sys_kthread_get_id()
+ * @see sys_portal_create()
  */
-kthread_t kthread_self(void)
-{
-	return (kcall0(NR_thread_get_id));
-}
-
-/*============================================================================*
- * kthread_create()                                                           *
- *============================================================================*/
-
-/*
- * @see sys_kthread_create()
- */
-int kthread_create(
-	kthread_t *tid,
-	void *(*start)(void*),
-	void *arg
-)
-{
-	int ret;
-
-	ret = kcall3(
-		NR_thread_create,
-		(word_t) tid,
-		(word_t) start,
-		(word_t) arg
-	);
-
-	/* System call failed. */
-	if (ret < 0)
-	{
-		errno = -ret;
-		return (-1);
-	}
-
-	return (ret);
-}
-
-/*============================================================================*
- * kthread_exit()                                                             *
- *============================================================================*/
-
-/*
- * @see sys_kthread_exit().
- */
-int kthread_exit(void *retval)
+int kportal_create(int local)
 {
 	int ret;
 
 	ret = kcall1(
-		NR_thread_exit,
-		(word_t) retval
+		NR_portal_create,
+		(dword_t) local
 	);
-
-	/* System call failed. */
-	if (ret < 0)
-	{
-		errno = -ret;
-		return (-1);
-	}
 
 	return (ret);
 }
 
 /*============================================================================*
- * kthread_join()                                                             *
+ * kportal_allow()                                                            *
  *============================================================================*/
 
 /*
- * @see sys_kthread_join()
+ * @see sys_portal_allow()
  */
-int kthread_join(
-	kthread_t tid,
-	void **retval
-)
+int kportal_allow(int portalid, int remote)
 {
 	int ret;
 
 	ret = kcall2(
-		NR_thread_join,
-		(word_t) tid,
-		(word_t) retval
+		NR_portal_allow,
+		(dword_t) portalid,
+		(dword_t) remote
 	);
-
-	/* System call failed. */
-	if (ret < 0)
-	{
-		errno = -ret;
-		return (-1);
-	}
 
 	return (ret);
 }
 
 /*============================================================================*
- * ksleep()                                                                   *
+ * kportal_open()                                                             *
  *============================================================================*/
 
 /*
- * @see sys_sleep()
+ * @see sys_portal_open()
  */
-int ksleep(void)
+int kportal_open(int local, int remote)
 {
 	int ret;
 
-	ret = kcall0(NR_sleep);
-
-	/* System call failed. */
-	if (ret < 0)
-	{
-		errno = -ret;
-		return (-1);
-	}
+	ret = kcall2(
+		NR_portal_open,
+		(dword_t) local,
+		(dword_t) remote
+	);
 
 	return (ret);
 }
 
 /*============================================================================*
- * kwakeup()                                                                  *
+ * kportal_unlink()                                                           *
  *============================================================================*/
 
 /*
- * @see sys_wakeup()
+ * @see sys_portal_unlink()
  */
-int kwakeup(kthread_t tid)
+int kportal_unlink(int portalid)
 {
 	int ret;
 
 	ret = kcall1(
-		NR_wakeup,
-		(word_t) tid
+		NR_portal_unlink,
+		(dword_t) portalid
 	);
-
-	/* System call failed. */
-	if (ret < 0)
-	{
-		errno = -ret;
-		return (-1);
-	}
 
 	return (ret);
 }
+
+/*============================================================================*
+ * kportal_close()                                                            *
+ *============================================================================*/
+
+/*
+ * @see sys_portal_close()
+ */
+int kportal_close(int portalid)
+{
+	int ret;
+
+	ret = kcall1(
+		NR_portal_close,
+		(dword_t) portalid
+	);
+
+	return (ret);
+}
+
+/*============================================================================*
+ * kportal_aread()                                                            *
+ *============================================================================*/
+
+/*
+ * @see sys_portal_aread()
+ */
+int kportal_aread(int portalid, void * buffer, size_t size)
+{
+	int ret;
+
+	ret = kcall3(
+		NR_portal_aread,
+		(dword_t) portalid,
+		(dword_t) buffer,
+		(dword_t) size
+	);
+
+	return (ret);
+}
+
+/*============================================================================*
+ * kportal_awrite()                                                           *
+ *============================================================================*/
+
+/*
+ * @see sys_portal_awrite()
+ */
+int kportal_awrite(int portalid, const void * buffer, size_t size)
+{
+	int ret;
+
+	ret = kcall3(
+		NR_portal_awrite,
+		(dword_t) portalid,
+		(dword_t) buffer,
+		(dword_t) size
+	);
+
+	return (ret);
+}
+
+/*============================================================================*
+ * kportal_wait()                                                             *
+ *============================================================================*/
+
+/*
+ * @see sys_portal_wait()
+ */
+int kportal_wait(int portalid)
+{
+	int ret;
+
+	ret = kcall1(
+		NR_portal_wait,
+		(dword_t) portalid
+	);
+
+	return (ret);
+}
+
+#endif /* __TARGET_HAS_PORTAL */

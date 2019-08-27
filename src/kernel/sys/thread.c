@@ -28,13 +28,13 @@
 #include <errno.h>
 
 /*============================================================================*
- * sys_thread_get_id()                                                        *
+ * kernel_thread_get_id()                                                     *
  *============================================================================*/
 
 /**
  * @see thread_get_id().
  */
-PUBLIC int sys_thread_get_id(void)
+PUBLIC int kernel_thread_get_id(void)
 {
 	return (thread_get_id(thread_get_curr()));
 }
@@ -42,13 +42,13 @@ PUBLIC int sys_thread_get_id(void)
 #if (THREAD_MAX > 1)
 
 /*============================================================================*
- * sys_thread_create()                                                        *
+ * kernel_thread_create()                                                     *
  *============================================================================*/
 
 /**
  * @see thread_create().
  */
-PUBLIC int sys_thread_create(int *tid, void *(*start)(void*), void *arg)
+PUBLIC int kernel_thread_create(int *tid, void *(*start)(void*), void *arg)
 {
 	/* Invalid start routine. */
 	if (start == NULL)
@@ -70,13 +70,13 @@ PUBLIC int sys_thread_create(int *tid, void *(*start)(void*), void *arg)
 }
 
 /*============================================================================*
- * sys_thread_exit()                                                          *
+ * kernel_thread_exit()                                                       *
  *============================================================================*/
 
 /**
  * @see thread_exit().
  */
-PUBLIC int sys_thread_exit(void *retval)
+PUBLIC int kernel_thread_exit(void *retval)
 {
 	/* Bad exit. */
 #if (defined(KERNEL_THREAD_BAD_EXIT) && (KERNEL_THREAD_BAD_EXIT == 1))
@@ -90,7 +90,7 @@ PUBLIC int sys_thread_exit(void *retval)
 }
 
 /*============================================================================*
- * sys_thread_join()                                                          *
+ * kernel_thread_join()                                                       *
  *============================================================================*/
 
 /**
@@ -99,7 +99,7 @@ PUBLIC int sys_thread_exit(void *retval)
  * @retval -EINVAL Cannot join itself.
  * @retval -EINVAL Cannot join master thread.
  */
-PUBLIC int sys_thread_join(int tid, void **retval)
+PUBLIC int kernel_thread_join(int tid, void **retval)
 {
 	/* Invalid thread ID. */
 	if (tid < 0)

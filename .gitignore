@@ -1,7 +1,3 @@
-# Vim
-*.swp
-*.swo
-
 # Tools
 tools/dev/toolchain/
 
@@ -28,3 +24,8 @@ include/nanvix/const.h
 include/nanvix/hal/
 include/nanvix/klib.h
 include/posix
+
+# IDEs
+*.swp
+*.swo
+*.vscode/
