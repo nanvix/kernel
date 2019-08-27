@@ -40,7 +40,7 @@ int kportal_create(int local)
 
 	ret = kcall1(
 		NR_portal_create,
-		(dword_t) local
+		(word_t) local
 	);
 
 	return (ret);
@@ -59,8 +59,8 @@ int kportal_allow(int portalid, int remote)
 
 	ret = kcall2(
 		NR_portal_allow,
-		(dword_t) portalid,
-		(dword_t) remote
+		(word_t) portalid,
+		(word_t) remote
 	);
 
 	return (ret);
@@ -79,8 +79,8 @@ int kportal_open(int local, int remote)
 
 	ret = kcall2(
 		NR_portal_open,
-		(dword_t) local,
-		(dword_t) remote
+		(word_t) local,
+		(word_t) remote
 	);
 
 	return (ret);
@@ -99,7 +99,7 @@ int kportal_unlink(int portalid)
 
 	ret = kcall1(
 		NR_portal_unlink,
-		(dword_t) portalid
+		(word_t) portalid
 	);
 
 	return (ret);
@@ -118,7 +118,7 @@ int kportal_close(int portalid)
 
 	ret = kcall1(
 		NR_portal_close,
-		(dword_t) portalid
+		(word_t) portalid
 	);
 
 	return (ret);
@@ -137,9 +137,9 @@ int kportal_aread(int portalid, void * buffer, size_t size)
 
 	ret = kcall3(
 		NR_portal_aread,
-		(dword_t) portalid,
-		(dword_t) buffer,
-		(dword_t) size
+		(word_t) portalid,
+		(word_t) buffer,
+		(word_t) size
 	);
 
 	return (ret);
@@ -158,9 +158,9 @@ int kportal_awrite(int portalid, const void * buffer, size_t size)
 
 	ret = kcall3(
 		NR_portal_awrite,
-		(dword_t) portalid,
-		(dword_t) buffer,
-		(dword_t) size
+		(word_t) portalid,
+		(word_t) buffer,
+		(word_t) size
 	);
 
 	return (ret);
@@ -179,7 +179,7 @@ int kportal_wait(int portalid)
 
 	ret = kcall1(
 		NR_portal_wait,
-		(dword_t) portalid
+		(word_t) portalid
 	);
 
 	return (ret);

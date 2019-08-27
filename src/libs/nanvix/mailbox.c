@@ -40,7 +40,7 @@ int kmailbox_create(int local)
 
 	ret = kcall1(
 		NR_mailbox_create,
-		(dword_t) local
+		(word_t) local
 	);
 
 	return (ret);
@@ -59,7 +59,7 @@ int kmailbox_open(int remote)
 
 	ret = kcall1(
 		NR_mailbox_open,
-		(dword_t) remote
+		(word_t) remote
 	);
 
 	return (ret);
@@ -78,7 +78,7 @@ int kmailbox_unlink(int mbxid)
 
 	ret = kcall1(
 		NR_mailbox_unlink,
-		(dword_t) mbxid
+		(word_t) mbxid
 	);
 
 	return (ret);
@@ -97,7 +97,7 @@ int kmailbox_close(int mbxid)
 
 	ret = kcall1(
 		NR_mailbox_close,
-		(dword_t) mbxid
+		(word_t) mbxid
 	);
 
 	return (ret);
@@ -116,9 +116,9 @@ int kmailbox_awrite(int mbxid, const void *buffer, size_t size)
 
 	ret = kcall3(
 		NR_mailbox_awrite,
-		(dword_t) mbxid,
-		(dword_t) buffer,
-		(dword_t) size
+		(word_t) mbxid,
+		(word_t) buffer,
+		(word_t) size
 	);
 
 	return (ret);
@@ -137,9 +137,9 @@ int kmailbox_aread(int mbxid, void *buffer, size_t size)
 
 	ret = kcall3(
 		NR_mailbox_aread,
-		(dword_t) mbxid,
-		(dword_t) buffer,
-		(dword_t) size
+		(word_t) mbxid,
+		(word_t) buffer,
+		(word_t) size
 	);
 
 	return (ret);
@@ -158,7 +158,7 @@ int kmailbox_wait(int mbxid)
 
 	ret = kcall1(
 		NR_mailbox_wait,
-		(dword_t) mbxid
+		(word_t) mbxid
 	);
 
 	return (ret);

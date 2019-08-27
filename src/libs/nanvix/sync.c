@@ -125,9 +125,9 @@ int ksync_create(const int *nodes, int nnodes, int type)
 
 	ret = kcall3(
 		NR_sync_create,
-		(dword_t) _nodes,
-		(dword_t) nnodes,
-		(dword_t) type
+		(word_t) _nodes,
+		(word_t) nnodes,
+		(word_t) type
 	);
 
 	return (ret);
@@ -184,9 +184,9 @@ int ksync_open(const int *nodes, int nnodes, int type)
 
 	ret = kcall3(
 		NR_sync_open,
-		(dword_t) _nodes,
-		(dword_t) nnodes,
-		(dword_t) type
+		(word_t) _nodes,
+		(word_t) nnodes,
+		(word_t) type
 	);
 
 	return (ret);
@@ -205,7 +205,7 @@ int ksync_wait(int syncid)
 
 	ret = kcall1(
 		NR_sync_wait,
-		(dword_t) syncid
+		(word_t) syncid
 	);
 
 	return (ret);
@@ -224,7 +224,7 @@ int ksync_signal(int syncid)
 
 	ret = kcall1(
 		NR_sync_signal,
-		(dword_t) syncid
+		(word_t) syncid
 	);
 
 	return (ret);
@@ -243,7 +243,7 @@ int ksync_close(int syncid)
 
 	ret = kcall1(
 		NR_sync_close,
-		(dword_t) syncid
+		(word_t) syncid
 	);
 
 	return (ret);
@@ -262,7 +262,7 @@ int ksync_unlink(int syncid)
 
 	ret = kcall1(
 		NR_sync_unlink,
-		(dword_t) syncid
+		(word_t) syncid
 	);
 
 	return (ret);
