@@ -414,19 +414,19 @@ static struct test mailbox_tests_fault[] = {
 void test_mailbox(void)
 {
 	/* API Tests */
-	kprintf("--------------------------------------------------------------------------------");
+	nanvix_puts("--------------------------------------------------------------------------------");
 	for (unsigned i = 0; mailbox_tests_api[i].test_fn != NULL; i++)
 	{
 		mailbox_tests_api[i].test_fn();
-		puts(mailbox_tests_api[i].name);
+		nanvix_puts(mailbox_tests_api[i].name);
 	}
 
 	/* FAULT Tests */
-	kprintf("--------------------------------------------------------------------------------");
+	nanvix_puts("--------------------------------------------------------------------------------");
 	for (unsigned i = 0; mailbox_tests_fault[i].test_fn != NULL; i++)
 	{
 		mailbox_tests_fault[i].test_fn();
-		puts(mailbox_tests_fault[i].name);
+		nanvix_puts(mailbox_tests_fault[i].name);
 	}
 }
 

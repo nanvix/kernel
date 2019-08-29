@@ -414,19 +414,19 @@ static struct test portal_tests_fault[] = {
 void test_portal(void)
 {
 	/* API Tests */
-	kprintf("--------------------------------------------------------------------------------");
+	nanvix_puts("--------------------------------------------------------------------------------");
 	for (unsigned i = 0; portal_tests_api[i].test_fn != NULL; i++)
 	{
 		portal_tests_api[i].test_fn();
-		puts(portal_tests_api[i].name);
+		nanvix_puts(portal_tests_api[i].name);
 	}
 
 	/* FAULT Tests */
-	kprintf("--------------------------------------------------------------------------------");
+	nanvix_puts("--------------------------------------------------------------------------------");
 	for (unsigned i = 0; portal_tests_fault[i].test_fn != NULL; i++)
 	{
 		portal_tests_fault[i].test_fn();
-		puts(portal_tests_fault[i].name);
+		nanvix_puts(portal_tests_fault[i].name);
 	}
 }
 

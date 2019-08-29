@@ -223,7 +223,7 @@ void test_thread_sync(void)
 #if (THREAD_MAX > 2)
 
 	/* API Tests */
-	kprintf("--------------------------------------------------------------------------------");
+	nanvix_puts("--------------------------------------------------------------------------------");
 	for (int i = 0; thread_sync_tests_api[i].test_fn != NULL; i++)
 	{
 		thread_sync_tests_api[i].test_fn();
@@ -231,7 +231,7 @@ void test_thread_sync(void)
 	}
 
 	/* Fault Injection Tests */
-	kprintf("--------------------------------------------------------------------------------");
+	nanvix_puts("--------------------------------------------------------------------------------");
 	for (int i = 0; thread_sync_tests_fault[i].test_fn != NULL; i++)
 	{
 		thread_sync_tests_fault[i].test_fn();
@@ -239,7 +239,7 @@ void test_thread_sync(void)
 	}
 
 	/* Stress Tests */
-	kprintf("--------------------------------------------------------------------------------");
+	nanvix_puts("--------------------------------------------------------------------------------");
 	for (int i = 0; thread_sync_tests_stress[i].test_fn != NULL; i++)
 	{
 		thread_sync_tests_stress[i].test_fn();

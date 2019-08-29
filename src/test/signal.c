@@ -138,7 +138,7 @@ void test_signal(void)
 {
 
 	/* API Tests */
-	kprintf("--------------------------------------------------------------------------------");
+	nanvix_puts("--------------------------------------------------------------------------------");
 	for (int i = 0; signal_tests_api[i].test_fn != NULL; i++)
 	{
 		signal_tests_api[i].test_fn();
@@ -146,7 +146,7 @@ void test_signal(void)
 	}
 
 	/* API Tests */
-	kprintf("--------------------------------------------------------------------------------");
+	nanvix_puts("--------------------------------------------------------------------------------");
 	for (int i = 0; signal_tests_fault[i].test_fn != NULL; i++)
 	{
 		signal_tests_fault[i].test_fn();
