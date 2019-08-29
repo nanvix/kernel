@@ -33,6 +33,7 @@
 #define UTEST_KTHREAD_BAD_ARG   0 /**< Test bad thread argument? */
 #define UTEST_KTHREAD_BAD_JOIN  0 /**< Test bad thread join?     */
 #define UTEST_KTHREAD_BAD_EXIT  0 /**< Test bad thread exit?     */
+#define UTEST_KTHREAD_STRESS    0 /**< Run stress tests?         */
 /**@}*/
 
 /**
@@ -77,21 +78,12 @@ static void test_api_kthread_create(void)
 #endif
 }
 
-/**
- * @brief API tests.
- */
-static struct test thread_mgmt_tests_api[] = {
-	{ test_api_kthread_self,   "[test][thread][api] thread identification       [passed]\n" },
-	{ test_api_kthread_create, "[test][thread][api] thread creation/termination [passed]\n" },
-	{ NULL,                     NULL                                                        },
-};
-
 /*============================================================================*
- * Fault Injection Testing Units                                              *
+ * Fault Testing Units                                                        *
  *============================================================================*/
 
 /**
- * @brief Fault Injection Test: Invalid Thread Create
+ * @brief Fault Test: Invalid Thread Create
  */
 static void test_fault_kthread_create_invalid(void)
 {
@@ -106,7 +98,7 @@ static void test_fault_kthread_create_invalid(void)
 }
 
 /**
- * @brief Fault Injection Test: Bad Thread Create
+ * @brief Fault Test: Bad Thread Create
  */
 static void test_fault_kthread_create_bad(void)
 {
@@ -132,7 +124,7 @@ static void test_fault_kthread_create_bad(void)
 }
 
 /**
- * @brief Fault Injection Test: Invalid Thread Join
+ * @brief Fault Test: Invalid Thread Join
  */
 static void test_fault_kthread_join_invalid(void)
 {
@@ -146,7 +138,7 @@ static void test_fault_kthread_join_invalid(void)
 }
 
 /**
- * @brief Fault Injection Test: Bad Thread Join
+ * @brief Fault Test: Bad Thread Join
  */
 static void test_fault_kthread_join_bad(void)
 {
@@ -170,10 +162,14 @@ static void test_fault_kthread_join_bad(void)
 #endif
 }
 
+/*============================================================================*
+ * Stress Testing Units                                                       *
+ *============================================================================*/
+
 /**
- * @brief Fault Injection Test: Create Too Many Threads
+ * @brief Fault Test: Create Too Many Threads
  */
-static void test_fault_kthread_create_overflow(void)
+static void test_stress_kthread_create_overflow(void)
 {
 #if (THREAD_MAX > 1)
 
@@ -187,22 +183,6 @@ static void test_fault_kthread_create_overflow(void)
 
 #endif
 }
-
-/**
- * @brief Fault injection tests.
- */
-static struct test thread_mgmt_tests_fault[] = {
-	{ test_fault_kthread_create_invalid,  "[test][thread][fault] invalid thread create    [passed]\n" },
-	{ test_fault_kthread_create_bad,      "[test][thread][fault] bad thread create        [passed]\n" },
-	{ test_fault_kthread_join_invalid,    "[test][thread][fault] invalid thread join      [passed]\n" },
-	{ test_fault_kthread_join_bad,        "[test][thread][fault] bad thread join          [passed]\n" },
-	{ test_fault_kthread_create_overflow, "[test][thread][fault] thread creation overflow [passed]\n" },
-	{ NULL,                                NULL                                                       },
-};
-
-/*============================================================================*
- * Stress Testing Units                                                       *
- *============================================================================*/
 
 /**
  * @brief Stress test for thread creation/termination.
@@ -227,17 +207,41 @@ static void test_stress_kthread_create(void)
 #endif
 }
 
-/**
- * @brief Stress tests.
- */
-static struct test thread_mgmt_tests_stress[] = {
-	{ test_stress_kthread_create, "[test][thread][stress] thread creation/termination [passed]\n" },
-	{ NULL,                        NULL                                                           },
-};
 
 /*============================================================================*
  * Test Driver                                                                *
  *============================================================================*/
+
+/**
+ * @brief API tests.
+ */
+static struct test thread_mgmt_tests_api[] = {
+	{ test_api_kthread_self,   "[test][thread][api] thread identification       [passed]" },
+	{ test_api_kthread_create, "[test][thread][api] thread creation/termination [passed]" },
+	{ NULL,                     NULL                                                      },
+};
+
+/**
+ * @brief Fault tests.
+ */
+static struct test thread_mgmt_tests_fault[] = {
+	{ test_fault_kthread_create_invalid,  "[test][thread][fault] invalid thread create [passed]" },
+	{ test_fault_kthread_create_bad,      "[test][thread][fault] bad thread create     [passed]" },
+	{ test_fault_kthread_join_invalid,    "[test][thread][fault] invalid thread join   [passed]" },
+	{ test_fault_kthread_join_bad,        "[test][thread][fault] bad thread join       [passed]" },
+	{ NULL,                                NULL                                                  },
+};
+
+/**
+ * @brief Stress tests.
+ */
+static struct test thread_mgmt_tests_stress[] = {
+#if (UTEST_KTHREAD_STRESS)
+	{ test_fault_kthread_create_overflow, "[test][thread][stress] thread creation overflow    [passed]" },
+	{ test_stress_kthread_create,         "[test][thread][stress] thread creation/termination [passed]" },
+#endif
+	{ NULL,                                NULL                                                         },
+};
 
 /**
  * The test_thread_mgmt() function launches testing units on thread manager.
@@ -254,7 +258,7 @@ void test_thread_mgmt(void)
 		nanvix_puts(thread_mgmt_tests_api[i].name);
 	}
 
-	/* Fault Injection Tests */
+	/* Fault Tests */
 	nanvix_puts("--------------------------------------------------------------------------------");
 	for (int i = 0; thread_mgmt_tests_fault[i].test_fn != NULL; i++)
 	{

@@ -80,7 +80,7 @@ void test_api_signal_action(void)
  * @brief API tests.
  */
 static struct test signal_tests_api[] = {
-	{ test_api_signal_action, "[test][signal][api] signal register/unregister [passed]\n" },
+	{ test_api_signal_action, "[test][signal][api] signal register/unregister [passed]" },
 	{ NULL,                    NULL                                                       },
 };
 
@@ -121,8 +121,8 @@ void test_fault_signal_action(void)
  * @brief API tests.
  */
 static struct test signal_tests_fault[] = {
-	{ test_fault_signal_action, "[test][signal][fault] signal register/unregister [passed]\n" },
-	{ NULL,                      NULL                                                         },
+	{ test_fault_signal_action, "[test][signal][fault] signal register/unregister [passed]" },
+	{ NULL,                      NULL                                                       },
 };
 
 

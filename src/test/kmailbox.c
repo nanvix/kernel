@@ -143,10 +143,12 @@ static void test_api_mailbox_read_write(void)
  * @brief Unit tests.
  */
 static struct test mailbox_tests_api[] = {
-	{ test_api_mailbox_create_unlink, "[test][mailbox][api] mailbox create unlink [passed]\n" },
-	{ test_api_mailbox_open_close,    "[test][mailbox][api] mailbox open close    [passed]\n" },
-	{ test_api_mailbox_read_write,    "[test][mailbox][api] mailbox read write    [passed]\n" },
-	{ NULL,                            NULL                                                   },
+	{ test_api_mailbox_create_unlink, "[test][mailbox][api] mailbox create unlink [passed]" },
+	{ test_api_mailbox_open_close,    "[test][mailbox][api] mailbox open close    [passed]" },
+#ifndef __unix64__
+	{ test_api_mailbox_read_write,    "[test][mailbox][api] mailbox read write    [passed]" },
+#endif
+	{ NULL,                            NULL                                                 },
 };
 
 /*============================================================================*
@@ -384,20 +386,20 @@ static void test_fault_mailbox_bad_wait(void)
  * @brief Unit tests.
  */
 static struct test mailbox_tests_fault[] = {
-	{ test_fault_mailbox_invalid_create,    "[test][mailbox][fault] mailbox invalid create    [passed]\n" },
-	{ test_fault_mailbox_double_create,     "[test][mailbox][fault] mailbox double create     [passed]\n" },
-	{ test_fault_mailbox_invalid_unlink,    "[test][mailbox][fault] mailbox invalid unlink    [passed]\n" },
-	{ test_fault_mailbox_double_unlink,     "[test][mailbox][fault] mailbox double unlink     [passed]\n" },
-	{ test_fault_mailbox_invalid_open,      "[test][mailbox][fault] mailbox invalid open      [passed]\n" },
-	{ test_fault_mailbox_invalid_close,     "[test][mailbox][fault] mailbox invalid close     [passed]\n" },
-	{ test_fault_mailbox_bad_close,         "[test][mailbox][fault] mailbox bad close         [passed]\n" },
-	{ test_fault_mailbox_invalid_read,      "[test][mailbox][fault] mailbox invalid read      [passed]\n" },
-	{ test_fault_mailbox_invalid_read_size, "[test][mailbox][fault] mailbox invalid read size [passed]\n" },
-	{ test_fault_mailbox_null_read,         "[test][mailbox][fault] mailbox null read         [passed]\n" },
-	{ test_fault_mailbox_invalid_write,     "[test][mailbox][fault] mailbox invalid write     [passed]\n" },
-	{ test_fault_mailbox_bad_write,         "[test][mailbox][fault] mailbox bad write         [passed]\n" },
-	{ test_fault_mailbox_bad_wait,          "[test][mailbox][fault] mailbox bad wait          [passed]\n" },
-	{ NULL,                                 NULL                                                          },
+	{ test_fault_mailbox_invalid_create,    "[test][mailbox][fault] mailbox invalid create    [passed]" },
+	{ test_fault_mailbox_double_create,     "[test][mailbox][fault] mailbox double create     [passed]" },
+	{ test_fault_mailbox_invalid_unlink,    "[test][mailbox][fault] mailbox invalid unlink    [passed]" },
+	{ test_fault_mailbox_double_unlink,     "[test][mailbox][fault] mailbox double unlink     [passed]" },
+	{ test_fault_mailbox_invalid_open,      "[test][mailbox][fault] mailbox invalid open      [passed]" },
+	{ test_fault_mailbox_invalid_close,     "[test][mailbox][fault] mailbox invalid close     [passed]" },
+	{ test_fault_mailbox_bad_close,         "[test][mailbox][fault] mailbox bad close         [passed]" },
+	{ test_fault_mailbox_invalid_read,      "[test][mailbox][fault] mailbox invalid read      [passed]" },
+	{ test_fault_mailbox_invalid_read_size, "[test][mailbox][fault] mailbox invalid read size [passed]" },
+	{ test_fault_mailbox_null_read,         "[test][mailbox][fault] mailbox null read         [passed]" },
+	{ test_fault_mailbox_invalid_write,     "[test][mailbox][fault] mailbox invalid write     [passed]" },
+	{ test_fault_mailbox_bad_write,         "[test][mailbox][fault] mailbox bad write         [passed]" },
+	{ test_fault_mailbox_bad_wait,          "[test][mailbox][fault] mailbox bad wait          [passed]" },
+	{ NULL,                                 NULL                                                        },
 };
 
 /*============================================================================*
