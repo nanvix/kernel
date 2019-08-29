@@ -98,7 +98,7 @@ int ksync_create(const int *nodes, int nnodes, int type)
 	if ((nnodes < 2) || (nnodes > PROCESSOR_NOC_NODES_NUM))
 		return (-EINVAL);
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 
 	/* Invalid type. */
 	if (type == SYNC_ONE_TO_ALL)
@@ -157,7 +157,7 @@ int ksync_open(const int *nodes, int nnodes, int type)
 	if ((nnodes < 2) || (nnodes > PROCESSOR_NOC_NODES_NUM))
 		return (-EINVAL);
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 
 	/* Invalid type. */
 	if (type == SYNC_ONE_TO_ALL)

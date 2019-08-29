@@ -35,10 +35,8 @@
  */
 #define NR_NODES       2
 #define NR_NODES_MAX   PROCESSOR_NOC_NODES_NUM
-#define MASTER_NODENUM 17
-#define MASTER_NODEID  129
-#define SLAVE_NODENUM  0
-#define SLAVE_NODEID   0
+#define MASTER_NODENUM 0
+#define SLAVE_NODENUM  1
 
 /*============================================================================*
  * API Test: Create Unlink                                                    *
@@ -52,7 +50,7 @@ static void test_api_mailbox_create_unlink(void)
 	int mbxid;
 	int local;
 
-	local = processor_node_get_num(processor_node_get_id());
+	local = processor_node_get_num();
 
 	test_assert((mbxid = kmailbox_create(local)) >= 0);
 	test_assert(kmailbox_unlink(mbxid) == 0);
@@ -70,7 +68,7 @@ static void test_api_mailbox_open_close(void)
 	int mbxid;
 	int remote;
 
-	remote = (processor_node_get_num(processor_node_get_id()) == MASTER_NODENUM) ?
+	remote = (processor_node_get_num() == MASTER_NODENUM) ?
 			 SLAVE_NODENUM : MASTER_NODENUM;
 
 	test_assert((mbxid = kmailbox_open(remote)) >= 0);
@@ -92,7 +90,7 @@ static void test_api_mailbox_read_write(void)
 	int mbx_out;
 	char message[MAILBOX_MSG_SIZE];
 
-	local  = processor_node_get_num(processor_node_get_id());
+	local  = processor_node_get_num();
 	remote = local == MASTER_NODENUM ? SLAVE_NODENUM : MASTER_NODENUM;
 
 	test_assert((mbx_in = kmailbox_create(local)) >= 0);
@@ -104,7 +102,7 @@ static void test_api_mailbox_read_write(void)
 		{
 			kmemset(message, 0, MAILBOX_MSG_SIZE);
 
-			test_assert(kmailbox_aread(mbx_in, message, MAILBOX_MSG_SIZE) == 0);
+			test_assert(kmailbox_aread(mbx_in, message, MAILBOX_MSG_SIZE) == MAILBOX_MSG_SIZE);
 			test_assert(kmailbox_wait(mbx_in) == 0);
 
 			for (unsigned j = 0; j < MAILBOX_MSG_SIZE; ++j)
@@ -112,7 +110,7 @@ static void test_api_mailbox_read_write(void)
 
 			kmemset(message, 2, MAILBOX_MSG_SIZE);
 
-			test_assert(kmailbox_awrite(mbx_out, message, MAILBOX_MSG_SIZE) == 0);
+			test_assert(kmailbox_awrite(mbx_out, message, MAILBOX_MSG_SIZE) == MAILBOX_MSG_SIZE);
 			test_assert(kmailbox_wait(mbx_out) == 0);
 		}
 	}
@@ -122,12 +120,12 @@ static void test_api_mailbox_read_write(void)
 		{
 			kmemset(message, 1, MAILBOX_MSG_SIZE);
 
-			test_assert(kmailbox_awrite(mbx_out, message, MAILBOX_MSG_SIZE) == 0);
+			test_assert(kmailbox_awrite(mbx_out, message, MAILBOX_MSG_SIZE) == MAILBOX_MSG_SIZE);
 			test_assert(kmailbox_wait(mbx_out) == 0);
 
 			kmemset(message, 0, MAILBOX_MSG_SIZE);
 
-			test_assert(kmailbox_aread(mbx_in, message, MAILBOX_MSG_SIZE) == 0);
+			test_assert(kmailbox_aread(mbx_in, message, MAILBOX_MSG_SIZE) == MAILBOX_MSG_SIZE);
 			test_assert(kmailbox_wait(mbx_in) == 0);
 
 			for (unsigned j = 0; j < MAILBOX_MSG_SIZE; ++j)
@@ -166,7 +164,7 @@ static void test_fault_mailbox_invalid_create(void)
 {
 	int nodenum;
 
-	nodenum = (processor_node_get_num(processor_node_get_id()) + 4) % PROCESSOR_NOC_NODES_NUM;
+	nodenum = (processor_node_get_num() + 4) % PROCESSOR_NOC_NODES_NUM;
 
 	test_assert(kmailbox_create(-1) < 0);
 	test_assert(kmailbox_create(nodenum) < 0);
@@ -185,7 +183,7 @@ static void test_fault_mailbox_double_create(void)
 	int local;
 	int mbxid;
 
-	local = processor_node_get_num(processor_node_get_id());
+	local = processor_node_get_num();
 
 	test_assert((mbxid = kmailbox_create(local)) >=  0);
 	test_assert(kmailbox_create(local) < 0);
@@ -218,7 +216,7 @@ static void test_fault_mailbox_double_unlink(void)
 	int local;
 	int mbxid;
 
-	local = processor_node_get_num(processor_node_get_id());
+	local = processor_node_get_num();
 
 	test_assert((mbxid = kmailbox_create(local)) >=  0);
 	test_assert(kmailbox_unlink(mbxid) == 0);
@@ -264,7 +262,7 @@ static void test_fault_mailbox_bad_close(void)
 	int local;
 	int mbxid;
 
-	local = processor_node_get_num(processor_node_get_id());
+	local = processor_node_get_num();
 
 	test_assert((mbxid = kmailbox_create(local)) >=  0);
 	test_assert(kmailbox_close(mbxid) < 0);
@@ -300,7 +298,7 @@ static void test_fault_mailbox_invalid_read_size(void)
 	int local;
 	char buffer[MAILBOX_MSG_SIZE];
 
-	local = processor_node_get_num(processor_node_get_id());
+	local = processor_node_get_num();
 
 	test_assert((mbxid = kmailbox_create(local)) >=  0);
 	test_assert(kmailbox_aread(mbxid, buffer, -1) < 0);
@@ -322,7 +320,7 @@ static void test_fault_mailbox_null_read(void)
 	int mbxid;
 	int local;
 
-	local = processor_node_get_num(processor_node_get_id());
+	local = processor_node_get_num();
 
 	test_assert((mbxid = kmailbox_create(local)) >=  0);
 	test_assert(kmailbox_aread(mbxid, NULL, MAILBOX_MSG_SIZE) < 0);
@@ -358,7 +356,7 @@ static void test_fault_mailbox_bad_write(void)
 	int local;
 	char buffer[MAILBOX_MSG_SIZE];
 
-	local = processor_node_get_num(processor_node_get_id());
+	local = processor_node_get_num();
 
 	test_assert((mbxid = kmailbox_create(local)) >=  0);
 	test_assert(kmailbox_awrite(mbxid, buffer, MAILBOX_MSG_SIZE) < 0);

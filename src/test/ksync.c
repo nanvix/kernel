@@ -36,7 +36,7 @@
 #define NR_NODES       2
 #define NR_NODES_MAX   PROCESSOR_NOC_NODES_NUM
 #define MASTER_NODENUM 0
-#define SLAVE_NODENUM  17
+#define SLAVE_NODENUM  1
 
 /**
  * @brief Auxiliar array
@@ -58,7 +58,7 @@ void test_api_sync_create_unlink(void)
 	int syncid;
 	int nodes[NR_NODES];
 
-	nodes[0] = processor_node_get_num(processor_node_get_id());
+	nodes[0] = processor_node_get_num();
 
 	for (int i = 0, j = 1; i < NR_NODES; i++)
 	{
@@ -84,7 +84,7 @@ void test_api_sync_open_close(void)
 	int syncid;
 	int nodes[NR_NODES];
 
-	nodes[0] = processor_node_get_num(processor_node_get_id());
+	nodes[0] = processor_node_get_num();
 
 	for (int i = 0, j = 1; i < NR_NODES; i++)
 	{
@@ -112,7 +112,7 @@ void test_api_sync_signal_wait(void)
 	int nodenum;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 	nodes[0] = MASTER_NODENUM;
 
 	for (int i = 0, j = 1; i < NR_NODES; i++)
@@ -176,7 +176,7 @@ void test_fault_sync_invalid_create(void)
 	int nodenum;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 	nodes[0] = (nodenum == MASTER_NODENUM) ? SLAVE_NODENUM : MASTER_NODENUM;
 
 	for (int i = 0, j = 1; i < NR_NODES; i++)
@@ -211,7 +211,7 @@ void test_fault_sync_bad_create1(void)
 	int nodenum;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 
 	/* Invalid list of NoC nodes. */
 	for (int i = NR_NODES - 1; i >= 0; i--)
@@ -255,7 +255,7 @@ void test_fault_sync_bad_create2(void)
 	int nodenum;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 
 	/* Invalid list of NoC nodes. */
 	for (int i = NR_NODES - 1; i >= 0; i--)
@@ -311,7 +311,7 @@ void test_fault_sync_invalid_open(void)
 	int nodenum;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 	nodes[0] = nodenum;
 
 	/* Build nodes list. */
@@ -347,7 +347,7 @@ void test_fault_sync_bad_open1(void)
 	int nodenum;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 	nodes[0] = nodenum;
 
 	/* Invalid list of NoC nodes. */
@@ -383,7 +383,7 @@ void test_fault_sync_bad_open2(void)
 	int nodenum;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 
 	/* Invalid list of NoC nodes. */
 	for (int i = NR_NODES - 1; i >= 0; i--)
@@ -446,7 +446,7 @@ void test_fault_sync_bad_unlink(void)
 	int syncid;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 	nodes[0] = nodenum;
 
 	/* Build nodes list. */
@@ -476,7 +476,7 @@ void test_fault_sync_double_unlink(void)
 	int syncid;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 	nodes[0] = nodenum;
 
 	/* Build nodes list. */
@@ -520,7 +520,7 @@ void test_fault_sync_bad_close(void)
 	int syncid;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 	nodes[0] = nodenum;
 
 	/* Build nodes list. */
@@ -550,7 +550,7 @@ void test_fault_sync_double_close(void)
 	int syncid;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 	nodes[0] = nodenum;
 
 	/* Build nodes list. */
@@ -594,7 +594,7 @@ void test_fault_sync_bad_signal(void)
 	int syncid;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 	nodes[0] = nodenum;
 
 	/* Build nodes list. */
@@ -638,7 +638,7 @@ void test_fault_sync_bad_wait(void)
 	int syncid;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 	nodes[0] = nodenum;
 
 	/* Build nodes list. */
