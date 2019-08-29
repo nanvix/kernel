@@ -103,9 +103,7 @@ PUBLIC struct thread *thread_get_curr(void)
 	{
 		/* Found. */
 		if (threads[i].coreid == mycoreid)
-		{
 			return (&threads[i]);
-		}
 	}
 
 	/* Should not happen. */
@@ -132,7 +130,7 @@ PUBLIC struct thread *thread_get_curr(void)
  */
 PRIVATE struct thread *thread_alloc(void)
 {
-	for (int i = 0; i < KTHREAD_MAX; i++)
+	for (int i = 1; i < KTHREAD_MAX; i++)
 	{
 		/* Found. */
 		if (threads[i].state == THREAD_NOT_STARTED)
@@ -169,6 +167,7 @@ PRIVATE void thread_free(struct thread *t)
 	KASSERT(t >= &threads[0]);
 	KASSERT(t <= &threads[KTHREAD_MAX - 1]);
 
+	t->coreid = -1;
 	t->state = THREAD_NOT_STARTED;
 	t->tid = KTHREAD_NULL_TID;
 	nthreads--;
@@ -213,13 +212,12 @@ PUBLIC NORETURN void thread_exit(void *retval)
 
 	spinlock_unlock(&lock_tm);
 
-	/* No rollback from this point. */
+	/* No rollback after this point. */
 
 	core_reset();
 
 	/* Never gets here. */
-	while (true)
-		noop();
+	UNREACHABLE();
 }
 
 /*============================================================================*
@@ -282,8 +280,7 @@ PRIVATE NORETURN void thread_start(void)
 	thread_exit(retval);
 
 	/* Never gets here. */
-	while (true)
-		noop();
+	UNREACHABLE();
 }
 
 /*============================================================================*
