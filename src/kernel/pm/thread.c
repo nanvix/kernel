@@ -27,11 +27,23 @@
 #include <nanvix/thread.h>
 #include <errno.h>
 
+/*
+ * Import definitions.
+ */
+EXTERN void kmain(int argc, const char *argv[]);
+
 /**
  * @brief Thread table.
  */
 EXTENSION PUBLIC struct thread threads[KTHREAD_MAX] = {
-	[0]                       = {.tid = KTHREAD_MASTER_TID, .state = THREAD_RUNNING},
+	[0] = {
+		.tid = KTHREAD_MASTER_TID,
+		.coreid = 0,
+		.state = THREAD_RUNNING,
+		.arg = NULL,
+		.start = (void *) kmain,
+		.next = NULL
+	},
 #if CLUSTER_IS_MULTICORE
 	[1 ... (KTHREAD_MAX - 1)] = {.tid = KTHREAD_NULL_TID, .state = THREAD_NOT_STARTED}
 #endif
