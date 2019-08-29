@@ -34,7 +34,7 @@
  * @brief Test's parameters
  */
 #define NR_NODES       2
-#define NR_NODES_MAX   NR_NOC_NODES
+#define NR_NODES_MAX   PROCESSOR_NOC_NODES_NUM
 #define MASTER_NODENUM 17
 #define MASTER_NODEID  129
 #define SLAVE_NODENUM  0
@@ -166,11 +166,11 @@ static void test_fault_mailbox_invalid_create(void)
 {
 	int nodenum;
 
-	nodenum = (processor_node_get_num(processor_node_get_id()) + 1) % PROCESSOR_CLUSTERS_NUM;
+	nodenum = (processor_node_get_num(processor_node_get_id()) + 4) % PROCESSOR_NOC_NODES_NUM;
 
 	test_assert(kmailbox_create(-1) < 0);
 	test_assert(kmailbox_create(nodenum) < 0);
-	test_assert(kmailbox_create(PROCESSOR_CLUSTERS_NUM) < 0);
+	test_assert(kmailbox_create(PROCESSOR_NOC_NODES_NUM) < 0);
 }
 
 /*============================================================================*
@@ -235,7 +235,7 @@ static void test_fault_mailbox_double_unlink(void)
 static void test_fault_mailbox_invalid_open(void)
 {
 	test_assert(kmailbox_open(-1) < 0);
-	test_assert(kmailbox_open(PROCESSOR_CLUSTERS_NUM) < 0);
+	test_assert(kmailbox_open(PROCESSOR_NOC_NODES_NUM) < 0);
 }
 
 /*============================================================================*

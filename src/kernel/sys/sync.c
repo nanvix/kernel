@@ -36,7 +36,7 @@
  * @see sync_create().
  *
  * @retval -EINVAL IDs of nodes need to exist.
- * @retval -EINVAL At least 2 nodes and at most NR_NOC_NODES must be involved.
+ * @retval -EINVAL At least 2 nodes and at most PROCESSOR_NOC_NODES_NUM must be involved.
  * @retval -EINVAL The type must be SYNC_ONE_TO_ALL or SYNC_ALL_TO_ONE.
  */
 PUBLIC int kernel_sync_create(const int *nodes, int nnodes, int type)
@@ -52,7 +52,7 @@ PUBLIC int kernel_sync_create(const int *nodes, int nnodes, int type)
  * @see sync_open().
  *
  * @retval -EINVAL IDs of nodes need to exist.
- * @retval -EINVAL At least 2 nodes and at most NR_NOC_NODES must be involved.
+ * @retval -EINVAL At least 2 nodes and at most PROCESSOR_NOC_NODES_NUM must be involved.
  * @retval -EINVAL The type must be SYNC_ONE_TO_ALL or SYNC_ALL_TO_ONE.
  */
 PUBLIC int kernel_sync_open(const int * nodes, int nnodes, int type)
