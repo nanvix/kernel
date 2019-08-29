@@ -302,6 +302,7 @@ PRIVATE NORETURN void thread_start(void)
  */
 PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
 {
+	int ret = 0;               /* Return value.             */
 	int _tid;                  /* Unique thread identifier. */
 	struct thread *new_thread; /* New thread.               */
 
@@ -338,9 +339,27 @@ PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
 		dcache_invalidate();
 	}
 
-	core_start(thread_get_coreid(new_thread), thread_start);
+	/*
+	 * We should do some busy waitting here. When the kernel is under
+	 * stress, there is a chance that we allocate a core that is in
+	 * RUNNING state. That happens because a previous thread running
+	 * on this core has existed and we have joined it, but the
+	 * terminated thread hasn't had enough time to issue issue a
+	 * core_reset().
+	 */
+	do
+		ret = core_start(thread_get_coreid(new_thread), thread_start);
+	while (ret == -EBUSY);
 
-	return (0);
+	/* Rollback. */
+	if (ret != 0)
+	{
+		spinlock_lock(&lock_tm);
+			thread_free(new_thread);
+		spinlock_unlock(&lock_tm);
+	}
+
+	return (ret);
 }
 
 /*============================================================================*
