@@ -692,19 +692,19 @@ static struct test sync_tests_fault[] = {
 void test_sync(void)
 {
 	/* API Tests */
-	kprintf("--------------------------------------------------------------------------------");
+	nanvix_puts("--------------------------------------------------------------------------------");
 	for (int i = 0; sync_tests_api[i].test_fn != NULL; i++)
 	{
 		sync_tests_api[i].test_fn();
-		puts(sync_tests_api[i].name);
+		nanvix_puts(sync_tests_api[i].name);
 	}
 
 	/* Fault Injection Tests */
-	kprintf("--------------------------------------------------------------------------------");
+	nanvix_puts("--------------------------------------------------------------------------------");
 	for (int i = 0; sync_tests_fault[i].test_fn != NULL; i++)
 	{
 		sync_tests_fault[i].test_fn();
-		puts(sync_tests_fault[i].name);
+		nanvix_puts(sync_tests_fault[i].name);
 	}
 }
 

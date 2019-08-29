@@ -247,7 +247,7 @@ static struct test thread_mgmt_tests_stress[] = {
 void test_thread_mgmt(void)
 {
 	/* API Tests */
-	kprintf("--------------------------------------------------------------------------------");
+	nanvix_puts("--------------------------------------------------------------------------------");
 	for (int i = 0; thread_mgmt_tests_api[i].test_fn != NULL; i++)
 	{
 		thread_mgmt_tests_api[i].test_fn();
@@ -255,7 +255,7 @@ void test_thread_mgmt(void)
 	}
 
 	/* Fault Injection Tests */
-	kprintf("--------------------------------------------------------------------------------");
+	nanvix_puts("--------------------------------------------------------------------------------");
 	for (int i = 0; thread_mgmt_tests_fault[i].test_fn != NULL; i++)
 	{
 		thread_mgmt_tests_fault[i].test_fn();
@@ -263,7 +263,7 @@ void test_thread_mgmt(void)
 	}
 
 	/* Stress Tests */
-	kprintf("--------------------------------------------------------------------------------");
+	nanvix_puts("--------------------------------------------------------------------------------");
 	for (int i = 0; thread_mgmt_tests_stress[i].test_fn != NULL; i++)
 	{
 		thread_mgmt_tests_stress[i].test_fn();
