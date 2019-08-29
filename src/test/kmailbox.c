@@ -411,20 +411,29 @@ static struct test mailbox_tests_fault[] = {
  */
 void test_mailbox(void)
 {
+	int nodenum;
+
+	nodenum = processor_node_get_num();
+
 	/* API Tests */
-	nanvix_puts("--------------------------------------------------------------------------------");
+	if (nodenum == processor_node_get_num())
+		nanvix_puts("--------------------------------------------------------------------------------");
 	for (unsigned i = 0; mailbox_tests_api[i].test_fn != NULL; i++)
 	{
 		mailbox_tests_api[i].test_fn();
-		nanvix_puts(mailbox_tests_api[i].name);
+		if (nodenum == processor_node_get_num())
+			nanvix_puts(mailbox_tests_api[i].name);
 	}
 
-	/* FAULT Tests */
-	nanvix_puts("--------------------------------------------------------------------------------");
-	for (unsigned i = 0; mailbox_tests_fault[i].test_fn != NULL; i++)
+	if (nodenum == processor_node_get_num())
 	{
-		mailbox_tests_fault[i].test_fn();
-		nanvix_puts(mailbox_tests_fault[i].name);
+		/* FAULT Tests */
+		nanvix_puts("--------------------------------------------------------------------------------");
+		for (unsigned i = 0; mailbox_tests_fault[i].test_fn != NULL; i++)
+		{
+			mailbox_tests_fault[i].test_fn();
+			nanvix_puts(mailbox_tests_fault[i].name);
+		}
 	}
 }
 

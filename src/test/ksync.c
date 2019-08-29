@@ -691,20 +691,30 @@ static struct test sync_tests_fault[] = {
  */
 void test_sync(void)
 {
+	int nodenum;
+
+	nodenum = processor_node_get_num();
+
 	/* API Tests */
-	nanvix_puts("--------------------------------------------------------------------------------");
+	if (nodenum == processor_node_get_num())
+		nanvix_puts("--------------------------------------------------------------------------------");
 	for (int i = 0; sync_tests_api[i].test_fn != NULL; i++)
 	{
 		sync_tests_api[i].test_fn();
-		nanvix_puts(sync_tests_api[i].name);
+
+		if (nodenum == processor_node_get_num())
+			nanvix_puts(sync_tests_api[i].name);
 	}
 
-	/* Fault Injection Tests */
-	nanvix_puts("--------------------------------------------------------------------------------");
-	for (int i = 0; sync_tests_fault[i].test_fn != NULL; i++)
+	if (nodenum == processor_node_get_num())
 	{
-		sync_tests_fault[i].test_fn();
-		nanvix_puts(sync_tests_fault[i].name);
+		/* Fault Injection Tests */
+		nanvix_puts("--------------------------------------------------------------------------------");
+		for (int i = 0; sync_tests_fault[i].test_fn != NULL; i++)
+		{
+			sync_tests_fault[i].test_fn();
+			nanvix_puts(sync_tests_fault[i].name);
+		}
 	}
 }
 

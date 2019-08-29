@@ -410,20 +410,29 @@ static struct test portal_tests_fault[] = {
  */
 void test_portal(void)
 {
+	int nodenum;
+
+	nodenum = processor_node_get_num();
+
 	/* API Tests */
-	nanvix_puts("--------------------------------------------------------------------------------");
+	if (nodenum == processor_node_get_num())
+		nanvix_puts("--------------------------------------------------------------------------------");
 	for (unsigned i = 0; portal_tests_api[i].test_fn != NULL; i++)
 	{
 		portal_tests_api[i].test_fn();
-		nanvix_puts(portal_tests_api[i].name);
+		if (nodenum == processor_node_get_num())
+			nanvix_puts(portal_tests_api[i].name);
 	}
 
 	/* FAULT Tests */
-	nanvix_puts("--------------------------------------------------------------------------------");
-	for (unsigned i = 0; portal_tests_fault[i].test_fn != NULL; i++)
+	if (nodenum == processor_node_get_num())
 	{
-		portal_tests_fault[i].test_fn();
-		nanvix_puts(portal_tests_fault[i].name);
+		nanvix_puts("--------------------------------------------------------------------------------");
+		for (unsigned i = 0; portal_tests_fault[i].test_fn != NULL; i++)
+		{
+			portal_tests_fault[i].test_fn();
+			nanvix_puts(portal_tests_fault[i].name);
+		}
 	}
 }
 
