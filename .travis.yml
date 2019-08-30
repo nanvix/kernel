@@ -69,11 +69,17 @@ jobs:
     - stage: "Tests Debug"
       name: "QEMU OpenRISC"
       script: docker run --privileged -v "$(pwd):/mnt" -p 4567:4567 nanvix/ubuntu:qemu-openrisc /bin/bash -l -c "cd /mnt && bash utils/nanvix-setup-network.sh on --root && make distclean && make contrib && make all && make test-ccluster"
+    - stage: "Tests Debug"
+      name: "Unix 64-bit"
+      script: docker run --privileged -v "$(pwd):/mnt" -p 4567:4567 nanvix/ubuntu:unix64        /bin/bash -l -c "cd /mnt && bash utils/nanvix-setup-unix.sh && make distclean && make contrib && make all && make test"
 
     # Tests Release
     - stage: "Tests Release"
       name: "QEMU OpenRISC"
       script: docker run --privileged -v "$(pwd):/mnt" -p 4567:4567 nanvix/ubuntu:qemu-openrisc /bin/bash -l -c "cd /mnt && bash utils/nanvix-setup-network.sh on --root && export RELEASE=true && make distclean && make contrib && make all && make test-ccluster"
+    - stage: "Tests Release"
+      name: "Unix 64-bit"
+      script: docker run --privileged -v "$(pwd):/mnt" -p 4567:4567 nanvix/ubuntu:unix64        /bin/bash -l -c "cd /mnt && bash utils/nanvix-setup-unix.sh && export RELEASE=true && make distclean && make contrib && make all && make test"
 
 notifications:
   slack: nanvix:31ePVjsrXynUajPUDqy6I0hp
