@@ -147,30 +147,12 @@ static void test_api_portal_read_write(void)
 	test_assert(kportal_unlink(portal_in) == 0);
 }
 
-/*============================================================================*/
-
-/**
- * @brief Unit tests.
- */
-static struct test portal_tests_api[] = {
-#ifndef __unix64__
-	{ test_api_portal_create_unlink, "[test][portal][api] portal create unlink [passed]" },
-	{ test_api_portal_open_close,    "[test][portal][api] portal open close    [passed]" },
-#endif
-	{ test_api_portal_read_write,    "[test][portal][api] portal read write    [passed]" },
-	{ NULL,                          NULL                                                },
-};
-
 /*============================================================================*
- * Fault tests                                                                *
- *============================================================================*/
-
-/*============================================================================*
- * API Test: Invalid Create                                                   *
+ * Fault Test: Invalid Create                                                 *
  *============================================================================*/
 
 /**
- * @brief API Test: Invalid Create
+ * @brief Fault Test: Invalid Create
  */
 static void test_fault_portal_invalid_create(void)
 {
@@ -184,11 +166,11 @@ static void test_fault_portal_invalid_create(void)
 }
 
 /*============================================================================*
- * API Test: Invalid Unlink                                                   *
+ * Fault Test: Invalid Unlink                                                 *
  *============================================================================*/
 
 /**
- * @brief API Test: Invalid Unlink
+ * @brief Fault Test: Invalid Unlink
  */
 static void test_fault_portal_invalid_unlink(void)
 {
@@ -198,11 +180,11 @@ static void test_fault_portal_invalid_unlink(void)
 }
 
 /*============================================================================*
- * API Test: Double Unlink                                                    *
+ * Fault Test: Double Unlink                                                  *
  *============================================================================*/
 
 /**
- * @brief API Test: Double Unlink
+ * @brief Fault Test: Double Unlink
  */
 static void test_fault_portal_double_unlink(void)
 {
@@ -217,11 +199,11 @@ static void test_fault_portal_double_unlink(void)
 }
 
 /*============================================================================*
- * API Test: Invalid Open                                                     *
+ * Fault Test: Invalid Open                                                   *
  *============================================================================*/
 
 /**
- * @brief API Test: Invalid Open
+ * @brief Fault Test: Invalid Open
  */
 static void test_fault_portal_invalid_open(void)
 {
@@ -238,11 +220,11 @@ static void test_fault_portal_invalid_open(void)
 }
 
 /*============================================================================*
- * API Test: Invalid Close                                                    *
+ * Fault Test: Invalid Close                                                  *
  *============================================================================*/
 
 /**
- * @brief API Test: Invalid Close
+ * @brief Fault Test: Invalid Close
  */
 static void test_fault_portal_invalid_close(void)
 {
@@ -252,11 +234,11 @@ static void test_fault_portal_invalid_close(void)
 }
 
 /*============================================================================*
- * API Test: Bad Close                                                        *
+ * Fault Test: Bad Close                                                      *
  *============================================================================*/
 
 /**
- * @brief API Test: Bad Close
+ * @brief Fault Test: Bad Close
  */
 static void test_fault_portal_bad_close(void)
 {
@@ -271,11 +253,11 @@ static void test_fault_portal_bad_close(void)
 }
 
 /*============================================================================*
- * API Test: Invalid Read                                                     *
+ * Fault Test: Invalid Read                                                   *
  *============================================================================*/
 
 /**
- * @brief API Test: Invalid Read
+ * @brief Fault Test: Invalid Read
  */
 static void test_fault_portal_invalid_read(void)
 {
@@ -288,11 +270,11 @@ static void test_fault_portal_invalid_read(void)
 }
 
 /*============================================================================*
- * API Test: Invalid Read Size                                                *
+ * Fault Test: Invalid Read Size                                              *
  *============================================================================*/
 
 /**
- * @brief API Test: Invalid Read Size
+ * @brief Fault Test: Invalid Read Size
  */
 static void test_fault_portal_invalid_read_size(void)
 {
@@ -310,11 +292,11 @@ static void test_fault_portal_invalid_read_size(void)
 }
 
 /*============================================================================*
- * API Test: Null Read                                                        *
+ * Fault Test: Null Read                                                      *
  *============================================================================*/
 
 /**
- * @brief API Test: Null Read
+ * @brief Fault Test: Null Read
  */
 static void test_fault_portal_null_read(void)
 {
@@ -329,11 +311,11 @@ static void test_fault_portal_null_read(void)
 }
 
 /*============================================================================*
- * API Test: Invalid Write                                                    *
+ * Fault Test: Invalid Write                                                  *
  *============================================================================*/
 
 /**
- * @brief API Test: Invalid Write
+ * @brief Fault Test: Invalid Write
  */
 static void test_fault_portal_invalid_write(void)
 {
@@ -346,11 +328,11 @@ static void test_fault_portal_invalid_write(void)
 }
 
 /*============================================================================*
- * API Test: Bad Write                                                        *
+ * Fault Test: Bad Write                                                      *
  *============================================================================*/
 
 /**
- * @brief API Test: Bad Write
+ * @brief Fault Test: Bad Write
  */
 static void test_fault_portal_bad_write(void)
 {
@@ -366,23 +348,37 @@ static void test_fault_portal_bad_write(void)
 }
 
 /*============================================================================*
- * API Test: Bad Wait                                                         *
+ * Fault Test: Bad Wait                                                       *
  *============================================================================*/
 
 /**
- * @brief API Test: Bad Write
+ * @brief Fault Test: Bad Write
  */
 static void test_fault_portal_bad_wait(void)
 {
 	test_assert(kportal_wait(-1) < 0);
-#ifdef XXX
+#ifndef __unix64__
 	test_assert(kportal_wait(PORTAL_CREATE_MAX) < 0);
 	test_assert(kportal_wait(PORTAL_OPEN_MAX) < 0);
 #endif
 	test_assert(kportal_wait(1000000) < 0);
 }
 
-/*============================================================================*/
+/*============================================================================*
+ * Test Driver                                                                *
+ *============================================================================*/
+
+/**
+ * @brief Unit tests.
+ */
+static struct test portal_tests_api[] = {
+#ifndef __unix64__
+	{ test_api_portal_create_unlink, "[test][portal][api] portal create unlink [passed]" },
+	{ test_api_portal_open_close,    "[test][portal][api] portal open close    [passed]" },
+#endif
+	{ test_api_portal_read_write,    "[test][portal][api] portal read write    [passed]" },
+	{ NULL,                           NULL                                               },
+};
 
 /**
  * @brief Unit tests.
@@ -400,12 +396,8 @@ static struct test portal_tests_fault[] = {
 	{ test_fault_portal_invalid_write,     "[test][portal][fault] portal invalid write     [passed]" },
 	{ test_fault_portal_bad_write,         "[test][portal][fault] portal bad write         [passed]" },
 	{ test_fault_portal_bad_wait,          "[test][portal][fault] portal bad wait          [passed]" },
-	{ NULL,                                NULL                                                      },
+	{ NULL,                                 NULL                                                     },
 };
-
-/*============================================================================*
- * Test Driver                                                                *
- *============================================================================*/
 
 /**
  * The test_thread_mgmt() function launches testing units on thread manager.
@@ -428,7 +420,7 @@ void test_portal(void)
 			nanvix_puts(portal_tests_api[i].name);
 	}
 
-	/* FAULT Tests */
+	/* Fault Tests */
 	if (nodenum == processor_node_get_num())
 	{
 		nanvix_puts("--------------------------------------------------------------------------------");

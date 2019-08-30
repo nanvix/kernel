@@ -102,6 +102,7 @@ void ___start(int argc, const char *argv[])
 	{
 		test_thread_mgmt();
 		test_thread_sleep();
+
 #ifndef __unix64__
 		test_perf();
 		test_signal();
