@@ -372,10 +372,8 @@ static void test_fault_portal_bad_wait(void)
  * @brief Unit tests.
  */
 static struct test portal_tests_api[] = {
-#ifndef __unix64__
 	{ test_api_portal_create_unlink, "[test][portal][api] portal create unlink [passed]" },
 	{ test_api_portal_open_close,    "[test][portal][api] portal open close    [passed]" },
-#endif
 	{ test_api_portal_read_write,    "[test][portal][api] portal read write    [passed]" },
 	{ NULL,                           NULL                                               },
 };

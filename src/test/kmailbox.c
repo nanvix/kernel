@@ -372,10 +372,8 @@ static void test_fault_mailbox_bad_wait(void)
  * @brief Unit tests.
  */
 static struct test mailbox_tests_api[] = {
-#ifndef __unix64__
 	{ test_api_mailbox_create_unlink, "[test][mailbox][api] mailbox create unlink [passed]" },
 	{ test_api_mailbox_open_close,    "[test][mailbox][api] mailbox open close    [passed]" },
-#endif
 	{ test_api_mailbox_read_write,    "[test][mailbox][api] mailbox read write    [passed]" },
 	{ NULL,                            NULL                                                 },
 };
