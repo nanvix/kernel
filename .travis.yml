@@ -61,14 +61,14 @@ jobs:
     - stage: "Build Release"
       name: "QEMU RISC-V 32-bit"
       script: docker run -v "$(pwd):/mnt" -p 4567:4567 nanvix/ubuntu:qemu-riscv32  /bin/bash -l -c "cd /mnt && export RELEASE=true && make distclean && make contrib && make all"
+    - stage: "Build Release"
+      name: "OpTiMSoC"
+      script: docker run -v "$(pwd):/mnt" -p 4567:4567 nanvix/ubuntu:qemu-openrisc /bin/bash -l -c "cd /mnt && export TARGET=optimsoc && export RELEASE=true && make distclean && make contrib && make all"
 
     # Tests Debug
     - stage: "Tests Debug"
       name: "QEMU OpenRISC"
       script: docker run --privileged -v "$(pwd):/mnt" -p 4567:4567 nanvix/ubuntu:qemu-openrisc /bin/bash -l -c "cd /mnt && bash utils/nanvix-setup-network.sh on --root && make distclean && make contrib && make all && make test-ccluster"
-    - stage: "Tests Debug"
-      name: "Unix 64-bit"
-      script: docker run --privileged -v "$(pwd):/mnt" -p 4567:4567 nanvix/ubuntu:unix64        /bin/bash -l -c "cd /mnt && bash utils/nanvix-setup-unix.sh && make distclean && make contrib && make all && make test"
 
     # Tests Release
     - stage: "Tests Release"
