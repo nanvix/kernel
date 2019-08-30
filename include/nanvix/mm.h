@@ -99,10 +99,7 @@
 	 */
 	static inline int mm_check_area(vaddr_t vaddr, uint64_t size, int area)
 	{
-	#if !defined(__mppa256__)       && \
-		!defined(__qemu_riscv32__)  && \
-		!defined(__optimsoc__)      && \
-		!defined(__qemu_openrisc__)
+	#if defined(__qemu_x86__)
 
 		return (
 			(area == UMEM_AREA) ?
