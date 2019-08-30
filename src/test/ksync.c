@@ -649,10 +649,8 @@ void test_fault_sync_bad_wait(void)
  * @brief API tests.
  */
 static struct test sync_tests_api[] = {
-#ifndef __unix64__
 	{ test_api_sync_create_unlink, "[test][sync][api] sync create/unlink [passed]" },
 	{ test_api_sync_open_close,    "[test][sync][api] sync open/close    [passed]" },
-#endif
 	{ test_api_sync_signal_wait,   "[test][sync][api] sync wait          [passed]" },
 	{ NULL,                         NULL                                           },
 };
