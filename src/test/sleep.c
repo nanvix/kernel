@@ -26,6 +26,13 @@
 #include "test.h"
 
 /**
+ * @brief Extra Tests
+ */
+/**@{*/
+#define UTEST_SLEEP_STRESS 0 /**< Run stress tests? */
+/**@}*/
+
+/**
  * @brief Number of threads to spawn.
  */
 #define NTHREADS (THREAD_MAX - 1)
@@ -92,14 +99,6 @@ static void test_api_sleep_wakeup(void)
 	test_assert(var == NTRIALS*NTHREADS);
 }
 
-/**
- * @brief API tests.
- */
-static struct test thread_sync_tests_api[] = {
-	{ test_api_sleep_wakeup, "[test][thread][api] thread sleep/wakeup [passed]\n" },
-	{ NULL,                   NULL                                              },
-};
-
 /*============================================================================*
  * Fault Injection Testing Units                                              *
  *============================================================================*/
@@ -141,14 +140,6 @@ static void test_fault_sleep_wakeup(void)
 	/* Wakeup bad thread. */
 	test_assert(kwakeup(tid) < 0);
 }
-
-/**
- * @brief Fault injection tests.
- */
-static struct test thread_sync_tests_fault[] = {
-	{ test_fault_sleep_wakeup, "[test][thread][fault] thread sleep/wakeup [passed]\n" },
-	{ NULL,                     NULL                                                },
-};
 
 /*============================================================================*
  * API Testing Units                                                          *
@@ -198,52 +189,73 @@ static void test_stress_sleep_wakeup(void)
 	}
 }
 
-/**
- * @brief Stress tests.
- */
-static struct test thread_sync_tests_stress[] = {
-	{ test_stress_sleep_wakeup, "[test][thread][stress] thread sleep/wakeup [passed]\n" },
-	{ NULL,                      NULL                                                   },
-};
-
 #endif
 
 /*============================================================================*
  * Test Driver                                                                *
  *============================================================================*/
+#if (THREAD_MAX > 2)
 
 /**
- * The test_thread_sync() function launches testing units on the
- * syncrhonization primitives of the thread manager.
+ * @brief API tests.
+ */
+static struct test thread_sleep_tests_api[] = {
+	{ test_api_sleep_wakeup, "[test][thread][api] thread sleep/wakeup [passed]" },
+	{ NULL,                   NULL                                              },
+};
+
+/**
+ * @brief Fault injection tests.
+ */
+static struct test thread_sleep_tests_fault[] = {
+	{ test_fault_sleep_wakeup, "[test][thread][fault] thread sleep/wakeup [passed]" },
+	{ NULL,                     NULL                                                },
+};
+
+/**
+ * @brief Stress tests.
+ */
+static struct test thread_sleep_tests_stress[] = {
+#if UTEST_SLEEP_STRESS
+	{ test_stress_sleep_wakeup, "[test][thread][stress] thread sleep/wakeup [passed]" },
+#endif
+	{ NULL,                      NULL                                                 },
+};
+
+#endif
+
+/**
+ * The test_thread_sleep() function launches testing units on the
+ * sleeprhonization primitives of the thread manager.
  *
  * @author Pedro Henrique Penna
  */
-void test_thread_sync(void)
+void test_thread_sleep(void)
 {
 #if (THREAD_MAX > 2)
 
 	/* API Tests */
 	nanvix_puts("--------------------------------------------------------------------------------");
-	for (int i = 0; thread_sync_tests_api[i].test_fn != NULL; i++)
+	for (int i = 0; thread_sleep_tests_api[i].test_fn != NULL; i++)
 	{
-		thread_sync_tests_api[i].test_fn();
-		nanvix_puts(thread_sync_tests_api[i].name);
+		thread_sleep_tests_api[i].test_fn();
+		nanvix_puts(thread_sleep_tests_api[i].name);
 	}
 
 	/* Fault Injection Tests */
 	nanvix_puts("--------------------------------------------------------------------------------");
-	for (int i = 0; thread_sync_tests_fault[i].test_fn != NULL; i++)
+	for (int i = 0; thread_sleep_tests_fault[i].test_fn != NULL; i++)
 	{
-		thread_sync_tests_fault[i].test_fn();
-		nanvix_puts(thread_sync_tests_fault[i].name);
+		thread_sleep_tests_fault[i].test_fn();
+		nanvix_puts(thread_sleep_tests_fault[i].name);
 	}
 
 	/* Stress Tests */
 	nanvix_puts("--------------------------------------------------------------------------------");
-	for (int i = 0; thread_sync_tests_stress[i].test_fn != NULL; i++)
+	for (int i = 0; thread_sleep_tests_stress[i].test_fn != NULL; i++)
 	{
-		thread_sync_tests_stress[i].test_fn();
-		nanvix_puts(thread_sync_tests_stress[i].name);
+		thread_sleep_tests_stress[i].test_fn();
+		nanvix_puts(thread_sleep_tests_stress[i].name);
 	}
 
 #endif

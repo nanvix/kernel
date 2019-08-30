@@ -35,10 +35,8 @@
  */
 #define NR_NODES       2
 #define NR_NODES_MAX   PROCESSOR_NOC_NODES_NUM
-#define MASTER_NODENUM 17
-#define MASTER_NODEID  129
-#define SLAVE_NODENUM  0
-#define SLAVE_NODEID   0
+#define MASTER_NODENUM 0
+#define SLAVE_NODENUM  1
 
 /*============================================================================*
  * API Test: Create Unlink                                                    *
@@ -52,7 +50,7 @@ static void test_api_mailbox_create_unlink(void)
 	int mbxid;
 	int local;
 
-	local = processor_node_get_num(processor_node_get_id());
+	local = processor_node_get_num();
 
 	test_assert((mbxid = kmailbox_create(local)) >= 0);
 	test_assert(kmailbox_unlink(mbxid) == 0);
@@ -70,7 +68,7 @@ static void test_api_mailbox_open_close(void)
 	int mbxid;
 	int remote;
 
-	remote = (processor_node_get_num(processor_node_get_id()) == MASTER_NODENUM) ?
+	remote = (processor_node_get_num() == MASTER_NODENUM) ?
 			 SLAVE_NODENUM : MASTER_NODENUM;
 
 	test_assert((mbxid = kmailbox_open(remote)) >= 0);
@@ -92,7 +90,7 @@ static void test_api_mailbox_read_write(void)
 	int mbx_out;
 	char message[MAILBOX_MSG_SIZE];
 
-	local  = processor_node_get_num(processor_node_get_id());
+	local  = processor_node_get_num();
 	remote = local == MASTER_NODENUM ? SLAVE_NODENUM : MASTER_NODENUM;
 
 	test_assert((mbx_in = kmailbox_create(local)) >= 0);
@@ -104,7 +102,7 @@ static void test_api_mailbox_read_write(void)
 		{
 			kmemset(message, 0, MAILBOX_MSG_SIZE);
 
-			test_assert(kmailbox_aread(mbx_in, message, MAILBOX_MSG_SIZE) == 0);
+			test_assert(kmailbox_aread(mbx_in, message, MAILBOX_MSG_SIZE) == MAILBOX_MSG_SIZE);
 			test_assert(kmailbox_wait(mbx_in) == 0);
 
 			for (unsigned j = 0; j < MAILBOX_MSG_SIZE; ++j)
@@ -112,7 +110,7 @@ static void test_api_mailbox_read_write(void)
 
 			kmemset(message, 2, MAILBOX_MSG_SIZE);
 
-			test_assert(kmailbox_awrite(mbx_out, message, MAILBOX_MSG_SIZE) == 0);
+			test_assert(kmailbox_awrite(mbx_out, message, MAILBOX_MSG_SIZE) == MAILBOX_MSG_SIZE);
 			test_assert(kmailbox_wait(mbx_out) == 0);
 		}
 	}
@@ -122,12 +120,12 @@ static void test_api_mailbox_read_write(void)
 		{
 			kmemset(message, 1, MAILBOX_MSG_SIZE);
 
-			test_assert(kmailbox_awrite(mbx_out, message, MAILBOX_MSG_SIZE) == 0);
+			test_assert(kmailbox_awrite(mbx_out, message, MAILBOX_MSG_SIZE) == MAILBOX_MSG_SIZE);
 			test_assert(kmailbox_wait(mbx_out) == 0);
 
 			kmemset(message, 0, MAILBOX_MSG_SIZE);
 
-			test_assert(kmailbox_aread(mbx_in, message, MAILBOX_MSG_SIZE) == 0);
+			test_assert(kmailbox_aread(mbx_in, message, MAILBOX_MSG_SIZE) == MAILBOX_MSG_SIZE);
 			test_assert(kmailbox_wait(mbx_in) == 0);
 
 			for (unsigned j = 0; j < MAILBOX_MSG_SIZE; ++j)
@@ -139,34 +137,18 @@ static void test_api_mailbox_read_write(void)
 	test_assert(kmailbox_unlink(mbx_in) == 0);
 }
 
-/*============================================================================*/
-
-/**
- * @brief Unit tests.
- */
-static struct test mailbox_tests_api[] = {
-	{ test_api_mailbox_create_unlink, "[test][mailbox][api] mailbox create unlink [passed]\n" },
-	{ test_api_mailbox_open_close,    "[test][mailbox][api] mailbox open close    [passed]\n" },
-	{ test_api_mailbox_read_write,    "[test][mailbox][api] mailbox read write    [passed]\n" },
-	{ NULL,                            NULL                                                   },
-};
-
 /*============================================================================*
- * Fault tests                                                                *
- *============================================================================*/
-
-/*============================================================================*
- * API Test: Invalid Create                                                   *
+ * Fault Test: Invalid Create                                                 *
  *============================================================================*/
 
 /**
- * @brief API Test: Invalid Create
+ * @brief Fault Test: Invalid Create
  */
 static void test_fault_mailbox_invalid_create(void)
 {
 	int nodenum;
 
-	nodenum = (processor_node_get_num(processor_node_get_id()) + 4) % PROCESSOR_NOC_NODES_NUM;
+	nodenum = (processor_node_get_num() + 4) % PROCESSOR_NOC_NODES_NUM;
 
 	test_assert(kmailbox_create(-1) < 0);
 	test_assert(kmailbox_create(nodenum) < 0);
@@ -174,18 +156,18 @@ static void test_fault_mailbox_invalid_create(void)
 }
 
 /*============================================================================*
- * API Test: Double Create                                                    *
+ * Fault Test: Double Create                                                  *
  *============================================================================*/
 
 /**
- * @brief API Test: Double Create
+ * @brief Fault Test: Double Create
  */
 static void test_fault_mailbox_double_create(void)
 {
 	int local;
 	int mbxid;
 
-	local = processor_node_get_num(processor_node_get_id());
+	local = processor_node_get_num();
 
 	test_assert((mbxid = kmailbox_create(local)) >=  0);
 	test_assert(kmailbox_create(local) < 0);
@@ -193,11 +175,11 @@ static void test_fault_mailbox_double_create(void)
 }
 
 /*============================================================================*
- * API Test: Invalid Unlink                                                   *
+ * Fault Test: Invalid Unlink                                                 *
  *============================================================================*/
 
 /**
- * @brief API Test: Invalid Unlink
+ * @brief Fault Test: Invalid Unlink
  */
 static void test_fault_mailbox_invalid_unlink(void)
 {
@@ -207,18 +189,18 @@ static void test_fault_mailbox_invalid_unlink(void)
 }
 
 /*============================================================================*
- * API Test: Double Unlink                                                    *
+ * Fault Test: Double Unlink                                                  *
  *============================================================================*/
 
 /**
- * @brief API Test: Double Unlink
+ * @brief Fault Test: Double Unlink
  */
 static void test_fault_mailbox_double_unlink(void)
 {
 	int local;
 	int mbxid;
 
-	local = processor_node_get_num(processor_node_get_id());
+	local = processor_node_get_num();
 
 	test_assert((mbxid = kmailbox_create(local)) >=  0);
 	test_assert(kmailbox_unlink(mbxid) == 0);
@@ -226,11 +208,11 @@ static void test_fault_mailbox_double_unlink(void)
 }
 
 /*============================================================================*
- * API Test: Invalid Open                                                     *
+ * Fault Test: Invalid Open                                                   *
  *============================================================================*/
 
 /**
- * @brief API Test: Invalid Open
+ * @brief Fault Test: Invalid Open
  */
 static void test_fault_mailbox_invalid_open(void)
 {
@@ -239,11 +221,11 @@ static void test_fault_mailbox_invalid_open(void)
 }
 
 /*============================================================================*
- * API Test: Invalid Close                                                    *
+ * Fault Test: Invalid Close                                                  *
  *============================================================================*/
 
 /**
- * @brief API Test: Invalid Close
+ * @brief Fault Test: Invalid Close
  */
 static void test_fault_mailbox_invalid_close(void)
 {
@@ -253,18 +235,18 @@ static void test_fault_mailbox_invalid_close(void)
 }
 
 /*============================================================================*
- * API Test: Bad Close                                                        *
+ * Fault Test: Bad Close                                                      *
  *============================================================================*/
 
 /**
- * @brief API Test: Bad Close
+ * @brief Fault Test: Bad Close
  */
 static void test_fault_mailbox_bad_close(void)
 {
 	int local;
 	int mbxid;
 
-	local = processor_node_get_num(processor_node_get_id());
+	local = processor_node_get_num();
 
 	test_assert((mbxid = kmailbox_create(local)) >=  0);
 	test_assert(kmailbox_close(mbxid) < 0);
@@ -272,11 +254,11 @@ static void test_fault_mailbox_bad_close(void)
 }
 
 /*============================================================================*
- * API Test: Invalid Read                                                     *
+ * Fault Test: Invalid Read                                                   *
  *============================================================================*/
 
 /**
- * @brief API Test: Invalid Read
+ * @brief Fault Test: Invalid Read
  */
 static void test_fault_mailbox_invalid_read(void)
 {
@@ -288,11 +270,11 @@ static void test_fault_mailbox_invalid_read(void)
 }
 
 /*============================================================================*
- * API Test: Invalid Read Size                                                *
+ * Fault Test: Invalid Read Size                                              *
  *============================================================================*/
 
 /**
- * @brief API Test: Invalid Read Size
+ * @brief Fault Test: Invalid Read Size
  */
 static void test_fault_mailbox_invalid_read_size(void)
 {
@@ -300,7 +282,7 @@ static void test_fault_mailbox_invalid_read_size(void)
 	int local;
 	char buffer[MAILBOX_MSG_SIZE];
 
-	local = processor_node_get_num(processor_node_get_id());
+	local = processor_node_get_num();
 
 	test_assert((mbxid = kmailbox_create(local)) >=  0);
 	test_assert(kmailbox_aread(mbxid, buffer, -1) < 0);
@@ -311,18 +293,18 @@ static void test_fault_mailbox_invalid_read_size(void)
 }
 
 /*============================================================================*
- * API Test: Null Read                                                        *
+ * Fault Test: Null Read                                                      *
  *============================================================================*/
 
 /**
- * @brief API Test: Null Read
+ * @brief Fault Test: Null Read
  */
 static void test_fault_mailbox_null_read(void)
 {
 	int mbxid;
 	int local;
 
-	local = processor_node_get_num(processor_node_get_id());
+	local = processor_node_get_num();
 
 	test_assert((mbxid = kmailbox_create(local)) >=  0);
 	test_assert(kmailbox_aread(mbxid, NULL, MAILBOX_MSG_SIZE) < 0);
@@ -330,11 +312,11 @@ static void test_fault_mailbox_null_read(void)
 }
 
 /*============================================================================*
- * API Test: Invalid Write                                                    *
+ * Fault Test: Invalid Write                                                  *
  *============================================================================*/
 
 /**
- * @brief API Test: Invalid Write
+ * @brief Fault Test: Invalid Write
  */
 static void test_fault_mailbox_invalid_write(void)
 {
@@ -346,11 +328,11 @@ static void test_fault_mailbox_invalid_write(void)
 }
 
 /*============================================================================*
- * API Test: Bad Write                                                        *
+ * Fault Test: Bad Write                                                      *
  *============================================================================*/
 
 /**
- * @brief API Test: Bad Write
+ * @brief Fault Test: Bad Write
  */
 static void test_fault_mailbox_bad_write(void)
 {
@@ -358,7 +340,7 @@ static void test_fault_mailbox_bad_write(void)
 	int local;
 	char buffer[MAILBOX_MSG_SIZE];
 
-	local = processor_node_get_num(processor_node_get_id());
+	local = processor_node_get_num();
 
 	test_assert((mbxid = kmailbox_create(local)) >=  0);
 	test_assert(kmailbox_awrite(mbxid, buffer, MAILBOX_MSG_SIZE) < 0);
@@ -366,45 +348,57 @@ static void test_fault_mailbox_bad_write(void)
 }
 
 /*============================================================================*
- * API Test: Bad Wait                                                         *
+ * Fault Test: Bad Wait                                                       *
  *============================================================================*/
 
 /**
- * @brief API Test: Bad Write
+ * @brief Fault Test: Bad Write
  */
 static void test_fault_mailbox_bad_wait(void)
 {
 	test_assert(kmailbox_wait(-1) < 0);
+#ifndef __unix64__
 	test_assert(kmailbox_wait(MAILBOX_CREATE_MAX) < 0);
 	test_assert(kmailbox_wait(MAILBOX_OPEN_MAX) < 0);
+#endif
 	test_assert(kmailbox_wait(1000000) < 0);
 }
 
-/*============================================================================*/
+/*============================================================================*
+ * Test Driver                                                                *
+ *============================================================================*/
+
+/**
+ * @brief Unit tests.
+ */
+static struct test mailbox_tests_api[] = {
+#ifndef __unix64__
+	{ test_api_mailbox_create_unlink, "[test][mailbox][api] mailbox create unlink [passed]" },
+	{ test_api_mailbox_open_close,    "[test][mailbox][api] mailbox open close    [passed]" },
+#endif
+	{ test_api_mailbox_read_write,    "[test][mailbox][api] mailbox read write    [passed]" },
+	{ NULL,                            NULL                                                 },
+};
 
 /**
  * @brief Unit tests.
  */
 static struct test mailbox_tests_fault[] = {
-	{ test_fault_mailbox_invalid_create,    "[test][mailbox][fault] mailbox invalid create    [passed]\n" },
-	{ test_fault_mailbox_double_create,     "[test][mailbox][fault] mailbox double create     [passed]\n" },
-	{ test_fault_mailbox_invalid_unlink,    "[test][mailbox][fault] mailbox invalid unlink    [passed]\n" },
-	{ test_fault_mailbox_double_unlink,     "[test][mailbox][fault] mailbox double unlink     [passed]\n" },
-	{ test_fault_mailbox_invalid_open,      "[test][mailbox][fault] mailbox invalid open      [passed]\n" },
-	{ test_fault_mailbox_invalid_close,     "[test][mailbox][fault] mailbox invalid close     [passed]\n" },
-	{ test_fault_mailbox_bad_close,         "[test][mailbox][fault] mailbox bad close         [passed]\n" },
-	{ test_fault_mailbox_invalid_read,      "[test][mailbox][fault] mailbox invalid read      [passed]\n" },
-	{ test_fault_mailbox_invalid_read_size, "[test][mailbox][fault] mailbox invalid read size [passed]\n" },
-	{ test_fault_mailbox_null_read,         "[test][mailbox][fault] mailbox null read         [passed]\n" },
-	{ test_fault_mailbox_invalid_write,     "[test][mailbox][fault] mailbox invalid write     [passed]\n" },
-	{ test_fault_mailbox_bad_write,         "[test][mailbox][fault] mailbox bad write         [passed]\n" },
-	{ test_fault_mailbox_bad_wait,          "[test][mailbox][fault] mailbox bad wait          [passed]\n" },
-	{ NULL,                                 NULL                                                          },
+	{ test_fault_mailbox_invalid_create,    "[test][mailbox][fault] mailbox invalid create    [passed]" },
+	{ test_fault_mailbox_double_create,     "[test][mailbox][fault] mailbox double create     [passed]" },
+	{ test_fault_mailbox_invalid_unlink,    "[test][mailbox][fault] mailbox invalid unlink    [passed]" },
+	{ test_fault_mailbox_double_unlink,     "[test][mailbox][fault] mailbox double unlink     [passed]" },
+	{ test_fault_mailbox_invalid_open,      "[test][mailbox][fault] mailbox invalid open      [passed]" },
+	{ test_fault_mailbox_invalid_close,     "[test][mailbox][fault] mailbox invalid close     [passed]" },
+	{ test_fault_mailbox_bad_close,         "[test][mailbox][fault] mailbox bad close         [passed]" },
+	{ test_fault_mailbox_invalid_read,      "[test][mailbox][fault] mailbox invalid read      [passed]" },
+	{ test_fault_mailbox_invalid_read_size, "[test][mailbox][fault] mailbox invalid read size [passed]" },
+	{ test_fault_mailbox_null_read,         "[test][mailbox][fault] mailbox null read         [passed]" },
+	{ test_fault_mailbox_invalid_write,     "[test][mailbox][fault] mailbox invalid write     [passed]" },
+	{ test_fault_mailbox_bad_write,         "[test][mailbox][fault] mailbox bad write         [passed]" },
+	{ test_fault_mailbox_bad_wait,          "[test][mailbox][fault] mailbox bad wait          [passed]" },
+	{ NULL,                                  NULL                                                       },
 };
-
-/*============================================================================*
- * Test Driver                                                                *
- *============================================================================*/
 
 /**
  * The test_thread_mgmt() function launches testing units on thread manager.
@@ -413,20 +407,29 @@ static struct test mailbox_tests_fault[] = {
  */
 void test_mailbox(void)
 {
+	int nodenum;
+
+	nodenum = processor_node_get_num();
+
 	/* API Tests */
-	nanvix_puts("--------------------------------------------------------------------------------");
+	if (nodenum == processor_node_get_num())
+		nanvix_puts("--------------------------------------------------------------------------------");
 	for (unsigned i = 0; mailbox_tests_api[i].test_fn != NULL; i++)
 	{
 		mailbox_tests_api[i].test_fn();
-		nanvix_puts(mailbox_tests_api[i].name);
+		if (nodenum == processor_node_get_num())
+			nanvix_puts(mailbox_tests_api[i].name);
 	}
 
-	/* FAULT Tests */
-	nanvix_puts("--------------------------------------------------------------------------------");
-	for (unsigned i = 0; mailbox_tests_fault[i].test_fn != NULL; i++)
+	if (nodenum == processor_node_get_num())
 	{
-		mailbox_tests_fault[i].test_fn();
-		nanvix_puts(mailbox_tests_fault[i].name);
+		/* Fault Tests */
+		nanvix_puts("--------------------------------------------------------------------------------");
+		for (unsigned i = 0; mailbox_tests_fault[i].test_fn != NULL; i++)
+		{
+			mailbox_tests_fault[i].test_fn();
+			nanvix_puts(mailbox_tests_fault[i].name);
+		}
 	}
 }
 

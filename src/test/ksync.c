@@ -36,7 +36,7 @@
 #define NR_NODES       2
 #define NR_NODES_MAX   PROCESSOR_NOC_NODES_NUM
 #define MASTER_NODENUM 0
-#define SLAVE_NODENUM  17
+#define SLAVE_NODENUM  1
 
 /**
  * @brief Auxiliar array
@@ -58,7 +58,7 @@ void test_api_sync_create_unlink(void)
 	int syncid;
 	int nodes[NR_NODES];
 
-	nodes[0] = processor_node_get_num(processor_node_get_id());
+	nodes[0] = processor_node_get_num();
 
 	for (int i = 0, j = 1; i < NR_NODES; i++)
 	{
@@ -84,7 +84,7 @@ void test_api_sync_open_close(void)
 	int syncid;
 	int nodes[NR_NODES];
 
-	nodes[0] = processor_node_get_num(processor_node_get_id());
+	nodes[0] = processor_node_get_num();
 
 	for (int i = 0, j = 1; i < NR_NODES; i++)
 	{
@@ -112,7 +112,7 @@ void test_api_sync_signal_wait(void)
 	int nodenum;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 	nodes[0] = MASTER_NODENUM;
 
 	for (int i = 0, j = 1; i < NR_NODES; i++)
@@ -150,33 +150,19 @@ void test_api_sync_signal_wait(void)
 	test_assert(ksync_unlink(syncin) == 0);
 }
 
-/**
- * @brief API tests.
- */
-static struct test sync_tests_api[] = {
-	{ test_api_sync_create_unlink, "[test][sync][api] sync create/unlink [passed]\n" },
-	{ test_api_sync_open_close,    "[test][sync][api] sync open/close    [passed]\n" },
-	{ test_api_sync_signal_wait,   "[test][sync][api] sync wait          [passed]\n" },
-	{ NULL,                        NULL                                              },
-};
-
 /*============================================================================*
- * FAULT TESTS                                                                *
- *============================================================================*/
-
-/*============================================================================*
- * Fault Injection Test: Invalid Create                                       *
+ * Fault Test: Invalid Create                                                 *
  *============================================================================*/
 
 /**
- * @brief Fault Injection Test: Synchronization Point Invalid Create
+ * @brief Fault Test: Synchronization Point Invalid Create
  */
 void test_fault_sync_invalid_create(void)
 {
 	int nodenum;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 	nodes[0] = (nodenum == MASTER_NODENUM) ? SLAVE_NODENUM : MASTER_NODENUM;
 
 	for (int i = 0, j = 1; i < NR_NODES; i++)
@@ -200,18 +186,18 @@ void test_fault_sync_invalid_create(void)
 }
 
 /*============================================================================*
- * Fault Injection Test: Bad Create                                           *
+ * Fault Test: Bad Create                                                     *
  *============================================================================*/
 
 /**
- * @brief Fault Injection Test: Synchronization Point Bad Create
+ * @brief Fault Test: Synchronization Point Bad Create
  */
 void test_fault_sync_bad_create1(void)
 {
 	int nodenum;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 
 	/* Invalid list of NoC nodes. */
 	for (int i = NR_NODES - 1; i >= 0; i--)
@@ -248,14 +234,14 @@ void test_fault_sync_bad_create1(void)
 }
 
 /**
- * @brief Fault Injection Test: Synchronization Point Bad Create
+ * @brief Fault Test: Synchronization Point Bad Create
  */
 void test_fault_sync_bad_create2(void)
 {
 	int nodenum;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 
 	/* Invalid list of NoC nodes. */
 	for (int i = NR_NODES - 1; i >= 0; i--)
@@ -291,7 +277,7 @@ void test_fault_sync_bad_create2(void)
 }
 
 /**
- * @brief Fault Injection Test: Synchronization Point Bad Create
+ * @brief Fault Test: Synchronization Point Bad Create
  */
 void test_fault_sync_bad_create(void)
 {
@@ -300,18 +286,18 @@ void test_fault_sync_bad_create(void)
 }
 
 /*============================================================================*
- * Fault Injection Test: Invalid Open                                         *
+ * Fault Test: Invalid Open                                                   *
  *============================================================================*/
 
 /**
- * @brief Fault Injection Test: Synchronization Point Invalid Open
+ * @brief Fault Test: Synchronization Point Invalid Open
  */
 void test_fault_sync_invalid_open(void)
 {
 	int nodenum;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 	nodes[0] = nodenum;
 
 	/* Build nodes list. */
@@ -336,18 +322,18 @@ void test_fault_sync_invalid_open(void)
 }
 
 /*============================================================================*
- * Fault Injection Test: Bad Open                                             *
+ * Fault Test: Bad Open                                                       *
  *============================================================================*/
 
 /**
- * @brief Fault Injection Test: Synchronization Point Bad Open
+ * @brief Fault Test: Synchronization Point Bad Open
  */
 void test_fault_sync_bad_open1(void)
 {
 	int nodenum;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 	nodes[0] = nodenum;
 
 	/* Invalid list of NoC nodes. */
@@ -376,14 +362,14 @@ void test_fault_sync_bad_open1(void)
 }
 
 /**
- * @brief Fault Injection Test: Synchronization Point Bad Open
+ * @brief Fault Test: Synchronization Point Bad Open
  */
 void test_fault_sync_bad_open2(void)
 {
 	int nodenum;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 
 	/* Invalid list of NoC nodes. */
 	for (int i = NR_NODES - 1; i >= 0; i--)
@@ -411,7 +397,7 @@ void test_fault_sync_bad_open2(void)
 }
 
 /**
- * @brief Fault Injection Test: Synchronization Point Bad Open
+ * @brief Fault Test: Synchronization Point Bad Open
  */
 void test_fault_sync_bad_open(void)
 {
@@ -420,11 +406,11 @@ void test_fault_sync_bad_open(void)
 }
 
 /*============================================================================*
- * Fault Injection Test: Invalid Unlink                                       *
+ * Fault Test: Invalid Unlink                                                 *
  *============================================================================*/
 
 /**
- * @brief Fault Injection Test: Synchronization Point Invalid Unlink
+ * @brief Fault Test: Synchronization Point Invalid Unlink
  */
 void test_fault_sync_invalid_unlink(void)
 {
@@ -434,11 +420,11 @@ void test_fault_sync_invalid_unlink(void)
 }
 
 /*============================================================================*
- * Fault Injection Test: Bad Unlink                                           *
+ * Fault Test: Bad Unlink                                                     *
  *============================================================================*/
 
 /**
- * @brief Fault Injection Test: Synchronization Point Bad Unlink
+ * @brief Fault Test: Synchronization Point Bad Unlink
  */
 void test_fault_sync_bad_unlink(void)
 {
@@ -446,7 +432,7 @@ void test_fault_sync_bad_unlink(void)
 	int syncid;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 	nodes[0] = nodenum;
 
 	/* Build nodes list. */
@@ -464,11 +450,11 @@ void test_fault_sync_bad_unlink(void)
 }
 
 /*============================================================================*
- * Fault Injection Test: Double Unlink                                        *
+ * Fault Test: Double Unlink                                                  *
  *============================================================================*/
 
 /**
- * @brief Fault Injection Test: Synchronization Point Double Unlink
+ * @brief Fault Test: Synchronization Point Double Unlink
  */
 void test_fault_sync_double_unlink(void)
 {
@@ -476,7 +462,7 @@ void test_fault_sync_double_unlink(void)
 	int syncid;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 	nodes[0] = nodenum;
 
 	/* Build nodes list. */
@@ -494,11 +480,11 @@ void test_fault_sync_double_unlink(void)
 }
 
 /*============================================================================*
- * Fault Injection Test: Invalid Close                                        *
+ * Fault Test: Invalid Close                                                  *
  *============================================================================*/
 
 /**
- * @brief Fault Injection Test: Synchronization Point Invalid Close
+ * @brief Fault Test: Synchronization Point Invalid Close
  */
 void test_fault_sync_invalid_close(void)
 {
@@ -508,11 +494,11 @@ void test_fault_sync_invalid_close(void)
 }
 
 /*============================================================================*
- * Fault Injection Test: Bad Close                                            *
+ * Fault Test: Bad Close                                                      *
  *============================================================================*/
 
 /**
- * @brief Fault Injection Test: Synchronization Point Bad Close
+ * @brief Fault Test: Synchronization Point Bad Close
  */
 void test_fault_sync_bad_close(void)
 {
@@ -520,7 +506,7 @@ void test_fault_sync_bad_close(void)
 	int syncid;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 	nodes[0] = nodenum;
 
 	/* Build nodes list. */
@@ -538,11 +524,11 @@ void test_fault_sync_bad_close(void)
 }
 
 /*============================================================================*
- * Fault Injection Test: Double Close                                         *
+ * Fault Test: Double Close                                                   *
  *============================================================================*/
 
 /**
- * @brief Fault Injection Test: Synchronization Point Double Close
+ * @brief Fault Test: Synchronization Point Double Close
  */
 void test_fault_sync_double_close(void)
 {
@@ -550,7 +536,7 @@ void test_fault_sync_double_close(void)
 	int syncid;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 	nodes[0] = nodenum;
 
 	/* Build nodes list. */
@@ -568,11 +554,11 @@ void test_fault_sync_double_close(void)
 }
 
 /*============================================================================*
- * Fault Injection Test: Invalid Signal                                       *
+ * Fault Test: Invalid Signal                                                 *
  *============================================================================*/
 
 /**
- * @brief Fault Injection Test: Synchronization Point Invalid Signal
+ * @brief Fault Test: Synchronization Point Invalid Signal
  */
 void test_fault_sync_invalid_signal(void)
 {
@@ -582,11 +568,11 @@ void test_fault_sync_invalid_signal(void)
 }
 
 /*============================================================================*
- * Fault Injection Test: Bad Signal                                           *
+ * Fault Test: Bad Signal                                                     *
  *============================================================================*/
 
 /**
- * @brief Fault Injection Test: Synchronization Point Bad Signal
+ * @brief Fault Test: Synchronization Point Bad Signal
  */
 void test_fault_sync_bad_signal(void)
 {
@@ -594,7 +580,7 @@ void test_fault_sync_bad_signal(void)
 	int syncid;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 	nodes[0] = nodenum;
 
 	/* Build nodes list. */
@@ -612,11 +598,11 @@ void test_fault_sync_bad_signal(void)
 }
 
 /*============================================================================*
- * Fault Injection Test: Invalid Wait                                         *
+ * Fault Test: Invalid Wait                                                   *
  *============================================================================*/
 
 /**
- * @brief Fault Injection Test: Synchronization Point Invalid Wait
+ * @brief Fault Test: Synchronization Point Invalid Wait
  */
 void test_fault_sync_invalid_wait(void)
 {
@@ -626,11 +612,11 @@ void test_fault_sync_invalid_wait(void)
 }
 
 /*============================================================================*
- * Fault Injection Test: Bad Wait                                             *
+ * Fault Test: Bad Wait                                                       *
  *============================================================================*/
 
 /**
- * @brief Fault Injection Test: Synchronization Point Bad Wait
+ * @brief Fault Test: Synchronization Point Bad Wait
  */
 void test_fault_sync_bad_wait(void)
 {
@@ -638,7 +624,7 @@ void test_fault_sync_bad_wait(void)
 	int syncid;
 	int nodes[NR_NODES];
 
-	nodenum = processor_node_get_num(processor_node_get_id());
+	nodenum = processor_node_get_num();
 	nodes[0] = nodenum;
 
 	/* Build nodes list. */
@@ -656,33 +642,41 @@ void test_fault_sync_bad_wait(void)
 }
 
 /*============================================================================*
- * Fault Injection Test: Structure                                            *
+ * Test Driver                                                                *
  *============================================================================*/
+
+/**
+ * @brief API tests.
+ */
+static struct test sync_tests_api[] = {
+#ifndef __unix64__
+	{ test_api_sync_create_unlink, "[test][sync][api] sync create/unlink [passed]" },
+	{ test_api_sync_open_close,    "[test][sync][api] sync open/close    [passed]" },
+#endif
+	{ test_api_sync_signal_wait,   "[test][sync][api] sync wait          [passed]" },
+	{ NULL,                         NULL                                           },
+};
 
 /**
  * @brief Fault tests.
  */
 static struct test sync_tests_fault[] = {
-	{ test_fault_sync_invalid_create, "[test][sync][fault] sync invalid create [passed]\n" },
-	{ test_fault_sync_bad_create,     "[test][sync][fault] sync bad create     [passed]\n" },
-	{ test_fault_sync_invalid_open,   "[test][sync][fault] sync invalid open   [passed]\n" },
-	{ test_fault_sync_bad_open,       "[test][sync][fault] sync bad open       [passed]\n" },
-	{ test_fault_sync_invalid_unlink, "[test][sync][fault] sync invalid unlink [passed]\n" },
-	{ test_fault_sync_bad_unlink,     "[test][sync][fault] sync bad unlink     [passed]\n" },
-	{ test_fault_sync_double_unlink,  "[test][sync][fault] sync double unlink  [passed]\n" },
-	{ test_fault_sync_invalid_close,  "[test][sync][fault] sync invalid close  [passed]\n" },
-	{ test_fault_sync_bad_close,      "[test][sync][fault] sync bad close      [passed]\n" },
-	{ test_fault_sync_double_close,   "[test][sync][fault] sync double close   [passed]\n" },
-	{ test_fault_sync_invalid_signal, "[test][sync][fault] sync invalid signal [passed]\n" },
-	{ test_fault_sync_bad_signal,     "[test][sync][fault] sync bad signal     [passed]\n" },
-	{ test_fault_sync_invalid_wait,   "[test][sync][fault] sync invalid wait   [passed]\n" },
-	{ test_fault_sync_bad_wait,       "[test][sync][fault] sync bad wait       [passed]\n" },
-	{ NULL,                           NULL                                                 },
+	{ test_fault_sync_invalid_create, "[test][sync][api] sync invalid create [passed]" },
+	{ test_fault_sync_bad_create,     "[test][sync][api] sync bad create     [passed]" },
+	{ test_fault_sync_invalid_open,   "[test][sync][api] sync invalid open   [passed]" },
+	{ test_fault_sync_bad_open,       "[test][sync][api] sync bad open       [passed]" },
+	{ test_fault_sync_invalid_unlink, "[test][sync][api] sync invalid unlink [passed]" },
+	{ test_fault_sync_bad_unlink,     "[test][sync][api] sync bad unlink     [passed]" },
+	{ test_fault_sync_double_unlink,  "[test][sync][api] sync double unlink  [passed]" },
+	{ test_fault_sync_invalid_close,  "[test][sync][api] sync invalid close  [passed]" },
+	{ test_fault_sync_bad_close,      "[test][sync][api] sync bad close      [passed]" },
+	{ test_fault_sync_double_close,   "[test][sync][api] sync double close   [passed]" },
+	{ test_fault_sync_invalid_signal, "[test][sync][api] sync invalid signal [passed]" },
+	{ test_fault_sync_bad_signal,     "[test][sync][api] sync bad signal     [passed]" },
+	{ test_fault_sync_invalid_wait,   "[test][sync][api] sync invalid wait   [passed]" },
+	{ test_fault_sync_bad_wait,       "[test][sync][api] sync bad wait       [passed]" },
+	{ NULL,                            NULL                                            },
 };
-
-/*============================================================================*
- * Test Driver                                                                *
- *============================================================================*/
 
 /**
  * The test_thread_mgmt() function launches testing units on thread manager.
@@ -691,20 +685,30 @@ static struct test sync_tests_fault[] = {
  */
 void test_sync(void)
 {
+	int nodenum;
+
+	nodenum = processor_node_get_num();
+
 	/* API Tests */
-	nanvix_puts("--------------------------------------------------------------------------------");
+	if (nodenum == processor_node_get_num())
+		nanvix_puts("--------------------------------------------------------------------------------");
 	for (int i = 0; sync_tests_api[i].test_fn != NULL; i++)
 	{
 		sync_tests_api[i].test_fn();
-		nanvix_puts(sync_tests_api[i].name);
+
+		if (nodenum == processor_node_get_num())
+			nanvix_puts(sync_tests_api[i].name);
 	}
 
-	/* Fault Injection Tests */
-	nanvix_puts("--------------------------------------------------------------------------------");
-	for (int i = 0; sync_tests_fault[i].test_fn != NULL; i++)
+	if (nodenum == processor_node_get_num())
 	{
-		sync_tests_fault[i].test_fn();
-		nanvix_puts(sync_tests_fault[i].name);
+		/* Fault Tests */
+		nanvix_puts("--------------------------------------------------------------------------------");
+		for (int i = 0; sync_tests_fault[i].test_fn != NULL; i++)
+		{
+			sync_tests_fault[i].test_fn();
+			nanvix_puts(sync_tests_fault[i].name);
+		}
 	}
 }
 

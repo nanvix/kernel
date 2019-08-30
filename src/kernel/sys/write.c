@@ -28,13 +28,58 @@
 #include <stdint.h>
 
 /**
+ * @brief Write buffer size.
+ */
+#define WRITE_BUFFER_SIZE 512
+
+/**
+ * @brief Write buffer.
+ */
+PRIVATE char bigbuf[WRITE_BUFFER_SIZE + 1];
+
+/**
+ * @brief Writes a formated string on the kernels's output device.
+ *
+ * @param fmt Formated string.
+ */
+PRIVATE void kprintf2(const char *fmt, ...)
+{
+	size_t len;   /* String length.           */
+	va_list args; /* Variable arguments list. */
+
+	/* Convert to raw string. */
+	va_start(args, fmt);
+	len = kvsprintf(bigbuf, fmt, args);
+	bigbuf[len++] = '\n';
+	bigbuf[len++] = '\0';
+	va_end(args);
+
+	stdout_write(bigbuf, len);
+}
+
+/**
  * @brief Writes to a device.
  */
 PUBLIC ssize_t kernel_write(int fd, const char *buf, size_t n)
 {
+	int clusternum;
+
 	UNUSED(fd);
 
-	stdout_write(buf, n);
+	/* Invalid file descriptor. */
+	if (fd < 0)
+		return (-EINVAL);
+
+	/* Invalid buffer. */
+	if (buf == NULL)
+		return (-EINVAL);
+
+	/* Invalid buffer size. */
+	if (n > WRITE_BUFFER_SIZE)
+		return (-EINVAL);
+
+	clusternum = cluster_get_num();
+	kprintf2("cluster %d: %s", clusternum, buf);
 
 	return (n);
 }

@@ -61,7 +61,7 @@
 	 */
 	/**@{*/
 	extern void test_thread_mgmt(void);
-	extern void test_thread_sync(void);
+	extern void test_thread_sleep(void);
 	extern void test_perf(void);
 	extern void test_signal(void);
 	extern void test_network(void);

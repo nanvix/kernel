@@ -91,26 +91,36 @@ void nanvix_puts(const char *str)
  */
 void ___start(int argc, const char *argv[])
 {
+	int nodenum;
+
 	((void) argc);
 	((void) argv);
 
-	test_thread_mgmt();
-	test_thread_sync();
-	test_perf();
-	test_signal();
-#if __TARGET_HAS_SYNC
-	test_sync();
-#endif
-#if __TARGET_HAS_MAILBOX
-	test_mailbox();
-#endif
-#if __TARGET_HAS_PORTAL
-	test_portal();
-#endif
+	nodenum = processor_node_get_num();
 
-#if __NANVIX_HAS_NETWORK
-	test_network();
+	if (nodenum == processor_node_get_num())
+	{
+		test_thread_mgmt();
+		test_thread_sleep();
+
+#ifndef __unix64__
+		test_perf();
+		test_signal();
 #endif
+	}
+
+	#if __TARGET_HAS_SYNC
+		test_sync();
+	#endif
+	#if __TARGET_HAS_MAILBOX
+		test_mailbox();
+	#endif
+	#if __TARGET_HAS_PORTAL
+		test_portal();
+	#endif
+	#if __NANVIX_HAS_NETWORK
+		test_network();
+	#endif
 
 	/* Halt. */
 	kshutdown();

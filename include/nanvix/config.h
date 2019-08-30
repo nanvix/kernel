@@ -36,8 +36,13 @@
 	 * @name Synchronization Primitives
 	 */
 	/**@{*/
-	#define __NANVIX_MUTEX_SLEEP     1 /**< Blocking Mutexes?    */
-	#define __NANVIX_SEMAPHORE_SLEEP 1 /**< Blocking Semaphores? */
+	#if defined(__unix64__)
+		#define __NANVIX_MUTEX_SLEEP     0 /**< Blocking Mutexes?    */
+		#define __NANVIX_SEMAPHORE_SLEEP 0 /**< Blocking Semaphores? */
+	#else
+		#define __NANVIX_MUTEX_SLEEP     1 /**< Blocking Mutexes?    */
+		#define __NANVIX_SEMAPHORE_SLEEP 1 /**< Blocking Semaphores? */
+	#endif
 	/**@}*/
 
 	/**

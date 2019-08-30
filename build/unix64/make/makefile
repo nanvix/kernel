@@ -45,7 +45,7 @@ export LD = ld
 export AR = ar
 
 # Timeout Variable
-export TIMEOUT ?= 5
+export TIMEOUT ?= 60
 
 # Compiler Options
 export CFLAGS += -D_GNU_SOURCE

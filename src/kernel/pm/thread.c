@@ -27,11 +27,23 @@
 #include <nanvix/thread.h>
 #include <errno.h>
 
+/*
+ * Import definitions.
+ */
+EXTERN void kmain(int argc, const char *argv[]);
+
 /**
  * @brief Thread table.
  */
 EXTENSION PUBLIC struct thread threads[KTHREAD_MAX] = {
-	[0]                       = {.tid = KTHREAD_MASTER_TID, .state = THREAD_RUNNING},
+	[0] = {
+		.tid = KTHREAD_MASTER_TID,
+		.coreid = 0,
+		.state = THREAD_RUNNING,
+		.arg = NULL,
+		.start = (void *) kmain,
+		.next = NULL
+	},
 #if CLUSTER_IS_MULTICORE
 	[1 ... (KTHREAD_MAX - 1)] = {.tid = KTHREAD_NULL_TID, .state = THREAD_NOT_STARTED}
 #endif
@@ -91,9 +103,7 @@ PUBLIC struct thread *thread_get_curr(void)
 	{
 		/* Found. */
 		if (threads[i].coreid == mycoreid)
-		{
 			return (&threads[i]);
-		}
 	}
 
 	/* Should not happen. */
@@ -120,7 +130,7 @@ PUBLIC struct thread *thread_get_curr(void)
  */
 PRIVATE struct thread *thread_alloc(void)
 {
-	for (int i = 0; i < KTHREAD_MAX; i++)
+	for (int i = 1; i < KTHREAD_MAX; i++)
 	{
 		/* Found. */
 		if (threads[i].state == THREAD_NOT_STARTED)
@@ -157,6 +167,7 @@ PRIVATE void thread_free(struct thread *t)
 	KASSERT(t >= &threads[0]);
 	KASSERT(t <= &threads[KTHREAD_MAX - 1]);
 
+	t->coreid = -1;
 	t->state = THREAD_NOT_STARTED;
 	t->tid = KTHREAD_NULL_TID;
 	nthreads--;
@@ -201,13 +212,12 @@ PUBLIC NORETURN void thread_exit(void *retval)
 
 	spinlock_unlock(&lock_tm);
 
-	/* No rollback from this point. */
+	/* No rollback after this point. */
 
 	core_reset();
 
 	/* Never gets here. */
-	while (true)
-		noop();
+	UNREACHABLE();
 }
 
 /*============================================================================*
@@ -270,8 +280,7 @@ PRIVATE NORETURN void thread_start(void)
 	thread_exit(retval);
 
 	/* Never gets here. */
-	while (true)
-		noop();
+	UNREACHABLE();
 }
 
 /*============================================================================*
@@ -293,6 +302,7 @@ PRIVATE NORETURN void thread_start(void)
  */
 PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
 {
+	int ret = 0;               /* Return value.             */
 	int _tid;                  /* Unique thread identifier. */
 	struct thread *new_thread; /* New thread.               */
 
@@ -329,9 +339,27 @@ PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
 		dcache_invalidate();
 	}
 
-	core_start(thread_get_coreid(new_thread), thread_start);
+	/*
+	 * We should do some busy waitting here. When the kernel is under
+	 * stress, there is a chance that we allocate a core that is in
+	 * RUNNING state. That happens because a previous thread running
+	 * on this core has existed and we have joined it, but the
+	 * terminated thread hasn't had enough time to issue issue a
+	 * core_reset().
+	 */
+	do
+		ret = core_start(thread_get_coreid(new_thread), thread_start);
+	while (ret == -EBUSY);
 
-	return (0);
+	/* Rollback. */
+	if (ret != 0)
+	{
+		spinlock_lock(&lock_tm);
+			thread_free(new_thread);
+		spinlock_unlock(&lock_tm);
+	}
+
+	return (ret);
 }
 
 /*============================================================================*
