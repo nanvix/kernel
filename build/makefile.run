@@ -34,11 +34,15 @@ run-iocluster:
 run-ccluster:
 	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(EXEC) $(TARGET) ccluster --no-debug
 
-# Runs Unit Tests in Compute Cluster.
+# Runs Unit Tests in all clusters with a timeout.
+test:
+	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(EXEC) $(TARGET) all --no-debug $(TIMEOUT)
+
+# Runs Unit Tests in Compute Cluster with a timout
 test-ccluster:
 	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(EXEC) $(TARGET) ccluster --no-debug $(TIMEOUT)
 
-# Runs Unit Tests in IO Cluster with the Timeout.
+# Runs Unit Tests in IO Cluster with a Timeout.
 test-iocluster:
 	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(EXECB) $(TARGET) iocluster --no-debug $(TIMEOUT)
 
