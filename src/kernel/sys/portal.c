@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ * Copyright(c) 2011-2019 The Maintainers of Nanvix
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+
 #include <nanvix/hal/hal.h>
 #include <nanvix/kernel/portal.h>
 #include <posix/errno.h>
@@ -33,11 +34,11 @@
  *============================================================================*/
 
 /**
- * @see _portal_create().
+ * @see do_portal_create().
  */
 PUBLIC int kernel_portal_create(int local)
 {
-	return (_portal_create(local));
+	return (do_portal_create(local));
 }
 
 /*============================================================================*
@@ -45,11 +46,11 @@ PUBLIC int kernel_portal_create(int local)
  *============================================================================*/
 
 /**
- * @see _portal_allow().
+ * @see do_portal_allow().
  */
 PUBLIC int kernel_portal_allow(int portalid, int remote)
 {
-	return (_portal_allow(portalid, remote));
+	return (do_portal_allow(portalid, remote));
 }
 
 /*============================================================================*
@@ -57,11 +58,11 @@ PUBLIC int kernel_portal_allow(int portalid, int remote)
  *============================================================================*/
 
 /**
- * @see _portal_open().
+ * @see do_portal_open().
  */
 PUBLIC int kernel_portal_open(int local, int remote)
 {
-	return (_portal_open(local, remote));
+	return (do_portal_open(local, remote));
 }
 
 /*============================================================================*
@@ -69,11 +70,11 @@ PUBLIC int kernel_portal_open(int local, int remote)
  *============================================================================*/
 
 /**
- * @see _portal_unlink().
+ * @see do_portal_unlink().
  */
 PUBLIC int kernel_portal_unlink(int portalid)
 {
-	return (_portal_unlink(portalid));
+	return (do_portal_unlink(portalid));
 }
 
 /*============================================================================*
@@ -81,11 +82,11 @@ PUBLIC int kernel_portal_unlink(int portalid)
  *============================================================================*/
 
 /**
- * @see _portal_close().
+ * @see do_portal_close().
  */
 PUBLIC int kernel_portal_close(int portalid)
 {
-	return (_portal_close(portalid));
+	return (do_portal_close(portalid));
 }
 
 /*============================================================================*
@@ -93,11 +94,11 @@ PUBLIC int kernel_portal_close(int portalid)
  *============================================================================*/
 
 /**
- * @see _portal_awrite().
+ * @see do_portal_awrite().
  */
 PUBLIC int kernel_portal_awrite(int portalid, const void * buffer, size_t size)
 {
-	return (_portal_awrite(portalid, buffer, size));
+	return (do_portal_awrite(portalid, buffer, size));
 }
 
 /*============================================================================*
@@ -105,11 +106,11 @@ PUBLIC int kernel_portal_awrite(int portalid, const void * buffer, size_t size)
  *============================================================================*/
 
 /**
- * @see _portal_aread().
+ * @see do_portal_aread().
  */
 PUBLIC int kernel_portal_aread(int portalid, void * buffer, size_t size)
 {
-	return (_portal_aread(portalid, buffer, size));
+	return (do_portal_aread(portalid, buffer, size));
 }
 
 /*============================================================================*
@@ -117,11 +118,11 @@ PUBLIC int kernel_portal_aread(int portalid, void * buffer, size_t size)
  *============================================================================*/
 
 /**
- * @see _portal_wait().
+ * @see do_portal_wait().
  */
 PUBLIC int kernel_portal_wait(int portalid)
 {
-	return (_portal_wait(portalid));
+	return (do_portal_wait(portalid));
 }
 
 #endif /* __TARGET_HAS_PORTAL */

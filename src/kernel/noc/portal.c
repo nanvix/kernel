@@ -1,8 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
- *              2015-2016 Davidson Francis     <davidsondfgl@gmail.com>
+ * Copyright(c) 2011-2019 The Maintainers of Nanvix
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -42,7 +41,7 @@ PRIVATE struct portal
 	int refcount;             /**< References count.           */
 	int fd;                   /**< Underlying file descriptor. */
 	int local;                /**< Local num.                  */
-	int remote;               /**< Target num.                 */
+	int remote;               /**< Target node number.         */
 } ALIGN(sizeof(dword_t)) portaltab[(PORTAL_CREATE_MAX + PORTAL_OPEN_MAX)];
 
 /**
@@ -53,7 +52,7 @@ PRIVATE const struct resource_pool portalpool = {
 };
 
 /*============================================================================*
- * _portal_is_valid()                                                         *
+ * do_portal_is_valid()                                                       *
  *============================================================================*/
 
 /**
@@ -68,13 +67,13 @@ PRIVATE const struct resource_pool portalpool = {
  * @note This function is thread-safe.
  * @note This function is reentrant.
  */
-PRIVATE int _portal_is_valid(int portalid)
+PRIVATE int do_portal_is_valid(int portalid)
 {
 	return WITHIN(portalid, 0, (PORTAL_CREATE_MAX + PORTAL_OPEN_MAX));
 }
 
 /*============================================================================*
- * _portal_allow()                                                            *
+ * do_portal_allow()                                                          *
  *============================================================================*/
 
 /**
@@ -86,7 +85,7 @@ PRIVATE int _portal_is_valid(int portalid)
  * portal is returned. Upon failure, a negative error code is returned
  * instead.
  */
-PUBLIC int _portal_create(int local)
+PRIVATE int _do_portal_create(int local)
 {
 	int fd;       /* File descriptor. */
 	int portalid; /* Portal ID.       */
@@ -103,36 +102,76 @@ PUBLIC int _portal_create(int local)
 
 	/* Initialize portal. */
 	portaltab[portalid].fd       = fd;
-	portaltab[portalid].refcount = 1;
 	portaltab[portalid].local    = local;
 	portaltab[portalid].remote   = -1;
+	portaltab[portalid].refcount = 1;
+
 	resource_set_rdonly(&portaltab[portalid].resource);
 	resource_set_notbusy(&portaltab[portalid].resource);
 
+	return (portalid);
+}
+
+/**
+ * @see _do_portal_create().
+ */
+PUBLIC int do_portal_create(int local)
+{
+	int portalid; /* Portal ID. */
+
+	/* Invalid local ID. */
+	if (!WITHIN(local, 0, PROCESSOR_NOC_NODES_NUM))
+		return (-EINVAL);
+
+	/* Searchs for existing portals. */
+	for (int i = 0; i < (PORTAL_CREATE_MAX + PORTAL_OPEN_MAX); ++i)
+	{
+		if (!resource_is_used(&portaltab[i].resource))
+			continue;
+
+		if (!resource_is_readable(&portaltab[i].resource))
+			continue;
+
+		/* Not the same local node? */
+		if (portaltab[i].local != local)
+			continue;
+
+		/* Does it have a remote allowed? */
+		if (portaltab[i].remote != -1)
+			continue;
+
+		portalid = i;
+		portaltab[i].refcount++;
+
+		goto found;
+	}
+
+	/* Alloc a new portal. */
+	portalid = _do_portal_create(local);
+
+found:
 	dcache_invalidate();
 
 	return (portalid);
 }
 
 /*============================================================================*
- * _portal_allow()                                                            *
+ * do_portal_allow()                                                          *
  *============================================================================*/
 
 /**
- * @brief Enables read operations from a remote.
- *
- * @param portalid Logic ID of the Target Portal.
- * @param remote   Logic ID of Target Node.
- *
- * @returns Upons successful completion zero is returned. Upon failure,
- * a negative error code is returned instead.
+ * @todo TODO: Provide a detailed description for this function.
  */
-PUBLIC int _portal_allow(int portalid, int remote)
+PUBLIC int do_portal_allow(int portalid, int remote)
 {
 	int ret; /* HAL function return. */
 
-	if (!_portal_is_valid(portalid))
+	if (!do_portal_is_valid(portalid))
 		return (-EBADF);
+
+	/* Invalid remote ID. */
+	if (!WITHIN(remote, 0, PROCESSOR_NOC_NODES_NUM))
+		return (-EINVAL);
 
 	/* Bad portal. */
 	if (!resource_is_used(&portaltab[portalid].resource))
@@ -150,9 +189,8 @@ PUBLIC int _portal_allow(int portalid, int remote)
 	return (0);
 }
 
-
 /*============================================================================*
- * _portal_open()                                                             *
+ * do_portal_open()                                                           *
  *============================================================================*/
 
 /**
@@ -164,7 +202,7 @@ PUBLIC int _portal_allow(int portalid, int remote)
  * @returns Upon successful completion, the ID of the target portal is
  * returned. Upon failure, a negative error code is returned instead.
  */
-PUBLIC int _portal_open(int local, int remote)
+PRIVATE int _do_portal_open(int local, int remote)
 {
 	int fd;       /* File descriptor. */
 	int portalid; /* Portal ID.       */
@@ -180,194 +218,232 @@ PUBLIC int _portal_open(int local, int remote)
 	}
 
 	portaltab[portalid].fd       = fd;
-	portaltab[portalid].refcount = 1;
 	portaltab[portalid].local    = local;
 	portaltab[portalid].remote   = remote;
+	portaltab[portalid].refcount = 1;
+
 	resource_set_wronly(&portaltab[portalid].resource);
 	resource_set_notbusy(&portaltab[portalid].resource);
 
+	return (portalid);
+}
+
+/**
+ * @see _do_portal_open().
+ */
+PUBLIC int do_portal_open(int local, int remote)
+{
+	int portalid; /* Portal ID. */
+
+	/* Invalid local ID. */
+	if (!WITHIN(local, 0, PROCESSOR_NOC_NODES_NUM))
+		return (-EINVAL);
+
+	/* Invalid remote ID. */
+	if (!WITHIN(remote, 0, PROCESSOR_NOC_NODES_NUM))
+		return (-EINVAL);
+
+	/* Searchs for existing portals. */
+	for (int i = 0; i < (PORTAL_CREATE_MAX + PORTAL_OPEN_MAX); ++i)
+	{
+		if (!resource_is_used(&portaltab[i].resource))
+			continue;
+
+		if (!resource_is_writable(&portaltab[i].resource))
+			continue;
+
+		/* Not the same local node? */
+		if (portaltab[i].local != local)
+			continue;
+
+		/* Does it have a remote allowed? */
+		if (portaltab[i].remote != remote)
+			continue;
+
+		portalid = i;
+		portaltab[i].refcount++;
+
+		goto found;
+	}
+
+	/* Alloc a new portal. */
+	portalid = _do_portal_open(local, remote);
+
+found:
 	dcache_invalidate();
 
 	return (portalid);
 }
 
 /*============================================================================*
- * _portal_unlink()                                                           *
+ * _do_portal_release()                                                       *
  *============================================================================*/
 
 /**
- * @brief Destroys a portal.
+ * @brief Relase a portal resource.
  *
- * @param portalid ID of the Target Portal.
- *
- * @returns Upon successful completion zero is returned. Upon failure, a
- * negative error code is returned instead.
- */
-PUBLIC int _portal_unlink(int portalid)
-{
-	int ret; /* HAL function return. */
-
-	/* Invalid portal. */
-	if (!_portal_is_valid(portalid))
-		return (-EBADF);
-
-	/* Bad portal. */
-	if (!resource_is_used(&portaltab[portalid].resource))
-		return (-EAGAIN);
-
-	/* Bad portal. */
-	if (!resource_is_readable(&portaltab[portalid].resource))
-		return (-EAGAIN);
-
-	if ((ret = portal_unlink(portaltab[portalid].fd)) < 0)
-		return (ret);
-
-	portaltab[portalid].fd = -1;
-	resource_free(&portalpool, portalid);
-
-	return (0);
-}
-
-/*============================================================================*
- * _portal_close()                                                            *
- *============================================================================*/
-
-/**
- * @brief Closes a portal.
- *
- * @param portalid ID of the Target Portal.
- *
- * @returns Upon successful completion zero is returned. Upon failure, a
- * negative error code is returned instead.
- */
-PUBLIC int _portal_close(int portalid)
-{
-	int ret; /* HAL function return. */
-
-	/* Invalid portal. */
-	if (!_portal_is_valid(portalid))
-		return (-EBADF);
-
-	/* Bad portal. */
-	if (!resource_is_used(&portaltab[portalid].resource))
-		return (-EAGAIN);
-
-	/* Bad portal. */
-	if (!resource_is_writable(&portaltab[portalid].resource))
-		return (-EAGAIN);
-
-	/* Closes portal. */
-	if ((ret = portal_close(portaltab[portalid].fd)) < 0)
-		return (ret);
-
-	portaltab[portalid].fd = -1;
-	resource_free(&portalpool, portalid);
-
-	return (0);
-}
-
-/*============================================================================*
- * _portal_aread()                                                            *
- *============================================================================*/
-
-/**
- * @brief Reads data asynchronously from a portal.
- *
- * @param portalid ID of the Target Portal.
- * @param buffer   Location from where data should be written.
- * @param size     Number of bytes to read.
+ * @param portalid   ID of the target portal.
+ * @param release_fn Underlying release function.
  *
  * @returns Upon successful completion, zero is returned. Upon
  * failure, a negative error code is returned instead.
  */
-PUBLIC int _portal_aread(int portalid, void * buffer, size_t size)
+PRIVATE int _do_portal_release(int portalid, int (*release_fn)(int))
+{
+	int ret; /* HAL function return. */
+
+	portaltab[portalid].refcount--;
+
+	if (portaltab[portalid].refcount == 0)
+	{
+		if ((ret = release_fn(portaltab[portalid].fd)) < 0)
+			return (ret);
+
+		portaltab[portalid].fd     = -1;
+		portaltab[portalid].local  = -1;
+		portaltab[portalid].remote = -1;
+
+		resource_free(&portalpool, portalid);
+
+		dcache_invalidate();
+	}
+
+	return (0);
+}
+
+/*============================================================================*
+ * do_portal_unlink()                                                         *
+ *============================================================================*/
+
+/**
+ * @todo TODO: Provide a detailed description for this function.
+ */
+PUBLIC int do_portal_unlink(int portalid)
 {
 	/* Invalid portal. */
-	if (!_portal_is_valid(portalid))
+	if (!do_portal_is_valid(portalid))
+		return (-EBADF);
+
+	/* Bad portal. */
+	if (!resource_is_used(&portaltab[portalid].resource))
+		return (-EBADF);
+
+	/* Bad portal. */
+	if (!resource_is_readable(&portaltab[portalid].resource))
+		return (-EBADF);
+
+	/* Release resource. */
+	return (_do_portal_release(portalid, portal_unlink));
+}
+
+/*============================================================================*
+ * do_portal_close()                                                          *
+ *============================================================================*/
+
+/**
+ * @todo TODO: Provide a detailed description for this function.
+ */
+PUBLIC int do_portal_close(int portalid)
+{
+	/* Invalid portal. */
+	if (!do_portal_is_valid(portalid))
+		return (-EBADF);
+
+	/* Bad portal. */
+	if (!resource_is_used(&portaltab[portalid].resource))
+		return (-EBADF);
+
+	/* Bad portal. */
+	if (!resource_is_writable(&portaltab[portalid].resource))
+		return (-EBADF);
+
+	/* Release resource. */
+	return (_do_portal_release(portalid, portal_close));
+}
+
+/*============================================================================*
+ * do_portal_aread()                                                          *
+ *============================================================================*/
+
+/**
+ * @todo TODO: Provide a detailed description for this function.
+ */
+PUBLIC int do_portal_aread(int portalid, void * buffer, size_t size)
+{
+	/* Invalid portal. */
+	if (!do_portal_is_valid(portalid))
 		return (-EBADF);
 
 	/* Invalid buffer. */
 	if (buffer == NULL)
-		return (-EAGAIN);
+		return (-EINVAL);
 
 	/* Invalid read size. */
 	if (size == 0 || size > PORTAL_MAX_SIZE)
-		return (-EAGAIN);
+		return (-EINVAL);
 
 	/* Bad portal. */
 	if (!resource_is_used(&portaltab[portalid].resource))
-		return (-EAGAIN);
+		return (-EBADF);
 
 	/* Bad portal. */
 	if (!resource_is_readable(&portaltab[portalid].resource))
-		return (-EAGAIN);
+		return (-EBADF);
 
 	/* Configures underlying async read. */
-	return portal_aread(portaltab[portalid].fd, buffer, size);
+	return (portal_aread(portaltab[portalid].fd, buffer, size));
 }
 
 /*============================================================================*
- * _portal_awrite()                                                           *
+ * do_portal_awrite()                                                         *
  *============================================================================*/
 
 /**
- * @brief Writes data to a portal.
- *
- * @param portalid ID of the Target Portal.
- * @param buffer   Buffer where the data should be read from.
- * @param size     Number of bytes to write.
- *
- * @returns Upon successful completion, zero is returned. Upon
- * failure, a negative error code is returned instead.
+ * @todo TODO: Provide a detailed description for this function.
  */
-PUBLIC int _portal_awrite(int portalid, const void * buffer, size_t size)
+PUBLIC int do_portal_awrite(int portalid, const void * buffer, size_t size)
 {
 	/* Invalid portal. */
-	if (!_portal_is_valid(portalid))
+	if (!do_portal_is_valid(portalid))
 		return (-EBADF);
 
 	/* Invalid buffer. */
 	if (buffer == NULL)
-		return (-EAGAIN);
+		return (-EINVAL);
 
 	/* Invalid write size. */
 	if (size == 0 || size > PORTAL_MAX_SIZE)
-		return (-EAGAIN);
+		return (-EINVAL);
 
 	/* Bad portal. */
 	if (!resource_is_used(&portaltab[portalid].resource))
-		return (-EAGAIN);
+		return (-EBADF);
 
 	/* Bad portal. */
 	if (!resource_is_writable(&portaltab[portalid].resource))
-		return (-EAGAIN);
+		return (-EBADF);
 
 	/* Configures underlying async write. */
-	return portal_awrite(portaltab[portalid].fd, buffer, size);
+	return (portal_awrite(portaltab[portalid].fd, buffer, size));
 }
 
 /*============================================================================*
- * _portal_wait()                                                             *
+ * do_portal_wait()                                                           *
  *============================================================================*/
 
 /**
- * @brief Waits for an asynchronous operation on a portal to complete.
- *
- * @param portalid ID of the Target Portal.
- *
- * @returns Upon successful completion, zero is returned. Upon
- * failure, a negative error code is returned instead.
+ * @todo TODO: Provide a detailed description for this function.
  */
-PUBLIC int _portal_wait(int portalid)
+PUBLIC int do_portal_wait(int portalid)
 {
 	/* Invalid portal. */
-	if (!_portal_is_valid(portalid))
+	if (!do_portal_is_valid(portalid))
 		return (-EBADF);
 
 	dcache_invalidate();
 
 	/* Waits. */
-	return portal_wait(portaltab[portalid].fd);
+	return (portal_wait(portaltab[portalid].fd));
 }
 
 #endif /* __TARGET_HAS_PORTAL */
