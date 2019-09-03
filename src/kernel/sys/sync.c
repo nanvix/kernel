@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ * Copyright(c) 2011-2019 The Maintainers of Nanvix
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -60,7 +60,7 @@ PUBLIC int kernel_sync_create(const int *nodes, int nnodes, int type)
 	if ((type != SYNC_ONE_TO_ALL) && (type != SYNC_ALL_TO_ONE))
 		return (-EINVAL);
 
-	return (_sync_create(nodes, nnodes, type));
+	return (do_sync_create(nodes, nnodes, type));
 }
 
 /*============================================================================*
@@ -94,39 +94,55 @@ PUBLIC int kernel_sync_open(const int *nodes, int nnodes, int type)
 	/* Bad sync type. */
 	if ((type != SYNC_ONE_TO_ALL) && (type != SYNC_ALL_TO_ONE))
 		return (-EINVAL);
-	return (_sync_open(nodes, nnodes, type));
+	return (do_sync_open(nodes, nnodes, type));
 }
+
+/*============================================================================*
+ * kernel_sync_wait()                                                         *
+ *============================================================================*/
 
 /**
  * @see sync_wait().
  */
 PUBLIC int kernel_sync_wait(int syncid)
 {
-	return (_sync_wait(syncid));
+	return (do_sync_wait(syncid));
 }
+
+/*============================================================================*
+ * kernel_sync_signal()                                                       *
+ *============================================================================*/
 
 /**
  * @see sync_signal().
  */
 PUBLIC int kernel_sync_signal(int syncid)
 {
-	return (_sync_signal(syncid));
+	return (do_sync_signal(syncid));
 }
+
+/*============================================================================*
+ * kernel_sync_close()                                                        *
+ *============================================================================*/
 
 /**
  * @see sync_close().
  */
 PUBLIC int kernel_sync_close(int syncid)
 {
-	return (_sync_close(syncid));
+	return (do_sync_close(syncid));
 }
+
+/*============================================================================*
+ * kernel_sync_unlink()                                                       *
+ *============================================================================*/
 
 /**
  * @see sync_unlink().
  */
 PUBLIC int kernel_sync_unlink(int syncid)
 {
-	return (_sync_unlink(syncid));
+	return (do_sync_unlink(syncid));
 }
 
 #endif /* __TARGET_SYNC */
