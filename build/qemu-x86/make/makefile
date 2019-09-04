@@ -36,7 +36,7 @@ export CFLAGS += -D __i486__        # Core
 #===============================================================================
 
 # Toolchain Directory
-export TOOLCHAIN_DIR ?= $(TOOLSDIR)/dev/toolchain/i486/bin
+export TOOLCHAIN_DIR ?= $(TOOLSDIR)/toolchain/i486/bin
 
 # Toolchain
 export CC = $(TOOLCHAIN_DIR)/i486-elf-gcc
@@ -79,7 +79,4 @@ clean-target:
 
 # Cleans everything.
 distclean-target:
-
-# Cleans everything for node cluster variant.
-distclean-k1bdp: clean-target
-	@$(MAKE) -C $(SRCDIR) clean
+	@$(MAKE) -C $(SRCDIR) distclean

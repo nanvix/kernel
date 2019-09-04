@@ -23,17 +23,33 @@
 #
 
 # Builds contrib.
-contrib: make-dirs
+contrib: contrib-hal
+
+# Builds contrib headers.
+contrib-headers: contrib-headers-hal
+
+# Cleans contrib.
+contrib-uninstall: contrib-uninstall-hal
+
+# Cleans contrib headers.
+contrib-uninstall-headers: contrib-uninstall-headers-hal
+
+#===============================================================================
+# HAL
+#===============================================================================
+
+# Builds HAL.
+contrib-hal: make-dirs
 	$(MAKE) -C $(CONTRIBDIR)/hal install PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
 
-# Builds contrib.
-contrib-headers: make-dirs
+# Builds HAL headers.
+contrib-headers-hal: make-dirs
 	$(MAKE) -C $(CONTRIBDIR)/hal install-headers PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
 
-# Cleans the HAL.
-contrib-uninstall:
+# Cleans HAL.
+contrib-uninstall-hal:
 	$(MAKE) -C $(CONTRIBDIR)/hal uninstall PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
 
-# Cleans the HAL.
-contrib-uninstall-headers:
+# Cleans HAL headers.
+contrib-uninstall-headers-hal:
 	$(MAKE) -C $(CONTRIBDIR)/hal uninstall-headers PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)

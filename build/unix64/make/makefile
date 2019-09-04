@@ -37,7 +37,7 @@ export CFLAGS += -D __linux64_core__    # Core
 #===============================================================================
 
 # Toolchain Directory
-export TOOLCHAIN_DIR ?= $(TOOLSDIR)/dev/toolchain/unix/bin
+export TOOLCHAIN_DIR ?= $(TOOLSDIR)/toolchain/unix/bin
 
 # Toolchain
 export CC = gcc
@@ -80,7 +80,4 @@ clean-target:
 
 # Cleans everything.
 distclean-target:
-
-# Cleans everything for node cluster variant.
-distclean-k1bdp: clean-target
-	@$(MAKE) -C $(SRCDIR) clean
+	@$(MAKE) -C $(SRCDIR) distclean
