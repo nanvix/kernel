@@ -47,13 +47,13 @@ install: | all-target install-headers
 	@cp -f $(LIBDIR)/libnanvix*.a $(PREFIX)/lib
 	@echo [CP] $(LIBDIR)/libnanvix*.a
 	@echo "==============================================================================="
-	@echo "Nanvix Microkernel Libraries Successfully Installed into $(PREFIX)"
+	@echo "Nanvix Microkernel Libraries Successfully Installed"
 	@echo "==============================================================================="
 
 # Install Headers
 install-headers: copy-artifacts
 	@echo "==============================================================================="
-	@echo "Nanvix Microkernel Headers Successfully Installed into $(PREFIX)"
+	@echo "Nanvix Microkernel Headers Successfully Installed"
 	@echo "==============================================================================="
 
 # Uninstall Everything
@@ -65,13 +65,13 @@ uninstall: | distclean uninstall-headers
 	@rm -f $(PREFIX)/lib/libnanvix*.a
 	@echo [RM] $(PREFIX)/lib/libnanvix*.a
 	@echo "==============================================================================="
-	@echo "Nanvix Microkernel Libraries Successfully Uninstalled from $(PREFIX)"
+	@echo "Nanvix Microkernel Libraries Successfully Uninstalled"
 	@echo "==============================================================================="
 
 # Uninstall Headers
 uninstall-headers: delete-artifacts
 	@echo "==============================================================================="
-	@echo "Nanvix Microkernel Headers Successfully Uninstalled from $(PREFIX)"
+	@echo "Nanvix Microkernel Headers Successfully Uninstalled"
 	@echo "==============================================================================="
 
 # Copies All Artifacts
