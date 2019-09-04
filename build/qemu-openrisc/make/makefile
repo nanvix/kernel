@@ -37,7 +37,7 @@ export CFLAGS += -D __or1200__        # Core Variant
 #===============================================================================
 
 # Toolchain Directory
-export TOOLCHAIN_DIR ?= $(TOOLSDIR)/dev/toolchain/or1k/bin/
+export TOOLCHAIN_DIR ?= $(TOOLSDIR)/toolchain/or1k/bin/
 
 # Toolchain
 export CC = $(TOOLCHAIN_DIR)/or1k-elf-gcc
