@@ -80,7 +80,4 @@ clean-target:
 
 # Cleans everything.
 distclean-target:
-
-# Cleans everything for node cluster variant.
-distclean-k1bdp: clean-target
-	@$(MAKE) -C $(SRCDIR) clean
+	@$(MAKE) -C $(SRCDIR) distclean
