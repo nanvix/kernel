@@ -34,6 +34,15 @@
 
 	#include <nanvix/hal/hal.h>
 	#include <nanvix/const.h>
+	#include <posix/stdarg.h>
+
+	/**
+	 * @name Requests for do_mailbox_ioctl()
+	 */
+	/**@{*/
+	#define MAILBOX_IOCTL_GET_VOLUME  1 /**< Get the amount of data transferred so far. */
+	#define MAILBOX_IOCTL_GET_LATENCY 2 /**< Get the cumulative transfer latency.       */
+	/**@}*/
 
 	/**
 	 * @brief Creates a mailbox.
@@ -110,6 +119,18 @@
 	 * failure, a negative error code is returned instead.
 	 */
 	EXTERN int do_mailbox_wait(int mbxid);
+
+	/**
+	 * @brief Performs control operations in a mailbox.
+	 *
+	 * @param mbxid   Target mailbox.
+	 * @param request Request.
+	 * @param args    Additional arguments.
+	 *
+	 * @param Upon successful completion, zero is returned. Upon failure,
+	 * a negative error code is returned instead.
+	 */
+	EXTERN int do_mailbox_ioctl(int mbxid, unsigned request, va_list args);
 
 #endif /* NANVIX_MAILBOX_H_ */
 
