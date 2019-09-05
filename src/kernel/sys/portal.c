@@ -25,7 +25,7 @@
 
 #include <nanvix/hal/hal.h>
 #include <nanvix/kernel/portal.h>
-#include <posix/errno.h>
+#include <posix/stdarg.h>
 
 #if __TARGET_HAS_PORTAL
 
@@ -123,6 +123,24 @@ PUBLIC int kernel_portal_aread(int portalid, void * buffer, size_t size)
 PUBLIC int kernel_portal_wait(int portalid)
 {
 	return (do_portal_wait(portalid));
+}
+
+/*============================================================================*
+ * kernel_portal_wait()                                                       *
+ *============================================================================*/
+
+/**
+ * @see do_portal_ioctl().
+ */
+PUBLIC int kernel_portal_ioctl(int mbxid, unsigned request, va_list *args)
+{
+	int ret;
+
+	dcache_invalidate();
+		ret = do_portal_ioctl(mbxid, request, *args);
+	dcache_invalidate();
+
+	return (ret);
 }
 
 #endif /* __TARGET_HAS_PORTAL */
