@@ -1,8 +1,6 @@
 [submodule "contrib/hal"]
 	path = contrib/hal
 	url = https://github.com/nanvix/hal.git
-	branch = unstable
 [submodule "utils"]
 	path = utils
 	url = https://github.com/nanvix/utils.git
-	branch = unstable
