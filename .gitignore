@@ -9,8 +9,11 @@ doxygen.output
 bin/
 lib/
 *.a
+*.img
 *.o
-nanvix-run.output
+
+# Output Files
+nanvix-cluster*
 
 # Ctags
 tags
