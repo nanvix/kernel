@@ -44,8 +44,6 @@ install: | all-target install-headers
 	@echo [CP] $(LIBDIR)/libhal*.a
 	@cp -f $(LIBDIR)/libkernel*.a $(PREFIX)/lib
 	@echo [CP] $(LIBDIR)/libkernel*.a
-	@cp -f $(LIBDIR)/libnanvix*.a $(PREFIX)/lib
-	@echo [CP] $(LIBDIR)/libnanvix*.a
 	@echo "==============================================================================="
 	@echo "Nanvix Microkernel Libraries Successfully Installed"
 	@echo "==============================================================================="
@@ -62,8 +60,6 @@ uninstall: | distclean uninstall-headers
 	@echo [RM] $(PREFIX)/lib/libhal*.a
 	@rm -f $(PREFIX)/lib/libkernel*.a
 	@echo [RM] $(PREFIX)/lib/libkernel*.a
-	@rm -f $(PREFIX)/lib/libnanvix*.a
-	@echo [RM] $(PREFIX)/lib/libnanvix*.a
 	@echo "==============================================================================="
 	@echo "Nanvix Microkernel Libraries Successfully Uninstalled"
 	@echo "==============================================================================="

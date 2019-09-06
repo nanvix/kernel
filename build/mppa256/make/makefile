@@ -66,26 +66,24 @@ export LIBLWIP =
 all-target: all-k1bio all-k1bdp
 
 # Builds everything for node cluster variant.
-all-k1bdp: clean-target
+all-k1bdp: make-dirs clean-target
 	@$(MAKE) -C $(SRCDIR) all                          \
 		CFLAGS="$(CFLAGS) -D __k1bdp__ -mcluster=node" \
 		LDFLAGS="$(LDFLAGS) -mcluster=node"            \
 		LINKERDIR=$(BUILDDIR)/mppa256/linker/k1bdp     \
 		LIBHAL=$(LIBDIR)/libhal-k1b-node.a             \
 		LIBKERNEL=$(LIBDIR)/libkernel-k1b-node.a       \
-		LIBNANVIX=$(LIBDIR)/libnanvix-k1b-node.a       \
 		OBJ_SUFFIX=node                                \
 		EXEC=test-driver-k1bdp
 
 # Builds everything for node ioddr variant.
-all-k1bio: clean-target
+all-k1bio: make-dirs clean-target
 	@$(MAKE) -C $(SRCDIR) all                           \
 		CFLAGS="$(CFLAGS) -D __k1bio__ -mcluster=ioddr" \
 		LDFLAGS="$(LDFLAGS) -mcluster=ioddr"            \
 		LINKERDIR=$(BUILDDIR)/mppa256/linker/k1bio      \
 		LIBHAL=$(LIBDIR)/libhal-k1b-ioddr.a             \
 		LIBKERNEL=$(LIBDIR)/libkernel-k1b-ioddr.a       \
-		LIBNANVIX=$(LIBDIR)/libnanvix-k1b-ioddr.a       \
 		EXEC=test-driver-k1bio                          \
 		OBJ_SUFFIX=ioddr
 
@@ -100,7 +98,6 @@ distclean-target: distclean-k1bdp distclean-k1bio
 distclean-k1bdp: clean-target
 	@$(MAKE) -C $(SRCDIR) distclean              \
 		LIBKERNEL=$(LIBDIR)/libkernel-k1b-node.a \
-		LIBNANVIX=$(LIBDIR)/libnanvix-k1b-node.a \
 		OBJ_SUFFIX=node                          \
 		EXEC=test-driver-k1bdp
 
@@ -108,6 +105,5 @@ distclean-k1bdp: clean-target
 distclean-k1bio: clean-target
 	@$(MAKE) -C $(SRCDIR) distclean               \
 		LIBKERNEL=$(LIBDIR)/libkernel-k1b-ioddr.a \
-		LIBNANVIX=$(LIBDIR)/libnanvix-k1b-ioddr.a \
 		OBJ_SUFFIX=ioddr                          \
 		EXEC=test-driver-k1bio

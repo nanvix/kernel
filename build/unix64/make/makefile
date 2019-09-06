@@ -71,7 +71,7 @@ export THEIR_LIBS= -lpthread -lm -lrt
 #===============================================================================
 
 # Builds everything.
-all-target:
+all-target: make-dirs
 	@$(MAKE) -C $(SRCDIR) all
 
 # Cleans object files.

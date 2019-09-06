@@ -62,7 +62,6 @@ export TOOLSDIR   := $(ROOTDIR)/utils
 # Libraries
 export LIBHAL    = $(LIBDIR)/libhal-$(TARGET).a
 export LIBKERNEL = $(LIBDIR)/libkernel-$(TARGET).a
-export LIBNANVIX = $(LIBDIR)/libnanvix-$(TARGET).a
 
 # Binaries
 export EXEC := test-driver
@@ -110,7 +109,7 @@ make-dirs:
 	@mkdir -p $(LIBDIR)
 
 ifeq ($(DOCKER),no)
-image-tests: | make-dirs all-target
+image-tests: all-target
 	bash $(TOOLSDIR)/nanvix-build-image.sh $(IMAGE) $(BINDIR) $(EXEC)
 
 # Cleans builds.
@@ -124,7 +123,7 @@ distclean: distclean-target
 
 # Run Docker containers.
 else
-image-tests:
+image-tests: all-targets
 	cd $(ROOTDIR)/docker && docker-compose -f image-tests.yml up $(TARGET)
 
 # Cleans builds.
