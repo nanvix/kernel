@@ -23,7 +23,7 @@
  */
 
 #include <nanvix/hal/hal.h>
-#include <nanvix/syscall.h>
+#include <nanvix/kernel/portal.h>
 #include <errno.h>
 
 #if __TARGET_HAS_PORTAL

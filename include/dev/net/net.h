@@ -25,7 +25,7 @@
 #ifndef DEV_NET_NET_H_
 #define DEV_NET_NET_H_
 
-	#include <nanvix/config.h>
+	#include <nanvix/kernel/config.h>
 	#include <nanvix/const.h>
 	#include <stdint.h>
 

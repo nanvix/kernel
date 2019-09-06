@@ -23,7 +23,7 @@
  */
 
 #include <nanvix/hal/hal.h>
-#include <nanvix/mailbox.h>
+#include <nanvix/kernel/mailbox.h>
 #include <errno.h>
 
 #if __TARGET_HAS_MAILBOX

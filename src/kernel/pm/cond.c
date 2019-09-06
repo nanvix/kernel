@@ -23,8 +23,8 @@
  */
 
 #include <nanvix/hal/hal.h>
+#include <nanvix/kernel/thread.h>
 #include <nanvix/const.h>
-#include <nanvix/thread.h>
 
 /*============================================================================*
  * cond_wait()                                                                *

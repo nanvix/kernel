@@ -27,7 +27,7 @@
 #===============================================================================
 
 # Libraries
-LIBS  = -Wl,--whole-archive $(LIBNANVIX) $(LIBKERNEL) $(LIBHAL) $(LIBLWIP)
+LIBS  = -Wl,--whole-archive $(LIBKERNEL) $(LIBHAL) $(LIBLWIP)
 LIBS += -Wl,--no-whole-archive $(THEIR_LIBS)
 
 #===============================================================================

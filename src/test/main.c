@@ -22,7 +22,9 @@
  * SOFTWARE.
  */
 
-#include <nanvix.h>
+#include <nanvix/hal/hal.h>
+#include <nanvix/kernel/syscall.h>
+#include <nanvix/kernel/config.h>
 #include "test.h"
 
 #ifdef __mppa256__
@@ -76,7 +78,12 @@ void nanvix_puts(const char *str)
 
 	len = strlen(str);
 
-	nanvix_write(0, str, len);
+	kcall3(
+		NR_write,
+		(word_t) 0,
+		(word_t) str,
+		(word_t) len
+	);
 }
 
 /*============================================================================*
@@ -91,38 +98,14 @@ void nanvix_puts(const char *str)
  */
 void ___start(int argc, const char *argv[])
 {
-	int nodenum;
-
 	((void) argc);
 	((void) argv);
 
-	nodenum = processor_node_get_num();
-
-	if (nodenum == processor_node_get_num())
-	{
-		test_thread_mgmt();
-		test_thread_sleep();
-
-#ifndef __unix64__
-		test_perf();
-		test_signal();
-#endif
-	}
-
-	#if __TARGET_HAS_SYNC
-		test_sync();
-	#endif
-	#if __TARGET_HAS_MAILBOX
-		test_mailbox();
-	#endif
-	#if __TARGET_HAS_PORTAL
-		test_portal();
-	#endif
 	#if __NANVIX_HAS_NETWORK
 		test_network();
 	#endif
 
 	/* Halt. */
-	kshutdown();
+	kcall0(NR_shutdown);
 	UNREACHABLE();
 }

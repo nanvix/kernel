@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include <nanvix/config.h>
+#include <nanvix/kernel/config.h>
 #include <dev/net/net.h>
 #include <lwip/netif.h>
 

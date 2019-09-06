@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
+#include <nanvix/kernel/thread.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
-#include <nanvix/thread.h>
 
 /*============================================================================*
  * semaphore_down()                                                           *

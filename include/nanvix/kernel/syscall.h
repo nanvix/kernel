@@ -25,12 +25,12 @@
 #ifndef NANVIX_SYSCALL_H_
 #define NANVIX_SYSCALL_H_
 
+	#include <nanvix/kernel/thread.h>
+	#include <nanvix/kernel/sync.h>
+	#include <nanvix/kernel/mailbox.h>
+	#include <nanvix/kernel/portal.h>
+	#include <nanvix/kernel/signal.h>
 	#include <nanvix/const.h>
-	#include <nanvix/thread.h>
-	#include <nanvix/sync.h>
-	#include <nanvix/mailbox.h>
-	#include <nanvix/portal.h>
-	#include <nanvix/signal.h>
 
 /**
  * @addtogroup kernel-syscalls System Calls

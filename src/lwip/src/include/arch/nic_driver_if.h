@@ -25,7 +25,7 @@
 #ifndef NIC_DRIVER_IF_H_
 #define NIC_DRIVER_IF_H_
 
-	#include <nanvix/config.h>
+	#include <nanvix/kernel/config.h>
 
 #if __NANVIX_HAS_NETWORK
 
