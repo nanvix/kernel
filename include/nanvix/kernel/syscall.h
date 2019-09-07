@@ -80,16 +80,18 @@
 	#define NR_mailbox_awrite 27 /**< kernel_mailbox_awrite() */
 	#define NR_mailbox_aread  28 /**< kernel_mailbox_aread()  */
 	#define NR_mailbox_wait   29 /**< kernel_mailbox_wait()   */
-	#define NR_portal_create  30 /**< kernel_portal_create()  */
-	#define NR_portal_allow   31 /**< kernel_portal_allow()   */
-	#define NR_portal_open    32 /**< kernel_portal_open()    */
-	#define NR_portal_unlink  33 /**< kernel_portal_unlink()  */
-	#define NR_portal_close   34 /**< kernel_portal_close()   */
-	#define NR_portal_awrite  35 /**< kernel_portal_awrite()  */
-	#define NR_portal_aread   36 /**< kernel_portal_aread()   */
-	#define NR_portal_wait    37 /**< kernel_portal_wait()    */
+	#define NR_mailbox_ioctl  30 /**< kernel_mailbox_ioctl()  */
+	#define NR_portal_create  31 /**< kernel_portal_create()  */
+	#define NR_portal_allow   32 /**< kernel_portal_allow()   */
+	#define NR_portal_open    33 /**< kernel_portal_open()    */
+	#define NR_portal_unlink  34 /**< kernel_portal_unlink()  */
+	#define NR_portal_close   35 /**< kernel_portal_close()   */
+	#define NR_portal_awrite  36 /**< kernel_portal_awrite()  */
+	#define NR_portal_aread   37 /**< kernel_portal_aread()   */
+	#define NR_portal_wait    38 /**< kernel_portal_wait()    */
+	#define NR_portal_ioctl   39 /**< kernel_portal_ioctl()   */
 
-	#define NR_last_kcall     38 /**< NR_SYSCALLS definer     */
+	#define NR_last_kcall     40 /**< NR_SYSCALLS definer     */
 	/**@}*/
 
 /*============================================================================*
@@ -203,11 +205,12 @@
 	EXTERN int kernel_mailbox_aread(int, void *, size_t);
 	EXTERN int kernel_mailbox_awrite(int, const void *, size_t);
 	EXTERN int kernel_mailbox_wait(int);
+	EXTERN int kernel_mailbox_ioctl(int, unsigned, va_list *);
 
 #endif /* __NANVIX_MICROKERNEL */
 
 /*============================================================================*
- * Portal Kernel Calls                                                       *
+ * Portal Kernel Calls                                                        *
  *============================================================================*/
 
 #ifdef __NANVIX_MICROKERNEL
@@ -220,6 +223,7 @@
 	EXTERN int kernel_portal_aread(int, void *, size_t);
 	EXTERN int kernel_portal_awrite(int, const void *, size_t);
 	EXTERN int kernel_portal_wait(int);
+	EXTERN int kernel_portal_ioctl(int, unsigned, va_list *);
 
 #endif /* __NANVIX_MICROKERNEL */
 
