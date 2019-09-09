@@ -27,71 +27,69 @@
 #===============================================================================
 
 .PHONY: kernel
-.PHONY: libs
 .PHONY: test
 .PHONY: lwip
 
 #===============================================================================
 
 # Builds Everything
-all: kernel test
-
-# Builds the Kernel
-kernel: lwip
-	$(MAKE) -C kernel all
-
-# Builds User Libraries
-libs: kernel
-	$(MAKE) -C libs all
-
-
-# Builds LwIP
-ifeq ($(TARGET),$(filter $(TARGET),qemu-x86 qemu-openrisc))
-lwip:
-	$(MAKE) -C lwip all
-else
-lwip:
-	echo "nothing to do"
-endif
-
-# Builds The Test Driver
-test: libs kernel lwip
-	$(MAKE) -C test all
+all: all-kernel all-test all-lwip
 
 # Cleans Build Objects
-clean: clean-kernel clean-libs clean-test clean-lwip
+clean: clean-kernel clean-test clean-lwip
 
-# Cleans Kernel Build Objects
-clean-kernel:
-	$(MAKE) -C kernel clean
+# Cleans Everything
+distclean: distclean-kernel distclean-test distclean-lwip
 
-# Cleans User Libraries Build Objects
-clean-libs:
-	$(MAKE) -C libs clean
+#===============================================================================
+# test 
+#===============================================================================
+
+# Builds The Test Driver
+all-test: all-kernel all-lwip
+	$(MAKE) -C test all
 
 # Cleans Test Driver Build Objects
 clean-test:
 	$(MAKE) -C test clean
 
-# Cleans Test Driver Build Objects
-clean-lwip:
-	$(MAKE) -C lwip clean
-
-# Cleans Everything
-distclean: distclean-kernel distclean-libs distclean-test distclean-lwip
-
-# Cleans Kernel Build
-distclean-kernel:
-	$(MAKE) -C kernel distclean
-
-# Cleans User Libraries Build
-distclean-libs:
-	$(MAKE) -C libs distclean
-
 # Cleans Test Driver Build
 distclean-test:
 	$(MAKE) -C test distclean
 
+#===============================================================================
+# kernel
+#===============================================================================
+
+# Builds the Kernel
+all-kernel: all-lwip
+	$(MAKE) -C kernel all
+
+# Cleans Kernel Build Objects
+clean-kernel:
+	$(MAKE) -C kernel clean
+
+# Cleans Kernel Build
+distclean-kernel:
+	$(MAKE) -C kernel distclean
+#===============================================================================
+# lwip
+#===============================================================================
+
+# Builds LwIP
+ifeq ($(TARGET),$(filter $(TARGET),qemu-x86 qemu-openrisc))
+all-lwip:
+	$(MAKE) -C lwip all
+else
+all-lwip:
+	echo "nothing to do"
+endif
+
+# Cleans Test Driver Build Objects
+clean-lwip:
+	$(MAKE) -C lwip clean
+
 # Cleans lwip Build
 distclean-lwip:
 	$(MAKE) -C lwip distclean
+

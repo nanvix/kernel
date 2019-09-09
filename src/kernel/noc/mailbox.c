@@ -23,7 +23,7 @@
  * SOFTWARE.
  */
 
-#include <nanvix/sync.h>
+#include <nanvix/hal/hal.h>
 #include <nanvix/klib.h>
 #include <errno.h>
 

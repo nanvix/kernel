@@ -70,7 +70,7 @@ export LIBLWIP = $(LIBDIR)/liblwip-$(TARGET).a
 #===============================================================================
 
 # Builds everything.
-all-target:
+all-target: make-dirs
 	@$(MAKE) -C $(SRCDIR) all
 
 # Cleans object files.

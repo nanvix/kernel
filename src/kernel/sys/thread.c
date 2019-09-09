@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
+#include <nanvix/kernel/mm.h>
+#include <nanvix/kernel/thread.h>
 #include <nanvix/const.h>
-#include <nanvix/mm.h>
-#include <nanvix/thread.h>
 #include <errno.h>
 
 /*============================================================================*

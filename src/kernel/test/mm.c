@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
+#include <nanvix/kernel/mm.h>
 #include <nanvix/const.h>
-#include <nanvix/mm.h>
 #include <nanvix/klib.h>
 #include <errno.h>
 

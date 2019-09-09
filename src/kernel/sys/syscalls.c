@@ -24,9 +24,9 @@
 
 #include <nanvix/const.h>
 #include <nanvix/hal/hal.h>
-#include <nanvix/thread.h>
+#include <nanvix/kernel/thread.h>
+#include <nanvix/kernel/syscall.h>
 #include <nanvix/klib.h>
-#include <nanvix/syscall.h>
 #include <errno.h>
 
 /**

@@ -25,8 +25,6 @@
 #ifndef _TEST_H_
 #define _TEST_H_
 
-	#include <nanvix.h>
-
 	/**
 	 * @brief Number of iterations in stress tests.
 	 */
@@ -60,14 +58,7 @@
 	 * @name User-Level Testing Units
 	 */
 	/**@{*/
-	extern void test_thread_mgmt(void);
-	extern void test_thread_sleep(void);
-	extern void test_perf(void);
-	extern void test_signal(void);
 	extern void test_network(void);
-	extern void test_sync(void);
-	extern void test_mailbox(void);
-	extern void test_portal(void);
 
 	/**@}*/
 

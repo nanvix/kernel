@@ -23,13 +23,12 @@
  */
 
 #include <nanvix/hal/hal.h>
+#include <nanvix/kernel/dev.h>
+#include <nanvix/kernel/mm.h>
+#include <nanvix/kernel/syscall.h>
+#include <nanvix/kernel/thread.h>
 #include <nanvix/const.h>
-#include <nanvix/dev.h>
 #include <nanvix/klib.h>
-#include <nanvix/mm.h>
-#include <nanvix/syscall.h>
-#include <nanvix/thread.h>
-#include <nanvix.h>
 
 #include <dev/net/net.h>
 
@@ -60,7 +59,7 @@ PRIVATE void *init(void *arg)
 #endif
 
 	/* Power down. */
-	kshutdown();
+	kernel_shutdown();
 	UNREACHABLE();
 
 	return (NULL);
