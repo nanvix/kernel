@@ -27,6 +27,11 @@
 #include <nanvix/const.h>
 #include <errno.h>
 
+/**
+ * @brief Number of thread_create trials.
+ */
+#define THREAD_CREATE_NTRIALS 5
+
 /*
  * Import definitions.
  */
@@ -305,6 +310,7 @@ PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
 	int ret = 0;               /* Return value.             */
 	int _tid;                  /* Unique thread identifier. */
 	struct thread *new_thread; /* New thread.               */
+	int ntrials = 0;           /* Trials realized.          */
 
 	/* Sanity check. */
 	KASSERT(start != NULL);
@@ -348,8 +354,11 @@ PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
 	 * core_reset().
 	 */
 	do
+	{
 		ret = core_start(thread_get_coreid(new_thread), thread_start);
-	while (ret == -EBUSY);
+		ntrials++;
+	} while (ret == -EBUSY && ntrials < THREAD_CREATE_NTRIALS);
+
 
 	/* Rollback. */
 	if (ret != 0)
