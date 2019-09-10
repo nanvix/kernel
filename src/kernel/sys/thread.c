@@ -25,7 +25,7 @@
 #include <nanvix/kernel/mm.h>
 #include <nanvix/kernel/thread.h>
 #include <nanvix/const.h>
-#include <errno.h>
+#include <posix/errno.h>
 
 /*============================================================================*
  * kernel_thread_get_id()                                                     *

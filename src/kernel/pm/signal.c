@@ -26,7 +26,7 @@
 #include <nanvix/kernel/mm.h>
 #include <nanvix/kernel/signal.h>
 #include <nanvix/const.h>
-#include <errno.h>
+#include <posix/errno.h>
 
 /**
  * @brief Signal Handlers Table lock.

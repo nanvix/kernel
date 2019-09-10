@@ -25,7 +25,7 @@
 #include <nanvix/hal/hal.h>
 #include <nanvix/kernel/thread.h>
 #include <nanvix/const.h>
-#include <errno.h>
+#include <posix/errno.h>
 
 /**
  * @brief Number of thread_create trials.

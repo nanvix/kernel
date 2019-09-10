@@ -25,7 +25,7 @@
 #include <nanvix/kernel/mm.h>
 #include <nanvix/kernel/signal.h>
 #include <nanvix/const.h>
-#include <errno.h>
+#include <posix/errno.h>
 
 /*============================================================================*
  * kernel_sigctl()                                                            *
