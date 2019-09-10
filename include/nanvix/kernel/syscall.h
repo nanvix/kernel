@@ -43,7 +43,7 @@
 	 *
 	 * @note This should be set to the highest system call number.
 	 */
-	#define NR_SYSCALLS 36
+	#define NR_SYSCALLS NR_last_kcall
 
 	/**
 	 * @name System Call Numbers
@@ -84,6 +84,8 @@
 	#define NR_portal_awrite  33 /**< kernel_portal_awrite()  */
 	#define NR_portal_aread   34 /**< kernel_portal_aread()   */
 	#define NR_portal_wait    35 /**< kernel_portal_wait()    */
+
+	#define NR_last_kcall     36 /**< NR_SYSCALLS definer     */
 	/**@}*/
 
 /*============================================================================*
