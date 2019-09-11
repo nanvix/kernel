@@ -243,11 +243,11 @@ int _mailbox_aread(int mbxid, void * buffer, size_t size)
 
 	/* Invalid buffer. */
 	if (buffer == NULL)
-		return (-EAGAIN);
+		return (-EINVAL);
 
 	/* Invalid read size. */
 	if (size != MAILBOX_MSG_SIZE)
-		return (-EAGAIN);
+		return (-EINVAL);
 
 	/* Bad mailbox. */
 	if (!resource_is_used(&mbxtab[mbxid].resource))
@@ -255,7 +255,7 @@ int _mailbox_aread(int mbxid, void * buffer, size_t size)
 
 	/* Bad mailbox. */
 	if (!resource_is_readable(&mbxtab[mbxid].resource))
-		return (-EAGAIN);
+		return (-EBADF);
 
 	return mailbox_aread(mbxtab[mbxid].fd, buffer, size);
 }
@@ -282,11 +282,11 @@ int _mailbox_awrite(int mbxid, const void * buffer, size_t size)
 
 	/* Invalid buffer. */
 	if (buffer == NULL)
-		return (-EAGAIN);
+		return (-EINVAL);
 
 	/* Invalid write size. */
 	if (size != MAILBOX_MSG_SIZE)
-		return (-EAGAIN);
+		return (-EINVAL);
 
 	/* Bad mailbox. */
 	if (!resource_is_used(&mbxtab[mbxid].resource))
@@ -294,7 +294,7 @@ int _mailbox_awrite(int mbxid, const void * buffer, size_t size)
 
 	/* Bad mailbox. */
 	if (!resource_is_writable(&mbxtab[mbxid].resource))
-		return (-EAGAIN);
+		return (-EBADF);
 
 	return mailbox_awrite(mbxtab[mbxid].fd, buffer, size);
 }
