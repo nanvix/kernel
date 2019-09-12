@@ -83,7 +83,7 @@ PUBLIC void kmain(int argc, const char *argv[])
 	dev_init();
 	mm_init();
 
-	kprintf("[kernel] enabling hardware interrupts");
+	kprintf("[kernel][dev] enabling hardware interrupts");
 	interrupts_enable();
 
 #if __NANVIX_HAS_NETWORK

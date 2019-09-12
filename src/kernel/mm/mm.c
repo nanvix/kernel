@@ -39,7 +39,7 @@
  */
 PUBLIC void mm_init(void)
 {
-	kprintf("[mm] initializing the memory system");
+	kprintf("[kernel][mm] initializing the memory system");
 	frame_init();
 	kpool_init();
 	upool_init();

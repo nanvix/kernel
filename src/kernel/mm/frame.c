@@ -61,7 +61,7 @@ PUBLIC frame_t frame_alloc(void)
 		}
 	}
 
-	kprintf("[mm] page frame overflow");
+	kprintf("[kernel][mm] page frame overflow");
 
 	return (FRAME_NULL);
 }
@@ -86,7 +86,7 @@ PUBLIC int frame_free(frame_t frame)
 
 	if (frames[frame_num_to_id(frame)] == 0)
 	{
-		kprintf("[mm] double free on page frame %x", frame);
+		kprintf("[kernel][mm] double free on page frame %x", frame);
 		return (-EFAULT);
 	}
 
@@ -110,7 +110,7 @@ PUBLIC int frame_free(frame_t frame)
  */
 PUBLIC void frame_init(void)
 {
-	kprintf("[mm] initializing the page frame allocator");
+	kprintf("[kernel][mm] initializing the page frame allocator");
 
 #ifndef __NANVIX_FAST_BOOT
 	for (frame_t i = 0; i < NUM_UFRAMES; i++)
@@ -118,7 +118,7 @@ PUBLIC void frame_init(void)
 #endif
 
 #ifndef NDEBUG
-	kprintf("[mm] running tests on the page frame allocator");
+	kprintf("[kernel][mm] running tests on the page frame allocator");
 	frame_test_driver();
 #endif
 }

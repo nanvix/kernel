@@ -60,7 +60,7 @@ PUBLIC void *kpage_get(int clean)
 			goto found;
 	}
 
-	kprintf("[mm] kernel page pool overflow");
+	kprintf("[kernel][mm] kernel page pool overflow");
 
 	return (NULL);
 
@@ -108,7 +108,7 @@ PUBLIC int kpage_put(void *kpg)
 	/* Double free. */
 	if (kpages[i] == 0)
 	{
-		kprintf("[mm] double free on kernel page");
+		kprintf("[kernel][mm] double free on kernel page");
 		return (-EFAULT);
 	}
 
@@ -132,7 +132,7 @@ PUBLIC int kpage_put(void *kpg)
  */
 PUBLIC void kpool_init(void)
 {
-	kprintf("[mm] initializing the kernel page allocator");
+	kprintf("[kernel][mm] initializing the kernel page allocator");
 
 #ifndef __NANVIX_FAST_BOOT
 	for (unsigned i = 0; i < NUM_KPAGES; i++)
@@ -140,7 +140,7 @@ PUBLIC void kpool_init(void)
 #endif
 
 #ifndef NDEBUG
-	kprintf("[mm] running tests on the kernel page allocator");
+	kprintf("[kernel][mm] running tests on the kernel page allocator");
 	kpool_test_driver();
 #endif
 }
