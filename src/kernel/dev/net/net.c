@@ -22,12 +22,13 @@
  * SOFTWARE.
  */
 
-#include <dev/net/net.h>
+#include <nanvix/kernel/config.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
 
 #if __NANVIX_HAS_NETWORK
 
+#include <dev/net/net.h>
 #include <arch/nic_driver_if.h>
 #include <lwip/init.h>
 #include <lwip/netif.h>

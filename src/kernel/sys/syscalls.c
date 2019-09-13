@@ -27,7 +27,7 @@
 #include <nanvix/kernel/thread.h>
 #include <nanvix/kernel/syscall.h>
 #include <nanvix/klib.h>
-#include <errno.h>
+#include <posix/errno.h>
 
 /**
  * @brief Semaphore variable for system call dispatcher.

@@ -86,6 +86,7 @@ export CFLAGS  += -Wundef -Wshadow -Wuninitialized -Wlogical-op
 export CFLAGS  += -Wno-unused-function
 export CFLAGS  += -fno-stack-protector
 export CFLAGS  += -Wvla # -Wredundant-decls
+export CFLAGS  += -D__NANVIX_MICROKERNEL
 export CFLAGS  += -I $(INCDIR)
 export CFLAGS += -I $(ROOTDIR)/src/lwip/src/include
 

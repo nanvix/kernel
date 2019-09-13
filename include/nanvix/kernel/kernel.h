@@ -22,26 +22,13 @@
  * SOFTWARE.
  */
 
-#include <nanvix/kernel/mm.h>
-#include <nanvix/const.h>
-#include <nanvix/klib.h>
+#ifndef NANVIX_KERNEL_KERNEL_H_
+#define NANVIX_KERNEL_KERNEL_H_
 
-/**
- * The mm_init() function initializes the Memory Management (MM)
- * system. It first performs assertions on memory structures handled
- * by the Hardware Abstraction Layer (HAL) and then initializes its
- * internal subsystems: (i) the Page Frame Allocator; (ii) the Kernel
- * Page Pool; and (iii) the User Page Pool.
- *
- * @see frame_init(), kpool_init and upool_init().
- *
- * @author Pedro Henrique Penna
- */
-PUBLIC void mm_init(void)
-{
-	kprintf("[kernel][mm] initializing the memory system");
-	frame_init();
-	kpool_init();
-	upool_init();
-}
+	#include <nanvix/hal/hal.h>
+	#include <nanvix/kernel/config.h>
+	#include <nanvix/kernel/signal.h>
+	#include <nanvix/kernel/syscall.h>
+	#include <nanvix/kernel/thread.h>
 
+#endif /* NANVIX_KERNEL_KERNEL_H_ */

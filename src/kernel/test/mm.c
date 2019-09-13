@@ -25,7 +25,7 @@
 #include <nanvix/kernel/mm.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
-#include <errno.h>
+#include <posix/errno.h>
 
 /**
  * @cond release_test

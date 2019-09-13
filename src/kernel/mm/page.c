@@ -26,7 +26,7 @@
 #include <nanvix/kernel/mm.h>
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
-#include <errno.h>
+#include <posix/errno.h>
 
 /*============================================================================*
  * pgtab_map()                                                                *
@@ -80,7 +80,7 @@ PRIVATE inline struct pde *pgtab_map(struct pde *pgdir, vaddr_t vaddr)
 	/* Busy page directory entry. */
 	if (pde_is_present(pde))
 	{
-		kprintf("[mm] busy page table directory entry");
+		kprintf("[kernel][mm] busy page table directory entry");
 		return (NULL);
 	}
 
@@ -187,7 +187,7 @@ PRIVATE int pgtab_unmap(struct pde *pgdir, vaddr_t vaddr)
 	/* Cannot release kernel page. */
 	if (kpage_put(pgtab) < 0)
 	{
-		kprintf("[mm] kernel page leak");
+		kprintf("[kernel][mm] kernel page leak");
 		return (-EIO);
 	}
 
@@ -421,7 +421,7 @@ PUBLIC int upage_alloc(struct pde *pgdir, vaddr_t vaddr)
 	if ((err = upage_map(pgdir, vaddr, frame)) < 0)
 	{
 		if (frame_free(frame) < 0)
-			kprintf("[mm] page frame leak");
+			kprintf("[kernel][mm] page frame leak");
 
 		return (err);
 	}
@@ -471,7 +471,7 @@ PUBLIC int upage_free(struct pde *pgdir, vaddr_t vaddr)
 	/* Release page frame. */
 	if (frame_free(frame) < 0)
 	{
-		kprintf("[mm] page frame leak");
+		kprintf("[kernel][mm] page frame leak");
 
 		return (-EIO);
 	}
@@ -527,7 +527,7 @@ PRIVATE void do_tlb_fault(
 	if (!mm_is_uaddr(vaddr))
 	{
 	#ifndef __mppa256__
-		kprintf("[mm] tlb fault in kernel land at %x", vaddr);
+		kprintf("[kernel][mm] tlb fault in kernel land at %x", vaddr);
 	#endif
 	}
 
@@ -571,7 +571,7 @@ PRIVATE void do_tlb_fault(
  */
 PUBLIC void upool_init(void)
 {
-	kprintf("[mm] initializing the user page allocator");
+	kprintf("[kernel][mm] initializing the user page allocator");
 
 	/* Register handlers. */
 #if (!CORE_HAS_TLB_HW)
@@ -580,7 +580,7 @@ PUBLIC void upool_init(void)
 #endif
 
 #ifndef NDEBUG
-	kprintf("[mm] running tests on the user page allocator");
+	kprintf("[kernel][mm] running tests on the user page allocator");
 	upool_test_driver();
 #endif
 }

@@ -25,12 +25,14 @@
 #ifndef NANVIX_SYSCALL_H_
 #define NANVIX_SYSCALL_H_
 
+#ifdef __NANVIX_MICROKERNEL
 	#include <nanvix/kernel/thread.h>
 	#include <nanvix/kernel/sync.h>
 	#include <nanvix/kernel/mailbox.h>
 	#include <nanvix/kernel/portal.h>
 	#include <nanvix/kernel/signal.h>
 	#include <nanvix/const.h>
+#endif /* __NANVIX_MICROKERNEL */
 
 /**
  * @addtogroup kernel-syscalls System Calls
@@ -92,6 +94,8 @@
  * Thread Kernel Calls                                                        *
  *============================================================================*/
 
+#ifdef __NANVIX_MICROKERNEL
+
 	EXTERN void kernel_exit(int);
 	EXTERN ssize_t kernel_write(int, const char *, size_t);
 	EXTERN int kernel_thread_get_id(void);
@@ -109,10 +113,13 @@
 	 */
 	EXTERN int kernel_shutdown(void);
 
+#endif /* __NANVIX_MICROKERNEL */
 
 /*============================================================================*
  * Thread Kernel Calls                                                        *
  *============================================================================*/
+
+#ifdef __NANVIX_MICROKERNEL
 
 	/**
 	 * @brief Controls the behavior of a signal.
@@ -157,9 +164,13 @@
 	 */
 	EXTERN void kernel_sigreturn(void);
 
+#endif /* __NANVIX_MICROKERNEL */
+
 /*============================================================================*
  * Sync Kernel Calls                                                          *
  *============================================================================*/
+
+#ifdef __NANVIX_MICROKERNEL
 
 	EXTERN int kernel_sync_create(const int *, int, int);
 	EXTERN int kernel_sync_open(const int *, int, int);
@@ -168,9 +179,13 @@
 	EXTERN int kernel_sync_wait(int);
 	EXTERN int kernel_sync_signal(int);
 
+#endif /* __NANVIX_MICROKERNEL */
+
 /*============================================================================*
  * Mailbox Kernel Calls                                                       *
  *============================================================================*/
+
+#ifdef __NANVIX_MICROKERNEL
 
 	EXTERN int kernel_mailbox_create(int);
 	EXTERN int kernel_mailbox_open(int);
@@ -180,9 +195,13 @@
 	EXTERN int kernel_mailbox_awrite(int, const void *, size_t);
 	EXTERN int kernel_mailbox_wait(int);
 
+#endif /* __NANVIX_MICROKERNEL */
+
 /*============================================================================*
  * Portal Kernel Calls                                                       *
  *============================================================================*/
+
+#ifdef __NANVIX_MICROKERNEL
 
 	EXTERN int kernel_portal_create(int);
 	EXTERN int kernel_portal_allow(int, int);
@@ -192,6 +211,8 @@
 	EXTERN int kernel_portal_aread(int, void *, size_t);
 	EXTERN int kernel_portal_awrite(int, const void *, size_t);
 	EXTERN int kernel_portal_wait(int);
+
+#endif /* __NANVIX_MICROKERNEL */
 
 /**@}*/
 

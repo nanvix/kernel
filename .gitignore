@@ -1,5 +1,5 @@
-# Tools
-tools/dev/toolchain/
+# Toolchain
+utils/toolchain
 
 # Doxygen
 doc/html
@@ -18,17 +18,17 @@ nanvix-cluster*
 # Ctags
 tags
 
-# HAL Headers
-include/arch/
-include/grub/
-include/machine/
-include/nanvix/cc.h
-include/nanvix/const.h
-include/nanvix/hal/
-include/nanvix/klib.h
-include/posix
-
 # IDEs
 *.swp
 *.swo
 *.vscode/
+
+# HAL Headers
+include/arch/
+include/grub/
+include/machine/
+include/nanvix/hal/
+include/nanvix/cc.h
+include/nanvix/const.h
+include/nanvix/klib.h
+include/posix/
