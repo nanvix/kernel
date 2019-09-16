@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ * Copyright(c) 2011-2019 The Maintainers of Nanvix
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,23 +23,18 @@
  */
 
 /**
- * @defgroup kernel-portal Portal System
+ * @defgroup kernel-portal Portal Facility
  * @ingroup kernel
  *
- * @brief Portal System
+ * @brief Portal Facility
  */
 
 #ifndef NANVIX_PORTAL_H_
 #define NANVIX_PORTAL_H_
 
-	/* External dependencies. */
 	#include <nanvix/hal/hal.h>
 	#include <nanvix/const.h>
 	#include <stdarg.h>
-
-/*============================================================================*
- *                               Portal System                                *
- *============================================================================*/
 
 	/**
 	 * @brief Creates a portal.
@@ -50,7 +45,7 @@
 	 * portal is returned. Upon failure, a negative error code is returned
 	 * instead.
 	 */
-	EXTERN int _portal_create(int local);
+	EXTERN int do_portal_create(int local);
 
 	/**
 	 * @brief Enables read operations from a remote.
@@ -61,7 +56,7 @@
 	 * @returns Upons successful completion zero is returned. Upon failure,
 	 * a negative error code is returned instead.
 	 */
-	EXTERN int _portal_allow(int portalid, int remote);
+	EXTERN int do_portal_allow(int portalid, int remote);
 
 	/**
 	 * @brief Opens a portal.
@@ -72,7 +67,7 @@
 	 * @returns Upon successful completion, the ID of the target portal is
 	 * returned. Upon failure, a negative error code is returned instead.
 	 */
-	EXTERN int _portal_open(int local, int remote);
+	EXTERN int do_portal_open(int local, int remote);
 
 	/**
 	 * @brief Destroys a portal.
@@ -82,8 +77,8 @@
 	 * @returns Upon successful completion zero is returned. Upon failure, a
 	 * negative error code is returned instead.
 	 */
-	EXTERN int _portal_unlink(int portalid);
-	
+	EXTERN int do_portal_unlink(int portalid);
+
 	/**
 	 * @brief Closes a portal.
 	 *
@@ -92,7 +87,7 @@
 	 * @returns Upon successful completion zero is returned. Upon failure, a
 	 * negative error code is returned instead.
 	 */
-	EXTERN int _portal_close(int portalid);
+	EXTERN int do_portal_close(int portalid);
 
 	/**
 	 * @brief Reads data asynchronously from a portal.
@@ -104,7 +99,7 @@
 	 * @returns Upon successful completion, zero is returned. Upon
 	 * failure, a negative error code is returned instead.
 	 */
-	EXTERN int _portal_aread(int portalid, void * buffer, size_t size);
+	EXTERN int do_portal_aread(int portalid, void * buffer, size_t size);
 
 	/**
 	* @brief Writes data asynchronously to a portal.
@@ -116,7 +111,7 @@
 	* @returns Upon successful, zero is returned. Upon failure, a
 	* negative error code is returned instead.
 	*/
-	EXTERN int _portal_awrite(int portalid, const void * buffer, size_t size);
+	EXTERN int do_portal_awrite(int portalid, const void * buffer, size_t size);
 
 	/**
 	 * @brief Waits for an asynchronous operation on a portal to complete.
@@ -126,7 +121,7 @@
 	 * @returns Upon successful completion, zero is returned. Upon
 	 * failure, a negative error code is returned instead.
 	 */
-	EXTERN int _portal_wait(int portalid);
+	EXTERN int do_portal_wait(int portalid);
 
 #endif /* NANVIX_PORTAL_H_ */
 

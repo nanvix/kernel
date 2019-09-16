@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ * Copyright(c) 2011-2019 The Maintainers of Nanvix
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,23 +23,17 @@
  */
 
 /**
- * @defgroup kernel-mailbox Mailbox System
+ * @defgroup kernel-mailbox Mailbox Facility
  * @ingroup kernel
  *
- * @brief Mailbox System
+ * @brief Mailbox Facility
  */
 
 #ifndef NANVIX_MAILBOX_H_
 #define NANVIX_MAILBOX_H_
 
-	/* External dependencies. */
 	#include <nanvix/hal/hal.h>
 	#include <nanvix/const.h>
-	#include <stdarg.h>
-
-/*============================================================================*
- *                               Mailbox System                               *
- *============================================================================*/
 
 	/**
 	 * @brief Creates a mailbox.
@@ -50,7 +44,7 @@
 	 * mailbox is returned. Upon failure, a negative error code is
 	 * returned instead.
 	 */
-	EXTERN int _mailbox_create(int local);
+	EXTERN int do_mailbox_create(int local);
 
 	/**
 	 * @brief Opens a mailbox.
@@ -61,7 +55,7 @@
 	 * is returned. Upon failure, a negative error code is returned
 	 * instead.
 	 */
-	EXTERN int _mailbox_open(int remote);
+	EXTERN int do_mailbox_open(int remote);
 
 	/**
 	 * @brief Destroys a mailbox.
@@ -71,7 +65,7 @@
 	 * @returns Upon successful completion, zero is returned. Upon failure,
 	 * a negative error code is returned instead.
 	 */
-	EXTERN int _mailbox_unlink(int mbxid);
+	EXTERN int do_mailbox_unlink(int mbxid);
 
 	/**
 	 * @brief Closes a mailbox.
@@ -81,7 +75,7 @@
 	 * @returns Upon successful completion, zero is returned. Upon
 	 * failure, a negative error code is returned instead.
 	 */
-	EXTERN int _mailbox_close(int mbxid);
+	EXTERN int do_mailbox_close(int mbxid);
 
 	/**
 	 * @brief Reads data from a mailbox.
@@ -93,7 +87,7 @@
 	 * @returns Upon successful completion, zero is returned. Upon
 	 * failure, a negative error code is returned instead.
 	 */
-	EXTERN int _mailbox_aread(int mbxid, void * buffer, size_t size);
+	EXTERN int do_mailbox_aread(int mbxid, void * buffer, size_t size);
 
 	/**
 	 * @brief Writes data to a mailbox.
@@ -105,7 +99,7 @@
 	 * @returns Upon successful completion, zero is returned. Upon
 	 * failure, a negative error code is returned instead.
 	 */
-	EXTERN int _mailbox_awrite(int mbxid, const void * buffer, size_t size);
+	EXTERN int do_mailbox_awrite(int mbxid, const void * buffer, size_t size);
 
 	/**
 	 * @brief Waits for an asynchronous operation on a mailbox to complete.
@@ -115,7 +109,7 @@
 	 * @returns Upon successful completion, zero is returned. Upon
 	 * failure, a negative error code is returned instead.
 	 */
-	EXTERN int _mailbox_wait(int mbxid);
+	EXTERN int do_mailbox_wait(int mbxid);
 
 #endif /* NANVIX_MAILBOX_H_ */
 

@@ -1,8 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
- *              2015-2016 Davidson Francis     <davidsondfgl@gmail.com>
+ * Copyright(c) 2011-2019 The Maintainers of Nanvix
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -41,7 +40,7 @@ PRIVATE struct mailbox
 	struct resource resource; /**< Underlying resource.        */
 	int refcount;             /**< References count.           */
 	int fd;                   /**< Underlying file descriptor. */
-	int nodenum;              /**< Target's amount.            */
+	int nodenum;              /**< Target node number.         */
 } ALIGN(sizeof(dword_t)) mbxtab[(MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX)];
 
 /**
@@ -52,7 +51,7 @@ PRIVATE const struct resource_pool mbxpool = {
 };
 
 /*============================================================================*
- * _mailbox_is_valid()                                                        *
+ * do_mailbox_is_valid()                                                      *
  *============================================================================*/
 
 /**
@@ -63,13 +62,13 @@ PRIVATE const struct resource_pool mbxpool = {
  * @returns One if the target synchronization point is valid, and false
  * otherwise.
  */
-PRIVATE int _mailbox_is_valid(int mbxid)
+PRIVATE int do_mailbox_is_valid(int mbxid)
 {
 	return WITHIN(mbxid, 0, (MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX));
 }
 
 /*============================================================================*
- * _mailbox_create()                                                          *
+ * do_mailbox_create()                                                        *
  *============================================================================*/
 
 /**
@@ -81,7 +80,7 @@ PRIVATE int _mailbox_is_valid(int mbxid)
  * mailbox is returned. Upon failure, a negative error code is
  * returned instead.
  */
-int _mailbox_create(int local)
+PRIVATE int _do_mailbox_create(int local)
 {
 	int fd;    /* File descriptor. */
 	int mbxid; /* Mailbox ID.      */
@@ -100,16 +99,54 @@ int _mailbox_create(int local)
 	mbxtab[mbxid].fd       = fd;
 	mbxtab[mbxid].refcount = 1;
 	mbxtab[mbxid].nodenum  = local;
+
 	resource_set_rdonly(&mbxtab[mbxid].resource);
 	resource_set_notbusy(&mbxtab[mbxid].resource);
 
+	return (mbxid);
+}
+
+/**
+ * @see _do_mailbox_create().
+ */
+PUBLIC int do_mailbox_create(int local)
+{
+	int mbxid; /* Mailbox ID. */
+
+	/* Invalid local ID. */
+	if (!WITHIN(local, 0, PROCESSOR_NOC_NODES_NUM))
+		return (-EINVAL);
+
+	/* Searchs for existing mailboxes. */
+	for (int i = 0; i < (MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX); ++i)
+	{
+		if (!resource_is_used(&mbxtab[i].resource))
+			continue;
+
+		if (!resource_is_readable(&mbxtab[i].resource))
+			continue;
+
+		/* Not the same node num? */
+		if (mbxtab[i].nodenum != local)
+			continue;
+
+		mbxid = i;
+		mbxtab[i].refcount++;
+
+		goto found;
+	}
+
+	/* Alloc a new mailbox. */
+	mbxid = _do_mailbox_create(local);
+
+found:
 	dcache_invalidate();
 
 	return (mbxid);
 }
 
 /*============================================================================*
- * _mailbox_open()                                                            *
+ * do_mailbox_open()                                                          *
  *============================================================================*/
 
 /**
@@ -120,7 +157,7 @@ int _mailbox_create(int local)
  * @returns Upon successful completion, the ID of the target mailbox
  * is returned. Upon failure, a negative error code is returned instead.
  */
-int _mailbox_open(int remote)
+PRIVATE int _do_mailbox_open(int remote)
 {
 	int fd;    /* File descriptor. */
 	int mbxid; /* Mailbox ID.      */
@@ -138,107 +175,142 @@ int _mailbox_open(int remote)
 	mbxtab[mbxid].fd       = fd;
 	mbxtab[mbxid].refcount = 1;
 	mbxtab[mbxid].nodenum  = remote;
+
 	resource_set_wronly(&mbxtab[mbxid].resource);
 	resource_set_notbusy(&mbxtab[mbxid].resource);
 
+	return (mbxid);
+}
+
+/**
+ * @see _do_mailbox_open().
+ */
+PUBLIC int do_mailbox_open(int remote)
+{
+	int mbxid; /* Mailbox ID. */
+
+	/* Invalid remote ID. */
+	if (!WITHIN(remote, 0, PROCESSOR_NOC_NODES_NUM))
+		return (-EINVAL);
+
+	/* Searchs for existing mailboxes. */
+	for (int i = 0; i < (MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX); ++i)
+	{
+		if (!resource_is_used(&mbxtab[i].resource))
+			continue;
+
+		if (!resource_is_writable(&mbxtab[i].resource))
+			continue;
+
+		/* Not the same node num? */
+		if (mbxtab[i].nodenum != remote)
+			continue;
+
+		mbxid = i;
+		mbxtab[i].refcount++;
+
+		goto found;
+	}
+
+	/* Alloc a new mailbox. */
+	mbxid = _do_mailbox_open(remote);
+
+found:
 	dcache_invalidate();
 
 	return (mbxid);
 }
 
 /*============================================================================*
- * _mailbox_unlink()                                                          *
+ * _do_mailbox_release()                                                      *
  *============================================================================*/
 
 /**
- * @brief Destroys a mailbox.
- *
- * @param mbxid ID of the Target Mailbox.
- *
- * @returns Upon successful completion, zero is returned. Upon failure,
- * a negative error code is returned instead.
+ * @todo TODO: Provide a detailed description for this function.
  */
-int _mailbox_unlink(int mbxid)
+PRIVATE int _do_mailbox_release(int mbxid, int (*release_fn)(int))
 {
 	int ret; /* HAL function return. */
 
+	mbxtab[mbxid].refcount--;
+
+	if (mbxtab[mbxid].refcount == 0)
+	{
+		if ((ret = release_fn(mbxtab[mbxid].fd)) < 0)
+			return (ret);
+
+		mbxtab[mbxid].fd      = -1;
+		mbxtab[mbxid].nodenum = -1;
+
+		resource_free(&mbxpool, mbxid);
+
+		dcache_invalidate();
+	}
+
+	return (0);
+}
+
+/*============================================================================*
+ * do_mailbox_unlink()                                                        *
+ *============================================================================*/
+
+/**
+ * @todo TODO: Provide a detailed description for this function.
+ */
+PUBLIC int do_mailbox_unlink(int mbxid)
+{
 	/* Invalid mailbox. */
-	if (!_mailbox_is_valid(mbxid))
+	if (!do_mailbox_is_valid(mbxid))
 		return (-EBADF);
 
 	/* Bad mailbox. */
 	if (!resource_is_used(&mbxtab[mbxid].resource))
-		return (-EAGAIN);
+		return (-EBADF);
 
 	/* Bad mailbox. */
 	if (!resource_is_readable(&mbxtab[mbxid].resource))
-		return (-EAGAIN);
+		return (-EBADF);
 
-	if ((ret = mailbox_unlink(mbxtab[mbxid].fd)) != 0)
-		return (ret);
-
-	mbxtab[mbxid].fd = -1;
-	resource_free(&mbxpool, mbxid);
-
-	return (0);
+	/* Release resource. */
+	return (_do_mailbox_release(mbxid, mailbox_unlink));
 }
 
 /*============================================================================*
- * _mailbox_close()                                                           *
+ * do_mailbox_close()                                                         *
  *============================================================================*/
 
 /**
- * @brief Closes a mailbox.
- *
- * @param mbxid ID of the Target Mailbox.
- *
- * @returns Upon successful completion, zero is returned. Upon
- * failure, a negative error code is returned instead.
+ * @todo TODO: Provide a detailed description for this function.
  */
-int _mailbox_close(int mbxid)
+PUBLIC int do_mailbox_close(int mbxid)
 {
-	int ret; /* HAL function return. */
-
 	/* Invalid mailbox. */
-	if (!_mailbox_is_valid(mbxid))
+	if (!do_mailbox_is_valid(mbxid))
 		return (-EBADF);
 
 	/* Bad mailbox. */
 	if (!resource_is_used(&mbxtab[mbxid].resource))
-		return (-EAGAIN);
+		return (-EBADF);
 
 	/* Bad mailbox. */
 	if (!resource_is_writable(&mbxtab[mbxid].resource))
-		return (-EAGAIN);
+		return (-EBADF);
 
-	/* Closes mailbox. */
-	if ((ret = mailbox_close(mbxtab[mbxid].fd)) != 0)
-		return (ret);
-
-	mbxtab[mbxid].fd = -1;
-	resource_free(&mbxpool, mbxid);
-
-	return (0);
+	/* Release resource. */
+	return (_do_mailbox_release(mbxid, mailbox_close));
 }
 
 /*============================================================================*
- * _mailbox_aread()                                                           *
+ * do_mailbox_aread()                                                         *
  *============================================================================*/
 
 /**
- * @brief Reads data from a mailbox.
- *
- * @param mbxid  ID of the Target Mailbox.
- * @param buffer Buffer where the data should be written to.
- * @param size   Number of bytes to read.
- *
- * @returns Upon successful completion, zero is returned. Upon
- * failure, a negative error code is returned instead.
+ * @todo TODO: Provide a detailed description for this function.
  */
-int _mailbox_aread(int mbxid, void * buffer, size_t size)
+PUBLIC int do_mailbox_aread(int mbxid, void * buffer, size_t size)
 {
 	/* Invalid mailbox. */
-	if (!_mailbox_is_valid(mbxid))
+	if (!do_mailbox_is_valid(mbxid))
 		return (-EBADF);
 
 	/* Invalid buffer. */
@@ -251,33 +323,26 @@ int _mailbox_aread(int mbxid, void * buffer, size_t size)
 
 	/* Bad mailbox. */
 	if (!resource_is_used(&mbxtab[mbxid].resource))
-		return (-EAGAIN);
+		return (-EBADF);
 
 	/* Bad mailbox. */
 	if (!resource_is_readable(&mbxtab[mbxid].resource))
 		return (-EBADF);
 
-	return mailbox_aread(mbxtab[mbxid].fd, buffer, size);
+	return (mailbox_aread(mbxtab[mbxid].fd, buffer, size));
 }
 
 /*============================================================================*
- * _mailbox_write()                                                           *
+ * do_mailbox_write()                                                         *
  *============================================================================*/
 
 /**
- * @brief Writes data to a mailbox.
- *
- * @param mbxid  ID of the Target Mailbox.
- * @param buffer Buffer where the data should be read from.
- * @param size   Number of bytes to write.
- *
- * @returns Upon successful completion, zero is returned. Upon
- * failure, a negative error code is returned instead.
+ * @todo TODO: Provide a detailed description for this function.
  */
-int _mailbox_awrite(int mbxid, const void * buffer, size_t size)
+PUBLIC int do_mailbox_awrite(int mbxid, const void * buffer, size_t size)
 {
 	/* Invalid mailbox. */
-	if (!_mailbox_is_valid(mbxid))
+	if (!do_mailbox_is_valid(mbxid))
 		return (-EBADF);
 
 	/* Invalid buffer. */
@@ -290,37 +355,32 @@ int _mailbox_awrite(int mbxid, const void * buffer, size_t size)
 
 	/* Bad mailbox. */
 	if (!resource_is_used(&mbxtab[mbxid].resource))
-		return (-EAGAIN);
+		return (-EBADF);
 
 	/* Bad mailbox. */
 	if (!resource_is_writable(&mbxtab[mbxid].resource))
 		return (-EBADF);
 
-	return mailbox_awrite(mbxtab[mbxid].fd, buffer, size);
+	return (mailbox_awrite(mbxtab[mbxid].fd, buffer, size));
 }
 
 /*============================================================================*
- * _mailbox_wait()                                                            *
+ * do_mailbox_wait()                                                          *
  *============================================================================*/
 
 /**
- * @brief Waits for an asynchronous operation on a mailbox to complete.
- *
- * @param mbxid ID of the Target Mailbox.
- *
- * @returns Upon successful completion, zero is returned. Upon
- * failure, a negative error code is returned instead.
+ * @todo TODO: Provide a detailed description for this function.
  */
-int _mailbox_wait(int mbxid)
+PUBLIC int do_mailbox_wait(int mbxid)
 {
 	/* Invalid mailbox. */
-	if (!_mailbox_is_valid(mbxid))
+	if (!do_mailbox_is_valid(mbxid))
 		return (-EBADF);
 
 	dcache_invalidate();
 
 	/* Waits. */
-	return mailbox_wait(mbxtab[mbxid].fd);
+	return (mailbox_wait(mbxtab[mbxid].fd));
 }
 
 #endif /* __TARGET_HAS_MAILBOX */

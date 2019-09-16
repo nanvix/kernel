@@ -1,8 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2011-2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
- *              2015-2016 Davidson Francis     <davidsondfgl@gmail.com>
+ * Copyright(c) 2011-2019 The Maintainers of Nanvix
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,39 +37,23 @@
  */
 PRIVATE struct sync
 {
-	struct create
-	{
-		struct resource resource; /**< Underlying resource.        */
-		int refcount;             /**< References count.           */
-		int fd;                   /**< Underlying file descriptor. */
-		int type;                 /**< Sync type.                  */
-		int nodenum;              /**< Relative sync point.        */
-	} ALIGN(sizeof(dword_t)) creates[SYNC_CREATE_MAX];
-
-	struct open
-	{
-		struct resource resource; /**< Underlying resource.        */
-		int refcount;             /**< References count.           */
-		int fd;                   /**< Underlying file descriptor. */
-		int type;                 /**< Sync's type.                */
-		uint64_t nodes;           /**< Target node IDs.            */
-	} ALIGN(sizeof(dword_t)) opens[SYNC_OPEN_MAX];
-} synctab;
+	struct resource resource; /**< Underlying resource.        */
+	int refcount;             /**< References count.           */
+	int fd;                   /**< Underlying file descriptor. */
+	int type;                 /**< Sync type.                  */
+	int masternum;            /**< Node number of the ONE.     */
+	uint64_t footprint;       /**< Node ID list.               */
+} ALIGN(sizeof(dword_t)) synctab[(SYNC_CREATE_MAX + SYNC_OPEN_MAX)];
 
 /**
  * @brief Resource pool.
  */
-PRIVATE struct syncpools
-{
-	const struct resource_pool create_pools;
-	const struct resource_pool open_pools;
-} ALIGN(sizeof(dword_t)) syncpools = {
-	.create_pools = {synctab.creates, SYNC_CREATE_MAX, sizeof(struct create)},
-	.open_pools   = {synctab.opens,   SYNC_OPEN_MAX,   sizeof(struct open)  },
+PRIVATE const struct resource_pool syncpool = {
+	synctab, (SYNC_CREATE_MAX + SYNC_OPEN_MAX), sizeof(struct sync)
 };
 
 /*============================================================================*
- * _sync_is_valid()                                                           *
+ * do_sync_is_valid()                                                         *
  *============================================================================*/
 
 /**
@@ -85,75 +68,114 @@ PRIVATE struct syncpools
  * @note This function is thread-safe.
  * @note This function is reentrant.
  */
-PRIVATE int _sync_is_valid(int syncid, int limit)
+PRIVATE int do_sync_is_valid(int syncid)
 {
-	return WITHIN(syncid, 0, limit);
+	return WITHIN(syncid, 0, (SYNC_CREATE_MAX + SYNC_OPEN_MAX));
 }
 
 /*============================================================================*
- * _sync_create()                                                             *
+ * do_sync_create()                                                           *
  *============================================================================*/
 
 /**
  * @brief Creates a synchronization point.
  *
- * @param nodes  Logic IDs of Target Nodes.
- * @param nnodes Number of Target Nodes.
- * @param type   Type of synchronization point.
+ * @param nodes     Logic IDs of Target Nodes.
+ * @param nnodes    Number of Target Nodes.
+ * @param type      Type of synchronization point.
+ * @param footprint Target nodes footprint.
  *
  * @returns Upon successful completion, the ID of the newly created
  * synchronization point is returned. Upon failure, a negative error
  * code is returned instead.
  */
-PUBLIC int _sync_create(const int *nodes, int nnodes, int type)
+PRIVATE int _do_sync_create(const int *nodes, int nnodes, int type, uint64_t footprint)
 {
-	int fd;		/* File descriptor.       */
-	int syncid; /* Synchronization point. */
-
-	for (int i = 0; i < SYNC_CREATE_MAX; i++)
-	{
-		if (!resource_is_used(&synctab.creates[i].resource))
-			continue;
-
-		if (synctab.creates[i].nodenum != nodes[0])
-			continue;
-
-		/* @todo: Is this check correctly and necessary? */
-		if (synctab.creates[i].type != type)
-			return (-EAGAIN);
-
-		syncid = i;
-		synctab.creates[i].refcount++;
-
-		goto found;
-	}
+	int fd;
+	int syncid;
 
 	/* Allocate a synchronization point. */
-	if ((syncid = resource_alloc(&syncpools.create_pools)) < 0)
+	if ((syncid = resource_alloc(&syncpool)) < 0)
 		return (-EAGAIN);
 
 	if ((fd = sync_create(nodes, nnodes, type)) < 0)
 	{
-		resource_free(&syncpools.create_pools, syncid);
+		resource_free(&syncpool, syncid);
 		return (fd);
 	}
 
 	/* Initialize synchronization point. */
-	synctab.creates[syncid].fd       = fd;
-	synctab.creates[syncid].type     = type;
-	synctab.creates[syncid].refcount = 1;
-	synctab.creates[syncid].nodenum  = nodes[0];
-	resource_set_rdonly(&synctab.creates[syncid].resource);
-	resource_set_notbusy(&synctab.creates[syncid].resource);
+	synctab[syncid].fd        = fd;
+	synctab[syncid].type      = type;
+	synctab[syncid].refcount  = 1;
+	synctab[syncid].masternum = nodes[0];
+	synctab[syncid].footprint = footprint;
 
-	dcache_invalidate();
+	resource_set_rdonly(&synctab[syncid].resource);
+	resource_set_notbusy(&synctab[syncid].resource);
+
+	return (syncid);
+}
+
+/**
+ * @see _do_sync_create().
+ */
+PUBLIC int do_sync_create(const int *nodes, int nnodes, int type)
+{
+	int syncid;         /* Synchronization point.  */
+	uint64_t footprint; /* Target nodes footprint. */
+
+	if (nodes == NULL)
+		return (-EINVAL);
+
+	if (!WITHIN(nnodes, 2, (PROCESSOR_NOC_NODES_NUM + 1)))
+		return(-EINVAL);
+
+	if (type != SYNC_ONE_TO_ALL && type != SYNC_ALL_TO_ONE)
+		return (-EINVAL);
+
+	footprint = 0ULL;
+	for (int j = 0; j < nnodes; j++)
+		footprint |= (1ULL << nodes[j]);
+
+	/* Searchs for existing syncs. */
+	for (int i = 0; i < (SYNC_CREATE_MAX + SYNC_OPEN_MAX); ++i)
+	{
+		if (!resource_is_used(&synctab[i].resource))
+			continue;
+
+		if (!resource_is_readable(&synctab[i].resource))
+			continue;
+
+		/* Not the same master? */
+		if (synctab[i].masternum != nodes[0])
+			continue;
+
+		/* Not the same node list? */
+		if (synctab[i].footprint != footprint)
+			continue;
+
+		/* Not the same type operation? */
+		if (synctab[i].type != type)
+			continue;
+
+		syncid = i;
+		synctab[i].refcount++;
+
+		goto found;
+	}
+
+	/* Alloc a new synchronization point. */
+	syncid = _do_sync_create(nodes, nnodes, type, footprint);
 
 found:
+	dcache_invalidate();
+
 	return (syncid);
 }
 
 /*============================================================================*
- * _sync_open()                                                               *
+ * do_sync_open()                                                             *
  *============================================================================*/
 
 /**
@@ -162,6 +184,7 @@ found:
  * @param nodes  Logic IDs of Target Nodes.
  * @param nnodes Number of Target Nodes.
  * @param type   Type of synchronization point.
+ * @param footprint Target nodes footprint.
  *
  * @returns Upon successful completion, the ID of the target
  * synchronization point is returned. Upon failure, a negative error
@@ -169,184 +192,230 @@ found:
  *
  * @todo Check for Invalid Remote
  */
-PUBLIC int _sync_open(const int *nodes, int nnodes, int type)
+PRIVATE int _do_sync_open(const int *nodes, int nnodes, int type, uint64_t footprint)
 {
-	int fd;		     /* File descriptor.        */
-	int syncid;      /* Synchronization point.  */
-	uint64_t _nodes; /* Target nodes footprint. */
-
-	if (nodes == NULL || nnodes > PROCESSOR_NOC_NODES_NUM)
-		return (-EINVAL);
-
-	_nodes = 0ULL;
-	for (int j = 0; j < nnodes; j++)
-		_nodes |= (1ULL << nodes[j]);
-
-	for (int i = 0; i < SYNC_OPEN_MAX; i++)
-	{
-		if (!resource_is_used(&synctab.opens[i].resource))
-			continue;
-
-		if (synctab.opens[i].type != type)
-			continue;
-
-		if (synctab.opens[i].nodes == _nodes)
-		{
-			syncid = i;
-			synctab.opens[syncid].refcount++;
-
-			goto found;
-		}
-	}
+	int fd;		/* File descriptor.       */
+	int syncid; /* Synchronization point. */
 
 	/* Allocate a synchronization point. */
-	if ((syncid = resource_alloc(&syncpools.open_pools)) < 0)
+	if ((syncid = resource_alloc(&syncpool)) < 0)
 		return (-EAGAIN);
 
 	/* Open connector. */
 	if ((fd = sync_open(nodes, nnodes, type)) < 0)
 	{
-		resource_free(&syncpools.open_pools, syncid);
+		resource_free(&syncpool, syncid);
 		return (fd);
 	}
 
 	/* Initialize synchronization point. */
-	synctab.opens[syncid].fd       = fd;
-	synctab.opens[syncid].type     = type;
-	synctab.opens[syncid].nodes    = _nodes;
-	synctab.opens[syncid].refcount = 1;
+	synctab[syncid].fd        = fd;
+	synctab[syncid].type      = type;
+	synctab[syncid].refcount  = 1;
+	synctab[syncid].masternum = nodes[0];
+	synctab[syncid].footprint = footprint;
 
-	resource_set_wronly(&synctab.opens[syncid].resource);
-	resource_set_notbusy(&synctab.opens[syncid].resource);
+	resource_set_wronly(&synctab[syncid].resource);
+	resource_set_notbusy(&synctab[syncid].resource);
 
-	dcache_invalidate();
-
-found:
 	return (syncid);
 }
 
+/**
+ * @see _do_sync_open().
+ */
+PUBLIC int do_sync_open(const int *nodes, int nnodes, int type)
+{
+	int syncid;         /* Synchronization point.  */
+	uint64_t footprint; /* Target nodes footprint. */
+
+	if (nodes == NULL)
+		return (-EINVAL);
+
+	if (!WITHIN(nnodes, 2, (PROCESSOR_NOC_NODES_NUM + 1)))
+		return(-EINVAL);
+
+	if (type != SYNC_ONE_TO_ALL && type != SYNC_ALL_TO_ONE)
+		return (-EINVAL);
+
+	footprint = 0ULL;
+	for (int j = 0; j < nnodes; j++)
+		footprint |= (1ULL << nodes[j]);
+
+	/* Searchs for existing syncs. */
+	for (int i = 0; i < (SYNC_CREATE_MAX + SYNC_OPEN_MAX); ++i)
+	{
+		if (!resource_is_used(&synctab[i].resource))
+			continue;
+
+		if (!resource_is_writable(&synctab[i].resource))
+			continue;
+
+		/* Not the same master? */
+		if (synctab[i].masternum != nodes[0])
+			continue;
+
+		/* Not the same node list? */
+		if (synctab[i].footprint != footprint)
+			continue;
+
+		/* Not the same type operation? */
+		if (synctab[i].type != type)
+			continue;
+
+		syncid = i;
+		synctab[i].refcount++;
+
+		goto found;
+	}
+
+	/* Alloc a new synchronization point. */
+	syncid = _do_sync_open(nodes, nnodes, type, footprint);
+
+found:
+	dcache_invalidate();
+
+	return (syncid);
+}
 
 /*============================================================================*
- * _sync_unlink()                                                             *
+ * _do_sync_release()                                                         *
  *============================================================================*/
 
 /**
- * @brief Destroys a synchronization point.
+ * @brief Relase a synchronization resource.
  *
- * @param syncid ID of the target synchronization point.
+ * @param syncid     ID of the target synchronization point.
+ * @param release_fn Underlying release function.
  *
  * @returns Upon successful completion, zero is returned. Upon
  * failure, a negative error code is returned instead.
  */
-PUBLIC int _sync_unlink(int syncid)
+PRIVATE int _do_sync_release(int syncid, int (*release_fn)(int))
 {
 	int ret; /* HAL function return. */
 
-	/* Invalid sync. */
-	if (!_sync_is_valid(syncid, SYNC_CREATE_MAX))
-		return (-EBADF);
+	synctab[syncid].refcount--;
 
-	/* Bad sync. */
-	if (!resource_is_used(&synctab.creates[syncid].resource))
-		return (-EINVAL);
-
-	if (--synctab.creates[syncid].refcount == 0)
+	if (synctab[syncid].refcount == 0)
 	{
-		if ((ret = sync_unlink(synctab.creates[syncid].fd)) < 0)
+		if ((ret = release_fn(synctab[syncid].fd)) < 0)
 			return (ret);
 
-		synctab.creates[syncid].fd = -1;
-		resource_free(&syncpools.create_pools, syncid);
+		synctab[syncid].fd        = -1;
+		synctab[syncid].masternum = -1;
+		synctab[syncid].footprint = 0ULL;
+
+		resource_free(&syncpool, syncid);
+
+		dcache_invalidate();
 	}
 
 	return (0);
 }
 
 /*============================================================================*
- * _sync_close()                                                              *
+ * do_sync_unlink()                                                           *
  *============================================================================*/
 
 /**
- * @brief Closes a synchronization point.
- *
- * @param syncid ID of the target synchronization point.
- *
- * @returns Upon successful completion, zero is returned. Upon
- * failure, a negative error code is returned instead.
+ * @todo TODO: Provide a detailed description for this function.
  */
-PUBLIC int _sync_close(int syncid)
+PUBLIC int do_sync_unlink(int syncid)
 {
-	int ret; /* HAL function return. */
-
 	/* Invalid sync. */
-	if (!_sync_is_valid(syncid, SYNC_OPEN_MAX))
+	if (!do_sync_is_valid(syncid))
 		return (-EBADF);
 
 	/* Bad sync. */
-	if (!resource_is_used(&synctab.opens[syncid].resource))
-		return (-EINVAL);
+	if (!resource_is_used(&synctab[syncid].resource))
+		return (-EBADF);
 
-	if (--synctab.opens[syncid].refcount == 0)
-	{
-		if ((ret = sync_close(synctab.opens[syncid].fd)) < 0)
-			return (ret);
+	/* Bad sync. */
+	if (!resource_is_readable(&synctab[syncid].resource))
+		return (-EBADF);
 
-		synctab.opens[syncid].fd    = -1;
-		synctab.opens[syncid].nodes = 0;
-		resource_free(&syncpools.open_pools, syncid);
-	}
-
-	return (0);
+	/* Release resource. */
+	return (_do_sync_release(syncid, sync_unlink));
 }
 
 /*============================================================================*
- * _sync_wait()                                                               *
+ * do_sync_close()                                                            *
  *============================================================================*/
 
 /**
- * @brief Waits on a synchronization point.
- *
- * @param syncid ID of the target synchronization point.
- *
- * @returns Upon successful completion, zero is returned. Upon
- * failure, a negative error code is returned instead.
+ * @todo TODO: Provide a detailed description for this function.
  */
-PUBLIC int _sync_wait(int syncid)
+PUBLIC int do_sync_close(int syncid)
 {
 	/* Invalid sync. */
-	if (!_sync_is_valid(syncid, SYNC_CREATE_MAX))
+	if (!do_sync_is_valid(syncid))
+		return (-EBADF);
+
+	/* Bad sync. */
+	if (!resource_is_used(&synctab[syncid].resource))
+		return (-EBADF);
+
+	/* Bad sync. */
+	if (!resource_is_writable(&synctab[syncid].resource))
+		return (-EBADF);
+
+	/* Release resource. */
+	return (_do_sync_release(syncid, sync_close));
+}
+
+/*============================================================================*
+ * do_sync_wait()                                                             *
+ *============================================================================*/
+
+/**
+ * @todo TODO: Provide a detailed description for this function.
+ */
+PUBLIC int do_sync_wait(int syncid)
+{
+	/* Invalid sync. */
+	if (!do_sync_is_valid(syncid))
 		return (-EBADF);
 
 	dcache_invalidate();
 
-	/* Waits. */
-	return sync_wait(synctab.creates[syncid].fd);
-}
-
-/*============================================================================*
- * _sync_signal()                                                             *
- *============================================================================*/
-
-/**
- * @brief Signals Waits on a synchronization point.
- *
- * @param syncid ID of the target synchronization point.
- *
- * @returns Upon successful completion, zero is returned. Upon
- * failure, a negative error code is returned instead.
- */
-PUBLIC int _sync_signal(int syncid)
-{
-	/* Invalid sync. */
-	if (!_sync_is_valid(syncid, SYNC_OPEN_MAX))
+	/* Bad sync. */
+	if (!resource_is_used(&synctab[syncid].resource))
 		return (-EBADF);
 
 	/* Bad sync. */
-	if (!resource_is_used(&synctab.opens[syncid].resource))
-		return (-EINVAL);
+	if (!resource_is_readable(&synctab[syncid].resource))
+		return (-EBADF);
+
+	/* Waits. */
+	return (sync_wait(synctab[syncid].fd));
+}
+
+/*============================================================================*
+ * do_sync_signal()                                                           *
+ *============================================================================*/
+
+/**
+ * @todo TODO: Provide a detailed description for this function.
+ */
+PUBLIC int do_sync_signal(int syncid)
+{
+	/* Invalid sync. */
+	if (!do_sync_is_valid(syncid))
+		return (-EBADF);
+
+	dcache_invalidate();
+
+	/* Bad sync. */
+	if (!resource_is_used(&synctab[syncid].resource))
+		return (-EBADF);
+
+	/* Bad sync. */
+	if (!resource_is_writable(&synctab[syncid].resource))
+		return (-EBADF);
 
 	/* Sends signal. */
-	return sync_signal(synctab.opens[syncid].fd);
+	return (sync_signal(synctab[syncid].fd));
 }
 
 #endif /* __TARGET_SYNC */

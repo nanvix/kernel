@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2018 Pedro Henrique Penna <pedrohenriquepenna@gmail.com>
+ * Copyright(c) 2011-2019 The Maintainers of Nanvix
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,11 +33,11 @@
  *============================================================================*/
 
 /**
- * @see _mailbox_create().
+ * @see do_mailbox_create().
  */
 PUBLIC int kernel_mailbox_create(int local)
 {
-	return (_mailbox_create(local));
+	return (do_mailbox_create(local));
 }
 
 /*============================================================================*
@@ -45,51 +45,71 @@ PUBLIC int kernel_mailbox_create(int local)
  *============================================================================*/
 
 /**
- * @see _mailbox_open().
+ * @see do_mailbox_open().
  */
 PUBLIC int kernel_mailbox_open(int remote)
 {
-	return (_mailbox_open(remote));
+	return (do_mailbox_open(remote));
 }
 
+/*============================================================================*
+ * kernel_mailbox_unlink()                                                    *
+ *============================================================================*/
+
 /**
- * @see _mailbox_unlink().
+ * @see do_mailbox_unlink().
  */
 PUBLIC int kernel_mailbox_unlink(int mbxid)
 {
-	return (_mailbox_unlink(mbxid));
+	return (do_mailbox_unlink(mbxid));
 }
 
+/*============================================================================*
+ * kernel_mailbox_close()                                                     *
+ *============================================================================*/
+
 /**
- * @see _mailbox_close().
+ * @see do_mailbox_close().
  */
 PUBLIC int kernel_mailbox_close(int mbxid)
 {
-	return (_mailbox_close(mbxid));
+	return (do_mailbox_close(mbxid));
 }
 
+/*============================================================================*
+ * kernel_mailbox_awrite()                                                    *
+ *============================================================================*/
+
 /**
- * @see _mailbox_awrite().
+ * @see do_mailbox_awrite().
  */
 PUBLIC int kernel_mailbox_awrite(int mbxid, const void *buffer, size_t size)
 {
-	return (_mailbox_awrite(mbxid, buffer, size));
+	return (do_mailbox_awrite(mbxid, buffer, size));
 }
 
+/*============================================================================*
+ * kernel_mailbox_aread()                                                     *
+ *============================================================================*/
+
 /**
- * @see _mailbox_aread().
+ * @see do_mailbox_aread().
  */
 PUBLIC int kernel_mailbox_aread(int mbxid, void *buffer, size_t size)
 {
-	return (_mailbox_aread(mbxid, buffer, size));
+	return (do_mailbox_aread(mbxid, buffer, size));
 }
 
+/*============================================================================*
+ * kernel_mailbox_wait()                                                      *
+ *============================================================================*/
+
 /**
- * @see _mailbox_wait().
+ * @see do_mailbox_wait().
  */
 PUBLIC int kernel_mailbox_wait(int mbxid)
 {
-	return (_mailbox_wait(mbxid));
+	return (do_mailbox_wait(mbxid));
 }
 
 #endif /* __TARGET_HAS_MAILBOX */
