@@ -120,6 +120,19 @@ PUBLIC void do_kcall2(void)
 				);
 				break;
 
+			case NR_node_get_num:
+				ret = kernel_node_get_num(
+					(int) sysboard[coreid].arg0
+				);
+				break;
+
+			case NR_node_set_num:
+				ret = kernel_node_set_num(
+					(int) sysboard[coreid].arg0,
+					(int) sysboard[coreid].arg1
+				);
+				break;
+
 #if __TARGET_HAS_SYNC
 			case NR_sync_create:
 				ret = kernel_sync_create(
