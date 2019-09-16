@@ -34,7 +34,15 @@
 
 	#include <nanvix/hal/hal.h>
 	#include <nanvix/const.h>
-	#include <stdarg.h>
+	#include <posix/stdarg.h>
+
+	/**
+	 * @name Requests for do_portal_ioctl().
+	 */
+	/**@{*/
+	#define PORTAL_IOCTL_GET_VOLUME  1 /**< Get the amount of data transferred so far. */
+	#define PORTAL_IOCTL_GET_LATENCY 2 /**< Get the cumulative transfer latency.       */
+	/**@}*/
 
 	/**
 	 * @brief Creates a portal.
@@ -122,6 +130,18 @@
 	 * failure, a negative error code is returned instead.
 	 */
 	EXTERN int do_portal_wait(int portalid);
+
+	/**
+	 * @brief Performs control operations in a portal.
+	 *
+	 * @param mbxid   Target portal.
+	 * @param request Request.
+	 * @param args    Additional arguments.
+	 *
+	 * @param Upon successful completion, zero is returned. Upon failure,
+	 * a negative error code is returned instead.
+	 */
+	EXTERN int do_portal_ioctl(int mbxid, unsigned request, va_list args);
 
 #endif /* NANVIX_PORTAL_H_ */
 

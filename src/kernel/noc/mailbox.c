@@ -23,8 +23,10 @@
  */
 
 #include <nanvix/hal/hal.h>
+#include <nanvix/kernel/mailbox.h>
 #include <nanvix/klib.h>
 #include <posix/errno.h>
+#include <posix/stdarg.h>
 
 #if __TARGET_HAS_MAILBOX
 
@@ -37,10 +39,15 @@
  */
 PRIVATE struct mailbox
 {
+	/* Control variables */
 	struct resource resource; /**< Underlying resource.        */
 	int refcount;             /**< References count.           */
 	int fd;                   /**< Underlying file descriptor. */
 	int nodenum;              /**< Target node number.         */
+
+	/* Experiments variables */
+	size_t volume;            /**< Amount of data transferred. */
+	uint64_t latency;         /**< Transfer latency.           */
 } ALIGN(sizeof(dword_t)) mbxtab[(MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX)];
 
 /**
@@ -99,6 +106,8 @@ PRIVATE int _do_mailbox_create(int local)
 	mbxtab[mbxid].fd       = fd;
 	mbxtab[mbxid].refcount = 1;
 	mbxtab[mbxid].nodenum  = local;
+	mbxtab[mbxid].volume   = 0ULL;
+	mbxtab[mbxid].latency  = 0ULL;
 
 	resource_set_rdonly(&mbxtab[mbxid].resource);
 	resource_set_notbusy(&mbxtab[mbxid].resource);
@@ -175,6 +184,8 @@ PRIVATE int _do_mailbox_open(int remote)
 	mbxtab[mbxid].fd       = fd;
 	mbxtab[mbxid].refcount = 1;
 	mbxtab[mbxid].nodenum  = remote;
+	mbxtab[mbxid].volume   = 0ULL;
+	mbxtab[mbxid].latency  = 0ULL;
 
 	resource_set_wronly(&mbxtab[mbxid].resource);
 	resource_set_notbusy(&mbxtab[mbxid].resource);
@@ -309,6 +320,10 @@ PUBLIC int do_mailbox_close(int mbxid)
  */
 PUBLIC int do_mailbox_aread(int mbxid, void * buffer, size_t size)
 {
+	int ret;     /* HAL function return.           */
+	uint64_t t1; /* Clock value before aread call. */
+	uint64_t t2; /* Clock value after aread call.  */
+
 	/* Invalid mailbox. */
 	if (!do_mailbox_is_valid(mbxid))
 		return (-EBADF);
@@ -329,7 +344,21 @@ PUBLIC int do_mailbox_aread(int mbxid, void * buffer, size_t size)
 	if (!resource_is_readable(&mbxtab[mbxid].resource))
 		return (-EBADF);
 
-	return (mailbox_aread(mbxtab[mbxid].fd, buffer, size));
+	t1 = clock_read();
+
+		/* Configures async read. */
+		if ((ret = mailbox_aread(mbxtab[mbxid].fd, buffer, size)) < 0)
+			return (ret);
+
+	t2 = clock_read();
+
+	/* Updates latency variable. */
+	mbxtab[mbxid].latency += (t2 - t1);
+
+	/* Updates volume variable. */
+	mbxtab[mbxid].volume += ret;
+
+	return (ret);
 }
 
 /*============================================================================*
@@ -341,6 +370,10 @@ PUBLIC int do_mailbox_aread(int mbxid, void * buffer, size_t size)
  */
 PUBLIC int do_mailbox_awrite(int mbxid, const void * buffer, size_t size)
 {
+	int ret;     /* HAL function return.            */
+	uint64_t t1; /* Clock value before awrite call. */
+	uint64_t t2; /* Clock value after awrite call.  */
+
 	/* Invalid mailbox. */
 	if (!do_mailbox_is_valid(mbxid))
 		return (-EBADF);
@@ -361,7 +394,21 @@ PUBLIC int do_mailbox_awrite(int mbxid, const void * buffer, size_t size)
 	if (!resource_is_writable(&mbxtab[mbxid].resource))
 		return (-EBADF);
 
-	return (mailbox_awrite(mbxtab[mbxid].fd, buffer, size));
+	t1 = clock_read();
+
+		/* Configures async write. */
+		if ((ret = mailbox_awrite(mbxtab[mbxid].fd, buffer, size)) < 0)
+			return (ret);
+
+	t2 = clock_read();
+
+	/* Updates latency variable. */
+	mbxtab[mbxid].latency += (t2 - t1);
+
+	/* Updates volume variable. */
+	mbxtab[mbxid].volume += ret;
+
+	return (ret);
 }
 
 /*============================================================================*
@@ -373,14 +420,73 @@ PUBLIC int do_mailbox_awrite(int mbxid, const void * buffer, size_t size)
  */
 PUBLIC int do_mailbox_wait(int mbxid)
 {
+	int ret;     /* HAL function return.            */
+	uint64_t t1; /* Clock value before wait call. */
+	uint64_t t2; /* Clock value after wait call.  */
+
 	/* Invalid mailbox. */
 	if (!do_mailbox_is_valid(mbxid))
 		return (-EBADF);
 
 	dcache_invalidate();
 
-	/* Waits. */
-	return (mailbox_wait(mbxtab[mbxid].fd));
+	t1 = clock_read();
+
+		ret = mailbox_wait(mbxtab[mbxid].fd);
+
+	t2 = clock_read();
+
+	/* Updates latency variable. */
+	mbxtab[mbxid].latency += (t2 - t1);
+
+	return (ret);
+}
+
+/*============================================================================*
+ * do_mailbox_ioctl()                                                         *
+ *============================================================================*/
+
+/**
+ * @todo TODO: Provide a detailed description for this function.
+ */
+int do_mailbox_ioctl(int mbxid, unsigned request, va_list args)
+{
+	int ret = 0;
+
+	/* Invalid mailbox. */
+	if (!do_mailbox_is_valid(mbxid))
+		return (-EBADF);
+
+	/* Bad mailbox. */
+	if (!resource_is_used(&mbxtab[mbxid].resource))
+		return (-EBADF);
+
+	/* Server request. */
+	switch (request)
+	{
+		/* Get the amount of data transferred so far. */
+		case MAILBOX_IOCTL_GET_VOLUME:
+		{
+			size_t *volume;
+			volume = va_arg(args, size_t *);
+			*volume = mbxtab[mbxid].volume;
+		} break;
+
+		/* Get the cumulative transfer latency. */
+		case MAILBOX_IOCTL_GET_LATENCY:
+		{
+			uint64_t *latency;
+			latency = va_arg(args, uint64_t *);
+			*latency = mbxtab[mbxid].latency;
+		} break;
+
+		/* Operation not supported. */
+		default:
+			ret = (-ENOTSUP);
+			break;
+	}
+
+	return (ret);
 }
 
 #endif /* __TARGET_HAS_MAILBOX */

@@ -24,7 +24,7 @@
 
 #include <nanvix/hal/hal.h>
 #include <nanvix/kernel/mailbox.h>
-#include <posix/errno.h>
+#include <posix/stdarg.h>
 
 #if __TARGET_HAS_MAILBOX
 
@@ -110,6 +110,24 @@ PUBLIC int kernel_mailbox_aread(int mbxid, void *buffer, size_t size)
 PUBLIC int kernel_mailbox_wait(int mbxid)
 {
 	return (do_mailbox_wait(mbxid));
+}
+
+/*============================================================================*
+ * kernel_mailbox_ioctl()                                                     *
+ *============================================================================*/
+
+/**
+ * @see do_mailbox_ioctl().
+ */
+PUBLIC int kernel_mailbox_ioctl(int mbxid, unsigned request, va_list *args)
+{
+	int ret;
+
+	dcache_invalidate();
+		ret = do_mailbox_ioctl(mbxid, request, *args);
+	dcache_invalidate();
+
+	return (ret);
 }
 
 #endif /* __TARGET_HAS_MAILBOX */

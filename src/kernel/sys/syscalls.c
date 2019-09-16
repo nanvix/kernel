@@ -209,6 +209,14 @@ PUBLIC void do_kcall2(void)
 					(size_t) sysboard[coreid].arg2
 				);
 				break;
+
+			case NR_mailbox_ioctl:
+				ret = kernel_mailbox_ioctl(
+					(int) sysboard[coreid].arg0,
+					(unsigned) sysboard[coreid].arg1,
+					(va_list *) sysboard[coreid].arg2
+				);
+				break;
 #endif /* __TARGET_HAS_MAILBOX */
 
 #if __TARGET_HAS_PORTAL
@@ -257,6 +265,14 @@ PUBLIC void do_kcall2(void)
 					(int) sysboard[coreid].arg0,
 					(const void *)(long) sysboard[coreid].arg1,
 					(size_t) sysboard[coreid].arg2
+				);
+				break;
+
+			case NR_portal_ioctl:
+				ret = kernel_portal_ioctl(
+					(int) sysboard[coreid].arg0,
+					(unsigned) sysboard[coreid].arg1,
+					(va_list *) sysboard[coreid].arg2
 				);
 				break;
 #endif /* __TARGET_HAS_PORTAL */

@@ -23,6 +23,7 @@
  */
 
 #include <nanvix/hal/hal.h>
+#include <nanvix/kernel/portal.h>
 #include <nanvix/klib.h>
 #include <posix/errno.h>
 
@@ -37,11 +38,16 @@
  */
 PRIVATE struct portal
 {
+	/* Control variables */
 	struct resource resource; /**< Underlying resource.        */
 	int refcount;             /**< References count.           */
 	int fd;                   /**< Underlying file descriptor. */
 	int local;                /**< Local num.                  */
 	int remote;               /**< Target node number.         */
+
+	/* Experiments variables */
+	size_t volume;            /**< Amount of data transferred. */
+	uint64_t latency;         /**< Transfer latency.           */
 } ALIGN(sizeof(dword_t)) portaltab[(PORTAL_CREATE_MAX + PORTAL_OPEN_MAX)];
 
 /**
@@ -105,6 +111,8 @@ PRIVATE int _do_portal_create(int local)
 	portaltab[portalid].local    = local;
 	portaltab[portalid].remote   = -1;
 	portaltab[portalid].refcount = 1;
+	portaltab[portalid].volume   = 0ULL;
+	portaltab[portalid].latency  = 0ULL;
 
 	resource_set_rdonly(&portaltab[portalid].resource);
 	resource_set_notbusy(&portaltab[portalid].resource);
@@ -221,6 +229,8 @@ PRIVATE int _do_portal_open(int local, int remote)
 	portaltab[portalid].local    = local;
 	portaltab[portalid].remote   = remote;
 	portaltab[portalid].refcount = 1;
+	portaltab[portalid].volume   = 0ULL;
+	portaltab[portalid].latency  = 0ULL;
 
 	resource_set_wronly(&portaltab[portalid].resource);
 	resource_set_notbusy(&portaltab[portalid].resource);
@@ -370,6 +380,10 @@ PUBLIC int do_portal_close(int portalid)
  */
 PUBLIC int do_portal_aread(int portalid, void * buffer, size_t size)
 {
+	int ret;     /* HAL function return.           */
+	uint64_t t1; /* Clock value before aread call. */
+	uint64_t t2; /* Clock value after aread call.  */
+
 	/* Invalid portal. */
 	if (!do_portal_is_valid(portalid))
 		return (-EBADF);
@@ -390,8 +404,21 @@ PUBLIC int do_portal_aread(int portalid, void * buffer, size_t size)
 	if (!resource_is_readable(&portaltab[portalid].resource))
 		return (-EBADF);
 
-	/* Configures underlying async read. */
-	return (portal_aread(portaltab[portalid].fd, buffer, size));
+	t1 = clock_read();
+
+		/* Configures async aread. */
+		if ((ret = portal_aread(portaltab[portalid].fd, buffer, size)) < 0)
+			return (ret);
+
+	t2 = clock_read();
+
+	/* Updates latency variable. */
+	portaltab[portalid].latency += (t2 - t1);
+
+	/* Updates volume variable. */
+	portaltab[portalid].volume += ret;
+
+	return (ret);
 }
 
 /*============================================================================*
@@ -403,6 +430,10 @@ PUBLIC int do_portal_aread(int portalid, void * buffer, size_t size)
  */
 PUBLIC int do_portal_awrite(int portalid, const void * buffer, size_t size)
 {
+	int ret;     /* HAL function return.            */
+	uint64_t t1; /* Clock value before awrite call. */
+	uint64_t t2; /* Clock value after awrite call.  */
+
 	/* Invalid portal. */
 	if (!do_portal_is_valid(portalid))
 		return (-EBADF);
@@ -423,8 +454,21 @@ PUBLIC int do_portal_awrite(int portalid, const void * buffer, size_t size)
 	if (!resource_is_writable(&portaltab[portalid].resource))
 		return (-EBADF);
 
-	/* Configures underlying async write. */
-	return (portal_awrite(portaltab[portalid].fd, buffer, size));
+	t1 = clock_read();
+
+		/* Configures async aread. */
+		if ((ret = portal_awrite(portaltab[portalid].fd, buffer, size)) < 0)
+			return (ret);
+
+	t2 = clock_read();
+
+	/* Updates latency variable. */
+	portaltab[portalid].latency += (t2 - t1);
+
+	/* Updates volume variable. */
+	portaltab[portalid].volume += ret;
+
+	return (ret);
 }
 
 /*============================================================================*
@@ -436,14 +480,73 @@ PUBLIC int do_portal_awrite(int portalid, const void * buffer, size_t size)
  */
 PUBLIC int do_portal_wait(int portalid)
 {
+	int ret;     /* HAL function return.          */
+	uint64_t t1; /* Clock value before wait call. */
+	uint64_t t2; /* Clock value after wait call.  */
+
 	/* Invalid portal. */
 	if (!do_portal_is_valid(portalid))
 		return (-EBADF);
 
 	dcache_invalidate();
 
-	/* Waits. */
-	return (portal_wait(portaltab[portalid].fd));
+	t1 = clock_read();
+
+		ret = portal_wait(portaltab[portalid].fd);
+
+	t2 = clock_read();
+
+	/* Updates latency variable. */
+	portaltab[portalid].latency += (t2 - t1);
+
+	return (ret);
+}
+
+/*============================================================================*
+ * do_portal_ioctl()                                                          *
+ *============================================================================*/
+
+/**
+ * @todo TODO: Provide a detailed description for this function.
+ */
+int do_portal_ioctl(int portalid, unsigned request, va_list args)
+{
+	int ret = 0;
+
+	/* Invalid portal. */
+	if (!do_portal_is_valid(portalid))
+		return (-EBADF);
+
+	/* Bad portal. */
+	if (!resource_is_used(&portaltab[portalid].resource))
+		return (-EBADF);
+
+	/* Server request. */
+	switch (request)
+	{
+		/* Get the amount of data transfered so far. */
+		case PORTAL_IOCTL_GET_VOLUME:
+		{
+			size_t *volume;
+			volume = va_arg(args, size_t *);
+			*volume = portaltab[portalid].volume;
+		} break;
+
+		/* Get the cummulative transfer latency. */
+		case PORTAL_IOCTL_GET_LATENCY:
+		{
+			uint64_t *latency;
+			latency = va_arg(args, uint64_t *);
+			*latency = portaltab[portalid].latency;
+		} break;
+
+		/* Operation not supported. */
+		default:
+			ret = (-ENOTSUP);
+			break;
+	}
+
+	return (ret);
 }
 
 #endif /* __TARGET_HAS_PORTAL */
