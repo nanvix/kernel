@@ -29,6 +29,16 @@
 #include <posix/errno.h>
 
 /**
+ * @brief Signal values holder for exception mapping.
+ */
+static int const mapped_signals[SIGNALS_NUM] = {
+	EXCEPTION_INVALID_OPCODE,
+	EXCEPTION_PAGE_FAULT,
+	EXCEPTION_PAGE_PROTECTION,
+	EXCEPTION_GENERAL_PROTECTION
+};
+
+/**
  * @brief Signal Handlers Table lock.
  */
 spinlock_t sigtab_lock = SPINLOCK_UNLOCKED;
@@ -102,15 +112,18 @@ PUBLIC int signal_control(int signum, struct ksigaction *sigact)
 	int ret;
 	int without_handler;
 
-	/*
-	 * Invalid signal ID.
-	 *
-	 * FIXME: we should only allow values
-	 * for exceptions that are mapped into signals.
-	 */
-	if (!WITHIN(signum, 0, EXCEPTIONS_NUM))
-		return (-EINVAL);
+	/* Checking if @p signum exists into the mapped signals table. */
+	for (int i = 0; i < SIGNALS_NUM; ++i)
+	{
+		/* Found. */
+		if (mapped_signals[i] == signum)
+			goto valid;
+	}
 
+	/* Invalid signal ID. */
+	return (-EINVAL);
+
+valid:
 	/* Unchanged the signal. */
 	if (sigact == NULL)
 		return (-EAGAIN);
