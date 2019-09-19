@@ -35,6 +35,9 @@ export VERBOSE ?= no
 # Release Version?
 export RELEASE ?= no
 
+# Stall regression tests?
+export SUPPRESS_TESTS ?= no
+
 # Installation Prefix
 export PREFIX ?= $(HOME)
 
@@ -88,7 +91,7 @@ export CFLAGS  += -fno-stack-protector
 export CFLAGS  += -Wvla # -Wredundant-decls
 export CFLAGS  += -D__NANVIX_MICROKERNEL
 export CFLAGS  += -I $(INCDIR)
-export CFLAGS += -I $(ROOTDIR)/src/lwip/src/include
+export CFLAGS  += -I $(ROOTDIR)/src/lwip/src/include
 
 # Additional C Flags
 include $(BUILDDIR)/makefile.cflags

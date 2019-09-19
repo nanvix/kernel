@@ -118,7 +118,9 @@ PUBLIC void frame_init(void)
 #endif
 
 #ifndef NDEBUG
-	kprintf("[kernel][mm] running tests on the page frame allocator");
-	frame_test_driver();
+	#ifndef __SUPPRESS_TESTS
+		kprintf("[kernel][mm] running tests on the page frame allocator");
+		frame_test_driver();
+	#endif
 #endif
 }

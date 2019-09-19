@@ -580,7 +580,9 @@ PUBLIC void upool_init(void)
 #endif
 
 #ifndef NDEBUG
-	kprintf("[kernel][mm] running tests on the user page allocator");
-	upool_test_driver();
+	#ifndef __SUPPRESS_TESTS
+		kprintf("[kernel][mm] running tests on the user page allocator");
+		upool_test_driver();
+	#endif
 #endif
 }
