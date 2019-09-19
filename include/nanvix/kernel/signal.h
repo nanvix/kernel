@@ -48,6 +48,14 @@
 	#define SIGPGFAULT EXCEPTION_PAGE_FAULT         /**< Page fault signal         */
 	#define SIGPGPROT  EXCEPTION_PAGE_PROTECTION    /**< Page protection signal    */
 	#define SIGGENPROT EXCEPTION_GENERAL_PROTECTION /**< General protection signal */
+
+	/**
+	 * @brief Number of mapped signals.
+	 *
+	 * @note Must be updated every time that a new signal type is added.
+	 */
+	/**@}*/
+	#define SIGNALS_NUM 4
 	/**@}*/
 
 	/**

@@ -57,11 +57,12 @@ PUBLIC int kernel_sigctl(int signum, struct ksigaction *sigact)
 /**
  * The kernel_alarm() function schedule an alarm signal to trigger when
  * the @seconds seconds pass.
- *
- * @todo: TODO check parameters.
  */
 PUBLIC int kernel_alarm(int seconds)
 {
+	if (seconds <= 0)
+		return (-EINVAL);
+
 	return signal_alarm(seconds);
 }
 
@@ -71,11 +72,16 @@ PUBLIC int kernel_alarm(int seconds)
 
 /**
  * The kernel_sigsend() function sends a signal @signum to another thread @tid.
- *
- * @todo: TODO check parameters.
  */
 PUBLIC int kernel_sigsend(int signum, int tid)
 {
+	if (tid < 0)
+		return (-EINVAL);
+
+	/* Invalid Signal ID. */
+	if (!WITHIN(signum, 0, EXCEPTIONS_NUM))
+		return (-EINVAL);
+
 	return signal_send(signum, tid);
 }
 
@@ -85,11 +91,13 @@ PUBLIC int kernel_sigsend(int signum, int tid)
 
 /**
  * The kernel_sigwait() function waits for the receipt of a @signum signal.
- *
- * @todo: TODO check parameters.
  */
 PUBLIC int kernel_sigwait(int signum)
 {
+	/* Invalid Signal ID. */
+	if (!WITHIN(signum, 0, EXCEPTIONS_NUM))
+		return (-EINVAL);
+
 	return signal_wait(signum);
 }
 
