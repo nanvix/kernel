@@ -122,10 +122,6 @@ PUBLIC int do_mailbox_create(int local)
 {
 	int mbxid; /* Mailbox ID. */
 
-	/* Invalid local ID. */
-	if (!WITHIN(local, 0, PROCESSOR_NOC_NODES_NUM))
-		return (-EINVAL);
-
 	/* Searchs for existing mailboxes. */
 	for (int i = 0; i < (MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX); ++i)
 	{
@@ -199,10 +195,6 @@ PRIVATE int _do_mailbox_open(int remote)
 PUBLIC int do_mailbox_open(int remote)
 {
 	int mbxid; /* Mailbox ID. */
-
-	/* Invalid remote ID. */
-	if (!WITHIN(remote, 0, PROCESSOR_NOC_NODES_NUM))
-		return (-EINVAL);
 
 	/* Searchs for existing mailboxes. */
 	for (int i = 0; i < (MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX); ++i)
@@ -328,14 +320,6 @@ PUBLIC int do_mailbox_aread(int mbxid, void * buffer, size_t size)
 	if (!do_mailbox_is_valid(mbxid))
 		return (-EBADF);
 
-	/* Invalid buffer. */
-	if (buffer == NULL)
-		return (-EINVAL);
-
-	/* Invalid read size. */
-	if (size != MAILBOX_MSG_SIZE)
-		return (-EINVAL);
-
 	/* Bad mailbox. */
 	if (!resource_is_used(&mbxtab[mbxid].resource))
 		return (-EBADF);
@@ -377,14 +361,6 @@ PUBLIC int do_mailbox_awrite(int mbxid, const void * buffer, size_t size)
 	/* Invalid mailbox. */
 	if (!do_mailbox_is_valid(mbxid))
 		return (-EBADF);
-
-	/* Invalid buffer. */
-	if (buffer == NULL)
-		return (-EINVAL);
-
-	/* Invalid write size. */
-	if (size != MAILBOX_MSG_SIZE)
-		return (-EINVAL);
 
 	/* Bad mailbox. */
 	if (!resource_is_used(&mbxtab[mbxid].resource))
