@@ -46,7 +46,7 @@ test-ccluster:
 
 # Runs Unit Tests in IO Cluster with a Timeout.
 test-iocluster:
-	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(EXECB) $(TARGET) iocluster --no-debug $(TIMEOUT)
+	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(EXEC) $(TARGET) iocluster --no-debug $(TIMEOUT)
 
 # Runs Unit Tests in all clusters in debug mode.
 debug:
