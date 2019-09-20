@@ -24,6 +24,7 @@
 
 #include <nanvix/hal/hal.h>
 #include <nanvix/kernel/sync.h>
+#include <nanvix/kernel/mm.h>
 #include <posix/errno.h>
 
 #if __TARGET_HAS_SYNC
@@ -48,6 +49,10 @@ PUBLIC int kernel_sync_create(const int *nodes, int nnodes, int type)
 	/* Invalid number of nodes. */
 	if (!WITHIN(nnodes, 2, (PROCESSOR_NOC_NODES_NUM + 1)))
 		return(-EINVAL);
+
+	/* Bad nodes list location. */
+	if (!mm_check_area(VADDR(nodes), sizeof(int) * nnodes, UMEM_AREA))
+		return(-EFAULT);
 
 	/* Bad nodes list. */
 	for (int i = 0; i < nnodes; i++)
@@ -83,6 +88,10 @@ PUBLIC int kernel_sync_open(const int *nodes, int nnodes, int type)
 	/* Invalid number of nodes. */
 	if (!WITHIN(nnodes, 2, (PROCESSOR_NOC_NODES_NUM + 1)))
 		return(-EINVAL);
+
+	/* Bad nodes list location. */
+	if (!mm_check_area(VADDR(nodes), sizeof(int) * nnodes, UMEM_AREA))
+		return(-EFAULT);
 
 	/* Bad nodes list. */
 	for (int i = 0; i < nnodes; i++)

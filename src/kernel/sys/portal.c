@@ -25,6 +25,7 @@
 
 #include <nanvix/hal/hal.h>
 #include <nanvix/kernel/portal.h>
+#include <nanvix/kernel/mm.h>
 #include <posix/stdarg.h>
 
 #if __TARGET_HAS_PORTAL
@@ -123,8 +124,6 @@ PUBLIC int kernel_portal_close(int portalid)
 
 /**
  * @see do_portal_awrite().
- *
- * @todo TODO: Check if buffer points to a valid memory region.
  */
 PUBLIC int kernel_portal_awrite(int portalid, const void * buffer, size_t size)
 {
@@ -140,6 +139,10 @@ PUBLIC int kernel_portal_awrite(int portalid, const void * buffer, size_t size)
 	if (buffer == NULL)
 		return (-EINVAL);
 
+	/* Bad buffer location. */
+	if (!mm_check_area(VADDR(buffer), size, UMEM_AREA))
+		return (-EFAULT);
+
 	return (do_portal_awrite(portalid, buffer, size));
 }
 
@@ -149,8 +152,6 @@ PUBLIC int kernel_portal_awrite(int portalid, const void * buffer, size_t size)
 
 /**
  * @see do_portal_aread().
- *
- * @todo TODO: Check if buffer points to a valid memory region.
  */
 PUBLIC int kernel_portal_aread(int portalid, void * buffer, size_t size)
 {
@@ -165,6 +166,10 @@ PUBLIC int kernel_portal_aread(int portalid, void * buffer, size_t size)
 	/* Invalid buffer. */
 	if (buffer == NULL)
 		return (-EINVAL);
+
+	/* Bad buffer location. */
+	if (!mm_check_area(VADDR(buffer), size, UMEM_AREA))
+		return (-EFAULT);
 
 	return (do_portal_aread(portalid, buffer, size));
 }
@@ -198,6 +203,10 @@ PUBLIC int kernel_portal_ioctl(int portalid, unsigned request, va_list *args)
 
 	/* Invalid portal ID. */
 	if (portalid < 0)
+		return (-EINVAL);
+
+	/* Bad args. */
+	if (args == NULL)
 		return (-EINVAL);
 
 	dcache_invalidate();

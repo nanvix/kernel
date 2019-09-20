@@ -24,6 +24,7 @@
 
 #include <nanvix/hal/hal.h>
 #include <nanvix/kernel/mailbox.h>
+#include <nanvix/kernel/mm.h>
 #include <posix/stdarg.h>
 
 #if __TARGET_HAS_MAILBOX
@@ -98,8 +99,6 @@ PUBLIC int kernel_mailbox_close(int mbxid)
 
 /**
  * @see do_mailbox_awrite().
- *
- * @todo TODO: Check buffer pointer if it is valid.
  */
 PUBLIC int kernel_mailbox_awrite(int mbxid, const void *buffer, size_t size)
 {
@@ -115,6 +114,10 @@ PUBLIC int kernel_mailbox_awrite(int mbxid, const void *buffer, size_t size)
 	if (buffer == NULL)
 		return (-EINVAL);
 
+	/* Bad buffer location. */
+	if (!mm_check_area(VADDR(buffer), size, UMEM_AREA))
+		return (-EFAULT);
+
 	return (do_mailbox_awrite(mbxid, buffer, size));
 }
 
@@ -124,8 +127,6 @@ PUBLIC int kernel_mailbox_awrite(int mbxid, const void *buffer, size_t size)
 
 /**
  * @see do_mailbox_aread().
- *
- * @todo TODO: Check buffer pointer if it is valid.
  */
 PUBLIC int kernel_mailbox_aread(int mbxid, void *buffer, size_t size)
 {
@@ -140,6 +141,10 @@ PUBLIC int kernel_mailbox_aread(int mbxid, void *buffer, size_t size)
 	/* Invalid buffer. */
 	if (buffer == NULL)
 		return (-EINVAL);
+
+	/* Bad buffer location. */
+	if (!mm_check_area(VADDR(buffer), size, UMEM_AREA))
+		return (-EFAULT);
 
 	return (do_mailbox_aread(mbxid, buffer, size));
 }
@@ -173,6 +178,10 @@ PUBLIC int kernel_mailbox_ioctl(int mbxid, unsigned request, va_list *args)
 
 	/* Invalid mailbox ID. */
 	if (mbxid < 0)
+		return (-EINVAL);
+
+	/* Bad args. */
+	if (args == NULL)
 		return (-EINVAL);
 
 	dcache_invalidate();

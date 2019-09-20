@@ -25,6 +25,7 @@
 #include <nanvix/const.h>
 #include <nanvix/klib.h>
 #include <nanvix/hal/hal.h>
+#include <nanvix/kernel/mm.h>
 #include <stdint.h>
 
 /**
@@ -81,6 +82,10 @@ PUBLIC ssize_t kernel_write(int fd, const char *buf, size_t n)
 	/* Invalid buffer size. */
 	if (n > WRITE_BUFFER_SIZE)
 		return (-EINVAL);
+
+	/* Invalid buffer location. */
+	if (!mm_check_area(VADDR(buf), n, UMEM_AREA))
+		return (-EFAULT);
 
 	/* Avoid overflow. */
 	kmemcpy(buf2, buf, n);
