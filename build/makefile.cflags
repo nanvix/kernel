@@ -39,3 +39,10 @@ else
 	export CFLAGS += -g
 
 endif
+
+ifeq ($(SUPPRESS_TESTS), true)
+
+	# Turn Off Regression tests
+	export CFLAGS += -D __SUPPRESS_TESTS
+
+endif
