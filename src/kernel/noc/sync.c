@@ -125,15 +125,6 @@ PUBLIC int do_sync_create(const int *nodes, int nnodes, int type)
 	int syncid;         /* Synchronization point.  */
 	uint64_t footprint; /* Target nodes footprint. */
 
-	if (nodes == NULL)
-		return (-EINVAL);
-
-	if (!WITHIN(nnodes, 2, (PROCESSOR_NOC_NODES_NUM + 1)))
-		return(-EINVAL);
-
-	if (type != SYNC_ONE_TO_ALL && type != SYNC_ALL_TO_ONE)
-		return (-EINVAL);
-
 	footprint = 0ULL;
 	for (int j = 0; j < nnodes; j++)
 		footprint |= (1ULL << nodes[j]);
@@ -228,15 +219,6 @@ PUBLIC int do_sync_open(const int *nodes, int nnodes, int type)
 {
 	int syncid;         /* Synchronization point.  */
 	uint64_t footprint; /* Target nodes footprint. */
-
-	if (nodes == NULL)
-		return (-EINVAL);
-
-	if (!WITHIN(nnodes, 2, (PROCESSOR_NOC_NODES_NUM + 1)))
-		return(-EINVAL);
-
-	if (type != SYNC_ONE_TO_ALL && type != SYNC_ALL_TO_ONE)
-		return (-EINVAL);
 
 	footprint = 0ULL;
 	for (int j = 0; j < nnodes; j++)
