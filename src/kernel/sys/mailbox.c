@@ -24,6 +24,7 @@
 
 #include <nanvix/hal/hal.h>
 #include <nanvix/kernel/mailbox.h>
+#include <nanvix/kernel/mm.h>
 #include <posix/stdarg.h>
 
 #if __TARGET_HAS_MAILBOX
@@ -37,6 +38,10 @@
  */
 PUBLIC int kernel_mailbox_create(int local)
 {
+	/* Invalid local ID. */
+	if (!WITHIN(local, 0, PROCESSOR_NOC_NODES_NUM))
+		return (-EINVAL);
+
 	return (do_mailbox_create(local));
 }
 
@@ -49,6 +54,10 @@ PUBLIC int kernel_mailbox_create(int local)
  */
 PUBLIC int kernel_mailbox_open(int remote)
 {
+	/* Invalid remote ID. */
+	if (!WITHIN(remote, 0, PROCESSOR_NOC_NODES_NUM))
+		return (-EINVAL);
+
 	return (do_mailbox_open(remote));
 }
 
@@ -61,6 +70,10 @@ PUBLIC int kernel_mailbox_open(int remote)
  */
 PUBLIC int kernel_mailbox_unlink(int mbxid)
 {
+	/* Invalid mailbox ID. */
+	if (mbxid < 0)
+		return (-EINVAL);
+
 	return (do_mailbox_unlink(mbxid));
 }
 
@@ -73,6 +86,10 @@ PUBLIC int kernel_mailbox_unlink(int mbxid)
  */
 PUBLIC int kernel_mailbox_close(int mbxid)
 {
+	/* Invalid mailbox ID. */
+	if (mbxid < 0)
+		return (-EINVAL);
+
 	return (do_mailbox_close(mbxid));
 }
 
@@ -85,6 +102,22 @@ PUBLIC int kernel_mailbox_close(int mbxid)
  */
 PUBLIC int kernel_mailbox_awrite(int mbxid, const void *buffer, size_t size)
 {
+	/* Invalid mailbox ID. */
+	if (mbxid < 0)
+		return (-EINVAL);
+
+	/* Invalid write size. */
+	if (size != MAILBOX_MSG_SIZE)
+		return (-EINVAL);
+
+	/* Invalid buffer. */
+	if (buffer == NULL)
+		return (-EINVAL);
+
+	/* Bad buffer location. */
+	if (!mm_check_area(VADDR(buffer), size, UMEM_AREA))
+		return (-EFAULT);
+
 	return (do_mailbox_awrite(mbxid, buffer, size));
 }
 
@@ -97,6 +130,22 @@ PUBLIC int kernel_mailbox_awrite(int mbxid, const void *buffer, size_t size)
  */
 PUBLIC int kernel_mailbox_aread(int mbxid, void *buffer, size_t size)
 {
+	/* Invalid mailbox ID. */
+	if (mbxid < 0)
+		return (-EINVAL);
+
+	/* Invalid read size. */
+	if (size != MAILBOX_MSG_SIZE)
+		return (-EINVAL);
+
+	/* Invalid buffer. */
+	if (buffer == NULL)
+		return (-EINVAL);
+
+	/* Bad buffer location. */
+	if (!mm_check_area(VADDR(buffer), size, UMEM_AREA))
+		return (-EFAULT);
+
 	return (do_mailbox_aread(mbxid, buffer, size));
 }
 
@@ -109,6 +158,10 @@ PUBLIC int kernel_mailbox_aread(int mbxid, void *buffer, size_t size)
  */
 PUBLIC int kernel_mailbox_wait(int mbxid)
 {
+	/* Invalid mailbox ID. */
+	if (mbxid < 0)
+		return (-EINVAL);
+
 	return (do_mailbox_wait(mbxid));
 }
 
@@ -122,6 +175,14 @@ PUBLIC int kernel_mailbox_wait(int mbxid)
 PUBLIC int kernel_mailbox_ioctl(int mbxid, unsigned request, va_list *args)
 {
 	int ret;
+
+	/* Invalid mailbox ID. */
+	if (mbxid < 0)
+		return (-EINVAL);
+
+	/* Bad args. */
+	if (args == NULL)
+		return (-EINVAL);
 
 	dcache_invalidate();
 		ret = do_mailbox_ioctl(mbxid, request, *args);

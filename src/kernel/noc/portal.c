@@ -127,10 +127,6 @@ PUBLIC int do_portal_create(int local)
 {
 	int portalid; /* Portal ID. */
 
-	/* Invalid local ID. */
-	if (!WITHIN(local, 0, PROCESSOR_NOC_NODES_NUM))
-		return (-EINVAL);
-
 	/* Searchs for existing portals. */
 	for (int i = 0; i < (PORTAL_CREATE_MAX + PORTAL_OPEN_MAX); ++i)
 	{
@@ -176,10 +172,6 @@ PUBLIC int do_portal_allow(int portalid, int remote)
 
 	if (!do_portal_is_valid(portalid))
 		return (-EBADF);
-
-	/* Invalid remote ID. */
-	if (!WITHIN(remote, 0, PROCESSOR_NOC_NODES_NUM))
-		return (-EINVAL);
 
 	/* Bad portal. */
 	if (!resource_is_used(&portaltab[portalid].resource))
@@ -244,14 +236,6 @@ PRIVATE int _do_portal_open(int local, int remote)
 PUBLIC int do_portal_open(int local, int remote)
 {
 	int portalid; /* Portal ID. */
-
-	/* Invalid local ID. */
-	if (!WITHIN(local, 0, PROCESSOR_NOC_NODES_NUM))
-		return (-EINVAL);
-
-	/* Invalid remote ID. */
-	if (!WITHIN(remote, 0, PROCESSOR_NOC_NODES_NUM))
-		return (-EINVAL);
 
 	/* Searchs for existing portals. */
 	for (int i = 0; i < (PORTAL_CREATE_MAX + PORTAL_OPEN_MAX); ++i)
@@ -388,14 +372,6 @@ PUBLIC int do_portal_aread(int portalid, void * buffer, size_t size)
 	if (!do_portal_is_valid(portalid))
 		return (-EBADF);
 
-	/* Invalid buffer. */
-	if (buffer == NULL)
-		return (-EINVAL);
-
-	/* Invalid read size. */
-	if (size == 0 || size > PORTAL_MAX_SIZE)
-		return (-EINVAL);
-
 	/* Bad portal. */
 	if (!resource_is_used(&portaltab[portalid].resource))
 		return (-EBADF);
@@ -437,14 +413,6 @@ PUBLIC int do_portal_awrite(int portalid, const void * buffer, size_t size)
 	/* Invalid portal. */
 	if (!do_portal_is_valid(portalid))
 		return (-EBADF);
-
-	/* Invalid buffer. */
-	if (buffer == NULL)
-		return (-EINVAL);
-
-	/* Invalid write size. */
-	if (size == 0 || size > PORTAL_MAX_SIZE)
-		return (-EINVAL);
 
 	/* Bad portal. */
 	if (!resource_is_used(&portaltab[portalid].resource))

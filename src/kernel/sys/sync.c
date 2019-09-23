@@ -24,6 +24,7 @@
 
 #include <nanvix/hal/hal.h>
 #include <nanvix/kernel/sync.h>
+#include <nanvix/kernel/mm.h>
 #include <posix/errno.h>
 
 #if __TARGET_HAS_SYNC
@@ -46,8 +47,12 @@ PUBLIC int kernel_sync_create(const int *nodes, int nnodes, int type)
 		return (-EINVAL);
 
 	/* Invalid number of nodes. */
-	if (nnodes < 2)
-		return (-EINVAL);
+	if (!WITHIN(nnodes, 2, (PROCESSOR_NOC_NODES_NUM + 1)))
+		return(-EINVAL);
+
+	/* Bad nodes list location. */
+	if (!mm_check_area(VADDR(nodes), sizeof(int) * nnodes, UMEM_AREA))
+		return(-EFAULT);
 
 	/* Bad nodes list. */
 	for (int i = 0; i < nnodes; i++)
@@ -81,8 +86,12 @@ PUBLIC int kernel_sync_open(const int *nodes, int nnodes, int type)
 		return (-EINVAL);
 
 	/* Invalid number of nodes. */
-	if (nnodes < 2)
-		return (-EINVAL);
+	if (!WITHIN(nnodes, 2, (PROCESSOR_NOC_NODES_NUM + 1)))
+		return(-EINVAL);
+
+	/* Bad nodes list location. */
+	if (!mm_check_area(VADDR(nodes), sizeof(int) * nnodes, UMEM_AREA))
+		return(-EFAULT);
 
 	/* Bad nodes list. */
 	for (int i = 0; i < nnodes; i++)
@@ -94,6 +103,7 @@ PUBLIC int kernel_sync_open(const int *nodes, int nnodes, int type)
 	/* Bad sync type. */
 	if ((type != SYNC_ONE_TO_ALL) && (type != SYNC_ALL_TO_ONE))
 		return (-EINVAL);
+
 	return (do_sync_open(nodes, nnodes, type));
 }
 
@@ -106,6 +116,10 @@ PUBLIC int kernel_sync_open(const int *nodes, int nnodes, int type)
  */
 PUBLIC int kernel_sync_wait(int syncid)
 {
+	/* Invalid sync ID. */
+	if (syncid < 0)
+		return (-EINVAL);
+
 	return (do_sync_wait(syncid));
 }
 
@@ -118,6 +132,10 @@ PUBLIC int kernel_sync_wait(int syncid)
  */
 PUBLIC int kernel_sync_signal(int syncid)
 {
+	/* Invalid sync ID. */
+	if (syncid < 0)
+		return (-EINVAL);
+
 	return (do_sync_signal(syncid));
 }
 
@@ -130,6 +148,10 @@ PUBLIC int kernel_sync_signal(int syncid)
  */
 PUBLIC int kernel_sync_close(int syncid)
 {
+	/* Invalid sync ID. */
+	if (syncid < 0)
+		return (-EINVAL);
+
 	return (do_sync_close(syncid));
 }
 
@@ -142,6 +164,10 @@ PUBLIC int kernel_sync_close(int syncid)
  */
 PUBLIC int kernel_sync_unlink(int syncid)
 {
+	/* Invalid sync ID. */
+	if (syncid < 0)
+		return (-EINVAL);
+
 	return (do_sync_unlink(syncid));
 }
 
