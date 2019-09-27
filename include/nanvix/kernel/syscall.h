@@ -90,8 +90,9 @@
 	#define NR_portal_aread   37 /**< kernel_portal_aread()   */
 	#define NR_portal_wait    38 /**< kernel_portal_wait()    */
 	#define NR_portal_ioctl   39 /**< kernel_portal_ioctl()   */
+	#define NR_clock          40 /**< kernel_clock()          */
 
-	#define NR_last_kcall     40 /**< NR_SYSCALLS definer     */
+	#define NR_last_kcall     41 /**< NR_SYSCALLS definer     */
 	/**@}*/
 
 /*============================================================================*
@@ -226,6 +227,20 @@
 	EXTERN int kernel_portal_ioctl(int, unsigned, va_list *);
 
 #endif /* __NANVIX_MICROKERNEL */
+
+/*============================================================================*
+ * Miscellaneous Kernel Calls                                                 *
+ *============================================================================*/
+
+	/**
+	 * @brief Gets the kernel wall clock.
+	 *
+	 * @param buffer Store location for wall clock.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 */
+	EXTERN int kernel_clock(uint64_t *buffer);
 
 /**@}*/
 
