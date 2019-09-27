@@ -384,6 +384,12 @@ PUBLIC int do_kcall(
 			break;
 #endif
 
+		case NR_clock:
+			ret = kernel_clock(
+				(uint64_t *) arg0
+			);
+			break;
+
 		/* Forward system call. */
 		default:
 		{
