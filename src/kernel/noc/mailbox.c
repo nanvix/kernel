@@ -30,6 +30,14 @@
 
 #if __TARGET_HAS_MAILBOX
 
+/**
+ * @brief Search types for do_mailbox_search().
+ */
+enum mailbox_search_type {
+	MAILBOX_SEARCH_INPUT = 0,
+	MAILBOX_SEARCH_OUTPUT = 1
+} resource_type_enum_t;
+
 /*============================================================================*
  * Control Structures.                                                        *
  *============================================================================*/
@@ -72,6 +80,44 @@ PRIVATE const struct resource_pool mbxpool = {
 PRIVATE int do_mailbox_is_valid(int mbxid)
 {
 	return WITHIN(mbxid, 0, (MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX));
+}
+
+/*============================================================================*
+ * do_mailbox_search()                                                      *
+ *============================================================================*/
+
+/**
+ * @brief Checks if the requested mailbox already exists in the mailbox table.
+ *
+ * @param nodenum     Logic ID of the requesting node.
+ * @param search_type Type of the searched resource (resource_type enum).
+ *
+ * @returns The mailbox ID if it already exists, and a negative number
+ * otherwise.
+ */
+PRIVATE int do_mailbox_search(int nodenum, enum mailbox_search_type search_type)
+{
+	for (int i = 0; i < (MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX); ++i)
+	{
+		if (!resource_is_used(&mbxtab[i].resource))
+			continue;
+
+		if (search_type == MAILBOX_SEARCH_INPUT && !resource_is_readable(&mbxtab[i].resource))
+			continue;
+
+		else if (search_type == MAILBOX_SEARCH_OUTPUT && !resource_is_writable(&mbxtab[i].resource))
+			continue;
+
+		/* Not the same node num? */
+		if (mbxtab[i].nodenum != nodenum)
+			continue;
+
+		mbxtab[i].refcount++;
+
+		return (i);
+	}
+
+	return (-1);
 }
 
 /*============================================================================*
@@ -120,31 +166,12 @@ PRIVATE int _do_mailbox_create(int local)
  */
 PUBLIC int do_mailbox_create(int local)
 {
-	int mbxid; /* Mailbox ID. */
+	int mbxid;
 
-	/* Searchs for existing mailboxes. */
-	for (int i = 0; i < (MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX); ++i)
-	{
-		if (!resource_is_used(&mbxtab[i].resource))
-			continue;
+	/* Didn't find an already existing mailbox. */
+	if ((mbxid = do_mailbox_search(local, MAILBOX_SEARCH_INPUT)) < 0)
+		mbxid = _do_mailbox_create(local);
 
-		if (!resource_is_readable(&mbxtab[i].resource))
-			continue;
-
-		/* Not the same node num? */
-		if (mbxtab[i].nodenum != local)
-			continue;
-
-		mbxid = i;
-		mbxtab[i].refcount++;
-
-		goto found;
-	}
-
-	/* Alloc a new mailbox. */
-	mbxid = _do_mailbox_create(local);
-
-found:
 	dcache_invalidate();
 
 	return (mbxid);
@@ -194,31 +221,12 @@ PRIVATE int _do_mailbox_open(int remote)
  */
 PUBLIC int do_mailbox_open(int remote)
 {
-	int mbxid; /* Mailbox ID. */
+	int mbxid;
 
-	/* Searchs for existing mailboxes. */
-	for (int i = 0; i < (MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX); ++i)
-	{
-		if (!resource_is_used(&mbxtab[i].resource))
-			continue;
+	/* Didn't find an already existing mailbox. */
+	if ((mbxid = do_mailbox_search(remote, MAILBOX_SEARCH_OUTPUT)) < 0)
+		mbxid = _do_mailbox_open(remote);
 
-		if (!resource_is_writable(&mbxtab[i].resource))
-			continue;
-
-		/* Not the same node num? */
-		if (mbxtab[i].nodenum != remote)
-			continue;
-
-		mbxid = i;
-		mbxtab[i].refcount++;
-
-		goto found;
-	}
-
-	/* Alloc a new mailbox. */
-	mbxid = _do_mailbox_open(remote);
-
-found:
 	dcache_invalidate();
 
 	return (mbxid);
