@@ -97,9 +97,6 @@ jobs:
 
     # Tests Debug
     - stage: "Tests Debug"
-      name: "QEMU OpenRISC"
-      script: docker run --privileged -v "$(pwd):/mnt" -p 4567:4567 nanvix/ubuntu:qemu-openrisc /bin/bash -l -c "cd /mnt && bash utils/nanvix-setup-network.sh on --root && make contrib && make all && make test-ccluster"
-    - stage: "Tests Debug"
       name: "MPPA-256"
       if: (NOT type IN (pull_request))
       before_script:
@@ -113,9 +110,6 @@ jobs:
         - ssh $SERVER_NAME 'bash travis/test-microkernel.sh --no-verbose --debug'
 
     # Tests Release
-    - stage: "Tests Release"
-      name: "QEMU OpenRISC"
-      script: docker run --privileged -v "$(pwd):/mnt" -p 4567:4567 nanvix/ubuntu:qemu-openrisc /bin/bash -l -c "cd /mnt && bash utils/nanvix-setup-network.sh on --root && export RELEASE=true && make contrib && make all && make test-ccluster"
     - stage: "Tests Release"
       name: "MPPA-256"
       if: (NOT type IN (pull_request))
