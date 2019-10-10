@@ -43,30 +43,48 @@ enum mailbox_search_type {
  *============================================================================*/
 
 /**
- * @brief Table of synchronization points.
+ * @brief Table of virtual mailboxes.
+ */
+PRIVATE struct
+{
+	/**
+	 * @name Control Variables
+	 */
+	/**@{*/
+	int fd; /**< Index to table of active mailboxes. */
+	/**@}*/
+
+	/**
+	 * @name Performance Statistics
+	 */
+	/**@{*/
+	size_t volume;   /**< Amount of data transferred. */
+	uint64_t latency;/**< Transfer latency.           */
+	/**@}*/
+} ALIGN(sizeof(dword_t)) virtual_mailboxes[KMAILBOX_MAX] = {
+	[0 ... (KMAILBOX_MAX - 1)] = { .fd = -1 },
+};
+
+/**
+ * @brief Table of active mailboxes.
  */
 PRIVATE struct mailbox
 {
-	/* Control variables */
-	struct resource resource; /**< Underlying resource.        */
-	int refcount;             /**< References count.           */
-	int fd;                   /**< Underlying file descriptor. */
-	int nodenum;              /**< Target node number.         */
-
-	/* Experiments variables */
-	size_t volume;            /**< Amount of data transferred. */
-	uint64_t latency;         /**< Transfer latency.           */
-} ALIGN(sizeof(dword_t)) mbxtab[(MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX)];
+	struct resource resource;  /**< Underlying resource.        */
+	int refcount;              /**< References count.           */
+	int hwfd;                  /**< Underlying file descriptor. */
+	int nodenum;               /**< Target node number.         */
+} active_mailboxes[(MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX)];
 
 /**
  * @brief Resource pool.
  */
 PRIVATE const struct resource_pool mbxpool = {
-	mbxtab, (MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX), sizeof(struct mailbox)
+	active_mailboxes, (MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX), sizeof(struct mailbox)
 };
 
 /*============================================================================*
- * do_mailbox_is_valid()                                                      *
+ * do_vmailbox_is_valid()                                                     *
  *============================================================================*/
 
 /**
@@ -77,42 +95,83 @@ PRIVATE const struct resource_pool mbxpool = {
  * @returns One if the target synchronization point is valid, and false
  * otherwise.
  */
-PRIVATE int do_mailbox_is_valid(int mbxid)
+PRIVATE int do_vmailbox_is_valid(int mbxid)
 {
-	return WITHIN(mbxid, 0, (MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX));
+	return WITHIN(mbxid, 0, (KMAILBOX_MAX));
 }
 
 /*============================================================================*
- * do_mailbox_search()                                                      *
+ * do_vmailbox_alloc()                                                        *
  *============================================================================*/
 
 /**
- * @brief Checks if the requested mailbox already exists in the mailbox table.
+ * @brief Searches for a free virtual mailbox.
+ *
+ * @returns Upon successful completion, the index of the virtual
+ * mailbox found is returned. Upon failure, a negative number is
+ * returned instead.
+ */
+PRIVATE int do_vmailbox_alloc(void)
+{
+	for (int i = 0; i < KMAILBOX_MAX; ++i)
+	{
+		/* Found. */
+		if (virtual_mailboxes[i].fd < 0)
+			return (i);
+	}
+
+	return (-1);
+}
+
+/*============================================================================*
+ * do_mailbox_search()                                                        *
+ *============================================================================*/
+
+/**
+ * @name Helper Macros for do_mailbox_search()
+ */
+/**@{*/
+
+/**
+ * @brief Asserts an input mailbox.
+ */
+#define MAILBOX_SEARCH_IS_INPUT(mbxid,type) \
+	((type == MAILBOX_SEARCH_INPUT) && !resource_is_readable(&active_mailboxes[mbxid].resource))
+
+/**
+ * @brief Asserts an output mailbox.
+ */
+#define MAILBOX_SEARCH_IS_OUTPUT(mbxid,type) \
+	 ((type == MAILBOX_SEARCH_OUTPUT) && !resource_is_writable(&active_mailboxes[mbxid].resource))
+/**@}*/
+
+/**
+ * @brief Searches for a mailbox.
+ *
+ * Searches for a mailbox in the table of active mailboxes.
  *
  * @param nodenum     Logic ID of the requesting node.
- * @param search_type Type of the searched resource (resource_type enum).
+ * @param search_type Type of the searched resource.
  *
- * @returns The mailbox ID if it already exists, and a negative number
- * otherwise.
+ * @returns Upon successful completion, the ID of the mailbox found is
+ * returned. Upon failure, a negative error code is returned instead.
  */
 PRIVATE int do_mailbox_search(int nodenum, enum mailbox_search_type search_type)
 {
 	for (int i = 0; i < (MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX); ++i)
 	{
-		if (!resource_is_used(&mbxtab[i].resource))
+		if (!resource_is_used(&active_mailboxes[i].resource))
 			continue;
 
-		if (search_type == MAILBOX_SEARCH_INPUT && !resource_is_readable(&mbxtab[i].resource))
+		if (MAILBOX_SEARCH_IS_INPUT(i, search_type))
 			continue;
 
-		else if (search_type == MAILBOX_SEARCH_OUTPUT && !resource_is_writable(&mbxtab[i].resource))
+		else if (MAILBOX_SEARCH_IS_OUTPUT(i, search_type))
 			continue;
 
-		/* Not the same node num? */
-		if (mbxtab[i].nodenum != nodenum)
+		/* Not the node we are looking for. */
+		if (active_mailboxes[i].nodenum != nodenum)
 			continue;
-
-		mbxtab[i].refcount++;
 
 		return (i);
 	}
@@ -121,115 +180,153 @@ PRIVATE int do_mailbox_search(int nodenum, enum mailbox_search_type search_type)
 }
 
 /*============================================================================*
- * do_mailbox_create()                                                        *
+ * do_vmailbox_create()                                                       *
  *============================================================================*/
 
 /**
- * @brief Creates a mailbox.
+ * @brief Creates a hardware mailbox.
  *
- * @param local Logic ID of the local node.
+ * @param local Logic ID of the target local node.
  *
  * @returns Upon successful completion, the ID of the newly created
- * mailbox is returned. Upon failure, a negative error code is
- * returned instead.
+ * hardware mailbox is returned. Upon failure, a negative error code
+ * is returned instead.
  */
 PRIVATE int _do_mailbox_create(int local)
 {
-	int fd;    /* File descriptor. */
+	int hwfd;  /* File descriptor. */
 	int mbxid; /* Mailbox ID.      */
 
-	/* Allocate a mailbox. */
+	/* Search target hardware mailbox. */
+	if ((mbxid = do_mailbox_search(local, MAILBOX_SEARCH_INPUT)) >= 0)
+		return (mbxid);
+
+	/* Allocate resource. */
 	if ((mbxid = resource_alloc(&mbxpool)) < 0)
 		return (-EAGAIN);
 
-	if ((fd = mailbox_create(local)) < 0)
+	/* Create underlying input hardware mailbox. */
+	if ((hwfd = mailbox_create(local)) < 0)
 	{
 		resource_free(&mbxpool, mbxid);
-		return (fd);
+		return (hwfd);
 	}
 
-	/* Initialize mailbox. */
-	mbxtab[mbxid].fd       = fd;
-	mbxtab[mbxid].refcount = 1;
-	mbxtab[mbxid].nodenum  = local;
-	mbxtab[mbxid].volume   = 0ULL;
-	mbxtab[mbxid].latency  = 0ULL;
-
-	resource_set_rdonly(&mbxtab[mbxid].resource);
-	resource_set_notbusy(&mbxtab[mbxid].resource);
+	/* Initialize hardware mailbox. */
+	active_mailboxes[mbxid].hwfd     = hwfd;
+	active_mailboxes[mbxid].refcount = 0;
+	active_mailboxes[mbxid].nodenum  = local;
+	resource_set_rdonly(&active_mailboxes[mbxid].resource);
+	resource_set_notbusy(&active_mailboxes[mbxid].resource);
 
 	return (mbxid);
 }
 
 /**
- * @see _do_mailbox_create().
+ * @brief Creates a virtual mailbox.
+ *
+ * @param local Logic ID of the target local node.
+ *
+ * @returns Upon successful completion, the ID of the newly created
+ * virtual mailbox is returned. Upon failure, a negative error code
+ * is returned instead.
  */
-PUBLIC int do_mailbox_create(int local)
+PUBLIC int do_vmailbox_create(int local)
 {
-	int mbxid;
+	int mbxid;  /* Hardware mailbox ID. */
+	int vmbxid; /* Virtual mailbox ID.  */
 
-	/* Didn't find an already existing mailbox. */
-	if ((mbxid = do_mailbox_search(local, MAILBOX_SEARCH_INPUT)) < 0)
-		mbxid = _do_mailbox_create(local);
+	/* Allocate a virtual mailbox. */
+	if ((vmbxid = do_vmailbox_alloc()) < 0)
+		return (-EAGAIN);
+
+	/* Create hardware mailbox. */
+	if ((mbxid = _do_mailbox_create(local)) < 0)
+		return (mbxid);
+
+	/* Initialize virtual mailbox. */
+	virtual_mailboxes[vmbxid].fd       = mbxid;
+	virtual_mailboxes[vmbxid].volume   = 0ULL;
+	virtual_mailboxes[vmbxid].latency  = 0ULL;
+	active_mailboxes[mbxid].refcount++;
 
 	dcache_invalidate();
-
-	return (mbxid);
+	return (vmbxid);
 }
 
 /*============================================================================*
- * do_mailbox_open()                                                          *
+ * do_vmailbox_open()                                                         *
  *============================================================================*/
 
 /**
- * @brief Opens a mailbox.
+ * @brief Opens a hardware mailbox.
  *
- * @param remote Logic ID of the Target Node.
+ * @param remote Logic ID of the target remote node.
  *
- * @returns Upon successful completion, the ID of the target mailbox
- * is returned. Upon failure, a negative error code is returned instead.
+ * @returns Upon successful completion, the ID of the newly opened
+ * hardware mailbox is returned. Upon failure, a negative error code
+ * is returned instead.
  */
 PRIVATE int _do_mailbox_open(int remote)
 {
-	int fd;    /* File descriptor. */
+	int hwfd;  /* File descriptor. */
 	int mbxid; /* Mailbox ID.      */
 
-	/* Allocate a mailbox. */
+	/* Search target hardware mailbox. */
+	if ((mbxid = do_mailbox_search(remote, MAILBOX_SEARCH_OUTPUT)) >= 0)
+		return (mbxid);
+
+	/* Allocate resource. */
 	if ((mbxid = resource_alloc(&mbxpool)) < 0)
 		return (-EAGAIN);
 
-	if ((fd = mailbox_open(remote)) < 0)
+	/* Open underlying output hardware mailbox. */
+	if ((hwfd = mailbox_open(remote)) < 0)
 	{
 		resource_free(&mbxpool, mbxid);
-		return (fd);
+		return (hwfd);
 	}
 
-	mbxtab[mbxid].fd       = fd;
-	mbxtab[mbxid].refcount = 1;
-	mbxtab[mbxid].nodenum  = remote;
-	mbxtab[mbxid].volume   = 0ULL;
-	mbxtab[mbxid].latency  = 0ULL;
-
-	resource_set_wronly(&mbxtab[mbxid].resource);
-	resource_set_notbusy(&mbxtab[mbxid].resource);
+	/* Initialize hardware mailbox. */
+	active_mailboxes[mbxid].hwfd     = hwfd;
+	active_mailboxes[mbxid].refcount = 0;
+	active_mailboxes[mbxid].nodenum  = remote;
+	resource_set_wronly(&active_mailboxes[mbxid].resource);
+	resource_set_notbusy(&active_mailboxes[mbxid].resource);
 
 	return (mbxid);
 }
 
 /**
- * @see _do_mailbox_open().
+ * @brief Opens a virtual mailbox.
+ *
+ * @param remote Logic ID of the target remote node.
+ *
+ * @returns Upon successful completion, the ID of the newly opened
+ * virtual mailbox is returned. Upon failure, a negative error code
+ * is returned instead.
  */
-PUBLIC int do_mailbox_open(int remote)
+PUBLIC int do_vmailbox_open(int remote)
 {
-	int mbxid;
+	int mbxid;  /* Hardware mailbox ID. */
+	int vmbxid; /* Virtual mailbox ID.  */
 
-	/* Didn't find an already existing mailbox. */
-	if ((mbxid = do_mailbox_search(remote, MAILBOX_SEARCH_OUTPUT)) < 0)
-		mbxid = _do_mailbox_open(remote);
+	/* Allocate a virtual mailbox. */
+	if ((vmbxid = do_vmailbox_alloc()) < 0)
+		return (-EAGAIN);
+
+	/* Create hardware mailbox. */
+	if ((mbxid = _do_mailbox_open(remote)) < 0)
+		return (mbxid);
+
+	/* Initialize virtual mailbox. */
+	virtual_mailboxes[vmbxid].fd       = mbxid;
+	virtual_mailboxes[vmbxid].volume   = 0ULL;
+	virtual_mailboxes[vmbxid].latency  = 0ULL;
+	active_mailboxes[mbxid].refcount++;
 
 	dcache_invalidate();
-
-	return (mbxid);
+	return (vmbxid);
 }
 
 /*============================================================================*
@@ -237,215 +334,265 @@ PUBLIC int do_mailbox_open(int remote)
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @brief Releases a hardware mailbox.
+ *
+ * @param mbxid      ID of the target hardware mailbox.
+ * @param release_fn Release function.
+ *
+ * @returns Upon successful completion, zero is returned. Upon
+ * failure, a negative error code is returned instead.
  */
 PRIVATE int _do_mailbox_release(int mbxid, int (*release_fn)(int))
 {
-	int ret; /* HAL function return. */
+	int ret;
 
-	mbxtab[mbxid].refcount--;
+	if ((ret = release_fn(active_mailboxes[mbxid].hwfd)) < 0)
+		return (ret);
 
-	if (mbxtab[mbxid].refcount == 0)
-	{
-		if ((ret = release_fn(mbxtab[mbxid].fd)) < 0)
-			return (ret);
+	active_mailboxes[mbxid].hwfd    = -1;
+	active_mailboxes[mbxid].nodenum = -1;
+	resource_free(&mbxpool, mbxid);
 
-		mbxtab[mbxid].fd      = -1;
-		mbxtab[mbxid].nodenum = -1;
+	dcache_invalidate();
+	return (0);
+}
 
-		resource_free(&mbxpool, mbxid);
+/*============================================================================*
+ * do_vmailbox_unlink()                                                       *
+ *============================================================================*/
 
-		dcache_invalidate();
-	}
+/**
+ * @brief Unlinks a created virtual mailbox.
+ *
+ * @param mbxid Logic ID of the target virtual mailbox.
+ *
+ * @returns Upon successful completion, zero is returned. Upon
+ * failure, a negative error code is returned instead.
+ */
+PUBLIC int do_vmailbox_unlink(int mbxid)
+{
+	int fd; /* Active_mailboxes table index. */
+
+	/* Invalid virtual mailbox. */
+	if (!do_vmailbox_is_valid(mbxid))
+		return (-EBADF);
+
+	fd = virtual_mailboxes[mbxid].fd;
+
+	/* Bad virtual mailbox. */
+	if (!resource_is_used(&active_mailboxes[fd].resource))
+		return (-EBADF);
+
+	/* Bad virtual mailbox. */
+	if (!resource_is_readable(&active_mailboxes[fd].resource))
+		return (-EBADF);
+
+	/* Unlink hardware mailbox. */
+	virtual_mailboxes[mbxid].fd = -1;
+	active_mailboxes[fd].refcount--;
+
+	/* Release underlying hardware mailbox. */
+	if (active_mailboxes[fd].refcount == 0)
+		return (_do_mailbox_release(fd, mailbox_unlink));
 
 	return (0);
 }
 
 /*============================================================================*
- * do_mailbox_unlink()                                                        *
+ * do_vmailbox_close()                                                        *
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @brief Closes an opened virtual mailbox.
+ *
+ * @param mbxid Logic ID of the target virtual mailbox.
+ *
+ * @returns Upon successful completion, zero is returned. Upon
+ * failure, a negative error code is returned instead.
  */
-PUBLIC int do_mailbox_unlink(int mbxid)
+PUBLIC int do_vmailbox_close(int mbxid)
 {
-	/* Invalid mailbox. */
-	if (!do_mailbox_is_valid(mbxid))
+	int fd; /* Active_mailboxes table index. */
+
+	/* Invalid virtual mailbox. */
+	if (!do_vmailbox_is_valid(mbxid))
 		return (-EBADF);
 
-	/* Bad mailbox. */
-	if (!resource_is_used(&mbxtab[mbxid].resource))
+	fd = virtual_mailboxes[mbxid].fd;
+
+	/* Bad virtual mailbox. */
+	if (!resource_is_used(&active_mailboxes[fd].resource))
 		return (-EBADF);
 
-	/* Bad mailbox. */
-	if (!resource_is_readable(&mbxtab[mbxid].resource))
+	/* Bad virtual mailbox. */
+	if (!resource_is_writable(&active_mailboxes[fd].resource))
 		return (-EBADF);
 
-	/* Release resource. */
-	return (_do_mailbox_release(mbxid, mailbox_unlink));
+	/* Unlink hardware mailbox. */
+	virtual_mailboxes[mbxid].fd = -1;
+	active_mailboxes[fd].refcount--;
+
+	/* Release underlying hardware mailbox. */
+	if (active_mailboxes[fd].refcount == 0)
+		return (_do_mailbox_release(fd, mailbox_close));
+
+	return (0);
 }
 
 /*============================================================================*
- * do_mailbox_close()                                                         *
+ * do_vmailbox_aread()                                                        *
  *============================================================================*/
 
 /**
  * @todo TODO: Provide a detailed description for this function.
  */
-PUBLIC int do_mailbox_close(int mbxid)
+PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 {
-	/* Invalid mailbox. */
-	if (!do_mailbox_is_valid(mbxid))
+	int ret;     /* HAL function return.                     */
+	int fd;      /* Active mailbox index of virtual mailbox. */
+	uint64_t t1; /* Clock value before aread call.           */
+	uint64_t t2; /* Clock value after aread call.            */
+
+	/* Invalid virtual mailbox. */
+	if (!do_vmailbox_is_valid(mbxid))
 		return (-EBADF);
 
-	/* Bad mailbox. */
-	if (!resource_is_used(&mbxtab[mbxid].resource))
+	fd = virtual_mailboxes[mbxid].fd;
+
+	/* Bad virtual mailbox. */
+	if (!resource_is_used(&active_mailboxes[fd].resource))
 		return (-EBADF);
 
-	/* Bad mailbox. */
-	if (!resource_is_writable(&mbxtab[mbxid].resource))
+	/* Bad virtual mailbox. */
+	if (!resource_is_readable(&active_mailboxes[fd].resource))
 		return (-EBADF);
 
-	/* Release resource. */
-	return (_do_mailbox_release(mbxid, mailbox_close));
-}
-
-/*============================================================================*
- * do_mailbox_aread()                                                         *
- *============================================================================*/
-
-/**
- * @todo TODO: Provide a detailed description for this function.
- */
-PUBLIC int do_mailbox_aread(int mbxid, void * buffer, size_t size)
-{
-	int ret;     /* HAL function return.           */
-	uint64_t t1; /* Clock value before aread call. */
-	uint64_t t2; /* Clock value after aread call.  */
-
-	/* Invalid mailbox. */
-	if (!do_mailbox_is_valid(mbxid))
-		return (-EBADF);
-
-	/* Bad mailbox. */
-	if (!resource_is_used(&mbxtab[mbxid].resource))
-		return (-EBADF);
-
-	/* Bad mailbox. */
-	if (!resource_is_readable(&mbxtab[mbxid].resource))
-		return (-EBADF);
+	resource_set_async(&active_mailboxes[fd].resource);
 
 	t1 = clock_read();
 
-		/* Configures async read. */
-		if ((ret = mailbox_aread(mbxtab[mbxid].fd, buffer, size)) < 0)
+		/* Setup asynchronous read. */
+		if ((ret = mailbox_aread(active_mailboxes[fd].hwfd, buffer, size)) < 0)
 			return (ret);
 
 	t2 = clock_read();
 
-	/* Updates latency variable. */
-	mbxtab[mbxid].latency += (t2 - t1);
-
-	/* Updates volume variable. */
-	mbxtab[mbxid].volume += ret;
+	/* Update performance statistics. */
+	virtual_mailboxes[mbxid].latency += (t2 - t1);
+	virtual_mailboxes[mbxid].volume += ret;
 
 	return (ret);
 }
 
 /*============================================================================*
- * do_mailbox_write()                                                         *
+ * do_vmailbox_awrite()                                                         *
  *============================================================================*/
 
 /**
  * @todo TODO: Provide a detailed description for this function.
  */
-PUBLIC int do_mailbox_awrite(int mbxid, const void * buffer, size_t size)
+PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
 {
-	int ret;     /* HAL function return.            */
-	uint64_t t1; /* Clock value before awrite call. */
-	uint64_t t2; /* Clock value after awrite call.  */
+	int ret;     /* HAL function return.                     */
+	int fd;      /* Active mailbox index of virtual mailbox. */
+	uint64_t t1; /* Clock value before awrite call.          */
+	uint64_t t2; /* Clock value after awrite call.           */
 
-	/* Invalid mailbox. */
-	if (!do_mailbox_is_valid(mbxid))
+	/* Invalid virtual mailbox. */
+	if (!do_vmailbox_is_valid(mbxid))
 		return (-EBADF);
 
-	/* Bad mailbox. */
-	if (!resource_is_used(&mbxtab[mbxid].resource))
+	fd = virtual_mailboxes[mbxid].fd;
+
+	/* Bad virtual mailbox. */
+	if (!resource_is_used(&active_mailboxes[fd].resource))
 		return (-EBADF);
 
-	/* Bad mailbox. */
-	if (!resource_is_writable(&mbxtab[mbxid].resource))
+	/* Bad virtual mailbox. */
+	if (!resource_is_writable(&active_mailboxes[fd].resource))
 		return (-EBADF);
+
+	resource_set_async(&active_mailboxes[fd].resource);
 
 	t1 = clock_read();
 
-		/* Configures async write. */
-		if ((ret = mailbox_awrite(mbxtab[mbxid].fd, buffer, size)) < 0)
+		/* Setup asynchronous write. */
+		if ((ret = mailbox_awrite(active_mailboxes[fd].hwfd, buffer, size)) < 0)
 			return (ret);
 
 	t2 = clock_read();
 
-	/* Updates latency variable. */
-	mbxtab[mbxid].latency += (t2 - t1);
-
-	/* Updates volume variable. */
-	mbxtab[mbxid].volume += ret;
+	/* Update performance statistics. */
+	virtual_mailboxes[mbxid].latency += (t2 - t1);
+	virtual_mailboxes[mbxid].volume += ret;
 
 	return (ret);
 }
 
 /*============================================================================*
- * do_mailbox_wait()                                                          *
+ * do_vmailbox_wait()                                                         *
  *============================================================================*/
 
 /**
  * @todo TODO: Provide a detailed description for this function.
  */
-PUBLIC int do_mailbox_wait(int mbxid)
+PUBLIC int do_vmailbox_wait(int mbxid)
 {
-	int ret;     /* HAL function return.            */
-	uint64_t t1; /* Clock value before wait call. */
-	uint64_t t2; /* Clock value after wait call.  */
+	int ret;     /* HAL function return.                     */
+	int fd;      /* Active mailbox index of virtual mailbox. */
+	uint64_t t1; /* Clock value before wait call.            */
+	uint64_t t2; /* Clock value after wait call.             */
 
-	/* Invalid mailbox. */
-	if (!do_mailbox_is_valid(mbxid))
+	/* Invalid virtual mailbox. */
+	if (!do_vmailbox_is_valid(mbxid))
+		return (-EBADF);
+
+	fd = virtual_mailboxes[mbxid].fd;
+
+	/* Bad virtual mailbox. */
+	if (!resource_is_rdonly(&active_mailboxes[fd].resource))
+		return (-EBADF);
+
+	/* Bad virtual mailbox. */
+	if (!resource_is_async(&active_mailboxes[fd].resource))
 		return (-EBADF);
 
 	dcache_invalidate();
 
 	t1 = clock_read();
 
-		ret = mailbox_wait(mbxtab[mbxid].fd);
+		/* Wait for asynchronous operation. */
+		ret = mailbox_wait(active_mailboxes[virtual_mailboxes[mbxid].fd].hwfd);
 
 	t2 = clock_read();
 
-	/* Updates latency variable. */
-	mbxtab[mbxid].latency += (t2 - t1);
+	/* Update performance statistics. */
+	virtual_mailboxes[mbxid].latency += (t2 - t1);
 
+	dcache_invalidate();
 	return (ret);
 }
 
 /*============================================================================*
- * do_mailbox_ioctl()                                                         *
+ * do_vmailbox_ioctl()                                                        *
  *============================================================================*/
 
 /**
  * @todo TODO: Provide a detailed description for this function.
  */
-int do_mailbox_ioctl(int mbxid, unsigned request, va_list args)
+int do_vmailbox_ioctl(int mbxid, unsigned request, va_list args)
 {
 	int ret = 0;
 
-	/* Invalid mailbox. */
-	if (!do_mailbox_is_valid(mbxid))
+	/* Invalid virtual mailbox. */
+	if (!do_vmailbox_is_valid(mbxid))
 		return (-EBADF);
 
-	/* Bad mailbox. */
-	if (!resource_is_used(&mbxtab[mbxid].resource))
+	/* Bad virtual mailbox. */
+	if (!resource_is_used(&active_mailboxes[virtual_mailboxes[mbxid].fd].resource))
 		return (-EBADF);
 
-	/* Server request. */
+	/* Parse request. */
 	switch (request)
 	{
 		/* Get the amount of data transferred so far. */
@@ -453,7 +600,7 @@ int do_mailbox_ioctl(int mbxid, unsigned request, va_list args)
 		{
 			size_t *volume;
 			volume = va_arg(args, size_t *);
-			*volume = mbxtab[mbxid].volume;
+			*volume = virtual_mailboxes[mbxid].volume;
 		} break;
 
 		/* Get the cumulative transfer latency. */
@@ -461,7 +608,7 @@ int do_mailbox_ioctl(int mbxid, unsigned request, va_list args)
 		{
 			uint64_t *latency;
 			latency = va_arg(args, uint64_t *);
-			*latency = mbxtab[mbxid].latency;
+			*latency = virtual_mailboxes[mbxid].latency;
 		} break;
 
 		/* Operation not supported. */
