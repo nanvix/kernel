@@ -307,7 +307,7 @@ PUBLIC int do_sync_unlink(int syncid)
 {
 	/* Invalid sync. */
 	if (!do_sync_is_valid(syncid))
-		return (-EBADF);
+		return (-EINVAL);
 
 	/* Bad sync. */
 	if (!resource_is_used(&synctab[syncid].resource))
@@ -332,7 +332,7 @@ PUBLIC int do_sync_close(int syncid)
 {
 	/* Invalid sync. */
 	if (!do_sync_is_valid(syncid))
-		return (-EBADF);
+		return (-EINVAL);
 
 	/* Bad sync. */
 	if (!resource_is_used(&synctab[syncid].resource))
@@ -357,7 +357,7 @@ PUBLIC int do_sync_wait(int syncid)
 {
 	/* Invalid sync. */
 	if (!do_sync_is_valid(syncid))
-		return (-EBADF);
+		return (-EINVAL);
 
 	dcache_invalidate();
 
@@ -384,7 +384,7 @@ PUBLIC int do_sync_signal(int syncid)
 {
 	/* Invalid sync. */
 	if (!do_sync_is_valid(syncid))
-		return (-EBADF);
+		return (-EINVAL);
 
 	dcache_invalidate();
 
