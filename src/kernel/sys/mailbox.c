@@ -34,7 +34,7 @@
  *============================================================================*/
 
 /**
- * @see do_mailbox_create().
+ * @see do_vmailbox_create().
  */
 PUBLIC int kernel_mailbox_create(int local)
 {
@@ -42,7 +42,7 @@ PUBLIC int kernel_mailbox_create(int local)
 	if (!WITHIN(local, 0, PROCESSOR_NOC_NODES_NUM))
 		return (-EINVAL);
 
-	return (do_mailbox_create(local));
+	return (do_vmailbox_create(local));
 }
 
 /*============================================================================*
@@ -50,7 +50,7 @@ PUBLIC int kernel_mailbox_create(int local)
  *============================================================================*/
 
 /**
- * @see do_mailbox_open().
+ * @see do_vmailbox_open().
  */
 PUBLIC int kernel_mailbox_open(int remote)
 {
@@ -58,7 +58,7 @@ PUBLIC int kernel_mailbox_open(int remote)
 	if (!WITHIN(remote, 0, PROCESSOR_NOC_NODES_NUM))
 		return (-EINVAL);
 
-	return (do_mailbox_open(remote));
+	return (do_vmailbox_open(remote));
 }
 
 /*============================================================================*
@@ -66,7 +66,7 @@ PUBLIC int kernel_mailbox_open(int remote)
  *============================================================================*/
 
 /**
- * @see do_mailbox_unlink().
+ * @see do_vmailbox_unlink().
  */
 PUBLIC int kernel_mailbox_unlink(int mbxid)
 {
@@ -74,7 +74,7 @@ PUBLIC int kernel_mailbox_unlink(int mbxid)
 	if (mbxid < 0)
 		return (-EINVAL);
 
-	return (do_mailbox_unlink(mbxid));
+	return (do_vmailbox_unlink(mbxid));
 }
 
 /*============================================================================*
@@ -82,7 +82,7 @@ PUBLIC int kernel_mailbox_unlink(int mbxid)
  *============================================================================*/
 
 /**
- * @see do_mailbox_close().
+ * @see do_vmailbox_close().
  */
 PUBLIC int kernel_mailbox_close(int mbxid)
 {
@@ -90,7 +90,7 @@ PUBLIC int kernel_mailbox_close(int mbxid)
 	if (mbxid < 0)
 		return (-EINVAL);
 
-	return (do_mailbox_close(mbxid));
+	return (do_vmailbox_close(mbxid));
 }
 
 /*============================================================================*
@@ -98,7 +98,7 @@ PUBLIC int kernel_mailbox_close(int mbxid)
  *============================================================================*/
 
 /**
- * @see do_mailbox_awrite().
+ * @see do_vmailbox_awrite().
  */
 PUBLIC int kernel_mailbox_awrite(int mbxid, const void *buffer, size_t size)
 {
@@ -118,7 +118,7 @@ PUBLIC int kernel_mailbox_awrite(int mbxid, const void *buffer, size_t size)
 	if (!mm_check_area(VADDR(buffer), size, UMEM_AREA))
 		return (-EFAULT);
 
-	return (do_mailbox_awrite(mbxid, buffer, size));
+	return (do_vmailbox_awrite(mbxid, buffer, size));
 }
 
 /*============================================================================*
@@ -126,7 +126,7 @@ PUBLIC int kernel_mailbox_awrite(int mbxid, const void *buffer, size_t size)
  *============================================================================*/
 
 /**
- * @see do_mailbox_aread().
+ * @see do_vmailbox_aread().
  */
 PUBLIC int kernel_mailbox_aread(int mbxid, void *buffer, size_t size)
 {
@@ -146,7 +146,7 @@ PUBLIC int kernel_mailbox_aread(int mbxid, void *buffer, size_t size)
 	if (!mm_check_area(VADDR(buffer), size, UMEM_AREA))
 		return (-EFAULT);
 
-	return (do_mailbox_aread(mbxid, buffer, size));
+	return (do_vmailbox_aread(mbxid, buffer, size));
 }
 
 /*============================================================================*
@@ -154,7 +154,7 @@ PUBLIC int kernel_mailbox_aread(int mbxid, void *buffer, size_t size)
  *============================================================================*/
 
 /**
- * @see do_mailbox_wait().
+ * @see do_vmailbox_wait().
  */
 PUBLIC int kernel_mailbox_wait(int mbxid)
 {
@@ -162,7 +162,7 @@ PUBLIC int kernel_mailbox_wait(int mbxid)
 	if (mbxid < 0)
 		return (-EINVAL);
 
-	return (do_mailbox_wait(mbxid));
+	return (do_vmailbox_wait(mbxid));
 }
 
 /*============================================================================*
@@ -170,7 +170,7 @@ PUBLIC int kernel_mailbox_wait(int mbxid)
  *============================================================================*/
 
 /**
- * @see do_mailbox_ioctl().
+ * @see do_vmailbox_ioctl().
  */
 PUBLIC int kernel_mailbox_ioctl(int mbxid, unsigned request, va_list *args)
 {
@@ -185,7 +185,7 @@ PUBLIC int kernel_mailbox_ioctl(int mbxid, unsigned request, va_list *args)
 		return (-EINVAL);
 
 	dcache_invalidate();
-		ret = do_mailbox_ioctl(mbxid, request, *args);
+		ret = do_vmailbox_ioctl(mbxid, request, *args);
 	dcache_invalidate();
 
 	return (ret);

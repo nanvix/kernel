@@ -37,7 +37,7 @@
 	#include <posix/stdarg.h>
 
 	/**
-	 * @name Requests for do_mailbox_ioctl()
+	 * @name Requests for do_vmailbox_ioctl()
 	 */
 	/**@{*/
 	#define MAILBOX_IOCTL_GET_VOLUME  1 /**< Get the amount of data transferred so far. */
@@ -45,7 +45,14 @@
 	/**@}*/
 
 	/**
-	 * @brief Creates a mailbox.
+	 * @brief Maximum number of virtual mailboxes.
+	 *
+	 * Maximum number of virtual mailboxes that may be created/opened.
+	 */
+	#define KMAILBOX_MAX 1024
+
+	/**
+	 * @brief Creates a virtual mailbox.
 	 *
 	 * @param local Logic ID of the Local Node.
 	 *
@@ -53,10 +60,10 @@
 	 * mailbox is returned. Upon failure, a negative error code is
 	 * returned instead.
 	 */
-	EXTERN int do_mailbox_create(int local);
+	EXTERN int do_vmailbox_create(int local);
 
 	/**
-	 * @brief Opens a mailbox.
+	 * @brief Opens a virtual mailbox.
 	 *
 	 * @param remote Logic ID of the Target Node.
 	 *
@@ -64,64 +71,64 @@
 	 * is returned. Upon failure, a negative error code is returned
 	 * instead.
 	 */
-	EXTERN int do_mailbox_open(int remote);
+	EXTERN int do_vmailbox_open(int remote);
 
 	/**
-	 * @brief Destroys a mailbox.
+	 * @brief Destroys a virtual mailbox.
 	 *
-	 * @param mbxid ID of the Target Mailbox.
+	 * @param mbxid ID of the target virtual mailbox.
 	 *
 	 * @returns Upon successful completion, zero is returned. Upon failure,
 	 * a negative error code is returned instead.
 	 */
-	EXTERN int do_mailbox_unlink(int mbxid);
+	EXTERN int do_vmailbox_unlink(int mbxid);
 
 	/**
-	 * @brief Closes a mailbox.
+	 * @brief Closes a virtual mailbox.
 	 *
-	 * @param mbxid ID of the Target Mailbox.
+	 * @param mbxid ID of the target virtual mailbox.
 	 *
 	 * @returns Upon successful completion, zero is returned. Upon
 	 * failure, a negative error code is returned instead.
 	 */
-	EXTERN int do_mailbox_close(int mbxid);
+	EXTERN int do_vmailbox_close(int mbxid);
 
 	/**
-	 * @brief Reads data from a mailbox.
+	 * @brief Reads data from a virtual mailbox.
 	 *
-	 * @param mbxid  ID of the Target Mailbox.
+	 * @param mbxid  ID of the target virtual mailbox.
 	 * @param buffer Buffer where the data should be written to.
 	 * @param size   Number of bytes to read.
 	 *
 	 * @returns Upon successful completion, zero is returned. Upon
 	 * failure, a negative error code is returned instead.
 	 */
-	EXTERN int do_mailbox_aread(int mbxid, void * buffer, size_t size);
+	EXTERN int do_vmailbox_aread(int mbxid, void * buffer, size_t size);
 
 	/**
-	 * @brief Writes data to a mailbox.
+	 * @brief Writes data to a virtual mailbox.
 	 *
-	 * @param mbxid ID of the Target Mailbox.
+	 * @param mbxid ID of the target virtual mailbox.
 	 * @param buffer   Buffer where the data should be read from.
 	 * @param size     Number of bytes to write.
 	 *
 	 * @returns Upon successful completion, zero is returned. Upon
 	 * failure, a negative error code is returned instead.
 	 */
-	EXTERN int do_mailbox_awrite(int mbxid, const void * buffer, size_t size);
+	EXTERN int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size);
 
 	/**
-	 * @brief Waits for an asynchronous operation on a mailbox to complete.
+	 * @brief Waits for an asynchronous operation on a virtual mailbox.
 	 *
-	 * @param mbxid ID of the Target Mailbox.
+	 * @param mbxid ID of the target virtual mailbox.
 	 *
 	 * @returns Upon successful completion, zero is returned. Upon
 	 * failure, a negative error code is returned instead.
 	 */
-	EXTERN int do_mailbox_wait(int mbxid);
+	EXTERN int do_vmailbox_wait(int mbxid);
 
 	/**
-	 * @brief Performs control operations in a mailbox.
+	 * @brief Performs control operations in a virtual mailbox.
 	 *
 	 * @param mbxid   Target mailbox.
 	 * @param request Request.
@@ -130,7 +137,7 @@
 	 * @param Upon successful completion, zero is returned. Upon failure,
 	 * a negative error code is returned instead.
 	 */
-	EXTERN int do_mailbox_ioctl(int mbxid, unsigned request, va_list args);
+	EXTERN int do_vmailbox_ioctl(int mbxid, unsigned request, va_list args);
 
 #endif /* NANVIX_MAILBOX_H_ */
 
