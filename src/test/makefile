@@ -40,6 +40,9 @@ SRC = $(wildcard *.c)
 # Object Files
 OBJ = $(SRC:.c=.$(OBJ_SUFFIX).o)
 
+# Binary file
+EXEC = test-driver.$(OBJ_SUFFIX)
+
 #===============================================================================
 # Sources (Target Specific)
 #===============================================================================

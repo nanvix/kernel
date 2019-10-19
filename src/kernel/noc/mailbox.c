@@ -375,7 +375,7 @@ PUBLIC int do_vmailbox_unlink(int mbxid)
 
 	/* Invalid virtual mailbox. */
 	if (!do_vmailbox_is_valid(mbxid))
-		return (-EBADF);
+		return (-EINVAL);
 
 	fd = virtual_mailboxes[mbxid].fd;
 
@@ -416,7 +416,7 @@ PUBLIC int do_vmailbox_close(int mbxid)
 
 	/* Invalid virtual mailbox. */
 	if (!do_vmailbox_is_valid(mbxid))
-		return (-EBADF);
+		return (-EINVAL);
 
 	fd = virtual_mailboxes[mbxid].fd;
 
@@ -455,7 +455,7 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 
 	/* Invalid virtual mailbox. */
 	if (!do_vmailbox_is_valid(mbxid))
-		return (-EBADF);
+		return (-EINVAL);
 
 	fd = virtual_mailboxes[mbxid].fd;
 
@@ -500,7 +500,7 @@ PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
 
 	/* Invalid virtual mailbox. */
 	if (!do_vmailbox_is_valid(mbxid))
-		return (-EBADF);
+		return (-EINVAL);
 
 	fd = virtual_mailboxes[mbxid].fd;
 
@@ -545,7 +545,7 @@ PUBLIC int do_vmailbox_wait(int mbxid)
 
 	/* Invalid virtual mailbox. */
 	if (!do_vmailbox_is_valid(mbxid))
-		return (-EBADF);
+		return (-EINVAL);
 
 	fd = virtual_mailboxes[mbxid].fd;
 
@@ -586,7 +586,7 @@ int do_vmailbox_ioctl(int mbxid, unsigned request, va_list args)
 
 	/* Invalid virtual mailbox. */
 	if (!do_vmailbox_is_valid(mbxid))
-		return (-EBADF);
+		return (-EINVAL);
 
 	/* Bad virtual mailbox. */
 	if (!resource_is_used(&active_mailboxes[virtual_mailboxes[mbxid].fd].resource))

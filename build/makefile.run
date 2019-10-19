@@ -26,39 +26,39 @@ ifeq ($(DOCKER),no)
 
 # Runs Unit Tests in all clusters
 run:
-	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(EXEC) $(TARGET) all --no-debug
+	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(TARGET) all --no-debug
 
 # Runs Unit Tests in IO Cluster.
 run-iocluster:
-	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(EXEC) $(TARGET) iocluster --no-debug
+	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(TARGET) iocluster --no-debug
 
 # Runs Unit Tests in Compute Cluster.
 run-ccluster:
-	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(EXEC) $(TARGET) ccluster --no-debug
+	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(TARGET) ccluster --no-debug
 
 # Runs Unit Tests in all clusters with a timeout.
 test:
-	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(EXEC) $(TARGET) all --no-debug $(TIMEOUT)
+	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(TARGET) all --no-debug $(TIMEOUT)
 
 # Runs Unit Tests in Compute Cluster with a timout
 test-ccluster:
-	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(EXEC) $(TARGET) ccluster --no-debug $(TIMEOUT)
+	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(TARGET) ccluster --no-debug $(TIMEOUT)
 
 # Runs Unit Tests in IO Cluster with a Timeout.
 test-iocluster:
-	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(EXEC) $(TARGET) iocluster --no-debug $(TIMEOUT)
+	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(TARGET) iocluster --no-debug $(TIMEOUT)
 
 # Runs Unit Tests in all clusters in debug mode.
 debug:
-	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(EXEC) $(TARGET) all --debug
+	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(TARGET) all --debug
 
 # Runs Unit Tests in IO Cluster in debug mode.
 debug-iocluster:
-	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(EXEC) $(TARGET) iocluster --debug
+	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(TARGET) iocluster --debug
 
 # Runs Unit Tests in Compute Cluster in debug mode.
 debug-ccluster:
-	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(EXEC) $(TARGET) ccluster --debug
+	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(TARGET) ccluster --debug
 
 # Run Docker containers.
 else

@@ -171,15 +171,15 @@ PUBLIC int do_portal_allow(int portalid, int remote)
 	int ret; /* HAL function return. */
 
 	if (!do_portal_is_valid(portalid))
-		return (-EBADF);
+		return (-EINVAL);
 
 	/* Bad portal. */
 	if (!resource_is_used(&portaltab[portalid].resource))
-		return (-EINVAL);
+		return (-EBADF);
 
 	/* Bad portal. */
 	if (!resource_is_readable(&portaltab[portalid].resource))
-		return (-EINVAL);
+		return (-EBADF);
 
 	if ((ret = portal_allow(portaltab[portalid].fd, remote)) < 0)
 		return (ret);
@@ -316,7 +316,7 @@ PUBLIC int do_portal_unlink(int portalid)
 {
 	/* Invalid portal. */
 	if (!do_portal_is_valid(portalid))
-		return (-EBADF);
+		return (-EINVAL);
 
 	/* Bad portal. */
 	if (!resource_is_used(&portaltab[portalid].resource))
@@ -341,7 +341,7 @@ PUBLIC int do_portal_close(int portalid)
 {
 	/* Invalid portal. */
 	if (!do_portal_is_valid(portalid))
-		return (-EBADF);
+		return (-EINVAL);
 
 	/* Bad portal. */
 	if (!resource_is_used(&portaltab[portalid].resource))
@@ -370,7 +370,7 @@ PUBLIC int do_portal_aread(int portalid, void * buffer, size_t size)
 
 	/* Invalid portal. */
 	if (!do_portal_is_valid(portalid))
-		return (-EBADF);
+		return (-EINVAL);
 
 	/* Bad portal. */
 	if (!resource_is_used(&portaltab[portalid].resource))
@@ -412,7 +412,7 @@ PUBLIC int do_portal_awrite(int portalid, const void * buffer, size_t size)
 
 	/* Invalid portal. */
 	if (!do_portal_is_valid(portalid))
-		return (-EBADF);
+		return (-EINVAL);
 
 	/* Bad portal. */
 	if (!resource_is_used(&portaltab[portalid].resource))
@@ -454,7 +454,7 @@ PUBLIC int do_portal_wait(int portalid)
 
 	/* Invalid portal. */
 	if (!do_portal_is_valid(portalid))
-		return (-EBADF);
+		return (-EINVAL);
 
 	dcache_invalidate();
 
@@ -483,7 +483,7 @@ int do_portal_ioctl(int portalid, unsigned request, va_list args)
 
 	/* Invalid portal. */
 	if (!do_portal_is_valid(portalid))
-		return (-EBADF);
+		return (-EINVAL);
 
 	/* Bad portal. */
 	if (!resource_is_used(&portaltab[portalid].resource))

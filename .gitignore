@@ -32,3 +32,6 @@ include/nanvix/cc.h
 include/nanvix/const.h
 include/nanvix/klib.h
 include/posix/
+
+# Excludes
+!img/*

@@ -73,8 +73,7 @@ all-k1bdp: make-dirs clean-target
 		LINKERDIR=$(BUILDDIR)/mppa256/linker/k1bdp     \
 		LIBHAL=$(LIBDIR)/libhal-k1b-node.a             \
 		LIBKERNEL=$(LIBDIR)/libkernel-k1b-node.a       \
-		OBJ_SUFFIX=node                                \
-		EXEC=test-driver-k1bdp
+		OBJ_SUFFIX=k1bdp
 
 # Builds everything for node ioddr variant.
 all-k1bio: make-dirs clean-target
@@ -84,8 +83,7 @@ all-k1bio: make-dirs clean-target
 		LINKERDIR=$(BUILDDIR)/mppa256/linker/k1bio      \
 		LIBHAL=$(LIBDIR)/libhal-k1b-ioddr.a             \
 		LIBKERNEL=$(LIBDIR)/libkernel-k1b-ioddr.a       \
-		EXEC=test-driver-k1bio                          \
-		OBJ_SUFFIX=ioddr
+		OBJ_SUFFIX=k1bio
 
 # Cleans object files.
 clean-target:
@@ -98,12 +96,10 @@ distclean-target: distclean-k1bdp distclean-k1bio
 distclean-k1bdp: clean-target
 	@$(MAKE) -C $(SRCDIR) distclean              \
 		LIBKERNEL=$(LIBDIR)/libkernel-k1b-node.a \
-		OBJ_SUFFIX=node                          \
-		EXEC=test-driver-k1bdp
+		OBJ_SUFFIX=k1bdp
 
 # Cleans everything for node ioddr variant.
 distclean-k1bio: clean-target
 	@$(MAKE) -C $(SRCDIR) distclean               \
 		LIBKERNEL=$(LIBDIR)/libkernel-k1b-ioddr.a \
-		OBJ_SUFFIX=ioddr                          \
-		EXEC=test-driver-k1bio
+		OBJ_SUFFIX=k1bio

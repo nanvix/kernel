@@ -59,6 +59,7 @@ export LINKERDIR  := $(BUILDDIR)/$(TARGET)/linker
 export MAKEDIR    := $(BUILDDIR)/$(TARGET)/make
 export DOCDIR     := $(ROOTDIR)/doc
 export INCDIR     := $(ROOTDIR)/include
+export IMGDIR     := $(CURDIR)/img
 export LIBDIR     := $(ROOTDIR)/lib
 export SRCDIR     := $(ROOTDIR)/src
 export TOOLSDIR   := $(ROOTDIR)/utils
@@ -106,6 +107,9 @@ export ARFLAGS = rc
 
 #===============================================================================
 
+# Image Source
+export IMGSRC = $(IMGDIR)/$(TARGET).img
+
 # Image Name
 export IMAGE = nanvix-debug.img
 
@@ -119,7 +123,7 @@ make-dirs:
 
 ifeq ($(DOCKER),no)
 image-tests: all-target
-	bash $(TOOLSDIR)/nanvix-build-image.sh $(IMAGE) $(BINDIR) $(EXEC)
+	bash $(TOOLSDIR)/nanvix-build-image.sh $(IMAGE) $(BINDIR) $(IMGSRC)
 
 # Cleans builds.
 clean: clean-target
