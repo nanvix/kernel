@@ -26,22 +26,27 @@
 # Toolchain Configuration 
 #===============================================================================
 
+# Compiler Options
+ifneq ($(LIBLWIP),)
+CFLAGS += -I $(INCDIR)/posix
+endif
+
 # Libraries
-LIBS  = -Wl,--whole-archive $(LIBKERNEL) $(LIBHAL) $(LIBLWIP)
-LIBS += -Wl,--no-whole-archive $(THEIR_LIBS)
+LIBS := -Wl,--whole-archive
+LIBS += $(LIBDIR)/$(LIBHAL)
+LIBS += -Wl,--no-whole-archive
+LIBS += $(LIBDIR)/$(LIBKERNEL)
+ifneq ($(LIBLWIP),)
+LIBS += $(LIBDIR)/$(LIBLWIP)
+endif
+LIBS += $(LIBDIR)/$(KLIB) $(THEIR_LIBS)
 
 #===============================================================================
-# Sources and Objects
+# Sources
 #===============================================================================
 
 # C Source Files
 SRC = $(wildcard *.c)
-
-# Object Files
-OBJ = $(SRC:.c=.$(OBJ_SUFFIX).o)
-
-# Binary file
-EXEC = test-driver.$(OBJ_SUFFIX)
 
 #===============================================================================
 # Sources (Target Specific)
@@ -54,6 +59,12 @@ endif
 ifeq ($(TARGET),qemu-openrisc)
 SRC += $(wildcard lwip/*.c)
 endif
+
+#===============================================================================
+# Object Files
+#===============================================================================
+
+OBJ = $(SRC:.c=.$(OBJ_SUFFIX).o)
 
 #===============================================================================
 
@@ -90,7 +101,7 @@ else
 	rm -rf $(BINDIR)/$(EXEC)
 endif
 
-# Builds a C Source file
+# Builds a C source file.
 %.$(OBJ_SUFFIX).o: %.c
 ifeq ($(VERBOSE), no)
 	@echo [CC] $@

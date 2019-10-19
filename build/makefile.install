@@ -37,37 +37,37 @@ export ARTIFACTS := $(shell find $(INCDIR) -name *.h -type f)
 
 #===============================================================================
 
-# Install Everything
-install: | all-target install-headers
+# Install
+install: | hal-target install-headers
 	@mkdir -p $(PREFIX)/lib
-	@cp -f $(LIBDIR)/libhal*.a $(PREFIX)/lib
-	@echo [CP] $(LIBDIR)/libhal*.a
-	@cp -f $(LIBDIR)/libkernel*.a $(PREFIX)/lib
-	@echo [CP] $(LIBDIR)/libkernel*.a
+	@cp -f $(LIBDIR)/klib*.a $(LIBDIR)/libhal*.a $(LIBDIR)/libkernel*.a $(PREFIX)/lib
+	@echo [CP] $(PREFIX)/lib/klib*.a
+	@echo [CP] $(PREFIX)/lib/libhal*.a
+	@echo [CP] $(PREFIX)/lib/libkernel*.a
 	@echo "==============================================================================="
-	@echo "Nanvix Microkernel Libraries Successfully Installed"
+	@echo "Nanvix MicroKernel Libraries Successfully Installed"
 	@echo "==============================================================================="
 
 # Install Headers
 install-headers: copy-artifacts
 	@echo "==============================================================================="
-	@echo "Nanvix Microkernel Headers Successfully Installed"
+	@echo "Nanvix MicroKernel Headers Successfully Installed"
 	@echo "==============================================================================="
 
-# Uninstall Everything
+# Uninstall
 uninstall: | distclean uninstall-headers
-	@rm -f $(PREFIX)/lib/libhal*.a
+	@rm -f $(PREFIX)/lib/klib*.a $(PREFIX)/lib/libhal*.a $(PREFIX)/lib/libkernel*.a
+	@echo [RM] $(PREFIX)/lib/klib*.a
 	@echo [RM] $(PREFIX)/lib/libhal*.a
-	@rm -f $(PREFIX)/lib/libkernel*.a
 	@echo [RM] $(PREFIX)/lib/libkernel*.a
 	@echo "==============================================================================="
-	@echo "Nanvix Microkernel Libraries Successfully Uninstalled"
+	@echo "Nanvix MicroKernel Libraries Successfully Uninstalled"
 	@echo "==============================================================================="
 
 # Uninstall Headers
 uninstall-headers: delete-artifacts
 	@echo "==============================================================================="
-	@echo "Nanvix Microkernel Headers Successfully Uninstalled"
+	@echo "Nanvix MicroKernel Headers Successfully Uninstalled"
 	@echo "==============================================================================="
 
 # Copies All Artifacts

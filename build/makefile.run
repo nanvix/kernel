@@ -40,7 +40,7 @@ run-ccluster:
 test:
 	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(TARGET) all --no-debug $(TIMEOUT)
 
-# Runs Unit Tests in Compute Cluster with a timout
+# Runs Unit Tests in Compute Cluster with a timeout.
 test-ccluster:
 	bash $(TOOLSDIR)/nanvix-run.sh $(IMAGE) $(BINDIR) $(TARGET) ccluster --no-debug $(TIMEOUT)
 
@@ -63,7 +63,7 @@ debug-ccluster:
 # Run Docker containers.
 else
 
-# Runs Unit Tests in all clusters
+# Runs Unit tests in all clusters.
 run:
 	cd $(ROOTDIR)/docker && docker-compose -f run.yml up $(TARGET)
 
@@ -90,4 +90,5 @@ debug-iocluster:
 # Runs Unit Tests in Compute Cluster in debug mode.
 debug-ccluster:
 	cd $(ROOTDIR)/docker && docker-compose -f debug-ccluster.yml up $(TARGET)
+
 endif

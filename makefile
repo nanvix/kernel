@@ -31,36 +31,35 @@
 # Build Options
 #===============================================================================
 
-# Use Docker?
-export DOCKER ?= no
-
 # Verbose Build?
 export VERBOSE ?= no
 
 # Release Version?
 export RELEASE ?= no
 
-# Stall regression tests?
-export SUPPRESS_TESTS ?= no
-
 # Installation Prefix
 export PREFIX ?= $(HOME)
 
+# Use Docker?
+export DOCKER ?= no
+
+# Stall regression tests?
+export SUPPRESS_TESTS ?= no
+
 #===============================================================================
 # Directories
 #===============================================================================
 
-# Directories
 export ROOTDIR    := $(CURDIR)
 export BINDIR     := $(ROOTDIR)/bin
 export BUILDDIR   := $(ROOTDIR)/build
 export CONTRIBDIR := $(ROOTDIR)/contrib
+export DOCDIR     := $(ROOTDIR)/doc
+export IMGDIR     := $(ROOTDIR)/img
+export INCDIR     := $(ROOTDIR)/include
+export LIBDIR     := $(ROOTDIR)/lib
 export LINKERDIR  := $(BUILDDIR)/$(TARGET)/linker
 export MAKEDIR    := $(BUILDDIR)/$(TARGET)/make
-export DOCDIR     := $(ROOTDIR)/doc
-export INCDIR     := $(ROOTDIR)/include
-export IMGDIR     := $(CURDIR)/img
-export LIBDIR     := $(ROOTDIR)/lib
 export SRCDIR     := $(ROOTDIR)/src
 export TOOLSDIR   := $(ROOTDIR)/utils
 
@@ -69,11 +68,12 @@ export TOOLSDIR   := $(ROOTDIR)/utils
 #===============================================================================
 
 # Libraries
-export LIBHAL    = $(LIBDIR)/libhal-$(TARGET).a
-export LIBKERNEL = $(LIBDIR)/libkernel-$(TARGET).a
+export KLIB      := klib-$(TARGET).a
+export LIBHAL    := libhal-$(TARGET).a
+export LIBKERNEL := libkernel-$(TARGET).a
 
 # Binaries
-export EXEC := test-driver
+export EXEC := test-driver.$(TARGET)
 
 #===============================================================================
 # Target-Specific Make Rules
@@ -88,16 +88,17 @@ endif
 #===============================================================================
 
 # Compiler Options
-export CFLAGS  += -std=c99 -fno-builtin
-export CFLAGS  += -Wall -Wextra -Werror -Wa,--warn
-export CFLAGS  += -Winit-self -Wswitch-default -Wfloat-equal
-export CFLAGS  += -Wundef -Wshadow -Wuninitialized -Wlogical-op
-export CFLAGS  += -Wno-unused-function
-export CFLAGS  += -fno-stack-protector
-export CFLAGS  += -Wvla # -Wredundant-decls
-export CFLAGS  += -D__NANVIX_MICROKERNEL
-export CFLAGS  += -I $(INCDIR)
-export CFLAGS  += -I $(ROOTDIR)/src/lwip/src/include
+export CFLAGS += -std=c99 -fno-builtin
+export CFLAGS += -Wall -Wextra -Werror -Wa,--warn
+export CFLAGS += -Winit-self -Wswitch-default -Wfloat-equal
+export CFLAGS += -Wundef -Wshadow -Wuninitialized -Wlogical-op
+export CFLAGS += -Wvla # -Wredundant-decls
+export CFLAGS += -Wno-missing-profile
+export CFLAGS += -fno-stack-protector
+export CFLAGS += -Wno-unused-function
+export CFLAGS += -I $(INCDIR)
+export CFLAGS += -I $(ROOTDIR)/src/lwip/src/include
+export CFLAGS += -D__NANVIX_MICROKERNEL
 
 # Additional C Flags
 include $(BUILDDIR)/makefile.cflags
@@ -111,10 +112,10 @@ export ARFLAGS = rc
 export IMGSRC = $(IMGDIR)/$(TARGET).img
 
 # Image Name
-export IMAGE = nanvix-debug.img
+export IMAGE = microkernel-debug.img
 
 # Builds everything.
-all: image-tests
+all: | make-dirs image
 
 # Make Directories
 make-dirs:
@@ -122,17 +123,16 @@ make-dirs:
 	@mkdir -p $(LIBDIR)
 
 ifeq ($(DOCKER),no)
-image-tests: all-target
-	bash $(TOOLSDIR)/nanvix-build-image.sh $(IMAGE) $(BINDIR) $(IMGSRC)
+# Builds image.
+image: all-target
+	@bash $(TOOLSDIR)/nanvix-build-image.sh $(IMAGE) $(BINDIR) $(IMGSRC)
 
-# Cleans builds.
+# Cleans build.
 clean: clean-target
 
 # Cleans everything.
 distclean: distclean-target
-	 @rm -f $(LIBDIR)/libkernel-* $(LIBDIR)/libnanvix-** $(LIBDIR)/liblwip-*
-	 @rm -rf $(BINDIR)
-	 @find $(SRCDIR) -name "*.o" -exec rm -rf {} \;
+	@rm -rf $(IMAGE) $(BINDIR)/$(EXECBIN) $(LIBDIR)/$(LIBKERNEL)
 
 # Run Docker containers.
 else

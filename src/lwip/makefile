@@ -32,6 +32,7 @@ LWIPDIR = src
 VERBOSE ?= no
 
 CFLAGS += -I $(CURDIR)/src/include
+CFLAGS += -I $(INCDIR)/posix
 
 include src/Filelists.mk
 
@@ -51,9 +52,9 @@ OBJ = $(SRC:.c=.$(OBJ_SUFFIX).o)
 all: $(OBJ)
 ifeq ($(VERBOSE), no)
 	@echo [AR] $(LIBLWIP)
-	@$(AR) $(ARFLAGS) $(LIBLWIP) $(OBJ)
+	@$(AR) $(ARFLAGS) $(LIBDIR)/$(LIBLWIP) $(OBJ)
 else
-	$(AR) $(ARFLAGS) $(LIBLWIP) $(OBJ)
+	$(AR) $(ARFLAGS) $(LIBDIR)/$(LIBLWIP) $(OBJ)
 endif
 
 # Cleans All Object Files
@@ -69,9 +70,9 @@ endif
 distclean: clean
 ifeq ($(VERBOSE), no)
 	@echo [CLEAN] $(LIBLWIP)
-	@rm -rf $(LIBLWIP)
+	@rm -rf $(LIBDIR)/$(LIBLWIP)
 else
-	rm -rf $(LIBLWIP)
+	rm -rf $(LIBDIR)/$(LIBLWIP)
 endif
 
 # Builds a C Source file
