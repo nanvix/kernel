@@ -24,9 +24,9 @@
 
 #include <nanvix/kernel/config.h>
 #include <dev/net/net.h>
-#include <lwip/netif.h>
 
 #if __NANVIX_HAS_NETWORK
+#include <lwip/netif.h>
 
 extern void lwip_test(struct netif *netif);
 extern void test_lwip_udp_send_receive_manual(struct netif* netif);

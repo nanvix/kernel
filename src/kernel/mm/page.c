@@ -25,7 +25,7 @@
 #include <nanvix/hal/hal.h>
 #include <nanvix/kernel/mm.h>
 #include <nanvix/const.h>
-#include <nanvix/klib.h>
+#include <nanvix/hlib.h>
 #include <posix/errno.h>
 
 /*============================================================================*

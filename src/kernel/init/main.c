@@ -28,7 +28,7 @@
 #include <nanvix/kernel/syscall.h>
 #include <nanvix/kernel/thread.h>
 #include <nanvix/const.h>
-#include <nanvix/klib.h>
+#include <nanvix/hlib.h>
 
 #include <dev/net/net.h>
 
