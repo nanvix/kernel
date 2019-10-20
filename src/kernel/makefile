@@ -23,7 +23,16 @@
 #
 
 #===============================================================================
-# Sources and Objects
+# Toolchain Configuration
+#===============================================================================
+
+# Compiler Options
+ifneq ($(LIBLWIP),)
+CFLAGS += -I $(INCDIR)/posix
+endif
+
+#===============================================================================
+# Sources
 #===============================================================================
 
 # C Source Files
@@ -35,9 +44,6 @@ SRC = $(wildcard dev/*.c)     \
       $(wildcard pm/*.c)      \
       $(wildcard sys/*.c)     \
       $(wildcard test/*.c)
-
-# Object Files
-OBJ = $(SRC:.c=.$(OBJ_SUFFIX).o)
 
 #===============================================================================
 # Sources (Target Specific)
@@ -55,17 +61,23 @@ SRC += $(wildcard test/network.c)
 endif
 
 #===============================================================================
+# Object Files
+#===============================================================================
 
-# Builds All Object Files
+OBJ = $(SRC:.c=.$(OBJ_SUFFIX).o)
+
+#===============================================================================
+
+# Builds all object files.
 all: $(OBJ)
 ifeq ($(VERBOSE), no)
 	@echo [AR] $(LIBKERNEL)
-	@$(AR) $(ARFLAGS) $(LIBKERNEL) $(OBJ)
+	@$(AR) $(ARFLAGS) $(LIBDIR)/$(LIBKERNEL) $(OBJ)
 else
-	$(AR) $(ARFLAGS) $(LIBKERNEL) $(OBJ)
+	$(AR) $(ARFLAGS) $(LIBDIR)/$(LIBKERNEL) $(OBJ)
 endif
 
-# Cleans All Object Files
+# Cleans all object files.
 clean:
 ifeq ($(VERBOSE), no)
 	@echo [CLEAN] $(OBJ)
@@ -74,16 +86,16 @@ else
 	rm -rf $(OBJ)
 endif
 
-# Cleans Everything
+# Cleans everything.
 distclean: clean
 ifeq ($(VERBOSE), no)
 	@echo [CLEAN] $(LIBKERNEL)
-	@rm -rf $(LIBKERNEL)
+	@rm -rf $(LIBDIR)/$(LIBKERNEL)
 else
-	rm -rf $(LIBKERNEL)
+	rm -rf $(LIBDIR)/$(LIBKERNEL)
 endif
 
-# Builds a C Source file
+# Builds a C source file.
 %.$(OBJ_SUFFIX).o: %.c
 ifeq ($(VERBOSE), no)
 	@echo [CC] $@

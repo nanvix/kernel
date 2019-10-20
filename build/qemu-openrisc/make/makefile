@@ -26,7 +26,12 @@
 # Target Configuration
 #===============================================================================
 
-export CFLAGS  = -D __qemu_openrisc__ # Target
+export TARGET    ?= qemu-openrisc
+export PROCESSOR := or1k-processor
+export CLUSTER   := or1k-cluster
+export CORE      := or1k
+
+export CFLAGS := -D __qemu_openrisc__ # Target
 export CFLAGS += -D __openrisc__      # Processor
 export CFLAGS += -D __or1k_cluster__  # Cluster
 export CFLAGS += -D __or1k__          # Core
@@ -40,9 +45,9 @@ export CFLAGS += -D __or1200__        # Core Variant
 export TOOLCHAIN_DIR ?= $(TOOLSDIR)/toolchain/or1k/bin/
 
 # Toolchain
-export CC = $(TOOLCHAIN_DIR)/or1k-elf-gcc
-export LD = $(TOOLCHAIN_DIR)/or1k-elf-ld
-export AR = $(TOOLCHAIN_DIR)/or1k-elf-ar
+export CC := $(TOOLCHAIN_DIR)/or1k-elf-gcc
+export LD := $(TOOLCHAIN_DIR)/or1k-elf-ld
+export AR := $(TOOLCHAIN_DIR)/or1k-elf-ar
 
 # Timeout Variable
 export TIMEOUT ?= 120
@@ -52,23 +57,21 @@ export CFLAGS += -nostdlib -nostdinc -ffreestanding
 export CFLAGS += -ansi -pedantic-errors
 export CFLAGS += -Wstack-usage=4096
 export CFLAGS += -Wno-type-limits
-export CFLAGS += -Wno-missing-profile
 export CFLAGS += -D __HAS_HW_DIVISION
-export CFLAGS += -I $(INCDIR)/posix
 
 # Linker Options
-export LDFLAGS  = -Wl,--allow-multiple-definition
-export LDFLAGS += -nostdlib -nostdinc -ffreestanding
+export LDFLAGS := -nostdlib -nostdinc -ffreestanding
+export LDFLAGS += -Wl,--allow-multiple-definition
 
 # Suffix for Objects
-export OBJ_SUFFIX=qemu-openrisc
+export OBJ_SUFFIX := qemu-openrisc
 
 #===============================================================================
 # Libraries
 #===============================================================================
 
 export THEIR_LIBS := -lgcc
-export LIBLWIP = $(LIBDIR)/liblwip-$(TARGET).a
+export LIBLWIP := liblwip-qemu-openrisc.a
 
 #===============================================================================
 

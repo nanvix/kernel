@@ -26,7 +26,7 @@
 #include <nanvix/hal/hal.h>
 #include <nanvix/kernel/thread.h>
 #include <nanvix/kernel/syscall.h>
-#include <nanvix/klib.h>
+#include <nanvix/hlib.h>
 #include <posix/errno.h>
 
 /**

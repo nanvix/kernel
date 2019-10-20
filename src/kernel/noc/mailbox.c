@@ -24,7 +24,7 @@
 
 #include <nanvix/hal/hal.h>
 #include <nanvix/kernel/mailbox.h>
-#include <nanvix/klib.h>
+#include <nanvix/hlib.h>
 #include <posix/errno.h>
 #include <posix/stdarg.h>
 

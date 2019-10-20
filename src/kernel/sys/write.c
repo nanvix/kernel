@@ -23,10 +23,10 @@
  */
 
 #include <nanvix/const.h>
-#include <nanvix/klib.h>
+#include <nanvix/hlib.h>
 #include <nanvix/hal/hal.h>
 #include <nanvix/kernel/mm.h>
-#include <stdint.h>
+#include <posix/stdint.h>
 
 /**
  * @brief Write buffer size.

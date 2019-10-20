@@ -27,7 +27,7 @@
 
 	#include <nanvix/kernel/config.h>
 	#include <nanvix/const.h>
-	#include <stdint.h>
+	#include <posix/stdint.h>
 
 #if __NANVIX_HAS_NETWORK
 

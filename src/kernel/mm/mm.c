@@ -24,7 +24,7 @@
 
 #include <nanvix/kernel/mm.h>
 #include <nanvix/const.h>
-#include <nanvix/klib.h>
+#include <nanvix/hlib.h>
 
 /**
  * The mm_init() function initializes the Memory Management (MM)

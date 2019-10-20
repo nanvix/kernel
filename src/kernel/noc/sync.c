@@ -23,7 +23,7 @@
  */
 
 #include <nanvix/hal/hal.h>
-#include <nanvix/klib.h>
+#include <nanvix/hlib.h>
 #include <posix/errno.h>
 
 #if __TARGET_HAS_SYNC

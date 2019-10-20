@@ -24,7 +24,7 @@
 
 #include <nanvix/kernel/thread.h>
 #include <nanvix/const.h>
-#include <nanvix/klib.h>
+#include <nanvix/hlib.h>
 
 /*============================================================================*
  * semaphore_down()                                                           *

@@ -23,6 +23,12 @@ tags
 *.swo
 *.vscode/
 
+# KLib Headers
+include/nanvix/klib.h
+include/posix/decl.h
+include/posix/stdarg.h
+include/posix/stddef.h
+
 # HAL Headers
 include/arch/
 include/grub/
@@ -30,7 +36,7 @@ include/machine/
 include/nanvix/hal/
 include/nanvix/cc.h
 include/nanvix/const.h
-include/nanvix/klib.h
+include/nanvix/hlib.h
 include/posix/
 
 # Excludes

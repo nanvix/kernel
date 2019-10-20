@@ -72,24 +72,31 @@ clean-kernel:
 # Cleans Kernel Build
 distclean-kernel:
 	$(MAKE) -C kernel distclean
+
 #===============================================================================
 # lwip
 #===============================================================================
 
 # Builds LwIP
-ifeq ($(TARGET),$(filter $(TARGET),qemu-x86 qemu-openrisc))
 all-lwip:
+ifeq ($(TARGET),$(filter $(TARGET),qemu-x86 qemu-openrisc))
 	$(MAKE) -C lwip all
 else
-all-lwip:
 	echo "nothing to do"
 endif
 
 # Cleans Test Driver Build Objects
 clean-lwip:
+ifeq ($(TARGET),$(filter $(TARGET),qemu-x86 qemu-openrisc))
 	$(MAKE) -C lwip clean
+else
+	echo "nothing to do"
+endif
 
 # Cleans lwip Build
 distclean-lwip:
+ifeq ($(TARGET),$(filter $(TARGET),qemu-x86 qemu-openrisc))
 	$(MAKE) -C lwip distclean
-
+else
+	echo "nothing to do"
+endif

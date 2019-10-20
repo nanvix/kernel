@@ -1,5 +1,4 @@
 #
-#
 # MIT License
 #
 # Copyright(c) 2011-2019 The Maintainers of Nanvix
@@ -27,10 +26,15 @@
 # Target Configuration
 #===============================================================================
 
-export CFLAGS  = -D __unix64__          # Target
-export CFLAGS += -D __linux64__         # Processor
-export CFLAGS += -D __linux64_cluster__ # Cluster
-export CFLAGS += -D __linux64_core__    # Core
+export TARGET    ?= unix64
+export PROCESSOR := linux64
+export CLUSTER   := linux64-cluster
+export CORE      := linux64-core
+
+export CFLAGS := -D __unix64__            # Target
+export CFLAGS += -D __linux64_processor__ # Processor
+export CFLAGS += -D __linux64_cluster__   # Cluster
+export CFLAGS += -D __linux64_core__      # Core
 
 #===============================================================================
 # Toolchain Configuration
@@ -40,33 +44,30 @@ export CFLAGS += -D __linux64_core__    # Core
 export TOOLCHAIN_DIR ?= $(TOOLSDIR)/toolchain/unix/bin
 
 # Toolchain
-export CC = gcc
-export LD = ld
-export AR = ar
+export CC := gcc
+export LD := ld
+export AR := ar
 
 # Timeout Variable
 export TIMEOUT ?= 60
 
 # Compiler Options
-export CFLAGS += -D_GNU_SOURCE
-export CFLAGS += -ansi -pedantic -Wno-error=pedantic
+export CFLAGS += -D_GNU_SOURCE -D_POSIX_C_SOURCE=200112L
+export CFLAGS += -ansi -Wno-error=pedantic
 export CFLAGS += -Wstack-usage=4096
 export CFLAGS += -D __HAS_HW_DIVISION
-export CFLAGS += -D_POSIX_C_SOURCE=200112L
 
 # Linker Options
-export LDFLAGS =
+export LDFLAGS :=
 
 # Suffix for Objects
-export OBJ_SUFFIX=$(TARGET)
+export OBJ_SUFFIX := unix64
 
 #===============================================================================
-# Libraries and Binaries
-#===============================================================================
-
 # Libraries
-export LIBLWIP =
-export THEIR_LIBS= -lpthread -lm -lrt
+#===============================================================================
+
+export THEIR_LIBS := -lpthread -lm -lrt
 
 #===============================================================================
 

@@ -27,7 +27,7 @@
 
 #include <nanvix/hal/hal.h>
 #include <nanvix/const.h>
-#include <nanvix/klib.h>
+#include <nanvix/hlib.h>
 #include <dev/net/ethoc.h>
 #include <stdint.h>
 
