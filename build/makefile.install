@@ -38,7 +38,7 @@ export ARTIFACTS := $(shell find $(INCDIR) -name *.h -type f)
 #===============================================================================
 
 # Install
-install: | hal-target install-headers
+install: | all-target install-headers
 	@mkdir -p $(PREFIX)/lib
 	@cp -f $(LIBDIR)/klib*.a $(LIBDIR)/libhal*.a $(LIBDIR)/libkernel*.a $(PREFIX)/lib
 	@echo [CP] $(PREFIX)/lib/klib*.a
