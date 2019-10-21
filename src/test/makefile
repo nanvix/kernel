@@ -77,7 +77,7 @@ endif
 # Builds All Object Files
 all: $(OBJ)
 ifeq ($(VERBOSE), no)
-	@echo [CC] $(BINDIR)/$(EXEC)
+	@echo [CC] $(EXEC)
 	@$(CC) $(LDFLAGS) $(LINKER_SCRIPT) -o $(BINDIR)/$(EXEC) $(OBJ) $(LIBS)
 else
 	$(CC) $(LDFLAGS) $(LINKER_SCRIPT) -o $(BINDIR)/$(EXEC) $(OBJ) $(LIBS)
@@ -95,7 +95,7 @@ endif
 # Cleans Everything
 distclean: clean
 ifeq ($(VERBOSE), no)
-	@echo [CLEAN] $(BINDIR)/$(EXEC)
+	@echo [CLEAN] $(EXEC)
 	@rm -rf $(BINDIR)/$(EXEC)
 else
 	rm -rf $(BINDIR)/$(EXEC)
