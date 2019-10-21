@@ -550,10 +550,6 @@ PUBLIC int do_vmailbox_wait(int mbxid)
 	fd = virtual_mailboxes[mbxid].fd;
 
 	/* Bad virtual mailbox. */
-	if (!resource_is_rdonly(&active_mailboxes[fd].resource))
-		return (-EBADF);
-
-	/* Bad virtual mailbox. */
 	if (!resource_is_async(&active_mailboxes[fd].resource))
 		return (-EBADF);
 
