@@ -558,7 +558,7 @@ PUBLIC int do_vmailbox_wait(int mbxid)
 	t1 = clock_read();
 
 		/* Wait for asynchronous operation. */
-		ret = mailbox_wait(active_mailboxes[virtual_mailboxes[mbxid].fd].hwfd);
+		ret = mailbox_wait(active_mailboxes[fd].hwfd);
 
 	t2 = clock_read();
 
