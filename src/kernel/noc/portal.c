@@ -29,42 +29,72 @@
 
 #if __TARGET_HAS_PORTAL
 
+/**
+ * @brief Search types for do_portal_search().
+ */
+enum portal_search_type {
+	PORTAL_SEARCH_INPUT = 0,
+	PORTAL_SEARCH_OUTPUT = 1
+} resource_type_enum_t;
+
 /*============================================================================*
  * Control Structures.                                                        *
  *============================================================================*/
 
 /**
- * @brief Table of portal points.
+ * @brief Table of virtual portals.
+ */
+PRIVATE struct
+{
+	/**
+	 * @name Control Variables
+	 */
+	/**@{*/
+	int fd;      /**< Index to table of active portals.    */
+	int allowed; /**< Input portal allows remote to write? */
+	/**@}*/
+
+	/**
+	 * @name Performance Statistics
+	 */
+	/**@{*/
+	size_t volume;    /**< Amount of data transferred. */
+	uint64_t latency; /**< Transfer latency.           */
+	/**@}*/
+} ALIGN(sizeof(dword_t)) virtual_portals[KPORTAL_MAX] = {
+	[0 ... (KPORTAL_MAX - 1)] = {
+		.fd = -1,
+		.allowed = 0
+	},
+};
+
+/**
+ * @brief Table of active portals.
  */
 PRIVATE struct portal
 {
-	/* Control variables */
 	struct resource resource; /**< Underlying resource.        */
 	int refcount;             /**< References count.           */
-	int fd;                   /**< Underlying file descriptor. */
-	int local;                /**< Local num.                  */
+	int hwfd;                 /**< Underlying file descriptor. */
+	int local;                /**< Local node number.          */
 	int remote;               /**< Target node number.         */
-
-	/* Experiments variables */
-	size_t volume;            /**< Amount of data transferred. */
-	uint64_t latency;         /**< Transfer latency.           */
-} ALIGN(sizeof(dword_t)) portaltab[(PORTAL_CREATE_MAX + PORTAL_OPEN_MAX)];
+} active_portals[(PORTAL_CREATE_MAX + PORTAL_OPEN_MAX)];
 
 /**
  * @brief Resource pool.
  */
 PRIVATE const struct resource_pool portalpool = {
-	portaltab, (PORTAL_CREATE_MAX + PORTAL_OPEN_MAX), sizeof(struct portal)
+	active_portals, (PORTAL_CREATE_MAX + PORTAL_OPEN_MAX), sizeof(struct portal)
 };
 
 /*============================================================================*
- * do_portal_is_valid()                                                       *
+ * do_vportal_is_valid()                                                      *
  *============================================================================*/
 
 /**
  * @brief Asserts whether or not a synchronization point is valid.
  *
- * @param portalid ID of the target synchronization point.
+ * @param portalid ID of the target virtual portal.
  *
  * @returns One if the target synchronization point is valid, and false
  * otherwise.
@@ -73,128 +103,212 @@ PRIVATE const struct resource_pool portalpool = {
  * @note This function is thread-safe.
  * @note This function is reentrant.
  */
-PRIVATE int do_portal_is_valid(int portalid)
+PRIVATE int do_vportal_is_valid(int portalid)
 {
-	return WITHIN(portalid, 0, (PORTAL_CREATE_MAX + PORTAL_OPEN_MAX));
+	return WITHIN(portalid, 0, (KPORTAL_MAX));
 }
 
 /*============================================================================*
- * do_portal_allow()                                                          *
+ * do_vportal_alloc()                                                         *
  *============================================================================*/
 
 /**
- * @brief Creates a portal.
+ * @brief Searches for a free virtual portal.
+ *
+ * @returns Upon successful completion, the index of the virtual
+ * portal found is returned. Upon failure, a negative number is
+ * returned instead.
+ */
+PRIVATE int do_vportal_alloc(void)
+{
+	for (int i = 0; i < KPORTAL_MAX; ++i)
+	{
+		/* Found. */
+		if (virtual_portals[i].fd < 0)
+			return (i);
+	}
+
+	return (-1);
+}
+
+/*============================================================================*
+ * do_portal_search()                                                         *
+ *============================================================================*/
+
+/**
+ * @name Helper Macros for do_portal_search()
+ */
+/**@{*/
+
+/**
+ * @brief Asserts an input portal.
+ */
+#define PORTAL_SEARCH_IS_INPUT(portalid,type) \
+	((type == PORTAL_SEARCH_INPUT) && !resource_is_readable(&active_portals[portalid].resource))
+
+/**
+ * @brief Asserts an output portal.
+ */
+#define PORTAL_SEARCH_IS_OUTPUT(portalid,type) \
+	 ((type == PORTAL_SEARCH_OUTPUT) && !resource_is_writable(&active_portals[portalid].resource))
+/**@}*/
+
+/**
+ * @brief Searches for a hardware portal in active_portals table.
+ *
+ * @param local       Logic ID of the local node.
+ * @param remote      Logic ID of the remote node.
+ * @param search_type Type of the searched resource.
+ *
+ * @returns Upon successful completion, the ID of the found portal is
+ * returned. Upon failure, a negative error code is returned instead.
+ */
+PRIVATE int do_portal_search(int local, int remote, enum portal_search_type search_type)
+{
+	for (unsigned i = 0; i < (PORTAL_CREATE_MAX + PORTAL_OPEN_MAX); ++i)
+	{
+		if (!resource_is_used(&active_portals[i].resource))
+			continue;
+
+		if (PORTAL_SEARCH_IS_INPUT(i, search_type))
+			continue;
+
+		else if (PORTAL_SEARCH_IS_OUTPUT(i, search_type))
+			continue;
+
+		/* Not the same local node? */
+		if (active_portals[i].local != local)
+			continue;
+
+		/* Does it have a remote allowed? */
+		if (active_portals[i].remote != remote)
+			continue;
+
+		return (i);
+	}
+
+	return (-1);
+}
+
+/*============================================================================*
+ * do_vportal_create()                                                        *
+ *============================================================================*/
+
+/**
+ * @brief Creates a hardware portal.
  *
  * @param local Logic ID of the Local Node.
  *
- * @returns Upon successful completion, the ID of a newly created
+ * @returns Upon successful completion, the ID of a newly created hardware
  * portal is returned. Upon failure, a negative error code is returned
  * instead.
  */
 PRIVATE int _do_portal_create(int local)
 {
-	int fd;       /* File descriptor. */
+	int hwfd;     /* File descriptor. */
 	int portalid; /* Portal ID.       */
 
-	/* Allocate a portal. */
+	/* Search target hardware portal. */
+	if ((portalid = do_portal_search(local, -1, PORTAL_SEARCH_INPUT)) >= 0)
+		return (portalid);
+
+	/* Allocate resource. */
 	if ((portalid = resource_alloc(&portalpool)) < 0)
 		return (-EAGAIN);
 
-	if ((fd = portal_create(local)) < 0)
+	if ((hwfd = portal_create(local)) < 0)
 	{
 		resource_free(&portalpool, portalid);
-		return (fd);
+		return (hwfd);
 	}
 
 	/* Initialize portal. */
-	portaltab[portalid].fd       = fd;
-	portaltab[portalid].local    = local;
-	portaltab[portalid].remote   = -1;
-	portaltab[portalid].refcount = 1;
-	portaltab[portalid].volume   = 0ULL;
-	portaltab[portalid].latency  = 0ULL;
-
-	resource_set_rdonly(&portaltab[portalid].resource);
-	resource_set_notbusy(&portaltab[portalid].resource);
+	active_portals[portalid].hwfd     = hwfd;
+	active_portals[portalid].local    = local;
+	active_portals[portalid].remote   = -1;
+	active_portals[portalid].refcount = 0;
+	resource_set_rdonly(&active_portals[portalid].resource);
+	resource_set_notbusy(&active_portals[portalid].resource);
 
 	return (portalid);
 }
 
 /**
- * @see _do_portal_create().
+ * @brief Creates a virtual portal.
+ *
+ * @param local Logic ID of the Local Node.
+ *
+ * @returns Upon successful completion, the ID of a newly created virtual
+ * portal is returned. Upon failure, a negative error code is returned
+ * instead.
  */
-PUBLIC int do_portal_create(int local)
+PUBLIC int do_vportal_create(int local)
 {
-	int portalid; /* Portal ID. */
+	int portalid;  /* Hardware portal ID. */
+	int vportalid; /* Virtual portal ID.  */
 
-	/* Searchs for existing portals. */
-	for (int i = 0; i < (PORTAL_CREATE_MAX + PORTAL_OPEN_MAX); ++i)
-	{
-		if (!resource_is_used(&portaltab[i].resource))
-			continue;
+	/* Allocate a virtual portal. */
+	if ((vportalid = do_vportal_alloc()) < 0)
+		return (-EAGAIN);
 
-		if (!resource_is_readable(&portaltab[i].resource))
-			continue;
+	/* Creates a hardware portal. */
+	if ((portalid = _do_portal_create(local)) < 0)
+		return (portalid);
 
-		/* Not the same local node? */
-		if (portaltab[i].local != local)
-			continue;
+	/* Initialize the new virtual portal. */
+	virtual_portals[vportalid].fd      = portalid;
+	virtual_portals[vportalid].volume  = 0ULL;
+	virtual_portals[vportalid].latency = 0ULL;
+	active_portals[portalid].refcount++;
 
-		/* Does it have a remote allowed? */
-		if (portaltab[i].remote != -1)
-			continue;
-
-		portalid = i;
-		portaltab[i].refcount++;
-
-		goto found;
-	}
-
-	/* Alloc a new portal. */
-	portalid = _do_portal_create(local);
-
-found:
 	dcache_invalidate();
-
-	return (portalid);
+	return (vportalid);
 }
 
 /*============================================================================*
- * do_portal_allow()                                                          *
+ * do_vportal_allow()                                                         *
  *============================================================================*/
 
 /**
  * @todo TODO: Provide a detailed description for this function.
  */
-PUBLIC int do_portal_allow(int portalid, int remote)
+PUBLIC int do_vportal_allow(int portalid, int remote)
 {
-	int ret; /* HAL function return. */
+	int ret; /* HAL function return.    */
+	int fd;  /* Active portal logic ID. */
 
-	if (!do_portal_is_valid(portalid))
+	if (!do_vportal_is_valid(portalid))
 		return (-EINVAL);
 
+	fd = virtual_portals[portalid].fd;
+
 	/* Bad portal. */
-	if (!resource_is_used(&portaltab[portalid].resource))
+	if (!resource_is_used(&active_portals[fd].resource))
 		return (-EBADF);
 
 	/* Bad portal. */
-	if (!resource_is_readable(&portaltab[portalid].resource))
+	if (!resource_is_readable(&active_portals[fd].resource))
 		return (-EBADF);
 
-	if ((ret = portal_allow(portaltab[portalid].fd, remote)) < 0)
+	/* Read operation is already ongoing on this HW portal. */
+	if (active_portals[fd].remote != -1)
+		return (-EBUSY);
+
+	if ((ret = portal_allow(active_portals[fd].hwfd, remote)) < 0)
 		return (ret);
 
-	portaltab[portalid].remote = remote;
+	virtual_portals[portalid].allowed = 1;
+	active_portals[fd].remote = remote;
 
 	return (0);
 }
 
 /*============================================================================*
- * do_portal_open()                                                           *
+ * do_vportal_open()                                                          *
  *============================================================================*/
 
 /**
- * @brief Opens a portal.
+ * @brief Opens a hardware portal.
  *
  * @param local  Logic ID of the Local Node.
  * @param remote Logic ID of the Target Node.
@@ -204,69 +318,63 @@ PUBLIC int do_portal_allow(int portalid, int remote)
  */
 PRIVATE int _do_portal_open(int local, int remote)
 {
-	int fd;       /* File descriptor. */
+	int hwfd;     /* File descriptor. */
 	int portalid; /* Portal ID.       */
+
+	/* Search target hardware portal. */
+	if ((portalid = do_portal_search(local, remote, PORTAL_SEARCH_OUTPUT)) >= 0)
+		return (portalid);
 
 	/* Allocate a Portal. */
 	if ((portalid = resource_alloc(&portalpool)) < 0)
 		return (-EAGAIN);
 
-	if ((fd = portal_open(local, remote)) < 0)
+	if ((hwfd = portal_open(local, remote)) < 0)
 	{
 		resource_free(&portalpool, portalid);
-		return (fd);
+		return (hwfd);
 	}
 
-	portaltab[portalid].fd       = fd;
-	portaltab[portalid].local    = local;
-	portaltab[portalid].remote   = remote;
-	portaltab[portalid].refcount = 1;
-	portaltab[portalid].volume   = 0ULL;
-	portaltab[portalid].latency  = 0ULL;
-
-	resource_set_wronly(&portaltab[portalid].resource);
-	resource_set_notbusy(&portaltab[portalid].resource);
+	active_portals[portalid].hwfd     = hwfd;
+	active_portals[portalid].local    = local;
+	active_portals[portalid].remote   = remote;
+	active_portals[portalid].refcount = 0;
+	resource_set_wronly(&active_portals[portalid].resource);
+	resource_set_notbusy(&active_portals[portalid].resource);
 
 	return (portalid);
 }
 
 /**
- * @see _do_portal_open().
+ * @brief Opens a virtual portal.
+ *
+ * @param local  Logic ID of the Local Node.
+ * @param remote Logic ID of the Target Node.
+ *
+ * @returns Upon successful completion, the ID of the newly opened virtual
+ * portal is returned. Upon failure, a negative error code is returned instead.
  */
-PUBLIC int do_portal_open(int local, int remote)
+PUBLIC int do_vportal_open(int local, int remote)
 {
-	int portalid; /* Portal ID. */
+	int portalid;  /* Hardware portal ID. */
+	int vportalid; /* Virtual portal ID.  */
 
-	/* Searchs for existing portals. */
-	for (int i = 0; i < (PORTAL_CREATE_MAX + PORTAL_OPEN_MAX); ++i)
-	{
-		if (!resource_is_used(&portaltab[i].resource))
-			continue;
+	/* Allocate a virtual portal. */
+	if ((vportalid = do_vportal_alloc()) < 0)
+		return (-EAGAIN);
 
-		if (!resource_is_writable(&portaltab[i].resource))
-			continue;
+	/* Opens a hardware portal. */
+	if ((portalid = _do_portal_open(local, remote)) < 0)
+		return (portalid);
 
-		/* Not the same local node? */
-		if (portaltab[i].local != local)
-			continue;
+	/* Initialize the new virtual portal. */
+	virtual_portals[vportalid].fd      = portalid;
+	virtual_portals[vportalid].volume  = 0ULL;
+	virtual_portals[vportalid].latency = 0ULL;
+	active_portals[portalid].refcount++;
 
-		/* Does it have a remote allowed? */
-		if (portaltab[i].remote != remote)
-			continue;
-
-		portalid = i;
-		portaltab[i].refcount++;
-
-		goto found;
-	}
-
-	/* Alloc a new portal. */
-	portalid = _do_portal_open(local, remote);
-
-found:
 	dcache_invalidate();
-
-	return (portalid);
+	return (vportalid);
 }
 
 /*============================================================================*
@@ -274,9 +382,9 @@ found:
  *============================================================================*/
 
 /**
- * @brief Relase a portal resource.
+ * @brief Releases a hardware portal.
  *
- * @param portalid   ID of the target portal.
+ * @param portalid   ID of the target hardware portal.
  * @param release_fn Underlying release function.
  *
  * @returns Upon successful completion, zero is returned. Upon
@@ -286,207 +394,255 @@ PRIVATE int _do_portal_release(int portalid, int (*release_fn)(int))
 {
 	int ret; /* HAL function return. */
 
-	portaltab[portalid].refcount--;
+	if ((ret = release_fn(active_portals[portalid].hwfd)) < 0)
+		return (ret);
 
-	if (portaltab[portalid].refcount == 0)
-	{
-		if ((ret = release_fn(portaltab[portalid].fd)) < 0)
-			return (ret);
+	active_portals[portalid].hwfd   = -1;
+	active_portals[portalid].local  = -1;
+	active_portals[portalid].remote = -1;
+	resource_free(&portalpool, portalid);
 
-		portaltab[portalid].fd     = -1;
-		portaltab[portalid].local  = -1;
-		portaltab[portalid].remote = -1;
+	dcache_invalidate();
+	return (0);
+}
 
-		resource_free(&portalpool, portalid);
+/*============================================================================*
+ * do_vportal_unlink()                                                        *
+ *============================================================================*/
 
-		dcache_invalidate();
-	}
+/**
+ * @brief Unlinks a created (input) virtual portal.
+ *
+ * @param portalid Logic ID of the target virtual portal.
+ *
+ * @returns Upon successful completion, zero is returned. Upon
+ * failure, a negative error code is returned instead.
+ */
+PUBLIC int do_vportal_unlink(int portalid)
+{
+	int fd; /* Active portal logic ID. */
+
+	/* Invalid portal. */
+	if (!do_vportal_is_valid(portalid))
+		return (-EINVAL);
+
+	fd = virtual_portals[portalid].fd;
+
+	/* Bad portal. */
+	if (!resource_is_used(&active_portals[fd].resource))
+		return (-EBADF);
+
+	/* Bad portal. */
+	if (!resource_is_readable(&active_portals[fd].resource))
+		return (-EBADF);
+
+	/* Unlink hardware portal. */
+	virtual_portals[portalid].fd = -1;
+	virtual_portals[portalid].allowed = 0;
+	active_portals[fd].refcount--;
+
+	/* Release underlying hardware portal. */
+	if (active_portals[fd].refcount == 0)
+		return (_do_portal_release(fd, portal_unlink));
 
 	return (0);
 }
 
 /*============================================================================*
- * do_portal_unlink()                                                         *
+ * do_vportal_close()                                                         *
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @brief Closes an opened (output) virtual portal.
+ *
+ * @param portalid Logic ID of the target virtual portal.
+ *
+ * @returns Upon successful completion, zero is returned. Upon
+ * failure, a negative error code is returned instead.
  */
-PUBLIC int do_portal_unlink(int portalid)
+PUBLIC int do_vportal_close(int portalid)
 {
+	int fd; /* Active portal logic ID. */
+
 	/* Invalid portal. */
-	if (!do_portal_is_valid(portalid))
+	if (!do_vportal_is_valid(portalid))
 		return (-EINVAL);
 
+	fd = virtual_portals[portalid].fd;
+
 	/* Bad portal. */
-	if (!resource_is_used(&portaltab[portalid].resource))
+	if (!resource_is_used(&active_portals[fd].resource))
 		return (-EBADF);
 
 	/* Bad portal. */
-	if (!resource_is_readable(&portaltab[portalid].resource))
+	if (!resource_is_writable(&active_portals[fd].resource))
 		return (-EBADF);
 
-	/* Release resource. */
-	return (_do_portal_release(portalid, portal_unlink));
+	/* Close hardware portal. */
+	virtual_portals[portalid].fd = -1;
+	active_portals[fd].refcount--;
+
+	/* Release underlying hardware portal. */
+	if (active_portals[fd].refcount == 0)
+		return (_do_portal_release(fd, portal_close));
+
+	return (0);
 }
 
 /*============================================================================*
- * do_portal_close()                                                          *
+ * do_vportal_aread()                                                         *
  *============================================================================*/
 
 /**
  * @todo TODO: Provide a detailed description for this function.
  */
-PUBLIC int do_portal_close(int portalid)
-{
-	/* Invalid portal. */
-	if (!do_portal_is_valid(portalid))
-		return (-EINVAL);
-
-	/* Bad portal. */
-	if (!resource_is_used(&portaltab[portalid].resource))
-		return (-EBADF);
-
-	/* Bad portal. */
-	if (!resource_is_writable(&portaltab[portalid].resource))
-		return (-EBADF);
-
-	/* Release resource. */
-	return (_do_portal_release(portalid, portal_close));
-}
-
-/*============================================================================*
- * do_portal_aread()                                                          *
- *============================================================================*/
-
-/**
- * @todo TODO: Provide a detailed description for this function.
- */
-PUBLIC int do_portal_aread(int portalid, void * buffer, size_t size)
+PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 {
 	int ret;     /* HAL function return.           */
+	int fd;      /* Hardware portal logic index.   */
 	uint64_t t1; /* Clock value before aread call. */
 	uint64_t t2; /* Clock value after aread call.  */
 
 	/* Invalid portal. */
-	if (!do_portal_is_valid(portalid))
+	if (!do_vportal_is_valid(portalid))
 		return (-EINVAL);
 
+	fd = virtual_portals[portalid].fd;
+
 	/* Bad portal. */
-	if (!resource_is_used(&portaltab[portalid].resource))
+	if (!resource_is_used(&active_portals[fd].resource))
 		return (-EBADF);
 
 	/* Bad portal. */
-	if (!resource_is_readable(&portaltab[portalid].resource))
+	if (!resource_is_readable(&active_portals[fd].resource))
 		return (-EBADF);
+
+	/* Unallowed operation. */
+	if (!virtual_portals[portalid].allowed)
+		return (-EACCES);
+
+	resource_set_async(&active_portals[fd].resource);
 
 	t1 = clock_read();
 
 		/* Configures async aread. */
-		if ((ret = portal_aread(portaltab[portalid].fd, buffer, size)) < 0)
+		if ((ret = portal_aread(active_portals[fd].hwfd, buffer, size)) < 0)
 			return (ret);
 
 	t2 = clock_read();
 
-	/* Updates latency variable. */
-	portaltab[portalid].latency += (t2 - t1);
+	/* Revoke allow. */
+	virtual_portals[portalid].allowed = 0;
+	active_portals[fd].remote = -1;
 
-	/* Updates volume variable. */
-	portaltab[portalid].volume += ret;
+	/* Updates performance statistics. */
+	virtual_portals[portalid].latency += (t2 - t1);
+	virtual_portals[portalid].volume  += ret;
 
 	return (ret);
 }
 
 /*============================================================================*
- * do_portal_awrite()                                                         *
+ * do_vportal_awrite()                                                        *
  *============================================================================*/
 
 /**
  * @todo TODO: Provide a detailed description for this function.
  */
-PUBLIC int do_portal_awrite(int portalid, const void * buffer, size_t size)
+PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 {
 	int ret;     /* HAL function return.            */
+	int fd;      /* Hardware portal logic index.    */
 	uint64_t t1; /* Clock value before awrite call. */
 	uint64_t t2; /* Clock value after awrite call.  */
 
 	/* Invalid portal. */
-	if (!do_portal_is_valid(portalid))
+	if (!do_vportal_is_valid(portalid))
 		return (-EINVAL);
 
+	fd = virtual_portals[portalid].fd;
+
 	/* Bad portal. */
-	if (!resource_is_used(&portaltab[portalid].resource))
+	if (!resource_is_used(&active_portals[fd].resource))
 		return (-EBADF);
 
 	/* Bad portal. */
-	if (!resource_is_writable(&portaltab[portalid].resource))
+	if (!resource_is_writable(&active_portals[fd].resource))
 		return (-EBADF);
+
+	resource_set_async(&active_portals[fd].resource);
 
 	t1 = clock_read();
 
 		/* Configures async aread. */
-		if ((ret = portal_awrite(portaltab[portalid].fd, buffer, size)) < 0)
+		if ((ret = portal_awrite(active_portals[fd].hwfd, buffer, size)) < 0)
 			return (ret);
 
 	t2 = clock_read();
 
-	/* Updates latency variable. */
-	portaltab[portalid].latency += (t2 - t1);
-
-	/* Updates volume variable. */
-	portaltab[portalid].volume += ret;
+	/* Update performance statistics. */
+	virtual_portals[portalid].latency += (t2 - t1);
+	virtual_portals[portalid].volume += ret;
 
 	return (ret);
 }
 
 /*============================================================================*
- * do_portal_wait()                                                           *
+ * do_vportal_wait()                                                          *
  *============================================================================*/
 
 /**
  * @todo TODO: Provide a detailed description for this function.
  */
-PUBLIC int do_portal_wait(int portalid)
+PUBLIC int do_vportal_wait(int portalid)
 {
 	int ret;     /* HAL function return.          */
+	int fd;      /* Hardware portal logic index.  */
 	uint64_t t1; /* Clock value before wait call. */
 	uint64_t t2; /* Clock value after wait call.  */
 
 	/* Invalid portal. */
-	if (!do_portal_is_valid(portalid))
+	if (!do_vportal_is_valid(portalid))
 		return (-EINVAL);
+
+	fd = virtual_portals[portalid].fd;
+
+	/* Bad virtual portal. */
+	if (!resource_is_async(&active_portals[fd].resource))
+		return (-EBADF);
 
 	dcache_invalidate();
 
 	t1 = clock_read();
 
-		ret = portal_wait(portaltab[portalid].fd);
+		/* Wait for asynchronous operation. */
+		ret = portal_wait(active_portals[fd].hwfd);
 
 	t2 = clock_read();
 
-	/* Updates latency variable. */
-	portaltab[portalid].latency += (t2 - t1);
+	/* Updates performance statistics. */
+	virtual_portals[portalid].latency += (t2 - t1);
 
 	return (ret);
 }
 
 /*============================================================================*
- * do_portal_ioctl()                                                          *
+ * do_vportal_ioctl()                                                         *
  *============================================================================*/
 
 /**
  * @todo TODO: Provide a detailed description for this function.
  */
-int do_portal_ioctl(int portalid, unsigned request, va_list args)
+int do_vportal_ioctl(int portalid, unsigned request, va_list args)
 {
 	int ret = 0;
 
 	/* Invalid portal. */
-	if (!do_portal_is_valid(portalid))
+	if (!do_vportal_is_valid(portalid))
 		return (-EINVAL);
 
 	/* Bad portal. */
-	if (!resource_is_used(&portaltab[portalid].resource))
+	if (!resource_is_used(&active_portals[virtual_portals[portalid].fd].resource))
 		return (-EBADF);
 
 	/* Server request. */
@@ -497,7 +653,7 @@ int do_portal_ioctl(int portalid, unsigned request, va_list args)
 		{
 			size_t *volume;
 			volume = va_arg(args, size_t *);
-			*volume = portaltab[portalid].volume;
+			*volume = virtual_portals[portalid].volume;
 		} break;
 
 		/* Get the cummulative transfer latency. */
@@ -505,7 +661,7 @@ int do_portal_ioctl(int portalid, unsigned request, va_list args)
 		{
 			uint64_t *latency;
 			latency = va_arg(args, uint64_t *);
-			*latency = portaltab[portalid].latency;
+			*latency = virtual_portals[portalid].latency;
 		} break;
 
 		/* Operation not supported. */

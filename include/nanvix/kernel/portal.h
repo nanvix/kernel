@@ -45,103 +45,111 @@
 	/**@}*/
 
 	/**
-	 * @brief Creates a portal.
+	 * @brief Maximum number of virtual portals.
+	 *
+	 * Maximum number of virtual portals that may be created/opened.
+	 */
+	#define KPORTAL_MAX 1024
+
+	/**
+	 * @brief Creates a virtual portal.
 	 *
 	 * @param local Logic ID of the Local Node.
 	 *
-	 * @returns Upon successful completion, the ID of a newly created
+	 * @returns Upon successful completion, the ID of a newly created virtual
 	 * portal is returned. Upon failure, a negative error code is returned
 	 * instead.
 	 */
-	EXTERN int do_portal_create(int local);
+	EXTERN int do_vportal_create(int local);
 
 	/**
 	 * @brief Enables read operations from a remote.
 	 *
-	 * @param portalid ID of the Target Portal.
+	 * @param portalid ID of the target virtual portal.
 	 * @param remote   Logic ID of Target Node.
 	 *
 	 * @returns Upons successful completion zero is returned. Upon failure,
 	 * a negative error code is returned instead.
 	 */
-	EXTERN int do_portal_allow(int portalid, int remote);
+	EXTERN int do_vportal_allow(int portalid, int remote);
 
 	/**
-	 * @brief Opens a portal.
+	 * @brief Opens a virtual portal.
 	 *
 	 * @param local  Logic ID of the local NoC node.
 	 * @param remote Logic ID of the target NoC node.
 	 *
-	 * @returns Upon successful completion, the ID of the target portal is
-	 * returned. Upon failure, a negative error code is returned instead.
+	 * @returns Upon successful completion, the ID of the target virtual
+	 * portal is returned. Upon failure, a negative error code is returned
+	 * instead.
 	 */
-	EXTERN int do_portal_open(int local, int remote);
+	EXTERN int do_vportal_open(int local, int remote);
 
 	/**
-	 * @brief Destroys a portal.
+	 * @brief Destroys a virtual portal.
 	 *
-	 * @param portalid ID of the Target Portal.
+	 * @param portalid ID of the target virtual portal.
 	 *
 	 * @returns Upon successful completion zero is returned. Upon failure, a
 	 * negative error code is returned instead.
 	 */
-	EXTERN int do_portal_unlink(int portalid);
+	EXTERN int do_vportal_unlink(int portalid);
 
 	/**
-	 * @brief Closes a portal.
+	 * @brief Closes a virtual portal.
 	 *
-	 * @param portalid ID of the Target Portal.
+	 * @param portalid ID of the target virtual portal.
 	 *
 	 * @returns Upon successful completion zero is returned. Upon failure, a
 	 * negative error code is returned instead.
 	 */
-	EXTERN int do_portal_close(int portalid);
+	EXTERN int do_vportal_close(int portalid);
 
 	/**
-	 * @brief Reads data asynchronously from a portal.
+	 * @brief Reads data asynchronously from a virtual portal.
 	 *
-	 * @param portalid ID of the Target Portal.
+	 * @param portalid ID of the target virtual portal.
 	 * @param buffer   Location from where data should be written.
 	 * @param size     Number of bytes to read.
 	 *
 	 * @returns Upon successful completion, zero is returned. Upon
 	 * failure, a negative error code is returned instead.
 	 */
-	EXTERN int do_portal_aread(int portalid, void * buffer, size_t size);
+	EXTERN int do_vportal_aread(int portalid, void * buffer, size_t size);
 
 	/**
-	* @brief Writes data asynchronously to a portal.
+	* @brief Writes data asynchronously to a virtual portal.
 	*
-	* @param portalid ID of the Target Portal.
+	* @param portalid ID of the target virtual portal.
 	* @param buffer   Location from where data should be read.
 	* @param size     Number of bytes to write.
 	*
 	* @returns Upon successful, zero is returned. Upon failure, a
 	* negative error code is returned instead.
 	*/
-	EXTERN int do_portal_awrite(int portalid, const void * buffer, size_t size);
+	EXTERN int do_vportal_awrite(int portalid, const void * buffer, size_t size);
 
 	/**
-	 * @brief Waits for an asynchronous operation on a portal to complete.
+	 * @brief Waits for an asynchronous operation on a virtual portal to complete.
 	 *
-	 * @param portalid ID of the Target Portal.
+	 * @param portalid ID of the target virtual portal.
 	 *
 	 * @returns Upon successful completion, zero is returned. Upon
 	 * failure, a negative error code is returned instead.
 	 */
-	EXTERN int do_portal_wait(int portalid);
+	EXTERN int do_vportal_wait(int portalid);
 
 	/**
-	 * @brief Performs control operations in a portal.
+	 * @brief Performs control operations in a virtual portal.
 	 *
-	 * @param portalid Target portal.
+	 * @param portalid Target virtual portal.
 	 * @param request  Request.
 	 * @param args     Additional arguments.
 	 *
 	 * @param Upon successful completion, zero is returned. Upon failure,
 	 * a negative error code is returned instead.
 	 */
-	EXTERN int do_portal_ioctl(int portalid, unsigned request, va_list args);
+	EXTERN int do_vportal_ioctl(int portalid, unsigned request, va_list args);
 
 #endif /* NANVIX_PORTAL_H_ */
 
