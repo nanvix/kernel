@@ -91,6 +91,7 @@
 	#define NR_portal_wait    38 /**< kernel_portal_wait()    */
 	#define NR_portal_ioctl   39 /**< kernel_portal_ioctl()   */
 	#define NR_clock          40 /**< kernel_clock()          */
+	#define NR_stats          42 /**< kernel_stats()          */
 
 	#define NR_last_kcall     41 /**< NR_SYSCALLS definer     */
 	/**@}*/
