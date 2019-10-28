@@ -68,7 +68,7 @@ export TOOLSDIR   := $(ROOTDIR)/utils
 #===============================================================================
 
 # Libraries
-export KLIB      := klib-$(TARGET).a
+export BARELIB   := barelib-$(TARGET).a
 export LIBHAL    := libhal-$(TARGET).a
 export LIBKERNEL := libkernel-$(TARGET).a
 

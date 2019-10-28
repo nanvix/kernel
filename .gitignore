@@ -23,8 +23,8 @@ tags
 *.swo
 *.vscode/
 
-# KLib Headers
-include/nanvix/klib.h
+# Barelib Headers
+include/nanvix/barelib.h
 include/posix/decl.h
 include/posix/stdarg.h
 include/posix/stddef.h

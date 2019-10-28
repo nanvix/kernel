@@ -39,7 +39,7 @@ LIBS += $(LIBDIR)/$(LIBKERNEL)
 ifneq ($(LIBLWIP),)
 LIBS += $(LIBDIR)/$(LIBLWIP)
 endif
-LIBS += $(LIBDIR)/$(KLIB) $(THEIR_LIBS)
+LIBS += $(LIBDIR)/$(BARELIB) $(THEIR_LIBS)
 
 #===============================================================================
 # Sources
