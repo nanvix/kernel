@@ -44,29 +44,11 @@ PRIVATE char bigbuf[WRITE_BUFFER_SIZE + 1];
 PRIVATE char buf2[WRITE_BUFFER_SIZE + 1];
 
 /**
- * @brief Writes a formated string on the kernels's output device.
- *
- * @param fmt Formated string.
- */
-PRIVATE void kprintf2(const char *fmt, ...)
-{
-	size_t len;   /* String length.           */
-	va_list args; /* Variable arguments list. */
-
-	/* Convert to raw string. */
-	va_start(args, fmt);
-	len = kvsprintf(bigbuf, fmt, args);
-	bigbuf[len++] = '\0';
-	va_end(args);
-
-	stdout_write(bigbuf, len);
-}
-
-/**
  * @brief Writes to a device.
  */
 PUBLIC ssize_t kernel_write(int fd, const char *buf, size_t n)
 {
+	size_t len;
 	int clusternum;
 
 	UNUSED(fd);
@@ -92,7 +74,13 @@ PUBLIC ssize_t kernel_write(int fd, const char *buf, size_t n)
 	buf2[n] = '\0';
 
 	clusternum = cluster_get_num();
-	kprintf2("cluster %d: %s", clusternum, buf2);
+	len = ksprintf(bigbuf, "cluster %d: ", clusternum);
+	kstrcat(bigbuf, buf2);
+	kstrcat(bigbuf, "\n");
+
+	len += n + 2;
+
+	stdout_write(bigbuf, len);
 
 	return (n);
 }
