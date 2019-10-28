@@ -36,72 +36,79 @@
 	#include <nanvix/const.h>
 
 	/**
-	 * @brief Creates a synchronization point.
+	 * @brief Maximum number of virtual syncs.
 	 *
-	 * @param nodes  Logic IDs of Target Nodes.
-	 * @param nnodes Number of Target Nodes.
+	 * Maximum number of virtual syncs that may be created/opened.
+	 */
+	#define KSYNC_MAX 1024
+
+	/**
+	 * @brief Creates a virtual synchronization point.
+	 *
+	 * @param nodes  Logic IDs of target nodes.
+	 * @param nnodes Number of target nodes.
 	 * @param type   Type of synchronization point.
 	 *
 	 * @returns Upon successful completion, the ID of the newly created
-	 * synchronization point is returned. Upon failure, a negative error
-	 * code is returned instead.
+	 * virtual synchronization point is returned. Upon failure, a negative
+	 * error code is returned instead.
 	 */
-	EXTERN int do_sync_create(const int * nodes, int nnodes, int type);
+	EXTERN int do_vsync_create(const int *nodes, int nnodes, int type);
 
 	/**
-	 * @brief Opens a synchronization point.
+	 * @brief Opens a virtual synchronization point.
 	 *
-	 * @param nodes  Logic IDs of Target Nodes.
-	 * @param nnodes Number of Target Nodes.
+	 * @param nodes  Logic IDs of target nodes.
+	 * @param nnodes Number of target nodes.
 	 * @param type   Type of synchronization point.
 	 *
-	 * @returns Upon successful completion, the ID of the target
+	 * @returns Upon successful completion, the ID of the opened virtual
 	 * synchronization point is returned. Upon failure, a negative error
 	 * code is returned instead.
 	 *
 	 * @todo Check for Invalid Remote
 	 */
-	EXTERN int do_sync_open(const int *nodes, int nnodes, int type);
-
-		/**
-	 * @brief Destroys a synchronization point.
-	 *
-	 * @param syncid ID of the target synchronization point.
-	 *
-	 * @returns Upon successful completion, zero is returned. Upon
-	 * failure, a negative error code is returned instead.
-	 */
-	EXTERN int do_sync_unlink(int syncid);
+	EXTERN int do_vsync_open(const int *nodes, int nnodes, int type);
 
 	/**
-	 * @brief Closes a synchronization point.
+	 * @brief Destroys a virtual synchronization point.
 	 *
-	 * @param syncid ID of the target synchronization point.
+	 * @param syncid ID of the target virtual synchronization point.
 	 *
 	 * @returns Upon successful completion, zero is returned. Upon
 	 * failure, a negative error code is returned instead.
 	 */
-	EXTERN int do_sync_close(int syncid);
+	EXTERN int do_vsync_unlink(int syncid);
+
+	/**
+	 * @brief Closes a virtual synchronization point.
+	 *
+	 * @param syncid ID of the target virtual synchronization point.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 */
+	EXTERN int do_vsync_close(int syncid);
 
 	/**
 	 * @brief Waits on a synchronization point.
 	 *
-	 * @param syncid ID of the target synchronization point.
+	 * @param syncid ID of the target virtual synchronization point.
 	 *
 	 * @returns Upon successful completion, zero is returned. Upon
 	 * failure, a negative error code is returned instead.
 	 */
-	EXTERN int do_sync_wait(int syncid);
+	EXTERN int do_vsync_wait(int syncid);
 
 	/**
-	 * @brief Signals Waits on a synchronization point.
+	 * @brief Signals nodes waiting on a synchronization point.
 	 *
-	 * @param syncid ID of the target synchronization point.
+	 * @param syncid ID of the target virtual synchronization point.
 	 *
 	 * @returns Upon successful completion, zero is returned. Upon
 	 * failure, a negative error code is returned instead.
 	 */
-	EXTERN int do_sync_signal(int syncid);
+	EXTERN int do_vsync_signal(int syncid);
 
 #endif /* NANVIX_SYNC_H_ */
 
