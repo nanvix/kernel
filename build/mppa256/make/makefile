@@ -77,7 +77,7 @@ all-k1bdp:
 		LINKERDIR=$(BUILDDIR)/mppa256/linker/k1bdp     \
 		LIBKERNEL=libkernel-k1bdp.a                    \
 		LIBHAL=libhal-k1bdp.a                          \
-		KLIB=klib-k1bdp.a                              \
+		BARELIB=barelib-k1bdp.a                        \
 		OBJ_SUFFIX=k1bdp                               \
 		EXEC=test-driver.k1bdp
 
@@ -89,7 +89,7 @@ all-k1bio:
 		LINKERDIR=$(BUILDDIR)/mppa256/linker/k1bio      \
 		LIBKERNEL=libkernel-k1bio.a                     \
 		LIBHAL=libhal-k1bio.a                           \
-		KLIB=klib-k1bio.a                               \
+		BARELIB=barelib-k1bio.a                         \
 		EXEC=test-driver.k1bio                          \
 		OBJ_SUFFIX=k1bio
 

@@ -40,9 +40,9 @@ export ARTIFACTS := $(shell find $(INCDIR) -name *.h -type f)
 # Install
 install: | all-target install-headers
 	@mkdir -p $(PREFIX)/lib
-	@cp -f $(LIBDIR)/klib*.a $(LIBDIR)/libhal*.a $(PREFIX)/lib
+	@cp -f $(LIBDIR)/barelib*.a $(LIBDIR)/libhal*.a $(PREFIX)/lib
 	@cp -f $(LIBDIR)/libkernel*.a $(LIBDIR)/liblwip*.a $(PREFIX)/lib 2>/dev/null || :
-	@echo [CP] $(PREFIX)/lib/klib*.a
+	@echo [CP] $(PREFIX)/lib/barelib*.a
 	@echo [CP] $(PREFIX)/lib/libhal*.a
 	@echo [CP] $(PREFIX)/lib/libkernel*.a
 	@echo [CP] $(PREFIX)/lib/liblwip*.a
@@ -58,9 +58,9 @@ install-headers: copy-artifacts
 
 # Uninstall
 uninstall: | distclean uninstall-headers
-	@rm -f $(PREFIX)/lib/klib*.a $(PREFIX)/lib/libhal*.a
+	@rm -f $(PREFIX)/lib/barelib*.a $(PREFIX)/lib/libhal*.a
 	@rm -f $(PREFIX)/lib/libkernel*.a $(LIBDIR)/liblwip.*a
-	@echo [RM] $(PREFIX)/lib/klib*.a
+	@echo [RM] $(PREFIX)/lib/barelib*.a
 	@echo [RM] $(PREFIX)/lib/libhal*.a
 	@echo [RM] $(PREFIX)/lib/libkernel*.a
 	@echo [RM] $(PREFIX)/lib/liblwip*.a
