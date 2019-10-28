@@ -47,7 +47,7 @@ PRIVATE void *init(void *arg)
 
 	UNUSED(arg);
 
-#if (CORES_NUM > 2)
+#if (CORES_NUM >= 2)
 
 	___start(argc, argv, NULL);
 

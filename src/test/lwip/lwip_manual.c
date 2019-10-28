@@ -29,8 +29,15 @@
 #include <lwip/tcp.h>
 #include <lwip/etharp.h>
 
+/**
+ * @brief Launch manual tests?
+ */
+#ifndef __TEST_LWIP_MANUAL
+#define __TEST_LWIP_MANUAL 0
+#endif
+
 /*============================================================================*
- * Utils function	                                                 		  *
+ * Utils Functions                                                            *
  *============================================================================*/
 
 /**
@@ -82,7 +89,7 @@ static void print_payload(struct pbuf* p)
 }
 
 /*============================================================================*
- * UDP Manual Tests	                                                 		  *
+ * UDP Manual Tests                                                           *
  *============================================================================*/
 
 static const char *udp_data = "this is a udp packet";
@@ -121,6 +128,10 @@ static void udp_echo_recv(
  */
 PUBLIC void test_lwip_udp_send_receive_manual(struct netif* netif)
 {
+#if !(__TEST_LWIP_MANUAL)
+	return;
+#endif
+
 	etharp_add_static_entry(&netif->ip_addr, (struct eth_addr *)(&netif->hwaddr));
 
 	udp_recv_counter = 0;
@@ -152,7 +163,7 @@ PUBLIC void test_lwip_udp_send_receive_manual(struct netif* netif)
 }
 
 /*============================================================================*
- * TCP Manual Tests	                                                 		  *
+ * TCP Manual Tests                                                           *
  *============================================================================*/
 
 static struct tcp_pcb *receiver_pcb;
@@ -203,6 +214,10 @@ static err_t receive_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
  */
 PUBLIC void test_lwip_tcp_send_receive_manual(struct netif* netif)
 {
+#if !(__TEST_LWIP_MANUAL)
+	return;
+#endif
+
 	tcp_recv_counter = 0;
 
 	/* Init the tcp server pcb */
