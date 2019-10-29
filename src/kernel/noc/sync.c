@@ -377,7 +377,7 @@ PRIVATE int _do_sync_release(int syncid, int (*release_fn)(int))
 	if ((ret = release_fn(active_syncs[syncid].hwfd)) < 0)
 		return (ret);
 
-	active_syncs[syncid].hwfd        = -1;
+	active_syncs[syncid].hwfd      = -1;
 	active_syncs[syncid].masternum = -1;
 	active_syncs[syncid].nodeslist = 0ULL;
 
