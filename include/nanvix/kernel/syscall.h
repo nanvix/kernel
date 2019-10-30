@@ -60,11 +60,11 @@
 	#define NR_sleep           7 /**< kernel_sleep()          */
 	#define NR_wakeup          8 /**< kernel_wakeup()         */
 	#define NR_shutdown        9 /**< kernel_shutdown()       */
-	#define NR_sigctl         10 /**< kernel_perf_read()      */
-	#define NR_alarm          11 /**< kernel_perf_read()      */
-	#define NR_sigsend        12 /**< kernel_perf_read()      */
-	#define NR_sigwait        13 /**< kernel_perf_read()      */
-	#define NR_sigreturn      14 /**< kernel_perf_read()      */
+	#define NR_sigctl         10 /**< kernel_sigctl()         */
+	#define NR_alarm          11 /**< kernel_alarm()          */
+	#define NR_sigsend        12 /**< kernel_sigsend()        */
+	#define NR_sigwait        13 /**< kernel_sigwait()        */
+	#define NR_sigreturn      14 /**< kernel_sigreturn()      */
 	#define NR_node_get_num   15 /**< kernel_node_get_num()   */
 	#define NR_node_set_num   16 /**< kernel_node_set_num()   */
 	#define NR_sync_create    17 /**< kernel_sync_create()    */
@@ -93,7 +93,7 @@
 	#define NR_clock          40 /**< kernel_clock()          */
 	#define NR_stats          42 /**< kernel_stats()          */
 
-	#define NR_last_kcall     41 /**< NR_SYSCALLS definer     */
+	#define NR_last_kcall     43 /**< NR_SYSCALLS definer     */
 	/**@}*/
 
 /*============================================================================*
@@ -242,6 +242,17 @@
 	 * failure, a negative error code is returned instead.
 	 */
 	EXTERN int kernel_clock(uint64_t *buffer);
+
+	/**
+	 * @brief Gets performance statistics of the kernel.
+	 *
+	 * @param buffer Store location for the statistics.
+	 * @param perf   Performance counter to watch.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 */
+	EXTERN int kernel_stats(uint64_t *buffer, int perf);
 
 /**@}*/
 
