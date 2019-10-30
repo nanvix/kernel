@@ -60,11 +60,11 @@
 	#define NR_sleep           7 /**< kernel_sleep()          */
 	#define NR_wakeup          8 /**< kernel_wakeup()         */
 	#define NR_shutdown        9 /**< kernel_shutdown()       */
-	#define NR_sigctl         10 /**< kernel_perf_read()      */
-	#define NR_alarm          11 /**< kernel_perf_read()      */
-	#define NR_sigsend        12 /**< kernel_perf_read()      */
-	#define NR_sigwait        13 /**< kernel_perf_read()      */
-	#define NR_sigreturn      14 /**< kernel_perf_read()      */
+	#define NR_sigctl         10 /**< kernel_sigctl()         */
+	#define NR_alarm          11 /**< kernel_alarm()          */
+	#define NR_sigsend        12 /**< kernel_sigsend()        */
+	#define NR_sigwait        13 /**< kernel_sigwait()        */
+	#define NR_sigreturn      14 /**< kernel_sigreturn()      */
 	#define NR_node_get_num   15 /**< kernel_node_get_num()   */
 	#define NR_node_set_num   16 /**< kernel_node_set_num()   */
 	#define NR_sync_create    17 /**< kernel_sync_create()    */
