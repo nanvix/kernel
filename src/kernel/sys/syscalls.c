@@ -277,6 +277,13 @@ PUBLIC void do_kcall2(void)
 				break;
 #endif /* __TARGET_HAS_PORTAL */
 
+		case NR_stats:
+			kernel_stats(
+				(uint64_t *) sysboard[coreid].arg0,
+				(int) sysboard[coreid].arg1
+			);
+			break;
+
 			default:
 				break;
 		}
@@ -388,12 +395,6 @@ PUBLIC int do_kcall(
 			ret = kernel_clock(
 				(uint64_t *) arg0
 			);
-			break;
-
-		case NR_stats:
-			perf_stop(1);
-			ret  = perf_read(1);
-			perf_start(1, arg0);
 			break;
 
 		/* Forward system call. */

@@ -93,7 +93,7 @@
 	#define NR_clock          40 /**< kernel_clock()          */
 	#define NR_stats          42 /**< kernel_stats()          */
 
-	#define NR_last_kcall     41 /**< NR_SYSCALLS definer     */
+	#define NR_last_kcall     43 /**< NR_SYSCALLS definer     */
 	/**@}*/
 
 /*============================================================================*
@@ -242,6 +242,17 @@
 	 * failure, a negative error code is returned instead.
 	 */
 	EXTERN int kernel_clock(uint64_t *buffer);
+
+	/**
+	 * @brief Gets performance statistics of the kernel.
+	 *
+	 * @param buffer Store location for the statistics.
+	 * @param perf   Performance counter to watch.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 */
+	EXTERN int kernel_stats(uint64_t *buffer, int perf);
 
 /**@}*/
 
