@@ -35,7 +35,7 @@
  *============================================================================*/
 
 /**
- * @see do_portal_create().
+ * @see do_vportal_create().
  */
 PUBLIC int kernel_portal_create(int local)
 {
@@ -43,7 +43,7 @@ PUBLIC int kernel_portal_create(int local)
 	if (!WITHIN(local, 0, PROCESSOR_NOC_NODES_NUM))
 		return (-EINVAL);
 
-	return (do_portal_create(local));
+	return (do_vportal_create(local));
 }
 
 /*============================================================================*
@@ -51,7 +51,7 @@ PUBLIC int kernel_portal_create(int local)
  *============================================================================*/
 
 /**
- * @see do_portal_allow().
+ * @see do_vportal_allow().
  */
 PUBLIC int kernel_portal_allow(int portalid, int remote)
 {
@@ -63,7 +63,7 @@ PUBLIC int kernel_portal_allow(int portalid, int remote)
 	if (!WITHIN(remote, 0, PROCESSOR_NOC_NODES_NUM))
 		return (-EINVAL);
 
-	return (do_portal_allow(portalid, remote));
+	return (do_vportal_allow(portalid, remote));
 }
 
 /*============================================================================*
@@ -71,7 +71,7 @@ PUBLIC int kernel_portal_allow(int portalid, int remote)
  *============================================================================*/
 
 /**
- * @see do_portal_open().
+ * @see do_vportal_open().
  */
 PUBLIC int kernel_portal_open(int local, int remote)
 {
@@ -83,7 +83,7 @@ PUBLIC int kernel_portal_open(int local, int remote)
 	if (!WITHIN(remote, 0, PROCESSOR_NOC_NODES_NUM))
 		return (-EINVAL);
 
-	return (do_portal_open(local, remote));
+	return (do_vportal_open(local, remote));
 }
 
 /*============================================================================*
@@ -91,7 +91,7 @@ PUBLIC int kernel_portal_open(int local, int remote)
  *============================================================================*/
 
 /**
- * @see do_portal_unlink().
+ * @see do_vportal_unlink().
  */
 PUBLIC int kernel_portal_unlink(int portalid)
 {
@@ -99,7 +99,7 @@ PUBLIC int kernel_portal_unlink(int portalid)
 	if (portalid < 0)
 		return (-EINVAL);
 
-	return (do_portal_unlink(portalid));
+	return (do_vportal_unlink(portalid));
 }
 
 /*============================================================================*
@@ -107,7 +107,7 @@ PUBLIC int kernel_portal_unlink(int portalid)
  *============================================================================*/
 
 /**
- * @see do_portal_close().
+ * @see do_vportal_close().
  */
 PUBLIC int kernel_portal_close(int portalid)
 {
@@ -115,7 +115,7 @@ PUBLIC int kernel_portal_close(int portalid)
 	if (portalid < 0)
 		return (-EINVAL);
 
-	return (do_portal_close(portalid));
+	return (do_vportal_close(portalid));
 }
 
 /*============================================================================*
@@ -123,7 +123,7 @@ PUBLIC int kernel_portal_close(int portalid)
  *============================================================================*/
 
 /**
- * @see do_portal_awrite().
+ * @see do_vportal_awrite().
  */
 PUBLIC int kernel_portal_awrite(int portalid, const void * buffer, size_t size)
 {
@@ -143,7 +143,7 @@ PUBLIC int kernel_portal_awrite(int portalid, const void * buffer, size_t size)
 	if (!mm_check_area(VADDR(buffer), size, UMEM_AREA))
 		return (-EFAULT);
 
-	return (do_portal_awrite(portalid, buffer, size));
+	return (do_vportal_awrite(portalid, buffer, size));
 }
 
 /*============================================================================*
@@ -151,7 +151,7 @@ PUBLIC int kernel_portal_awrite(int portalid, const void * buffer, size_t size)
  *============================================================================*/
 
 /**
- * @see do_portal_aread().
+ * @see do_vportal_aread().
  */
 PUBLIC int kernel_portal_aread(int portalid, void * buffer, size_t size)
 {
@@ -171,7 +171,7 @@ PUBLIC int kernel_portal_aread(int portalid, void * buffer, size_t size)
 	if (!mm_check_area(VADDR(buffer), size, UMEM_AREA))
 		return (-EFAULT);
 
-	return (do_portal_aread(portalid, buffer, size));
+	return (do_vportal_aread(portalid, buffer, size));
 }
 
 /*============================================================================*
@@ -179,7 +179,7 @@ PUBLIC int kernel_portal_aread(int portalid, void * buffer, size_t size)
  *============================================================================*/
 
 /**
- * @see do_portal_wait().
+ * @see do_vportal_wait().
  */
 PUBLIC int kernel_portal_wait(int portalid)
 {
@@ -187,7 +187,7 @@ PUBLIC int kernel_portal_wait(int portalid)
 	if (portalid < 0)
 		return (-EINVAL);
 
-	return (do_portal_wait(portalid));
+	return (do_vportal_wait(portalid));
 }
 
 /*============================================================================*
@@ -195,7 +195,7 @@ PUBLIC int kernel_portal_wait(int portalid)
  *============================================================================*/
 
 /**
- * @see do_portal_ioctl().
+ * @see do_vportal_ioctl().
  */
 PUBLIC int kernel_portal_ioctl(int portalid, unsigned request, va_list *args)
 {
@@ -210,7 +210,7 @@ PUBLIC int kernel_portal_ioctl(int portalid, unsigned request, va_list *args)
 		return (-EINVAL);
 
 	dcache_invalidate();
-		ret = do_portal_ioctl(portalid, request, *args);
+		ret = do_vportal_ioctl(portalid, request, *args);
 	dcache_invalidate();
 
 	return (ret);
