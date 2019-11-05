@@ -88,16 +88,15 @@ PRIVATE const struct resource_pool mbxpool = {
  *============================================================================*/
 
 /**
- * @brief Asserts whether or not a synchronization point is valid.
+ * @brief Asserts whether or not a virtual mailbox ID is valid.
  *
  * @param mbxid ID of the Target Mailbox.
  *
- * @returns One if the target synchronization point is valid, and false
- * otherwise.
+ * @returns One if the mailboxID is valid, and false otherwise.
  */
 PRIVATE int do_vmailbox_is_valid(int mbxid)
 {
-	return WITHIN(mbxid, 0, (KMAILBOX_MAX));
+	return WITHIN(mbxid, 0, KMAILBOX_MAX);
 }
 
 /*============================================================================*
@@ -245,9 +244,9 @@ PUBLIC int do_vmailbox_create(int local)
 		return (mbxid);
 
 	/* Initialize virtual mailbox. */
-	virtual_mailboxes[vmbxid].fd       = mbxid;
-	virtual_mailboxes[vmbxid].volume   = 0ULL;
-	virtual_mailboxes[vmbxid].latency  = 0ULL;
+	virtual_mailboxes[vmbxid].fd      = mbxid;
+	virtual_mailboxes[vmbxid].volume  = 0ULL;
+	virtual_mailboxes[vmbxid].latency = 0ULL;
 	active_mailboxes[mbxid].refcount++;
 
 	dcache_invalidate();
@@ -387,7 +386,7 @@ PUBLIC int do_vmailbox_unlink(int mbxid)
 	if (!resource_is_readable(&active_mailboxes[fd].resource))
 		return (-EBADF);
 
-	/* Unlink hardware mailbox. */
+	/* Unlink virtual mailbox. */
 	virtual_mailboxes[mbxid].fd = -1;
 	active_mailboxes[fd].refcount--;
 

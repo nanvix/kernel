@@ -34,7 +34,7 @@
  *============================================================================*/
 
 /**
- * @see sync_create().
+ * @see vsync_create().
  *
  * @retval -EINVAL IDs of nodes need to exist.
  * @retval -EINVAL At least 2 nodes and at most PROCESSOR_NOC_NODES_NUM must be involved.
@@ -65,7 +65,7 @@ PUBLIC int kernel_sync_create(const int *nodes, int nnodes, int type)
 	if ((type != SYNC_ONE_TO_ALL) && (type != SYNC_ALL_TO_ONE))
 		return (-EINVAL);
 
-	return (do_sync_create(nodes, nnodes, type));
+	return (do_vsync_create(nodes, nnodes, type));
 }
 
 /*============================================================================*
@@ -73,7 +73,7 @@ PUBLIC int kernel_sync_create(const int *nodes, int nnodes, int type)
  *============================================================================*/
 
 /**
- * @see sync_open().
+ * @see vsync_open().
  *
  * @retval -EINVAL IDs of nodes need to exist.
  * @retval -EINVAL At least 2 nodes and at most PROCESSOR_NOC_NODES_NUM must be involved.
@@ -104,7 +104,7 @@ PUBLIC int kernel_sync_open(const int *nodes, int nnodes, int type)
 	if ((type != SYNC_ONE_TO_ALL) && (type != SYNC_ALL_TO_ONE))
 		return (-EINVAL);
 
-	return (do_sync_open(nodes, nnodes, type));
+	return (do_vsync_open(nodes, nnodes, type));
 }
 
 /*============================================================================*
@@ -112,7 +112,7 @@ PUBLIC int kernel_sync_open(const int *nodes, int nnodes, int type)
  *============================================================================*/
 
 /**
- * @see sync_wait().
+ * @see vsync_wait().
  */
 PUBLIC int kernel_sync_wait(int syncid)
 {
@@ -120,7 +120,7 @@ PUBLIC int kernel_sync_wait(int syncid)
 	if (syncid < 0)
 		return (-EINVAL);
 
-	return (do_sync_wait(syncid));
+	return (do_vsync_wait(syncid));
 }
 
 /*============================================================================*
@@ -128,7 +128,7 @@ PUBLIC int kernel_sync_wait(int syncid)
  *============================================================================*/
 
 /**
- * @see sync_signal().
+ * @see vsync_signal().
  */
 PUBLIC int kernel_sync_signal(int syncid)
 {
@@ -136,7 +136,7 @@ PUBLIC int kernel_sync_signal(int syncid)
 	if (syncid < 0)
 		return (-EINVAL);
 
-	return (do_sync_signal(syncid));
+	return (do_vsync_signal(syncid));
 }
 
 /*============================================================================*
@@ -144,7 +144,7 @@ PUBLIC int kernel_sync_signal(int syncid)
  *============================================================================*/
 
 /**
- * @see sync_close().
+ * @see vsync_close().
  */
 PUBLIC int kernel_sync_close(int syncid)
 {
@@ -152,7 +152,7 @@ PUBLIC int kernel_sync_close(int syncid)
 	if (syncid < 0)
 		return (-EINVAL);
 
-	return (do_sync_close(syncid));
+	return (do_vsync_close(syncid));
 }
 
 /*============================================================================*
@@ -160,7 +160,7 @@ PUBLIC int kernel_sync_close(int syncid)
  *============================================================================*/
 
 /**
- * @see sync_unlink().
+ * @see vsync_unlink().
  */
 PUBLIC int kernel_sync_unlink(int syncid)
 {
@@ -168,7 +168,7 @@ PUBLIC int kernel_sync_unlink(int syncid)
 	if (syncid < 0)
 		return (-EINVAL);
 
-	return (do_sync_unlink(syncid));
+	return (do_vsync_unlink(syncid));
 }
 
 #endif /* __TARGET_SYNC */
