@@ -105,6 +105,11 @@
 	#define KTHREAD_MASTER_TID 0
 
 	/**
+	 * @brief ID of leader thread.
+	 */
+	#define KTHREAD_LEADER_TID 1
+
+	/**
 	 * @brief Gets the currently running thread.
 	 *
 	 * The thread_get() function returns a pointer to the thread
