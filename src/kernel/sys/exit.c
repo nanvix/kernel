@@ -35,6 +35,5 @@ void kernel_exit(int status)
 {
 	UNUSED(status);
 
-	cluster_poweroff();
+	target_poweroff();
 }
-
