@@ -73,7 +73,12 @@ PUBLIC ssize_t kernel_write(int fd, const char *buf, size_t n)
 	kmemcpy(buf2, buf, n);
 	buf2[n] = '\0';
 
+#if (PROCESSOR_HAS_NOC)
 	clusternum = cluster_get_num();
+#else
+	clusternum = 0;
+#endif /* PROCESSOR_HAS_NOC */
+
 	len = ksprintf(bigbuf, "cluster %d: ", clusternum);
 	kstrcat(bigbuf, buf2);
 	kstrcat(bigbuf, "\n");
