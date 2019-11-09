@@ -45,7 +45,15 @@ PUBLIC int kernel_node_get_num(int coreid)
 	if (!WITHIN(coreid, 0, CORES_NUM))
 		return (-EINVAL);
 
+#if (PROCESSOR_HAS_NOC)
+
     return (processor_node_get_num(coreid));
+
+#else
+
+	return (-ENOSYS);
+
+#endif /* PROCESSOR_HAS_NOC */
 }
 
 /*============================================================================*
@@ -69,9 +77,19 @@ PUBLIC int kernel_node_set_num(int coreid, int nodenum)
 	if (!WITHIN(coreid, 0, CORES_NUM))
 		return (-EINVAL);
 
+#if (PROCESSOR_HAS_NOC)
+
 	/* Invalid NoC node number. */
 	if (!WITHIN(nodenum, 0, PROCESSOR_NOC_NODES_NUM))
 		return (-EINVAL);
 
 	return (processor_node_set_num(coreid, nodenum));
+
+#else
+
+	UNUSED(nodenum);
+
+	return (-ENOSYS);
+
+#endif /* PROCESSOR_HAS_NOC */
 }
