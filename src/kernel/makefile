@@ -31,6 +31,10 @@ ifneq ($(LIBLWIP),)
 CFLAGS += -I $(INCDIR)/posix
 endif
 
+ifeq ($(ENABLE_STRESS_TESTS),yes)
+CFLAGS += -D__ENABLE_STRESS_TESTS
+endif
+
 #===============================================================================
 # Sources
 #===============================================================================

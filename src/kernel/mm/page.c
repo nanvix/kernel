@@ -579,10 +579,8 @@ PUBLIC void upool_init(void)
 	exception_register(EXCEPTION_ITLB_FAULT, do_tlb_fault);
 #endif
 
-#ifndef NDEBUG
 	#ifndef __SUPPRESS_TESTS
 		kprintf("[kernel][mm] running tests on the user page allocator");
 		upool_test_driver();
 	#endif
-#endif
 }

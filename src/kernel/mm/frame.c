@@ -117,10 +117,8 @@ PUBLIC void frame_init(void)
 		frames[i] = 0;
 #endif
 
-#ifndef NDEBUG
 	#ifndef __SUPPRESS_TESTS
 		kprintf("[kernel][mm] running tests on the page frame allocator");
 		frame_test_driver();
 	#endif
-#endif
 }
