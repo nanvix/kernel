@@ -139,10 +139,8 @@ PUBLIC void kpool_init(void)
 		kpages[i] = 0;
 #endif
 
-#ifndef NDEBUG
 	#ifndef __SUPPRESS_TESTS
 		kprintf("[kernel][mm] running tests on the kernel page allocator");
 		kpool_test_driver();
 	#endif
-#endif
 }

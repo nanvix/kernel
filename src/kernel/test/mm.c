@@ -31,15 +31,6 @@
  * @cond release_test
  */
 
-/**
- * @name Test Driver Features
- */
-/**@{*/
-#define TEST_FRAME_STRESS  1 /**< Launch stress tests on frame subsystem? */
-#define TEST_KPOOL_STRESS  0 /**< Launch stress tests on kpool subsystem? */
-#define TEST_UPOOL_STRESS  0 /**< Launch stress tests on upool subsystem? */
-/**@}*/
-
 /*============================================================================*
  * Frame Allocator Unit Tests                                                 *
  *============================================================================*/
@@ -117,7 +108,7 @@ PRIVATE void test_fault_frame_double_free(void)
 	KASSERT(frame_free(frame) == -EFAULT);
 }
 
-#if TEST_FRAME_STRESS
+#if defined(__ENABLE_STRESS_TESTS)
 
 /**
  * @brief Stress Test: Page Frame Allocation Overflow
@@ -175,7 +166,7 @@ PRIVATE struct
 	{ test_fault_frame_invalid_free,         "fault",  "invalid frame release"             },
 	{ test_fault_frame_bad_free,             "fault",  "bad frame release"                 },
 	{ test_fault_frame_double_free,          "fault",  "double frame release"              },
-#if TEST_FRAME_STRESS
+#if defined(__ENABLE_STRESS_TESTS)
 	{ test_stress_frame_allocation,          "stress", "frame allocation"                  },
 	{ test_stress_frame_allocation_overflow, "stress", "frame allocation overflow"         },
 #endif
@@ -314,7 +305,7 @@ PRIVATE void test_fault_kpage_double_free(void)
 	KASSERT(kpage_put(kpg) == -EFAULT);
 }
 
-#if TEST_KPOOL_STRESS
+#if defined(__ENABLE_STRESS_TESTS)
 
 /**
  * @brief Stress Test: Kernel Page Allocation Overflow
@@ -408,7 +399,7 @@ PRIVATE struct
 	{ test_fault_kpage_invalid_free,         "fault",  "kernel page invalid release"     },
 	{ test_fault_kpage_bad_free,             "fault",  "kernel page bad release"         },
 	{ test_fault_kpage_double_free,          "fault",  "kernel page double release"      },
-#if TEST_KPOOL_STRESS
+#if defined(__ENABLE_STRESS_TESTS)
 	{ test_stress_kpage_allocation,          "stress", "kernel page allocation"          },
 	{ test_stress_kpage_allocation_overflow, "stress", "kernel page allocation overflow" },
 	{ test_stress_kpage_write,               "stress", "kernel page write"               },
@@ -531,7 +522,7 @@ PRIVATE void test_fault_upage_double_free(void)
 	KASSERT(upage_free(root_pgdir, UBASE_VIRT) == -EFAULT);
 }
 
-#if TEST_UPOOL_STRESS
+#if defined(__ENABLE_STRESS_TESTS)
 
 /**
  * @brief Stress Test: User Page Allocation Overflow
@@ -632,7 +623,7 @@ PRIVATE struct
 	{ test_fault_upage_invalid_free,         "fault",  "user page invalid free"        },
 	{ test_fault_upage_bad_free,             "fault",  "user page bad free"            },
 	{ test_fault_upage_double_free,          "fault",  "user page double free"         },
-#if TEST_UPOOL_STRESS
+#if defined(__ENABLE_STRESS_TESTS)
 	{ test_stress_upage_allocation,          "stress", "user page allocation"          },
 	{ test_stress_upage_allocation_overflow, "stress", "user page allocation overflow" },
 	{ test_stress_upage_write,               "stress", "user page write"               },
@@ -660,4 +651,3 @@ PUBLIC void upool_test_driver(void)
 /*============================================================================*/
 
 /**@endcond*/
-

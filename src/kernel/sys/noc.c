@@ -51,7 +51,7 @@ PUBLIC int kernel_node_get_num(int coreid)
 
 #else
 
-	return (-ENOSYS);
+	return (0);
 
 #endif /* PROCESSOR_HAS_NOC */
 }
