@@ -54,7 +54,7 @@ export CFLAGS += -nostdlib -nostdinc -ffreestanding
 export CFLAGS += -ansi -pedantic-errors
 export CFLAGS += -Wstack-usage=4096
 export CFLAGS += -Wno-type-limits
-export CFLAGS += -D __HAS_HW_DIVISION
+export CFLAGS += -D __HAS_HW_DIVISION=0 -D__HAS_HW_MULTIPLICATION=0
 
 # Timeout Variable
 export TIMEOUT ?= 5

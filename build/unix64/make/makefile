@@ -55,7 +55,7 @@ export TIMEOUT ?= 60
 export CFLAGS += -D_GNU_SOURCE -D_POSIX_C_SOURCE=200112L
 export CFLAGS += -ansi -Wno-error=pedantic
 export CFLAGS += -Wstack-usage=4096
-export CFLAGS += -D __HAS_HW_DIVISION
+export CFLAGS += -D __HAS_HW_DIVISION=1 -D__HAS_HW_MULTIPLICATION=1
 
 # Linker Options
 export LDFLAGS :=
