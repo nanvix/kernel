@@ -55,7 +55,7 @@ services:
       tty: true
 
     optimsoc:
-      image: ${OPENRISC_IMG}
+      image: ${OPTIMSOC_IMG}
       ports:
         - ${OPTIMSOC_PORT}:${CONTAINER_PORT}
       environment:
