@@ -28,7 +28,11 @@
 /**
  * @brief Timer frequency.
  */
+#ifdef __optimsoc__
 #define TIMER_FREQ 30
+#else
+#define TIMER_FREQ 32
+#endif
 
 /**
  * @brief Timer interrupts since system initialization.
