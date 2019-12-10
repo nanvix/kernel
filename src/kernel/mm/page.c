@@ -524,10 +524,12 @@ PRIVATE void do_tlb_fault(
 	 * land and this is unlikely to happen.
 	 * So, it's better to get some warning.
 	 */
-	if (!mm_is_uaddr(vaddr))
+	if (!mm_check_area(vaddr, PAGE_SIZE, UMEM_AREA))
 	{
 	#ifndef __mppa256__
-		kprintf("[kernel][mm] tlb fault in kernel land at %x", vaddr);
+		kprintf("[kernel][mm] tlb fault in kernel land at %x",
+			exception_get_addr(excp)
+		);
 	#endif
 	}
 
