@@ -40,20 +40,20 @@ contrib-uninstall-headers: contrib-uninstall-headers-hal
 
 # Builds HAL.
 contrib-hal: make-dirs
-	$(MAKE) -C $(CONTRIBDIR)/hal contrib PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
+	$(MAKE) -C $(CONTRIBDIR)/hal contrib RELEASE=$(RELEASE)
 	$(MAKE) -C $(CONTRIBDIR)/hal install PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
 
 # Builds HAL headers.
 contrib-headers-hal: make-dirs
-	$(MAKE) -C $(CONTRIBDIR)/hal contrib-headers PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
+	$(MAKE) -C $(CONTRIBDIR)/hal contrib-headers RELEASE=$(RELEASE)
 	$(MAKE) -C $(CONTRIBDIR)/hal install-headers PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
 
 # Cleans HAL.
 contrib-uninstall-hal:
 	$(MAKE) -C $(CONTRIBDIR)/hal uninstall PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
-	$(MAKE) -C $(CONTRIBDIR)/hal contrib-uninstall PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
+	$(MAKE) -C $(CONTRIBDIR)/hal contrib-uninstall RELEASE=$(RELEASE)
 
 # Cleans HAL headers.
 contrib-uninstall-headers-hal:
 	$(MAKE) -C $(CONTRIBDIR)/hal uninstall-headers PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
-	$(MAKE) -C $(CONTRIBDIR)/hal contrib-uninstall-headers PREFIX=$(ROOTDIR) RELEASE=$(RELEASE)
+	$(MAKE) -C $(CONTRIBDIR)/hal contrib-uninstall-headers RELEASE=$(RELEASE)
