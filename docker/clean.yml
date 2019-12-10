@@ -51,7 +51,7 @@ services:
       command: /bin/bash -l -c "cd ${MNT_DST} && bash ./utils/nanvix-setup-network.sh on --root && make clean"
 
     optimsoc:
-      image: ${OPENRISC_IMG}
+      image: ${OPTIMSOC_IMG}
       ports:
         - ${OPTIMSOC_PORT}:${CONTAINER_PORT}
       environment:
