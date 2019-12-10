@@ -47,31 +47,31 @@ install: | all-target install-headers
 	@echo [CP] $(PREFIX)/lib/libkernel*.a
 	@echo [CP] $(PREFIX)/lib/liblwip*.a
 	@echo "==============================================================================="
-	@echo "Nanvix MicroKernel Libraries Successfully Installed"
+	@echo "Nanvix Microkernel Libraries Successfully Installed"
 	@echo "==============================================================================="
 
 # Install Headers
 install-headers: copy-artifacts
 	@echo "==============================================================================="
-	@echo "Nanvix MicroKernel Headers Successfully Installed"
+	@echo "Nanvix Microkernel Headers Successfully Installed"
 	@echo "==============================================================================="
 
 # Uninstall
 uninstall: | distclean uninstall-headers
 	@rm -f $(PREFIX)/lib/barelib*.a $(PREFIX)/lib/libhal*.a
-	@rm -f $(PREFIX)/lib/libkernel*.a $(LIBDIR)/liblwip.*a
+	@rm -f $(PREFIX)/lib/libkernel*.a $(PREFIX)/lib/liblwip*.a
 	@echo [RM] $(PREFIX)/lib/barelib*.a
 	@echo [RM] $(PREFIX)/lib/libhal*.a
 	@echo [RM] $(PREFIX)/lib/libkernel*.a
 	@echo [RM] $(PREFIX)/lib/liblwip*.a
 	@echo "==============================================================================="
-	@echo "Nanvix MicroKernel Libraries Successfully Uninstalled"
+	@echo "Nanvix Microkernel Libraries Successfully Uninstalled"
 	@echo "==============================================================================="
 
 # Uninstall Headers
 uninstall-headers: delete-artifacts
 	@echo "==============================================================================="
-	@echo "Nanvix MicroKernel Headers Successfully Uninstalled"
+	@echo "Nanvix Microkernel Headers Successfully Uninstalled"
 	@echo "==============================================================================="
 
 # Copies All Artifacts
