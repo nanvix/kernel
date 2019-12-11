@@ -20,8 +20,10 @@ stdout.*
 tags
 
 # IDEs
+*.json
 *.swp
 *.swo
+*.clangd/
 *.vscode/
 
 # Barelib Headers
