@@ -103,6 +103,8 @@ void ___start(int argc, const char *argv[])
 
 	#if __NANVIX_HAS_NETWORK
 		test_network();
+		test_noc();
+		test_clusters();
 	#endif
 
 	/* Halt. */

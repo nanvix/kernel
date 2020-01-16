@@ -59,7 +59,8 @@
 	 */
 	/**@{*/
 	extern void test_network(void);
-
+	extern void test_noc(void);
+	extern void test_clusters(void);
 	/**@}*/
 
 	/**
