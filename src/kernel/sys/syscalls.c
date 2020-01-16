@@ -169,7 +169,7 @@ PUBLIC void do_kcall2(void)
 				break;
 #endif /* __TARGET_HAS_SYNC */
 
-#if __TARGET_HAS_MAILBOX
+#if __TARGET_HAS_MAILBOX || __NANVIX_HAS_NETWORK
 			case NR_mailbox_create:
 				ret = kernel_mailbox_create(
 					(int) sysboard[coreid].arg0
@@ -375,7 +375,7 @@ PUBLIC int do_kcall(
 			break;
 #endif
 
-#if __TARGET_HAS_MAILBOX
+#if __TARGET_HAS_MAILBOX || __NANVIX_HAS_NETWORK
 		case NR_mailbox_wait:
 			ret = kernel_mailbox_wait(
 				(int) arg0

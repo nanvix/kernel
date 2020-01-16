@@ -27,7 +27,7 @@
 #include <nanvix/kernel/mm.h>
 #include <posix/stdarg.h>
 
-#if __TARGET_HAS_MAILBOX
+#if __TARGET_HAS_MAILBOX || __NANVIX_HAS_NETWORK
 
 /*============================================================================*
  * kernel_mailbox_create()                                                    *

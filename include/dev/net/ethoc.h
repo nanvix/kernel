@@ -315,8 +315,7 @@
 		/**
 		 * @brief RX buffers.
 		 */
-		// char rx_buffer[ETHOC_RX_BUF_COUNT][ETHOC_PACKETLEN_SIZE_MAX];
-		char rx_buffer[ETHOC_RX_BUF_COUNT / 3][ETHOC_PACKETLEN_SIZE_MAX];
+		char rx_buffer[ETHOC_RX_BUF_COUNT][ETHOC_PACKETLEN_SIZE_MAX];
 
 		/**
 		 * @brief Next RX buffer.
@@ -326,8 +325,7 @@
 		/**
 		 * @brief TX buffers.
 		 */
-		// char tx_buffer[ETHOC_TX_BUF_COUNT][ETHOC_PACKETLEN_SIZE_MAX];
-		char tx_buffer[ETHOC_TX_BUF_COUNT / 3][ETHOC_PACKETLEN_SIZE_MAX];
+		char tx_buffer[ETHOC_TX_BUF_COUNT][ETHOC_PACKETLEN_SIZE_MAX];
 
 		/**
 		 * @brief Next TX buffer.

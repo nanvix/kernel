@@ -37,9 +37,15 @@
 	 * @name Default Network Configuration
 	 */
 	/**@{*/
-	#define NETWORK_DEFAULT_IPADDR  "192.168.66.67" /**< IP Address   */
-	#define NETWORK_DEFAULT_NETMASK "255.255.255.0" /**< Network Mask */
-	#define NETWORK_DEFAULT_GATEWAY "192.168.66.66" /**< Gateway      */
+	#ifndef NETWORK_DEFAULT_IPADDR
+		#define NETWORK_DEFAULT_IPADDR  "192.168.66.67" /**< IP Address   */
+	#endif
+	#ifndef NETWORK_DEFAULT_NETMASK
+		#define NETWORK_DEFAULT_NETMASK "255.255.255.0" /**< Network Mask */
+	#endif
+	#ifndef NETWORK_DEFAULT_GATEWAY
+		#define NETWORK_DEFAULT_GATEWAY "192.168.66.66" /**< Gateway      */
+	#endif
 	/**@}*/
 
 	/**
@@ -50,6 +56,11 @@
 		uint16_t len;  /**< Size */
 		uint8_t *data; /**< Data */
 	};
+
+	/**
+	 * @brief Network interface.
+	 */
+	EXTERN struct netif net_interface;
 
 	/**
 	 * @brief Tests the network driver.

@@ -32,7 +32,7 @@
 #include <lwip/arch.h>
 #include <lwip/err.h>
 
-#include <nanvix/hal/hal.h>
+#include <nanvix/hal.h>
 #endif
 
 extern int lwip_now;

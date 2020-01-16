@@ -46,7 +46,7 @@
 /**
  * @brief Default MAC Address.
  */
-PRIVATE const uint8_t MAC_DEFAULT[6] = { 0x52, 0x54, 0x00, 0x12, 0x34, 0x56 };
+PRIVATE const uint8_t MAC_DEFAULT[6] = { 0x52, 0x54, 0x00, 0x12, 0x34, MAC_DEFAULT_ADDR };
 
 /**
  * @brief Ethernet device.

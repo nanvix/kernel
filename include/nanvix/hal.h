@@ -32,4 +32,22 @@
 	#include <nanvix/hal/hal.h>
 	#include <nanvix/kernel/config.h>
 
+#ifdef __NANVIX_HAS_NETWORK
+	#include <net/mailbox.h>
+
+	#if (PROCESSOR_IS_MULTICLUSTER == 0)
+		#include <net/clusters.h>
+	#endif
+
+	#if (PROCESSOR_HAS_NOC == 0)
+		#include <net/noc.h>
+	#endif
+
+	#if defined(NUMBER_OF_GUESTS) && (NUMBER_OF_GUESTS > 1) \
+		 && (PROCESSOR_HAS_NOC == 0)
+		#undef PROCESSOR_HAS_NOC
+		#define PROCESSOR_HAS_NOC 1
+	#endif
+#endif
+
 #endif /* NANVIX_HAL_H_ */

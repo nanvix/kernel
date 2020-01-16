@@ -54,7 +54,7 @@ export TIMEOUT ?= 120
 
 # Compiler Options
 export CFLAGS += -nostdlib -nostdinc -ffreestanding
-export CFLAGS += -ansi -pedantic-errors
+export CFLAGS += -ansi
 export CFLAGS += -Wstack-usage=4096
 export CFLAGS += -Wno-type-limits
 export CFLAGS += -D __HAS_HW_DIVISION=1 -D__HAS_HW_MULTIPLICATION=1
@@ -75,8 +75,35 @@ export LIBLWIP := liblwip-qemu-openrisc.a
 
 #===============================================================================
 
+# Number of images to be build
+NB_IMAGES ?= 1
+export BINARIES = $(addprefix test-driver, $(shell seq 1 ${NB_IMAGES}) )
+
 # Builds everything.
 all-target: make-dirs
+	for number in $$(seq 1 $(NB_IMAGES)); do \
+		$(MAKE) one-image image_ID=$$number; \
+	done; \
+
+one-image: clean-target
+one-image: export CFLAGS += -D NUMBER_OF_GUESTS=$(NB_IMAGES)
+one-image: export CFLAGS += -D GUEST_ID=$(image_ID)
+one-image: export CFLAGS += -D'NETWORK_REMOTE_ADDR="192.169.66."'
+one-image: export CFLAGS += -D'NETWORK_DEFAULT_IPADDR="192.169.66.$(image_ID)"'
+one-image: export CFLAGS += -D'NETWORK_DEFAULT_NETMASK="255.255.255.0"'
+one-image: export CFLAGS += -D'NETWORK_DEFAULT_GATEWAY="192.169.66.$(image_ID)"'
+one-image: export CFLAGS += -D'MAC_DEFAULT_ADDR=0x$(image_ID)'
+one-image: export CFLAGS += -D'NET_PROCESSOR_CCLUSTERS_NUM=$(shell echo $$(($(NB_IMAGES) - 1)))'
+one-image: export CFLAGS += -D'NET_PROCESSOR_IOCLUSTERS_NUM=1'
+one-image: export CFLAGS += -D'NET_PROCESSOR_CLUSTERNUM_MASTER=0'
+one-image: export CFLAGS += -D'NET_PROCESSOR_CLUSTERNUM=$(shell echo $$(($(image_ID) - 1)))'
+one-image: export CFLAGS += -D'NET_PROCESSOR_NOC_CNODES_NUM=$(shell echo $$(($(NB_IMAGES) - 1)))'
+one-image: export CFLAGS += -D'NET_PROCESSOR_NOC_IONODES_NUM=1'
+one-image: export CFLAGS += -D'NET_PROCESSOR_NODENUM_MASTER=0'
+one-image: export CFLAGS += -D'NET_PROCESSOR_NODENUM=$(shell echo $$(($(image_ID) - 1)))'
+one-image: export EXEC = test-driver$(image_ID)
+one-image: export LIBKERNEL := libkernel-$(TARGET)-cluster$(image_ID).a
+one-image:
 	@$(MAKE) -C $(SRCDIR) all
 
 # Cleans object files.

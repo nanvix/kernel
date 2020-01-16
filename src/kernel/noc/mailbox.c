@@ -25,10 +25,11 @@
 #include <nanvix/hal.h>
 #include <nanvix/kernel/mailbox.h>
 #include <nanvix/hlib.h>
+#include <net/mailbox.h>
 #include <posix/errno.h>
 #include <posix/stdarg.h>
 
-#if __TARGET_HAS_MAILBOX
+#if defined(__TARGET_HAS_MAILBOX) || defined(__NANVIX_HAS_NETWORK)
 
 /**
  * @brief Search types for do_mailbox_search().

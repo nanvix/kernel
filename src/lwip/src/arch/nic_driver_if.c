@@ -78,7 +78,7 @@
 #include "netif/ppp/pppoe.h"
 
 #include "dev/net/net.h"
-#include "nanvix/hal/hal.h"
+#include "nanvix/hal.h"
 
 #include "arch/nic_driver_if.h"
 
@@ -153,6 +153,7 @@ PRIVATE err_t low_level_output(struct netif *netif, struct pbuf *p)
 
 	/* Init buffer */
 	u8_t *data = mem_calloc(p->tot_len, 1);
+	if(data == NULL) return ERR_MEM;
 	u32_t data_index = 0;
 
 #if ETH_PAD_SIZE
@@ -193,6 +194,8 @@ PRIVATE err_t low_level_output(struct netif *netif, struct pbuf *p)
 
 	LINK_STATS_INC(link.xmit);
 
+	mem_free(data);
+
 	return ERR_OK;
 }
 
@@ -212,7 +215,7 @@ PRIVATE struct pbuf* low_level_input(struct netif *netif)
 	struct packet packet;
 	uint8_t data[1600];
 	packet.data = data;
-	KASSERT(network_get_new_packet(&packet));
+	if(network_get_new_packet(&packet) != 1){return NULL;};
 	u32_t packet_index = 0;
 
 #if ETH_PAD_SIZE

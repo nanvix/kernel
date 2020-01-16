@@ -36,7 +36,7 @@
 /**
  * @brinef Network interface
  */
-PUBLIC struct netif netif;
+PUBLIC struct netif net_interface;
 
 /**
  * The network_setup() function initializes the network stack. It
@@ -55,11 +55,12 @@ PUBLIC void network_setup(void)
 	ip4addr_aton(NETWORK_DEFAULT_IPADDR, &ip);
 	ip4addr_aton(NETWORK_DEFAULT_NETMASK, &netmask);
 	ip4addr_aton(NETWORK_DEFAULT_GATEWAY, &gateway);
-	netif_add(&netif, &ip, &netmask, &gateway, NULL, nic_driver_if_init, netif_input);
+	netif_add(&net_interface, &ip, &netmask, &gateway, NULL, nic_driver_if_init,
+		netif_input);
 
 	/* Bring the interface up. */
-	netif_set_default(&netif);
-	netif_set_up(&netif);
+	netif_set_default(&net_interface);
+	netif_set_up(&net_interface);
 
 	network_test_driver();
 }
