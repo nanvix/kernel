@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hal/hal.h>
+#include <nanvix/hal.h>
 #include <nanvix/kernel/syscall.h>
 #include <nanvix/kernel/config.h>
 #include "test.h"

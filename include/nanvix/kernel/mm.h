@@ -32,7 +32,7 @@
 #ifndef NANVIX_MM_H_
 #define NANVIX_MM_H_
 
-	#include <nanvix/hal/hal.h>
+	#include <nanvix/hal.h>
 
 /**
  * @addtogroup kernel-mm

@@ -25,7 +25,7 @@
 #ifndef NANVIX_KERNEL_KERNEL_H_
 #define NANVIX_KERNEL_KERNEL_H_
 
-	#include <nanvix/hal/hal.h>
+	#include <nanvix/hal.h>
 	#include <nanvix/kernel/config.h>
 	#include <nanvix/kernel/signal.h>
 	#include <nanvix/kernel/syscall.h>

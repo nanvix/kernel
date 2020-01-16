@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hal/hal.h>
+#include <nanvix/hal.h>
 
 /*============================================================================*
  * kernel_node_get_num()                                                      *

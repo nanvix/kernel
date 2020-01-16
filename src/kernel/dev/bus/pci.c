@@ -35,7 +35,7 @@
 #if defined(__qemu_x86__)
 
 #include <dev/pci.h>
-#include <nanvix/hal/hal.h>
+#include <nanvix/hal.h>
 
 /* PRIVATE functions */
 PRIVATE struct pci_dev dev_pci_scan_function(uint16_t vendor_id, uint16_t device_id,

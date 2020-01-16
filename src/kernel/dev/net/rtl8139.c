@@ -31,7 +31,7 @@
  * Raw packets can be sent using the rtl8139_send_packet function.
  */
 
-#include <nanvix/hal/hal.h>
+#include <nanvix/hal.h>
 #include <dev/pci.h>
 #include <dev/net/net.h>
 #include <dev/net/rtl8139.h>

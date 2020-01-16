@@ -33,7 +33,7 @@
 #define NANVIX_THREAD_H_
 
 	/* External dependencies. */
-	#include <nanvix/hal/hal.h>
+	#include <nanvix/hal.h>
 	#include <nanvix/const.h>
 
 /*============================================================================*

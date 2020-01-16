@@ -25,7 +25,7 @@
 /* Must come first. */
 #define __NEED_ETHOC
 
-#include <nanvix/hal/hal.h>
+#include <nanvix/hal.h>
 #include <nanvix/const.h>
 #include <nanvix/hlib.h>
 #include <dev/net/ethoc.h>

@@ -32,7 +32,7 @@
 #ifndef NANVIX_SYNC_H_
 #define NANVIX_SYNC_H_
 
-	#include <nanvix/hal/hal.h>
+	#include <nanvix/hal.h>
 	#include <nanvix/const.h>
 
 	/**

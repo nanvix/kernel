@@ -23,7 +23,7 @@
  */
 
 #include <nanvix/const.h>
-#include <nanvix/hal/hal.h>
+#include <nanvix/hal.h>
 #include <nanvix/kernel/thread.h>
 #include <nanvix/kernel/syscall.h>
 #include <nanvix/hlib.h>

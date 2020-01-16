@@ -24,7 +24,7 @@
 
 #include <nanvix/const.h>
 #include <nanvix/hlib.h>
-#include <nanvix/hal/hal.h>
+#include <nanvix/hal.h>
 #include <nanvix/kernel/mm.h>
 #include <posix/stdint.h>
 

@@ -22,18 +22,14 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hal.h>
+#ifndef NANVIX_HAL_H_
+#define NANVIX_HAL_H_
 
-/**
- * @brief Terminates the calling process.
- *
- * @param status Exit status.
- *
- * @note This function does not return.
- */
-void kernel_exit(int status)
-{
-	UNUSED(status);
+	/* Must come first. */
+	#undef  __NEED_HAL
+	#define __NEED_HAL
 
-	target_poweroff();
-}
+	#include <nanvix/hal/hal.h>
+	#include <nanvix/kernel/config.h>
+
+#endif /* NANVIX_HAL_H_ */

@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hal/hal.h>
+#include <nanvix/hal.h>
 #include <nanvix/kernel/sync.h>
 #include <nanvix/kernel/mm.h>
 #include <posix/errno.h>

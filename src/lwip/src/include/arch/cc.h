@@ -25,7 +25,7 @@
 #ifndef CC_H_
 #define CC_H_
 
-#include <nanvix/hal/hal.h>
+#include <nanvix/hal.h>
 
 #define LWIP_NO_INTTYPES_H 1
 

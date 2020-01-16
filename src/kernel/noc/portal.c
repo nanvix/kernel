@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hal/hal.h>
+#include <nanvix/hal.h>
 #include <nanvix/kernel/portal.h>
 #include <nanvix/hlib.h>
 #include <posix/errno.h>

@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hal/hal.h>
+#include <nanvix/hal.h>
 
 /**
  * The kernel_shutdown() function shutdowns the kernel.
