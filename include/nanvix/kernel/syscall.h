@@ -27,6 +27,7 @@
 
 	#include <nanvix/kernel/mm.h>
 #ifdef __NANVIX_MICROKERNEL
+	#include <nanvix/kernel/excp.h>
 	#include <nanvix/kernel/thread.h>
 	#include <nanvix/kernel/sync.h>
 	#include <nanvix/kernel/mailbox.h>
@@ -99,8 +100,11 @@
 	#define NR_upage_free     46 /**< kernel_upage_free()     */
 	#define NR_upage_map      47 /**< kernel_upage_map()      */
 	#define NR_upage_unmap    48 /**< kernel_upage_unmap()    */
+	#define NR_excp_ctrl      49 /**< kernel_excp_ctrl()      */
+	#define NR_excp_pause     50 /**< kernel_excp_pause()     */
+	#define NR_excp_resume    51 /**< kernel_excp_resume()    */
 
-	#define NR_last_kcall     49 /**< NR_SYSCALLS definer     */
+	#define NR_last_kcall     52 /**< NR_SYSCALLS definer     */
 	/**@}*/
 
 /*============================================================================*
@@ -330,6 +334,47 @@
 	 * failure, a negative error code is returned instead.
 	 */
 	EXTERN int kernel_stats(uint64_t *buffer, int perf);
+
+/*============================================================================*
+ * User-Space Exception Kernel Calls                                          *
+ *============================================================================*/
+
+#ifdef __NANVIX_MICROKERNEL
+
+#if (THREAD_MAX > 1)
+
+	/**
+	 * @brief Sets a user-space exception handler.
+	 *
+	 * @param excpnum Number of the target exception.
+	 * @param action  Action upon target exception.
+	 *
+	 * @return Upon successful completion, zero is returned. Upon
+	 * failure a negative error code is returned instead.
+	 */
+	EXTERN int kernel_excp_ctrl(int excpnum, int action);
+
+	/**
+	 * @brief Pauses the user-space exception handler.
+	 *
+	 * @param excp Information about the exception
+	 *
+	 * @return Upon successful completion, zero is returned. Upon
+	 * failure a negative error code is returned instead.
+	 */
+	EXTERN int kernel_excp_pause(struct exception *excp);
+
+	/**
+	 * @brief Resumes a kernel-space exception handler.
+	 *
+	 * @return Upon successful completion, zero is returned. Upon
+	 * failure a negative error code is returned instead.
+	 */
+	EXTERN int kernel_excp_resume(void);
+
+#endif
+
+#endif /* __NANVIX_MICROKERNEL */
 
 /**@}*/
 

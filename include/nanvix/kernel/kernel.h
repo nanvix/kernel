@@ -27,6 +27,7 @@
 
 	#include <nanvix/hal.h>
 	#include <nanvix/kernel/config.h>
+	#include <nanvix/kernel/excp.h>
 	#include <nanvix/kernel/signal.h>
 	#include <nanvix/kernel/syscall.h>
 	#include <nanvix/kernel/mm.h>

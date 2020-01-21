@@ -319,6 +319,21 @@ PUBLIC void do_kcall2(void)
 			);
 			break;
 
+#if (THREAD_MAX > 1)
+
+		case NR_excp_ctrl:
+			ret = kernel_excp_ctrl(
+				(int) sysboard[coreid].arg0,
+				(int) sysboard[coreid].arg1
+			);
+			break;
+
+		case NR_excp_resume:
+			ret = kernel_excp_resume();
+			break;
+
+#endif
+
 			default:
 				break;
 		}
@@ -431,6 +446,16 @@ PUBLIC int do_kcall(
 				(uint64_t *) arg0
 			);
 			break;
+
+#if (THREAD_MAX > 1)
+
+		case NR_excp_pause:
+			ret = kernel_excp_pause(
+				(struct exception *) arg0
+			);
+			break;
+
+#endif
 
 		/* Forward system call. */
 		default:
