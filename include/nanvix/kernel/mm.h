@@ -39,6 +39,8 @@
  */
 /**@{*/
 
+#ifdef __NANVIX_MICROKERNEL
+
 	/**
 	 * @name Memory area identification
 	 */
@@ -124,6 +126,8 @@
 	#endif
 	}
 
+#endif
+
 /**@}*/
 
 /*============================================================================*
@@ -142,6 +146,9 @@
 	 * @brief Number of page frames for user use.
 	 */
 	#define NUM_UFRAMES (UMEM_SIZE/PAGE_SIZE)
+
+#ifdef __NANVIX_MICROKERNEL
+
 
 	/**
 	 * @param Null frame.
@@ -248,6 +255,8 @@
 	 */
 	EXTERN void frame_init(void);
 
+#endif
+
 /**@}*/
 
 /*============================================================================*
@@ -278,6 +287,8 @@
 	 * @brief Number of pages for kernel use.
 	 */
 	#define NUM_KPAGES (KPOOL_SIZE/PAGE_SIZE)
+
+#ifdef __NANVIX_MICROKERNEL
 
 	/**
 	 * @brief Asserts a kernel page address.
@@ -402,6 +413,8 @@
 	 */
 	EXTERN void kpool_init(void);
 
+#endif
+
 /**@}*/
 
 /*============================================================================*
@@ -420,6 +433,8 @@
 	 * @brief Number of pages for user use
 	 */
 	#define NUM_UPAGES NUM_UFRAMES
+
+#ifdef __NANVIX_MICROKERNEL
 
 	/**
 	 * @brief Asserts an page address.
@@ -505,6 +520,8 @@
 	 * @todo This shall be moved to the Hardware Abstraction Layer (HAL).
 	 */
 	EXTERN struct pde *root_pgdir;
+
+#endif
 
 /**@}*/
 

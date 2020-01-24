@@ -284,6 +284,31 @@ PUBLIC void do_kcall2(void)
 			);
 			break;
 
+		case NR_upage_alloc:
+			ret = kernel_upage_alloc(
+				(vaddr_t) sysboard[coreid].arg0
+			);
+			break;
+
+		case NR_upage_free:
+			ret = kernel_upage_free(
+				(vaddr_t) sysboard[coreid].arg0
+			);
+			break;
+
+		case NR_upage_map:
+			ret = kernel_upage_map(
+				(vaddr_t) sysboard[coreid].arg0,
+				(frame_t) sysboard[coreid].arg1
+			);
+			break;
+
+		case NR_upage_unmap:
+			ret = kernel_upage_unmap(
+				(vaddr_t) sysboard[coreid].arg0
+			);
+			break;
+
 			default:
 				break;
 		}

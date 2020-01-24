@@ -103,6 +103,7 @@ PRIVATE inline struct pde *pgtab_map(struct pde *pgdir, vaddr_t vaddr)
 		frame << PAGE_SHIFT,
 		vaddr
 	);
+	KASSERT(pde_is_present(pde));
 
 	dcache_invalidate();
 	tlb_flush();
@@ -280,6 +281,7 @@ PUBLIC int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame)
 		true,
 		false
 	);
+	KASSERT(pte_is_present(pte));
 
 	dcache_invalidate();
 	tlb_flush();

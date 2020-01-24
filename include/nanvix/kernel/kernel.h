@@ -29,6 +29,7 @@
 	#include <nanvix/kernel/config.h>
 	#include <nanvix/kernel/signal.h>
 	#include <nanvix/kernel/syscall.h>
+	#include <nanvix/kernel/mm.h>
 	#include <nanvix/kernel/thread.h>
 	#include <nanvix/kernel/sync.h>
 	#include <nanvix/kernel/mailbox.h>

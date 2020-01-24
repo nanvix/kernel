@@ -25,6 +25,7 @@
 #ifndef NANVIX_SYSCALL_H_
 #define NANVIX_SYSCALL_H_
 
+	#include <nanvix/kernel/mm.h>
 #ifdef __NANVIX_MICROKERNEL
 	#include <nanvix/kernel/thread.h>
 	#include <nanvix/kernel/sync.h>
@@ -92,8 +93,12 @@
 	#define NR_portal_ioctl   39 /**< kernel_portal_ioctl()   */
 	#define NR_clock          40 /**< kernel_clock()          */
 	#define NR_stats          42 /**< kernel_stats()          */
+	#define NR_upage_alloc    43 /**< kernel_upage_alloc()    */
+	#define NR_upage_free     44 /**< kernel_upage_free()    */
+	#define NR_upage_map      45 /**< kernel_upage_map()      */
+	#define NR_upage_unmap    46 /**< kernel_upage_unmap()    */
 
-	#define NR_last_kcall     43 /**< NR_SYSCALLS definer     */
+	#define NR_last_kcall     47 /**< NR_SYSCALLS definer     */
 	/**@}*/
 
 /*============================================================================*
@@ -171,6 +176,57 @@
 	EXTERN void kernel_sigreturn(void);
 
 #endif /* __NANVIX_MICROKERNEL */
+
+/*============================================================================*
+ * Memory Management Kernel Calls                                             *
+ *============================================================================*/
+
+	/**
+	 * @brief Allocates a user page.
+	 *
+	 * @param vaddr Target virtual address.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 *
+	 * @see upage_free().
+	 */
+	EXTERN int kernel_upage_alloc(vaddr_t vaddr);
+
+	/**
+	 * @brief Releases a user page.
+	 *
+	 * @param vaddr Target virtual address.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 *
+	 * @see upage_alloc().
+	 */
+	EXTERN int kernel_upage_free(vaddr_t vaddr);
+
+	/**
+	 * @brief Maps a page frame into a page.
+	 *
+	 * @param vaddr Target virtual address.
+	 * @param frame Target page frame.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 */
+	EXTERN int kernel_upage_map(vaddr_t vaddr, frame_t frame);
+
+	/**
+	 * @brief Unmaps a page frame.
+	 *
+	 * @param vaddr Target virtual address.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 *
+	 * @see upage_map().
+	 */
+	EXTERN int kernel_upage_unmap(vaddr_t vaddr);
 
 /*============================================================================*
  * NoC Kernel Calls                                                           *
