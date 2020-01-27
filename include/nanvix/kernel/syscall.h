@@ -93,12 +93,14 @@
 	#define NR_portal_ioctl   39 /**< kernel_portal_ioctl()   */
 	#define NR_clock          40 /**< kernel_clock()          */
 	#define NR_stats          42 /**< kernel_stats()          */
-	#define NR_upage_alloc    43 /**< kernel_upage_alloc()    */
-	#define NR_upage_free     44 /**< kernel_upage_free()    */
-	#define NR_upage_map      45 /**< kernel_upage_map()      */
-	#define NR_upage_unmap    46 /**< kernel_upage_unmap()    */
+	#define NR_frame_alloc    43 /**< kernel_frame_alloc()    */
+	#define NR_frame_free     44 /**< kernel_frame_free()     */
+	#define NR_upage_alloc    45 /**< kernel_upage_alloc()    */
+	#define NR_upage_free     46 /**< kernel_upage_free()     */
+	#define NR_upage_map      47 /**< kernel_upage_map()      */
+	#define NR_upage_unmap    48 /**< kernel_upage_unmap()    */
 
-	#define NR_last_kcall     47 /**< NR_SYSCALLS definer     */
+	#define NR_last_kcall     49 /**< NR_SYSCALLS definer     */
 	/**@}*/
 
 /*============================================================================*
@@ -180,6 +182,25 @@
 /*============================================================================*
  * Memory Management Kernel Calls                                             *
  *============================================================================*/
+
+	/**
+	 * @brief Allocates a page frame.
+	 *
+	 * @returns Upon successful completion, the number of the
+	 * allocated page frame is returned. Upon failure, @p FRAME_NULL
+	 * is returned instead.
+	 */
+	EXTERN frame_t kernel_frame_alloc(void);
+
+	/**
+	 * @brief Frees a page frame.
+	 *
+	 * @param frame Number of the target page frame.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 */
+	EXTERN int kernel_frame_free(frame_t frame);
 
 	/**
 	 * @brief Allocates a user page.

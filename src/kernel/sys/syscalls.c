@@ -284,6 +284,16 @@ PUBLIC void do_kcall2(void)
 			);
 			break;
 
+		case NR_frame_alloc:
+			ret = kernel_frame_alloc();
+			break;
+
+		case NR_frame_free:
+			ret = kernel_frame_free(
+				(vaddr_t) sysboard[coreid].arg0
+			);
+			break;
+
 		case NR_upage_alloc:
 			ret = kernel_upage_alloc(
 				(vaddr_t) sysboard[coreid].arg0

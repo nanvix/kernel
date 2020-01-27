@@ -28,65 +28,19 @@
 /**
  * @todo TODO: provide a detailed description for this function.
  */
-PUBLIC int kernel_upage_alloc(vaddr_t vaddr)
+PUBLIC frame_t kernel_frame_alloc(void)
 {
-	/* Bad user address. */
-	if (vaddr & ~PAGE_MASK)
-		return (-EINVAL);
-
-	/* Invalid user address. */
-	if (!mm_is_uaddr(vaddr))
-		return (-EFAULT);
-
-	return (upage_alloc(root_pgdir, vaddr));
+	return (frame_alloc());
 }
 
 /**
  * @todo TODO: provide a detailed description for this function.
  */
-PUBLIC int kernel_upage_free(vaddr_t vaddr)
+PUBLIC int kernel_frame_free(frame_t frame)
 {
-	/* Bad user address. */
-	if (vaddr & ~PAGE_MASK)
+	/* Invalid frame. */
+	if (frame == FRAME_NULL)
 		return (-EINVAL);
 
-	/* Invalid user address. */
-	if (!mm_is_uaddr(vaddr))
-		return (-EFAULT);
-
-	return (upage_free(root_pgdir, vaddr));
-}
-
-/**
- * @todo TODO: provide a detailed description for this function.
- */
-PUBLIC int kernel_upage_map(vaddr_t vaddr, frame_t frame)
-{
-	/* Bad user address. */
-	if (vaddr & ~PAGE_MASK)
-		return (-EINVAL);
-
-	/* Invalid user address. */
-	if (!mm_is_uaddr(vaddr))
-		return (-EFAULT);
-
-	return (upage_map(root_pgdir, vaddr, frame));
-}
-
-
-/**
- * todo TODO: provide a detailed description for this function.
- */
-PUBLIC int kernel_upage_unmap(vaddr_t vaddr)
-{
-	kprintf("page_unmap() 0");
-	/* Bad user address. */
-	if (vaddr & ~PAGE_MASK)
-		return (-EINVAL);
-
-	/* Invalid user address. */
-	if (!mm_is_uaddr(vaddr))
-		return (-EFAULT);
-
-	return ((upage_unmap(root_pgdir, vaddr) == FRAME_NULL) ? -EAGAIN : 0);
+	return (frame_free(frame));
 }
