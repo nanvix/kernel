@@ -147,8 +147,6 @@
 	 */
 	#define NUM_UFRAMES (UMEM_SIZE/PAGE_SIZE)
 
-#ifdef __NANVIX_MICROKERNEL
-
 
 	/**
 	 * @param Null frame.
@@ -225,6 +223,8 @@
 
 		return (frame - (UBASE_PHYS >> PAGE_SHIFT));
 	}
+
+#ifdef __NANVIX_MICROKERNEL
 
 	/**
 	 * @brief Allocates a page frame.
