@@ -274,8 +274,8 @@ PUBLIC void exception_init(void)
 		}
 	}
 
+	spinlock_init(&ulock);
 	spinlock_lock(&ulock);
-	spinlock_init(&lock);
 	handling.excpnum = -1;
 	handling.coreid = -1;
 

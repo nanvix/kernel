@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <nanvix/kernel/excp.h>
 #include <nanvix/hal.h>
 #include <nanvix/kernel/mm.h>
 #include <nanvix/const.h>
@@ -564,6 +565,26 @@ PRIVATE void do_tlb_fault(
 #endif
 
 /*============================================================================*
+ * do_page_fault()                                                            *
+ *============================================================================*/
+
+/**
+ * @todo TODO Provide a detailed description for this function.
+ */
+PRIVATE void do_page_fault(
+	const struct exception *excp,
+	const struct context *ctx
+)
+{
+	UNUSED(ctx);
+	UNUSED(excp);
+
+#if (THREAD_MAX > 1)
+	exception_wait(EXCEPTION_PAGE_FAULT, excp);
+#endif
+}
+
+/*============================================================================*
  * upool_init()                                                               *
  *============================================================================*/
 
@@ -587,4 +608,7 @@ PUBLIC void upool_init(void)
 		kprintf("[kernel][mm] running tests on the user page allocator");
 		upool_test_driver();
 	#endif
+
+	exception_register(EXCEPTION_PAGE_FAULT, do_page_fault);
+
 }
