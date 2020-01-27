@@ -22,87 +22,56 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hal.h>
-#include <nanvix/kernel/dev.h>
-#include <nanvix/kernel/excp.h>
-#include <nanvix/kernel/mm.h>
-#include <nanvix/kernel/syscall.h>
 #include <nanvix/kernel/thread.h>
+#include <nanvix/kernel/mm.h>
+#include <nanvix/kernel/excp.h>
 #include <nanvix/const.h>
-#include <nanvix/hlib.h>
+#include <nanvix/hal.h>
+#include <posix/errno.h>
 
-#include <dev/net/net.h>
-
-EXTERN void do_kcall2(void);
-EXTERN void ___start(int argc, const char *argv[], char **envp);
-
-#if (CLUSTER_IS_MULTICORE)
-
-/**
- * @brief Init thread.
- */
-PRIVATE void *init(void *arg)
-{
-	int argc = 1;
-	const char *argv[] = { "init", NULL };
-
-	UNUSED(arg);
-
-#if (CORES_NUM >= 2)
-
-	___start(argc, argv, NULL);
-
-#else
-
-	UNUSED(argc);
-	UNUSED(argv);
-
-#endif
-
-	/* Power down. */
-	kernel_shutdown();
-	UNREACHABLE();
-
-	return (NULL);
-}
-
-#endif
-
-/**
- * @brief Initializes the kernel.
- */
-PUBLIC void kmain(int argc, const char *argv[])
-{
-#if (CLUSTER_IS_MULTICORE)
-	int tid;
-#endif
-
-	UNUSED(argc);
-	UNUSED(argv);
-
-	hal_init();
-	dev_init();
 #if (THREAD_MAX > 1)
-	exception_init();
-#endif
-	mm_init();
 
-	kprintf("[kernel][dev] enabling hardware interrupts");
-	interrupts_enable();
+/**
+ * The kernel_excp_ctrl() function sets @p h as the user-space handler for
+ * handling the exception @p excpnum.
+ */
+PUBLIC int kernel_excp_ctrl(int excpnum, int action)
+{
+	/* Invalid exception. */
+	if (!exception_is_valid(excpnum))
+		return (-EINVAL);
 
-#if __NANVIX_HAS_NETWORK
-	network_setup();
-#endif
+	/* Invalid action. */
+	if ((action != EXCP_ACTION_IGNORE) && (action != EXCP_ACTION_HANDLE))
+		return (-EINVAL);
 
-#if (CLUSTER_IS_MULTICORE)
-	thread_create(&tid, init, NULL);
-	while (true)
-		do_kcall2();
-#else
-
-	/* Power down. */
-	kernel_shutdown();
-	UNREACHABLE();
-
-#endif
+	return (exception_control(excpnum, action));
 }
+
+/**
+ * The kernel_excp_resume() function pauses the user-space handler and
+ * waits for the develiery of the exception @p excpnum.
+ */
+PUBLIC int kernel_excp_pause(struct exception *excp)
+{
+	/* Invalid store location. */
+	if (excp != NULL)
+	{
+		/* Bad store location. */
+		if (!mm_check_area(VADDR(excp), sizeof(struct exception), UMEM_AREA))
+			return (-EFAULT);
+	}
+
+	return (exception_pause(excp));
+}
+
+/**
+ * The kernel_excp_resume() function resumes the kernel-space handler of
+ * the exception @p excpnum.
+ */
+PUBLIC int kernel_excp_resume(void)
+{
+	return (exception_resume());
+}
+
+#endif /* THREAD_MAX > 1*/
