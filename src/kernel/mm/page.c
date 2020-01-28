@@ -367,8 +367,8 @@ PUBLIC frame_t upage_unmap(struct pde *pgdir, vaddr_t vaddr)
 	pte_present_set(pte, 0);
 
 #if (!CORE_HAS_TLB_HW)
-	tlb_inval(EXCEPTION_DTLB_FAULT, vaddr);
-	tlb_inval(EXCEPTION_ITLB_FAULT, vaddr);
+	tlb_inval(TLB_INSTRUCTION, vaddr);
+	tlb_inval(TLB_DATA, vaddr);
 #endif
 
 	tlb_flush();
