@@ -34,6 +34,25 @@
 PRIVATE int frames[NUM_UFRAMES] = {0, };
 
 /*============================================================================*
+ * frame_is_allocated()                                                       *
+ *============================================================================*/
+
+/**
+ * The frame_is_allocated() function asserts if the target page frame
+ * @p frame is allocated.
+ *
+ * @author Pedro Henrique Penna
+ */
+PUBLIC int frame_is_allocated(frame_t frame)
+{
+	/* Invalid page frame. */
+	if (!frame_is_valid_num(frame))
+		return (0);
+
+	return ((frames[frame_num_to_id(frame)] >= 0));
+}
+
+/*============================================================================*
  * frame_alloc()                                                              *
  *============================================================================*/
 

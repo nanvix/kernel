@@ -227,6 +227,16 @@
 #ifdef __NANVIX_MICROKERNEL
 
 	/**
+	 * @brief Asserts if a page frame is allocated.
+	 *
+	 * @param frame Number of the target page frame.
+	 *
+	 * @returns One if the target page frame is allocated and zero
+	 * otherwise.
+	 */
+	EXTERN int frame_is_allocated(frame_t frame);
+
+	/**
 	 * @brief Allocates a page frame.
 	 *
 	 * @returns Upon successful completion, the number of the
