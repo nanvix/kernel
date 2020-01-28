@@ -70,6 +70,10 @@ PUBLIC int kernel_upage_map(vaddr_t vaddr, frame_t frame)
 	if (!mm_is_uaddr(vaddr))
 		return (-EFAULT);
 
+	/* Invalid frame. */
+	if (!frame_is_allocated(frame))
+		return (-EFAULT);
+
 	return (upage_map(root_pgdir, vaddr, frame));
 }
 
