@@ -527,6 +527,7 @@ PRIVATE void do_tlb_fault(
 	const struct context *ctx
 )
 {
+	bool retry = true; /* Retry handler?                  */
 	int tlb_type;      /* Type of TLB.                    */
 	paddr_t paddr;     /* Physical address.               */
 	vaddr_t vaddr;     /* Faulting address.               */
@@ -558,12 +559,18 @@ PRIVATE void do_tlb_fault(
 
 #endif
 
+again:
+
+	if (!retry)
+		return;
+
 	/* Lookup PDE. */
 	pde = pde_get(root_pgdir, vaddr);
 	if (!pde_is_present(pde))
 	{
 		exception_forward(EXCEPTION_PAGE_FAULT, excp, ctx);
-		return;
+		retry = false;
+		goto again;
 	}
 
 	/* Lookup PTE. */
@@ -572,7 +579,8 @@ PRIVATE void do_tlb_fault(
 	if (!pte_is_present(pte))
 	{
 		exception_forward(EXCEPTION_PAGE_FAULT, excp, ctx);
-		return;
+		retry = false;
+		goto again;
 	}
 
 	/* Writing mapping to TLB. */
@@ -580,6 +588,8 @@ PRIVATE void do_tlb_fault(
 	paddr = pte_frame_get(pte) << PAGE_SHIFT;
 	if (tlb_write(tlb_type, vaddr, paddr) < 0)
 		kpanic("cannot write to tlb");
+
+	tlb_flush();
 }
 
 #endif
