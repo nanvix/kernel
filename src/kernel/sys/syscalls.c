@@ -478,6 +478,18 @@ PUBLIC int do_kcall(
 			semaphore_down(&sysboard[coreid].syssem);
 
 			ret = sysboard[coreid].ret;
+
+			switch (syscall_nr)
+			{
+				case NR_upage_alloc:
+				case NR_upage_free:
+				case NR_upage_map:
+				case NR_upage_unmap:
+					upage_inval(arg0);
+
+				default:
+					break;
+			}
 		} break;
 	}
 

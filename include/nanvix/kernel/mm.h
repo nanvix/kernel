@@ -451,6 +451,13 @@
 	}
 
 	/**
+	 * @brief Invalidates HW references to a user page.
+	 *
+	 * @param vaddr Target virtual address.
+	 */
+	EXTERN int upage_inval(vaddr_t vaddr);
+
+	/**
 	 * @brief Maps a page frame into a page.
 	 *
 	 * @param pgdir Target page directory.

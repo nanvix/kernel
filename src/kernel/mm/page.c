@@ -197,6 +197,31 @@ PRIVATE int pgtab_unmap(struct pde *pgdir, vaddr_t vaddr)
 }
 
 /*============================================================================*
+ * upage_inval()                                                              *
+ *============================================================================*/
+
+/**
+ * @todo Provide a detailed description for this function.
+ */
+PUBLIC int upage_inval(vaddr_t vaddr)
+{
+	vaddr &= PAGE_MASK;
+
+	/* Bad virtual address. */
+	if (!mm_is_uaddr(vaddr))
+		return (-EINVAL);
+
+#if (!CORE_HAS_TLB_HW)
+	tlb_inval(TLB_INSTRUCTION, vaddr);
+	tlb_inval(TLB_DATA, vaddr);
+#endif
+
+	tlb_flush();
+
+	return (0);
+}
+
+/*============================================================================*
  * upage_map()                                                                *
  *============================================================================*/
 
@@ -366,12 +391,7 @@ PUBLIC frame_t upage_unmap(struct pde *pgdir, vaddr_t vaddr)
 	frame = pte_frame_get(pte);
 	pte_present_set(pte, 0);
 
-#if (!CORE_HAS_TLB_HW)
-	tlb_inval(TLB_INSTRUCTION, vaddr);
-	tlb_inval(TLB_DATA, vaddr);
-#endif
-
-	tlb_flush();
+	upage_inval(vaddr);
 
 	/* Free underlying page tables. */
 #ifndef NANVIX_FAST_MEMORY
@@ -507,6 +527,7 @@ PRIVATE void do_tlb_fault(
 	const struct context *ctx
 )
 {
+	bool retry = true; /* Retry handler?                  */
 	int tlb_type;      /* Type of TLB.                    */
 	paddr_t paddr;     /* Physical address.               */
 	vaddr_t vaddr;     /* Faulting address.               */
@@ -538,12 +559,18 @@ PRIVATE void do_tlb_fault(
 
 #endif
 
+again:
+
+	if (!retry)
+		return;
+
 	/* Lookup PDE. */
 	pde = pde_get(root_pgdir, vaddr);
 	if (!pde_is_present(pde))
 	{
 		exception_forward(EXCEPTION_PAGE_FAULT, excp, ctx);
-		return;
+		retry = false;
+		goto again;
 	}
 
 	/* Lookup PTE. */
@@ -552,7 +579,8 @@ PRIVATE void do_tlb_fault(
 	if (!pte_is_present(pte))
 	{
 		exception_forward(EXCEPTION_PAGE_FAULT, excp, ctx);
-		return;
+		retry = false;
+		goto again;
 	}
 
 	/* Writing mapping to TLB. */
@@ -560,6 +588,8 @@ PRIVATE void do_tlb_fault(
 	paddr = pte_frame_get(pte) << PAGE_SHIFT;
 	if (tlb_write(tlb_type, vaddr, paddr) < 0)
 		kpanic("cannot write to tlb");
+
+	tlb_flush();
 }
 
 #endif
