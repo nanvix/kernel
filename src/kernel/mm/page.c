@@ -197,6 +197,31 @@ PRIVATE int pgtab_unmap(struct pde *pgdir, vaddr_t vaddr)
 }
 
 /*============================================================================*
+ * upage_inval()                                                              *
+ *============================================================================*/
+
+/**
+ * @todo Provide a detailed description for this function.
+ */
+PUBLIC int upage_inval(vaddr_t vaddr)
+{
+	vaddr &= PAGE_MASK;
+
+	/* Bad virtual address. */
+	if (!mm_is_uaddr(vaddr))
+		return (-EINVAL);
+
+#if (!CORE_HAS_TLB_HW)
+	tlb_inval(TLB_INSTRUCTION, vaddr);
+	tlb_inval(TLB_DATA, vaddr);
+#endif
+
+	tlb_flush();
+
+	return (0);
+}
+
+/*============================================================================*
  * upage_map()                                                                *
  *============================================================================*/
 
@@ -366,12 +391,7 @@ PUBLIC frame_t upage_unmap(struct pde *pgdir, vaddr_t vaddr)
 	frame = pte_frame_get(pte);
 	pte_present_set(pte, 0);
 
-#if (!CORE_HAS_TLB_HW)
-	tlb_inval(TLB_INSTRUCTION, vaddr);
-	tlb_inval(TLB_DATA, vaddr);
-#endif
-
-	tlb_flush();
+	upage_inval(vaddr);
 
 	/* Free underlying page tables. */
 #ifndef NANVIX_FAST_MEMORY
