@@ -83,7 +83,6 @@ PUBLIC int kernel_upage_map(vaddr_t vaddr, frame_t frame)
  */
 PUBLIC int kernel_upage_unmap(vaddr_t vaddr)
 {
-	kprintf("page_unmap() 0");
 	/* Bad user address. */
 	if (vaddr & ~PAGE_MASK)
 		return (-EINVAL);
