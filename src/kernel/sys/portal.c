@@ -37,13 +37,17 @@
 /**
  * @see do_vportal_create().
  */
-PUBLIC int kernel_portal_create(int local)
+PUBLIC int kernel_portal_create(int local, int port)
 {
 	/* Invalid local ID. */
 	if (!WITHIN(local, 0, PROCESSOR_NOC_NODES_NUM))
 		return (-EINVAL);
 
-	return (do_vportal_create(local));
+	/* Invalid port. */
+	if (!WITHIN(port, 0, PORTAL_PORT_NR))
+		return (-EINVAL);
+
+	return (do_vportal_create(local, port));
 }
 
 /*============================================================================*
@@ -53,17 +57,21 @@ PUBLIC int kernel_portal_create(int local)
 /**
  * @see do_vportal_allow().
  */
-PUBLIC int kernel_portal_allow(int portalid, int remote)
+PUBLIC int kernel_portal_allow(int portalid, int remote, int remote_port)
 {
 	/* Invalid portal ID. */
-	if (portalid < 0)
+	if (!WITHIN(portalid, 0, KPORTAL_MAX))
 		return (-EINVAL);
 
 	/* Invalid remote ID. */
 	if (!WITHIN(remote, 0, PROCESSOR_NOC_NODES_NUM))
 		return (-EINVAL);
 
-	return (do_vportal_allow(portalid, remote));
+	/* Invalid port ID. */
+	if (!WITHIN(remote_port, 0, PORTAL_PORT_NR))
+		return (-EINVAL);
+
+	return (do_vportal_allow(portalid, remote, remote_port));
 }
 
 /*============================================================================*
@@ -73,7 +81,7 @@ PUBLIC int kernel_portal_allow(int portalid, int remote)
 /**
  * @see do_vportal_open().
  */
-PUBLIC int kernel_portal_open(int local, int remote)
+PUBLIC int kernel_portal_open(int local, int remote, int remote_port)
 {
 	/* Invalid local ID. */
 	if (!WITHIN(local, 0, PROCESSOR_NOC_NODES_NUM))
@@ -83,7 +91,11 @@ PUBLIC int kernel_portal_open(int local, int remote)
 	if (!WITHIN(remote, 0, PROCESSOR_NOC_NODES_NUM))
 		return (-EINVAL);
 
-	return (do_vportal_open(local, remote));
+	/* Invalid port number. */
+	if (!WITHIN(remote_port, 0, PORTAL_PORT_NR))
+		return (-EINVAL);
+
+	return (do_vportal_open(local, remote, remote_port));
 }
 
 /*============================================================================*
@@ -96,7 +108,7 @@ PUBLIC int kernel_portal_open(int local, int remote)
 PUBLIC int kernel_portal_unlink(int portalid)
 {
 	/* Invalid portal ID. */
-	if (portalid < 0)
+	if (!WITHIN(portalid, 0, KPORTAL_MAX))
 		return (-EINVAL);
 
 	return (do_vportal_unlink(portalid));
@@ -112,7 +124,7 @@ PUBLIC int kernel_portal_unlink(int portalid)
 PUBLIC int kernel_portal_close(int portalid)
 {
 	/* Invalid portal ID. */
-	if (portalid < 0)
+	if (!WITHIN(portalid, 0, KPORTAL_MAX))
 		return (-EINVAL);
 
 	return (do_vportal_close(portalid));
@@ -128,7 +140,7 @@ PUBLIC int kernel_portal_close(int portalid)
 PUBLIC int kernel_portal_awrite(int portalid, const void * buffer, size_t size)
 {
 	/* Invalid portal ID. */
-	if (portalid < 0)
+	if (!WITHIN(portalid, 0, KPORTAL_MAX))
 		return (-EINVAL);
 
 	/* Invalid buffer size. */
@@ -156,7 +168,7 @@ PUBLIC int kernel_portal_awrite(int portalid, const void * buffer, size_t size)
 PUBLIC int kernel_portal_aread(int portalid, void * buffer, size_t size)
 {
 	/* Invalid portal ID. */
-	if (portalid < 0)
+	if (!WITHIN(portalid, 0, KPORTAL_MAX))
 		return (-EINVAL);
 
 	/* Invalid buffer size. */
@@ -184,7 +196,7 @@ PUBLIC int kernel_portal_aread(int portalid, void * buffer, size_t size)
 PUBLIC int kernel_portal_wait(int portalid)
 {
 	/* Invalid portal ID. */
-	if (portalid < 0)
+	if (!WITHIN(portalid, 0, KPORTAL_MAX))
 		return (-EINVAL);
 
 	return (do_vportal_wait(portalid));
@@ -202,7 +214,7 @@ PUBLIC int kernel_portal_ioctl(int portalid, unsigned request, va_list *args)
 	int ret;
 
 	/* Invalid portal ID. */
-	if (portalid < 0)
+	if (!WITHIN(portalid, 0, KPORTAL_MAX))
 		return (-EINVAL);
 
 	/* Bad args. */
