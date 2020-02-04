@@ -298,9 +298,9 @@
 
 #ifdef __NANVIX_MICROKERNEL
 
-	EXTERN int kernel_portal_create(int);
-	EXTERN int kernel_portal_allow(int, int);
-	EXTERN int kernel_portal_open(int, int);
+	EXTERN int kernel_portal_create(int, int);
+	EXTERN int kernel_portal_allow(int, int, int);
+	EXTERN int kernel_portal_open(int, int, int);
 	EXTERN int kernel_portal_unlink(int);
 	EXTERN int kernel_portal_close(int);
 	EXTERN int kernel_portal_aread(int, void *, size_t);

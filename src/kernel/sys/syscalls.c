@@ -222,21 +222,24 @@ PUBLIC void do_kcall2(void)
 #if __TARGET_HAS_PORTAL
 			case NR_portal_create:
 				ret = kernel_portal_create(
-					(int) sysboard[coreid].arg0
+					(int) sysboard[coreid].arg0,
+					(int) sysboard[coreid].arg1
 				);
 				break;
 
 			case NR_portal_allow:
 				ret = kernel_portal_allow(
 					(int) sysboard[coreid].arg0,
-					(int) sysboard[coreid].arg1
+					(int) sysboard[coreid].arg1,
+					(int) sysboard[coreid].arg2
 				);
 				break;
 
 			case NR_portal_open:
 				ret = kernel_portal_open(
 					(int) sysboard[coreid].arg0,
-					(int) sysboard[coreid].arg1
+					(int) sysboard[coreid].arg1,
+					(int) sysboard[coreid].arg2
 				);
 				break;
 

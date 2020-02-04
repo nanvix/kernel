@@ -49,41 +49,58 @@
 	 *
 	 * Maximum number of virtual portals that may be created/opened.
 	 */
-	#define KPORTAL_MAX 1024
+	#define KPORTAL_MAX (PORTAL_CREATE_MAX + PORTAL_OPEN_MAX) * PORTAL_PORT_NR
+
+	/**
+	 * @brief Portal message header size.
+	 *
+	 * Size of portal message header.
+	 */
+	#define KPORTAL_MESSAGE_HEADER_SIZE 3*sizeof(int)
+
+	/**
+	 * @brief Maximum number of message buffer resources.
+	 *
+	 * Maximum number of message buffers used to hold temporary data on kernel space.
+	 */
+	#define KPORTAL_MESSAGE_BUFFERS_MAX 32
 
 	/**
 	 * @brief Creates a virtual portal.
 	 *
 	 * @param local Logic ID of the Local Node.
+	 * @param port  Logic ID of the Local Node port.
 	 *
 	 * @returns Upon successful completion, the ID of a newly created virtual
 	 * portal is returned. Upon failure, a negative error code is returned
 	 * instead.
 	 */
-	EXTERN int do_vportal_create(int local);
+	EXTERN int do_vportal_create(int local, int port);
 
 	/**
 	 * @brief Enables read operations from a remote.
 	 *
-	 * @param portalid ID of the target virtual portal.
-	 * @param remote   Logic ID of Target Node.
+	 * @param portalid    ID of the target virtual portal.
+	 * @param remote      Logic ID of target node.
+	 * @param remote_port Target port number in @p remote.
 	 *
 	 * @returns Upons successful completion zero is returned. Upon failure,
 	 * a negative error code is returned instead.
 	 */
-	EXTERN int do_vportal_allow(int portalid, int remote);
+	EXTERN int do_vportal_allow(int portalid, int remote, int remote_port);
 
 	/**
 	 * @brief Opens a virtual portal.
 	 *
-	 * @param local  Logic ID of the local NoC node.
-	 * @param remote Logic ID of the target NoC node.
+	 * @param local       Logic ID of the local NoC node.
+	 * @param remote      Logic ID of the target NoC node.
+	 * @param remote_port Target port number in @p remote.
 	 *
 	 * @returns Upon successful completion, the ID of the target virtual
 	 * portal is returned. Upon failure, a negative error code is returned
 	 * instead.
 	 */
-	EXTERN int do_vportal_open(int local, int remote);
+	EXTERN int do_vportal_open(int local, int remote, int remote_port);
 
 	/**
 	 * @brief Destroys a virtual portal.
