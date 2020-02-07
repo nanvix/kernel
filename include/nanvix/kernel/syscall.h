@@ -99,12 +99,14 @@
 	#define NR_upage_alloc    45 /**< kernel_upage_alloc()    */
 	#define NR_upage_free     46 /**< kernel_upage_free()     */
 	#define NR_upage_map      47 /**< kernel_upage_map()      */
-	#define NR_upage_unmap    48 /**< kernel_upage_unmap()    */
-	#define NR_excp_ctrl      49 /**< kernel_excp_ctrl()      */
-	#define NR_excp_pause     50 /**< kernel_excp_pause()     */
-	#define NR_excp_resume    51 /**< kernel_excp_resume()    */
+	#define NR_upage_link     48 /**< kernel_upage_link()     */
+	#define NR_upage_unlink   49 /**< kernel_upage_unlink()   */
+	#define NR_upage_unmap    50 /**< kernel_upage_unmap()    */
+	#define NR_excp_ctrl      51 /**< kernel_excp_ctrl()      */
+	#define NR_excp_pause     52 /**< kernel_excp_pause()     */
+	#define NR_excp_resume    53 /**< kernel_excp_resume()    */
 
-	#define NR_last_kcall     52 /**< NR_SYSCALLS definer     */
+	#define NR_last_kcall     54 /**< NR_SYSCALLS definer     */
 	/**@}*/
 
 /*============================================================================*
@@ -252,6 +254,17 @@
 	 * @see upage_map().
 	 */
 	EXTERN int kernel_upage_unmap(vaddr_t vaddr);
+
+	/**
+	 * @brief Links two pages.
+	 *
+	 * @param vaddr Virtual address of source page.
+	 * @param vaddr Virtual address of target page.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 */
+	EXTERN int kernel_upage_link(vaddr_t vaddr1, vaddr_t vaddr2);
 
 /*============================================================================*
  * NoC Kernel Calls                                                           *

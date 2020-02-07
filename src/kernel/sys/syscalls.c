@@ -322,6 +322,13 @@ PUBLIC void do_kcall2(void)
 			);
 			break;
 
+		case NR_upage_link:
+			ret = kernel_upage_link(
+				(vaddr_t) sysboard[coreid].arg0,
+				(vaddr_t) sysboard[coreid].arg1
+			);
+			break;
+
 #if (THREAD_MAX > 1)
 
 		case NR_excp_ctrl:
@@ -488,6 +495,7 @@ PUBLIC int do_kcall(
 				case NR_upage_free:
 				case NR_upage_map:
 				case NR_upage_unmap:
+				case NR_upage_link:
 					upage_inval(arg0);
 
 				default:

@@ -522,6 +522,18 @@
 	EXTERN int upage_free(struct pde *pgdir, vaddr_t vaddr);
 
 	/**
+	 * @brief Links two pages.
+	 *
+	 * @param pgdir Target page directory.
+	 * @param vaddr Virtual address of source page.
+	 * @param vaddr Virtual address of target page.
+	 *
+	 * @returns Upon successful completion, zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 */
+	EXTERN int upage_link(struct pde *pgdir, vaddr_t vaddr1, vaddr_t vaddr2);
+
+	/**
 	 * @brief Runs unit tests on the user page allocator.
 	 */
 	EXTERN void upool_test_driver(void);
