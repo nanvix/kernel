@@ -93,3 +93,19 @@ PUBLIC int kernel_upage_unmap(vaddr_t vaddr)
 
 	return ((upage_unmap(root_pgdir, vaddr) == FRAME_NULL) ? -EAGAIN : 0);
 }
+
+/**
+ * @todo TODO: provide a detailed description for this function.
+ */
+PUBLIC int kernel_upage_link(vaddr_t vaddr1, vaddr_t vaddr2)
+{
+	/* Bad user address. */
+	if (vaddr2 & ~PAGE_MASK)
+		return (-EINVAL);
+
+	/* Invalid user address. */
+	if (!mm_is_uaddr(vaddr2))
+		return (-EFAULT);
+
+	return (upage_link(root_pgdir, vaddr1, vaddr2));
+}

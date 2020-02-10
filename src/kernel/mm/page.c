@@ -214,6 +214,11 @@ PUBLIC int upage_inval(vaddr_t vaddr)
 #if (!CORE_HAS_TLB_HW)
 	tlb_inval(TLB_INSTRUCTION, vaddr);
 	tlb_inval(TLB_DATA, vaddr);
+#ifdef __tlb_shootdown_fn
+	tlb_shootdown(vaddr);
+#endif
+	kprintf("[kernel][mm] cannot shootdown the tlb");
+#else
 #endif
 
 	tlb_flush();
@@ -500,6 +505,58 @@ PUBLIC int upage_free(struct pde *pgdir, vaddr_t vaddr)
 	}
 
 	return (0);
+}
+
+/*============================================================================*
+ * upage_link()                                                               *
+ *============================================================================*/
+
+/**
+ * @todo TODO: provide a detailed description for this function.
+ */
+PUBLIC int upage_link(struct pde *pgdir, vaddr_t vaddr1, vaddr_t vaddr2)
+{
+	frame_t frame;     /* Underlying page frame.          */
+	struct pte *pte1;  /* Working page table table entry. */
+	struct pde *pde1;  /* Working page directory entry.   */
+	struct pte *pgtab; /* Working page table.             */
+
+	/* Invalid page directory. */
+	if (pgdir == NULL)
+		return (-EINVAL);
+
+	/* TODO: check for bad page directory. */
+
+	/* Bad virtual address. */
+	if (!mm_is_uaddr(vaddr2))
+		return (-EFAULT);
+
+	/* Misaligned target address. */
+	if (vaddr2 & (~PAGE_MASK))
+		return (-EINVAL);
+
+	/*
+	 * Retrieve page directory entry
+	 * of target page.
+	 */
+	pde1 = pde_get(pgdir, vaddr1);
+	if (!pde_is_present(pde1))
+		return (-EFAULT);
+
+	/*
+	 * Retrieve the page table entry
+	 * of the target page.
+	 */
+	pgtab = (struct pte *)(kpool_frame_to_addr(pde_frame_get(pde1)));
+	pte1 = pte_get(pgtab, vaddr1);
+
+	/* Unampped source page. */
+	if (!pte_is_present(pte1))
+		return (-EFAULT);
+
+	frame = pte_frame_get(pte1);
+
+	return (upage_map(pgdir, vaddr2, frame));
 }
 
 /*============================================================================*
