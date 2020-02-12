@@ -36,13 +36,17 @@
 /**
  * @see do_vmailbox_create().
  */
-PUBLIC int kernel_mailbox_create(int local)
+PUBLIC int kernel_mailbox_create(int local, int port)
 {
 	/* Invalid local ID. */
 	if (!WITHIN(local, 0, PROCESSOR_NOC_NODES_NUM))
 		return (-EINVAL);
 
-	return (do_vmailbox_create(local));
+	/* Invalid port number. */
+	if (!WITHIN(port, 0, MAILBOX_PORT_NR))
+		return (-EINVAL);
+
+	return (do_vmailbox_create(local, port));
 }
 
 /*============================================================================*
@@ -52,13 +56,17 @@ PUBLIC int kernel_mailbox_create(int local)
 /**
  * @see do_vmailbox_open().
  */
-PUBLIC int kernel_mailbox_open(int remote)
+PUBLIC int kernel_mailbox_open(int remote, int remote_port)
 {
 	/* Invalid remote ID. */
 	if (!WITHIN(remote, 0, PROCESSOR_NOC_NODES_NUM))
 		return (-EINVAL);
 
-	return (do_vmailbox_open(remote));
+	/* Invalid port number. */
+	if (!WITHIN(remote_port, 0, MAILBOX_PORT_NR))
+		return (-EINVAL);
+
+	return (do_vmailbox_open(remote, remote_port));
 }
 
 /*============================================================================*
@@ -71,7 +79,7 @@ PUBLIC int kernel_mailbox_open(int remote)
 PUBLIC int kernel_mailbox_unlink(int mbxid)
 {
 	/* Invalid mailbox ID. */
-	if (mbxid < 0)
+	if (!WITHIN(mbxid, 0, KMAILBOX_MAX))
 		return (-EINVAL);
 
 	return (do_vmailbox_unlink(mbxid));
@@ -87,7 +95,7 @@ PUBLIC int kernel_mailbox_unlink(int mbxid)
 PUBLIC int kernel_mailbox_close(int mbxid)
 {
 	/* Invalid mailbox ID. */
-	if (mbxid < 0)
+	if (!WITHIN(mbxid, 0, KMAILBOX_MAX))
 		return (-EINVAL);
 
 	return (do_vmailbox_close(mbxid));
@@ -103,11 +111,11 @@ PUBLIC int kernel_mailbox_close(int mbxid)
 PUBLIC int kernel_mailbox_awrite(int mbxid, const void *buffer, size_t size)
 {
 	/* Invalid mailbox ID. */
-	if (mbxid < 0)
+	if (!WITHIN(mbxid, 0, KMAILBOX_MAX))
 		return (-EINVAL);
 
 	/* Invalid write size. */
-	if (size != MAILBOX_MSG_SIZE)
+	if (size != KMAILBOX_MESSAGE_SIZE)
 		return (-EINVAL);
 
 	/* Invalid buffer. */
@@ -131,11 +139,11 @@ PUBLIC int kernel_mailbox_awrite(int mbxid, const void *buffer, size_t size)
 PUBLIC int kernel_mailbox_aread(int mbxid, void *buffer, size_t size)
 {
 	/* Invalid mailbox ID. */
-	if (mbxid < 0)
+	if (!WITHIN(mbxid, 0, KMAILBOX_MAX))
 		return (-EINVAL);
 
 	/* Invalid read size. */
-	if (size != MAILBOX_MSG_SIZE)
+	if (size != KMAILBOX_MESSAGE_SIZE)
 		return (-EINVAL);
 
 	/* Invalid buffer. */
@@ -159,7 +167,7 @@ PUBLIC int kernel_mailbox_aread(int mbxid, void *buffer, size_t size)
 PUBLIC int kernel_mailbox_wait(int mbxid)
 {
 	/* Invalid mailbox ID. */
-	if (mbxid < 0)
+	if (!WITHIN(mbxid, 0, KMAILBOX_MAX))
 		return (-EINVAL);
 
 	return (do_vmailbox_wait(mbxid));
@@ -177,7 +185,7 @@ PUBLIC int kernel_mailbox_ioctl(int mbxid, unsigned request, va_list *args)
 	int ret;
 
 	/* Invalid mailbox ID. */
-	if (mbxid < 0)
+	if (!WITHIN(mbxid, 0, KMAILBOX_MAX))
 		return (-EINVAL);
 
 	/* Bad args. */

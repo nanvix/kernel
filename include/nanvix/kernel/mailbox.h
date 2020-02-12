@@ -45,33 +45,63 @@
 	/**@}*/
 
 	/**
+	 * @brief Number of ports per HW mailbox.
+	 *
+	 * Maximum number of virtual mailboxes that can be vinculated to each HW mailbox.
+	 */
+	#define MAILBOX_PORT_NR 16
+
+	/**
 	 * @brief Maximum number of virtual mailboxes.
 	 *
 	 * Maximum number of virtual mailboxes that may be created/opened.
 	 */
-	#define KMAILBOX_MAX 1024
+	#define KMAILBOX_MAX (MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX) * MAILBOX_PORT_NR
+
+	/**
+	 * @brief Mailbox message header size.
+	 *
+	 * Size of mailbox message header.
+	 */
+	#define KMAILBOX_MESSAGE_HEADER_SIZE (1 * sizeof(int))
+
+	/**
+	 * @brief Maximum number of message buffer resources.
+	 *
+	 * Maximum number of message buffers used to hold temporary data on kernel space.
+	 */
+	#define KMAILBOX_MESSAGE_BUFFERS_MAX 64
+
+	/**
+	 * @brief Mailbox message buffer max size.
+	 *
+	 * Maximum size of mailbox message data buffer.
+	 */
+	#define KMAILBOX_MESSAGE_SIZE (MAILBOX_MSG_SIZE - KMAILBOX_MESSAGE_HEADER_SIZE)
 
 	/**
 	 * @brief Creates a virtual mailbox.
 	 *
-	 * @param local Logic ID of the Local Node.
+	 * @param local Logic ID of the local node.
+	 * @param port  Target port in @p local node.
 	 *
 	 * @returns Upon successful completion, the ID of the newly created
 	 * mailbox is returned. Upon failure, a negative error code is
 	 * returned instead.
 	 */
-	EXTERN int do_vmailbox_create(int local);
+	EXTERN int do_vmailbox_create(int local, int port);
 
 	/**
 	 * @brief Opens a virtual mailbox.
 	 *
-	 * @param remote Logic ID of the Target Node.
+	 * @param remote      Logic ID of the target node.
+	 * @param remote_port Target port in @p remote node.
 	 *
 	 * @returns Upon successful completion, the ID of the target mailbox
 	 * is returned. Upon failure, a negative error code is returned
 	 * instead.
 	 */
-	EXTERN int do_vmailbox_open(int remote);
+	EXTERN int do_vmailbox_open(int remote, int remote_port);
 
 	/**
 	 * @brief Destroys a virtual mailbox.
