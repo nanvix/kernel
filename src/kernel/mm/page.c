@@ -214,11 +214,12 @@ PUBLIC int upage_inval(vaddr_t vaddr)
 #if (!CORE_HAS_TLB_HW)
 	tlb_inval(TLB_INSTRUCTION, vaddr);
 	tlb_inval(TLB_DATA, vaddr);
-#ifdef __tlb_shootdown_fn
-	tlb_shootdown(vaddr);
 #endif
-	kprintf("[kernel][mm] cannot shootdown the tlb");
+
+#if (CLUSTER_HAS_TLB_SHOOTDOWN)
+	tlb_shootdown(vaddr);
 #else
+	kprintf("[kernel][mm] cannot shootdown the tlb");
 #endif
 
 	tlb_flush();
