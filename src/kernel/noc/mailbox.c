@@ -793,10 +793,9 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 			return (-EBUSY);
 	}
 
+again:
 	/* Sets the mailbox data buffer as busy. */
 	MAILBOX_SET_BUSY(fd);
-
-again:
 
 	dcache_invalidate();
 
@@ -832,8 +831,8 @@ again:
 		}
 		else
 		{
-			/* Returns sinalizing the mailbox is busy. */
-			return (-EBUSY);
+			/* Discards the message. */
+			goto again;
 		}
 	}
 
