@@ -46,22 +46,13 @@ enum mailbox_search_type {
 /**
  * @brief Virtual mailboxes flags.
  */
-#define VMAILBOX_FLAGS_USED (1 << 0) /**< Used vmailbox? */
+#define VMAILBOX_STATUS_USED (1 << 0) /**< Used vmailbox? */
 
 /**
  * @brief Asserts if the virtual mailbox is used.
  */
 #define VMAILBOX_IS_USED(vmbxid) \
-	(virtual_mailboxes[vmbxid].flags & VMAILBOX_FLAGS_USED)
-
-/**
- * @brief Sets vmailbox USED flag.
- */
-#define VMAILBOX_SET_USED(vmbxid) \
-	(virtual_mailboxes[vmbxid].flags |= VMAILBOX_FLAGS_USED)
-
-#define VMAILBOX_SET_NOTUSED(vmbxid) \
-	(virtual_mailboxes[vmbxid].flags &= ~VMAILBOX_FLAGS_USED)
+	(virtual_mailboxes[vmbxid].status & VMAILBOX_STATUS_USED)
 /**@}*/
 
 /**
@@ -119,8 +110,8 @@ enum mailbox_search_type {
 #define MBUFFER_IS_USED(mbufferid) \
 	(mailbox_message_buffers[mbufferid].flags & MBUFFER_FLAGS_USED)
 
-#define MBUFFER_IS_BUSY(mbuffer_ptr) \
-	(mbuffer_ptr->flags & MBUFFER_FLAGS_BUSY)
+#define MBUFFER_IS_BUSY(mbufferid) \
+	(mailbox_message_buffers[mbufferid].flags & MBUFFER_FLAGS_BUSY)
 /**@}*/
 
 /**
@@ -132,7 +123,7 @@ enum mailbox_search_type {
  * @brief Asserts if the mailbox data buffer is busy.
  */
 #define MAILBOX_IS_BUSY(mbxid) \
-	(MBUFFER_IS_BUSY(active_mailboxes[mbxid].buffer))
+	(active_mailboxes[mbxid].buffer->flags & MBUFFER_FLAGS_BUSY)
 
 /**
  * @brief Sets the mailbox data buffer as busy / notbusy.
@@ -158,10 +149,13 @@ struct mailbox_message_buffer
 
 	/**
 	 * @brief Structure that holds a message.
+	 *
+	 * @note Parameters aside the data buffer must be included in header size
+	 * on include/nanvix/kernel/mailbox.h -> KMAILBOX_MESSAGE_HEADER_SIZE.
 	 */
 	struct mailbox_message
 	{
-		uint32_t dest; /* Data destination. */
+		int dest; /* Data destination. */
 		char data[KMAILBOX_MESSAGE_SIZE];
 	} message;
 };
@@ -193,8 +187,8 @@ PRIVATE struct
 	 * @name Control Variables
 	 */
 	/**@{*/
-	unsigned short flags; /**< Flags.          */
-	int remote;           /**< Remote address. */
+	unsigned short status; /**< Status.         */
+	int remote;            /**< Remote address. */
 	/**@}*/
 
 	/**
@@ -206,7 +200,7 @@ PRIVATE struct
 	/**@}*/
 } ALIGN(sizeof(dword_t)) virtual_mailboxes[KMAILBOX_MAX] = {
 	[0 ... (KMAILBOX_MAX - 1)] = {
-		.flags  =  0,
+		.status  =  0,
 		.remote = -1
 	},
 };
@@ -308,11 +302,10 @@ PRIVATE int do_mbuffer_alloc(void)
 {
 	for (unsigned int i = 0; i < KMAILBOX_MESSAGE_BUFFERS_MAX; ++i)
 	{
-		if (!MBUFFER_IS_USED(i))
+		if (!(MBUFFER_IS_USED(i) || MBUFFER_IS_BUSY(i)))
 		{
-			mailbox_message_buffers[i].flags = 0 | MBUFFER_FLAGS_USED;
-			mailbox_message_buffers[i].message.dest = KMAILBOX_MAX;
-			mailbox_message_buffers[i].message.data[0] = '\0';
+			mailbox_message_buffers[i].flags |= MBUFFER_FLAGS_USED;
+
 			return (i);
 		}
 	}
@@ -339,10 +332,13 @@ PRIVATE int do_mbuffer_free(struct mailbox_message_buffer * buffer)
 		return (-EINVAL);
 
 	/* Buffer have data to be read. */
-	if (MBUFFER_IS_BUSY(buffer))
+	if (buffer->flags & MBUFFER_FLAGS_BUSY)
 		return (-EBUSY);
 
+	/* Resets mbuffer original status. */
 	buffer->flags = 0;
+	buffer->message.dest = KMAILBOX_MAX;
+	buffer->message.data[0] = '\0';
 
 	return (0);
 }
@@ -466,7 +462,6 @@ PUBLIC int do_vmailbox_create(int local, int port)
 {
 	int mbxid;   /* Hardware mailbox ID.  */
 	int vmbxid;  /* Virtual mailbox ID.   */
-	int mbuffer; /* Allocated mbuffer ID. */
 
 	/* Create hardware mailbox. */
 	if ((mbxid = _do_mailbox_create(local)) < 0)
@@ -476,16 +471,11 @@ PUBLIC int do_vmailbox_create(int local, int port)
 	if ((vmbxid = do_vmailbox_alloc(mbxid, port)) < 0)
 		return (-EBUSY);
 
-	/* Allocs a message buffer on the port to hold received data. */
-	if ((mbuffer = do_mbuffer_alloc()) < 0)
-		return (-EAGAIN);
-
 	/* Initialize virtual mailbox. */
-	VMAILBOX_SET_USED(vmbxid);
+	virtual_mailboxes[vmbxid].status |= VMAILBOX_STATUS_USED;
 	virtual_mailboxes[vmbxid].volume  = 0ULL;
 	virtual_mailboxes[vmbxid].latency = 0ULL;
 	active_mailboxes[mbxid].ports[port].status |= PORT_STATUS_USED;
-	active_mailboxes[mbxid].ports[port].mbuffer = &mailbox_message_buffers[mbuffer];
 	active_mailboxes[mbxid].refcount++;
 
 	dcache_invalidate();
@@ -564,7 +554,7 @@ PUBLIC int do_vmailbox_open(int remote, int remote_port)
 		return (-EBUSY);
 
 	/* Initialize virtual mailbox. */
-	VMAILBOX_SET_USED(vmbxid);
+	virtual_mailboxes[vmbxid].status |= VMAILBOX_STATUS_USED;
 	virtual_mailboxes[vmbxid].volume  = 0ULL;
 	virtual_mailboxes[vmbxid].latency = 0ULL;
 	virtual_mailboxes[vmbxid].remote  = DO_LADDRESS_COMPOSE(remote, remote_port);
@@ -626,7 +616,6 @@ PUBLIC int do_vmailbox_unlink(int mbxid)
 {
 	int fd;   /* Active mailbox logic ID.       */
 	int port; /* Virtual mailbox logic port ID. */
-	int ret;  /* Underlying function return.    */
 
 	/* Bad virtual mailbox. */
 	if (!VMAILBOX_IS_USED(mbxid))
@@ -644,14 +633,9 @@ PUBLIC int do_vmailbox_unlink(int mbxid)
 
 	port = GET_LADDRESS_PORT(mbxid);
 
-	/* Release mbuffer resource. */
-	if ((ret = do_mbuffer_free(active_mailboxes[fd].ports[port].mbuffer)) < 0)
-		return (ret);
-
 	/* Unlink virtual mailbox. */
-	VMAILBOX_SET_NOTUSED(mbxid);
+	virtual_mailboxes[mbxid].status &= ~VMAILBOX_STATUS_USED;
 	active_mailboxes[fd].ports[port].status &= ~PORT_STATUS_USED;
-	active_mailboxes[fd].ports[port].mbuffer = NULL;
 	active_mailboxes[fd].refcount--;
 
 	/* Release underlying hardware mailbox. */
@@ -695,7 +679,7 @@ PUBLIC int do_vmailbox_close(int mbxid)
 	port = GET_LADDRESS_PORT(mbxid);
 
 	/* Unlink virtual mailbox. */
-	VMAILBOX_SET_NOTUSED(mbxid);
+	virtual_mailboxes[mbxid].status &= ~VMAILBOX_STATUS_USED;
 	virtual_mailboxes[mbxid].remote = -1;
 	active_mailboxes[fd].ports[port].status &= ~PORT_STATUS_USED;
 	active_mailboxes[fd].refcount--;
@@ -712,6 +696,37 @@ PUBLIC int do_vmailbox_close(int mbxid)
  *============================================================================*/
 
 /**
+ * @brief Searches for a stored message destinated to @p local_address.
+ *
+ * @param local_address Local HW address for which the messages come.
+ *
+ * @returns Upon successful completion, the mbuffer that contains the first
+ * message found is returned. A negative error number is returned instead.
+ */
+PRIVATE int do_message_search(int local_address)
+{
+	for (unsigned int i = 0; i < KMAILBOX_MESSAGE_BUFFERS_MAX; ++i)
+	{
+		/* Is the buffer being used by another mailbox? */
+		if (MBUFFER_IS_USED(i))
+			continue;
+
+		/* The buffer contains a stored message? */
+		if (!MBUFFER_IS_BUSY(i))
+			continue;
+
+		/* Is this message addressed to the local_address? */
+		if (mailbox_message_buffers[i].message.dest != local_address)
+			continue;
+
+		return (i);
+	}
+
+	/* No message encountered. */
+	return (-1);
+}
+
+/**
  * @todo TODO: Provide a detailed description for this function.
  */
 PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
@@ -721,7 +736,8 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 	int port;            /* Port used by vmailbox.         */
 	int dest;            /* Msg destination address.       */
 	int local_hwaddress; /* Vmailbox hardware address.     */
-	struct mailbox_message_buffer *aux_buffer;
+	int mbuffer;         /* New alocated buffer.           */
+	struct mailbox_message_buffer *aux_buffer_ptr;
 	uint64_t t1;         /* Clock value before aread call. */
 	uint64_t t2;         /* Clock value after aread call.  */
 
@@ -730,7 +746,6 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 		return (-EBADF);
 
 	fd = GET_LADDRESS_FD(mbxid);
-	port = GET_LADDRESS_PORT(mbxid);
 
 	/* Bad mailbox. */
 	if (!resource_is_used(&active_mailboxes[fd].resource))
@@ -740,19 +755,26 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 	if (!resource_is_readable(&active_mailboxes[fd].resource))
 		return (-EBADF);
 
+	port = GET_LADDRESS_PORT(mbxid);
+
 	local_hwaddress = DO_LADDRESS_COMPOSE(active_mailboxes[fd].nodenum, port);
 
 	resource_set_async(&active_mailboxes[fd].resource);
 
-	/* Check if already exists data on port mbuffer. */
-	if (MBUFFER_IS_BUSY(active_mailboxes[fd].ports[port].mbuffer))
+	/* Is there a pending message for this vmailbox? */
+	if ((mbuffer = do_message_search(local_hwaddress)) >= 0)
 	{
+		aux_buffer_ptr = &mailbox_message_buffers[mbuffer];
+
 		t1 = clock_read();
-			kmemcpy(buffer, (void *) &active_mailboxes[fd].ports[port].mbuffer->message.data, ret = size);
+			kmemcpy(buffer, (void *) &aux_buffer_ptr->message.data, ret = size);
 		t2 = clock_read();
 
-		/* Set mbuffer as not busy. */
-		active_mailboxes[fd].ports[port].mbuffer->flags &= ~MBUFFER_FLAGS_BUSY;
+		aux_buffer_ptr->flags &= ~MBUFFER_FLAGS_BUSY;
+
+		/* Releases the message buffer. */
+		/*@todo Assert this returns 0*/
+		do_mbuffer_free(aux_buffer_ptr);
 
 		goto finish;
 	}
@@ -798,12 +820,14 @@ again:
 		/* Check if the destination port is opened to receive data. */
 		if (PORT_IS_USED(fd, aux_port))
 		{
-			/* Redirects the message to the correct port. */
-			aux_buffer = active_mailboxes[fd].ports[aux_port].mbuffer;
-			active_mailboxes[fd].ports[aux_port].mbuffer = active_mailboxes[fd].buffer;
-			active_mailboxes[fd].buffer = aux_buffer;
+			/* Allocate a message_buffer to hold the message. */
+			if ((mbuffer = do_mbuffer_alloc()) < 0)
+				return (-EBUSY);
 
-			MAILBOX_SET_BUSY(fd);
+			/* Switch the mailbox buffer to use an empty one. */
+			active_mailboxes[fd].buffer->flags &= ~MBUFFER_FLAGS_USED;
+			active_mailboxes[fd].buffer = &mailbox_message_buffers[mbuffer];
+
 			goto again;
 		}
 		else
@@ -852,7 +876,6 @@ PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
 		return (-EBADF);
 
 	fd = GET_LADDRESS_FD(mbxid);
-	port = GET_LADDRESS_PORT(mbxid);
 
 	/* Bad virtual mailbox. */
 	if (!resource_is_used(&active_mailboxes[fd].resource))
@@ -861,6 +884,8 @@ PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
 	/* Bad virtual mailbox. */
 	if (!resource_is_writable(&active_mailboxes[fd].resource))
 		return (-EBADF);
+
+	port = GET_LADDRESS_PORT(mbxid);
 
 	/* Allocate the message buffer that will be used to write. */
 	if (active_mailboxes[fd].ports[port].mbuffer != NULL)
