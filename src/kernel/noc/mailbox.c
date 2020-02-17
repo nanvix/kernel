@@ -727,6 +727,42 @@ PRIVATE int do_message_search(int local_address)
 }
 
 /**
+ * @brief Allocs a new message buffer and store the old
+ * on message_buffers tab.
+ *
+ * @param fd Busy HW mailbox.
+ *
+ * @returns Upon successful completion, zero is returned.
+ * A negative error number is returned instead.
+ */
+PRIVATE int do_message_store(int fd)
+{
+	int dest;    /* Message destination.   */
+	int port;    /* Target port.           */
+	int mbuffer; /* New mbuffer allocated. */
+
+	dest = active_mailboxes[fd].buffer->message.dest;
+	port = GET_LADDRESS_PORT(dest);
+
+	/* Check if the destination port is opened to receive data. */
+	if (PORT_IS_USED(fd, port))
+	{
+		/* Allocate a message_buffer to hold the message. */
+		if ((mbuffer = do_mbuffer_alloc()) < 0)
+			return (-EBUSY);
+
+		/* Switch the mailbox buffer to use an empty one. */
+		active_mailboxes[fd].buffer->flags &= ~MBUFFER_FLAGS_USED;
+		active_mailboxes[fd].buffer = &mailbox_message_buffers[mbuffer];
+	}
+	/**
+	 * XXX - ELSE Discards the message.
+	 */
+
+	return (0);
+}
+
+/**
  * @todo TODO: Provide a detailed description for this function.
  */
 PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
@@ -773,8 +809,7 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 		aux_buffer_ptr->flags &= ~MBUFFER_FLAGS_BUSY;
 
 		/* Releases the message buffer. */
-		/*@todo Assert this returns 0*/
-		do_mbuffer_free(aux_buffer_ptr);
+		KASSERT(do_mbuffer_free(aux_buffer_ptr) == 0);
 
 		goto finish;
 	}
@@ -789,8 +824,8 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 			t2 = clock_read();
 
 			goto finish;
-		} else
-			return (-EBUSY);
+		} else if ((ret = do_message_store(fd)) < 0)
+			return (ret);
 	}
 
 again:
@@ -814,22 +849,8 @@ again:
 	dest = active_mailboxes[fd].buffer->message.dest;
 	if (dest != local_hwaddress)
 	{
-		int aux_port = GET_LADDRESS_PORT(dest);
-
-		/* Check if the destination port is opened to receive data. */
-		if (PORT_IS_USED(fd, aux_port))
-		{
-			/* Allocate a message_buffer to hold the message. */
-			if ((mbuffer = do_mbuffer_alloc()) < 0)
-				return (-EBUSY);
-
-			/* Switch the mailbox buffer to use an empty one. */
-			active_mailboxes[fd].buffer->flags &= ~MBUFFER_FLAGS_USED;
-			active_mailboxes[fd].buffer = &mailbox_message_buffers[mbuffer];
-		}
-		/**
-		 * XXX - ELSE Discards the message.
-		 */
+		if ((ret = do_message_store(fd)) < 0)
+			return (ret);
 
 		goto again;
 	}
