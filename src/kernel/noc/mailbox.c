@@ -826,14 +826,12 @@ again:
 			/* Switch the mailbox buffer to use an empty one. */
 			active_mailboxes[fd].buffer->flags &= ~MBUFFER_FLAGS_USED;
 			active_mailboxes[fd].buffer = &mailbox_message_buffers[mbuffer];
+		}
+		/**
+		 * XXX - ELSE Discards the message.
+		 */
 
-			goto again;
-		}
-		else
-		{
-			/* Discards the message. */
-			goto again;
-		}
+		goto again;
 	}
 
 	ret = size;
