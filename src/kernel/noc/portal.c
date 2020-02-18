@@ -367,14 +367,16 @@ PRIVATE int do_mbuffer_free(struct portal_message_buffer * buffer)
  *============================================================================*/
 
 /**
- * @brief Searches for a stored message destinated to @p local_address.
+ * @brief Searches for a stored message sended by @p remote_address
+ * to @p local_address.
  *
- * @param local_address Local HW address for which the messages come.
+ * @param local_address  Local HW address for which the messages come.
+ * @param remote_address Remote HW address from where the messages come.
  *
  * @returns Upon successful completion, the mbuffer that contains the first
  * message found is returned. A negative error number is returned instead.
  */
-PRIVATE int do_message_search(int local_address)
+PRIVATE int do_message_search(int local_address, int remote_address)
 {
 	for (unsigned int i = 0; i < KPORTAL_MESSAGE_BUFFERS_MAX; ++i)
 	{
@@ -389,6 +391,13 @@ PRIVATE int do_message_search(int local_address)
 		/* Is this message addressed to the local_address? */
 		if (portal_message_buffers[i].message.dest != local_address)
 			continue;
+
+		/* Is the message sender the expected? */
+		if (remote_address != -1)
+		{
+			if (portal_message_buffers[i].message.src != remote_address)
+				continue;
+		}
 
 		return (i);
 	}
@@ -741,7 +750,7 @@ PUBLIC int do_vportal_unlink(int portalid)
 	local_hwaddress = DO_LADDRESS_COMPOSE(active_portals[fd].local, port);
 
 	/* Releases mbuffers that contains messages addressed to this vportal. */
-	while ((mbuffer = do_message_search(local_hwaddress)) >= 0)
+	while ((mbuffer = do_message_search(local_hwaddress, -1)) >= 0)
 	{
 		portal_message_buffers[mbuffer].flags &= ~MBUFFER_FLAGS_BUSY;
 
@@ -858,6 +867,7 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 	int port;            /* Port used by vportal.          */
 	int local_hwaddress; /* Vportal hardware address.      */
 	int dest;            /* Message destination address.   */
+	int src;             /* Message sender address.        */
 	int mbuffer;         /* New alocated buffer.           */
 	uint64_t t1;         /* Clock value before aread call. */
 	uint64_t t2;         /* Clock value after aread call.  */
@@ -888,7 +898,7 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 	resource_set_async(&active_portals[fd].resource);
 
 	/* Is there a pending message for this vportal? */
-	if ((mbuffer = do_message_search(local_hwaddress)) >= 0)
+	if ((mbuffer = do_message_search(local_hwaddress, virtual_portals[portalid].remote)) >= 0)
 	{
 		aux_buffer_ptr = &portal_message_buffers[mbuffer];
 
@@ -908,7 +918,9 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 	if (PORTAL_IS_BUSY(fd))
 	{
 		dest = active_portals[fd].buffer->message.dest;
-		if (dest == local_hwaddress)
+		src = active_portals[fd].buffer->message.src;
+
+		if ((dest == local_hwaddress) && (src == virtual_portals[portalid].remote))
 		{
 			t1 = clock_read();
 				kmemcpy(buffer, (void *) &active_portals[fd].buffer->message.data, ret = size);
@@ -943,7 +955,9 @@ again:
 
 	/* Checks if the message is addressed for the requesting port. */
 	dest = active_portals[fd].buffer->message.dest;
-	if (dest != local_hwaddress)
+	src = active_portals[fd].buffer->message.src;
+
+	if ((dest != local_hwaddress) || (src != virtual_portals[portalid].remote))
 	{
 		if ((ret = do_message_store(fd)) < 0)
 			return (ret);
