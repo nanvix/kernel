@@ -562,6 +562,10 @@ PUBLIC int do_vportal_allow(int portalid, int remote, int remote_port)
 {
 	int fd;  /* Active portal logic ID. */
 
+	/* Bad virtual portal. */
+	if (!VPORTAL_IS_USED(portalid))
+		return (-EBADF);
+
 	fd = GET_LADDRESS_FD(portalid);
 
 	/* Bad portal. */
@@ -718,6 +722,10 @@ PUBLIC int do_vportal_unlink(int portalid)
 	int local_hwaddress; /* Local HW address.       */
 	int mbuffer;         /* Busy mbuffer.           */
 
+	/* Bad virtual portal. */
+	if (!VPORTAL_IS_USED(portalid))
+		return (-EBADF);
+
 	fd = GET_LADDRESS_FD(portalid);
 
 	/* Bad portal. */
@@ -769,6 +777,10 @@ PUBLIC int do_vportal_close(int portalid)
 {
 	int fd;   /* Active portal logic ID.          */
 	int port; /* Port designed to vportal.        */
+
+	/* Bad virtual portal. */
+	if (!VPORTAL_IS_USED(portalid))
+		return (-EBADF);
 
 	fd = GET_LADDRESS_FD(portalid);
 
@@ -850,6 +862,10 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 	uint64_t t1;         /* Clock value before aread call. */
 	uint64_t t2;         /* Clock value after aread call.  */
 	struct portal_message_buffer *aux_buffer_ptr;
+
+	/* Bad virtual portal. */
+	if (!VPORTAL_IS_USED(portalid))
+		return (-EBADF);
 
 	fd = GET_LADDRESS_FD(portalid);
 
@@ -977,6 +993,10 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 	uint64_t t1;       /* Clock value before awrite call. */
 	uint64_t t2;       /* Clock value after awrite call.  */
 
+	/* Bad virtual portal. */
+	if (!VPORTAL_IS_USED(portalid))
+		return (-EBADF);
+
 	fd = GET_LADDRESS_FD(portalid);
 
 	/* Bad portal. */
@@ -1052,6 +1072,10 @@ PUBLIC int do_vportal_wait(int portalid)
 	uint64_t t1;   /* Clock value before wait call. */
 	uint64_t t2;   /* Clock value after wait call.  */
 
+	/* Bad virtual portal. */
+	if (!VPORTAL_IS_USED(portalid))
+		return (-EBADF);
+
 	fd = GET_LADDRESS_FD(portalid);
 
 	/* Bad virtual portal. */
@@ -1085,6 +1109,10 @@ int do_vportal_ioctl(int portalid, unsigned request, va_list args)
 {
 	int ret = 0;
 	int fd;
+
+	/* Bad virtual portal. */
+	if (!VPORTAL_IS_USED(portalid))
+		return (-EBADF);
 
 	fd = GET_LADDRESS_FD(portalid);
 
