@@ -172,13 +172,15 @@ PUBLIC void do_kcall2(void)
 #if __TARGET_HAS_MAILBOX
 			case NR_mailbox_create:
 				ret = kernel_mailbox_create(
-					(int) sysboard[coreid].arg0
+					(int) sysboard[coreid].arg0,
+					(int) sysboard[coreid].arg1
 				);
 				break;
 
 			case NR_mailbox_open:
 				ret = kernel_mailbox_open(
-					(int) sysboard[coreid].arg0
+					(int) sysboard[coreid].arg0,
+					(int) sysboard[coreid].arg1
 				);
 				break;
 

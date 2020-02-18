@@ -294,8 +294,8 @@
 
 #ifdef __NANVIX_MICROKERNEL
 
-	EXTERN int kernel_mailbox_create(int);
-	EXTERN int kernel_mailbox_open(int);
+	EXTERN int kernel_mailbox_create(int, int);
+	EXTERN int kernel_mailbox_open(int, int);
 	EXTERN int kernel_mailbox_unlink(int);
 	EXTERN int kernel_mailbox_close(int);
 	EXTERN int kernel_mailbox_aread(int, void *, size_t);
