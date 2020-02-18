@@ -749,14 +749,9 @@ PUBLIC int do_vportal_unlink(int portalid)
 
 	local_hwaddress = DO_LADDRESS_COMPOSE(active_portals[fd].local, port);
 
-	/* Releases mbuffers that contains messages addressed to this vportal. */
-	while ((mbuffer = do_message_search(local_hwaddress, -1)) >= 0)
-	{
-		portal_message_buffers[mbuffer].flags &= ~MBUFFER_FLAGS_BUSY;
-
-		/* Releases the message buffer. */
-		KASSERT(do_mbuffer_free(&portal_message_buffers[mbuffer]) == 0);
-	}
+	/* Check if exist pending messages for this port. */
+	if ((mbuffer = do_message_search(local_hwaddress, -1)) >= 0)
+		return (-EBUSY);
 
 	/* Unlink virtual portal. */
 	virtual_portals[portalid].status = 0;
