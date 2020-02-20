@@ -117,7 +117,7 @@ PUBLIC int kernel_sync_open(const int *nodes, int nnodes, int type)
 PUBLIC int kernel_sync_wait(int syncid)
 {
 	/* Invalid sync ID. */
-	if (syncid < 0)
+	if (!WITHIN(syncid, 0, KSYNC_MAX))
 		return (-EINVAL);
 
 	return (do_vsync_wait(syncid));
@@ -133,7 +133,7 @@ PUBLIC int kernel_sync_wait(int syncid)
 PUBLIC int kernel_sync_signal(int syncid)
 {
 	/* Invalid sync ID. */
-	if (syncid < 0)
+	if (!WITHIN(syncid, 0, KSYNC_MAX))
 		return (-EINVAL);
 
 	return (do_vsync_signal(syncid));
@@ -149,7 +149,7 @@ PUBLIC int kernel_sync_signal(int syncid)
 PUBLIC int kernel_sync_close(int syncid)
 {
 	/* Invalid sync ID. */
-	if (syncid < 0)
+	if (!WITHIN(syncid, 0, KSYNC_MAX))
 		return (-EINVAL);
 
 	return (do_vsync_close(syncid));
@@ -165,7 +165,7 @@ PUBLIC int kernel_sync_close(int syncid)
 PUBLIC int kernel_sync_unlink(int syncid)
 {
 	/* Invalid sync ID. */
-	if (syncid < 0)
+	if (!WITHIN(syncid, 0, KSYNC_MAX))
 		return (-EINVAL);
 
 	return (do_vsync_unlink(syncid));
