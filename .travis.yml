@@ -57,7 +57,7 @@ jobs:
       name: "MPPA-256"
       if: (NOT type IN (pull_request))
       before_script:
-        - openssl aes-256-cbc -K $encrypted_759c9d3c8277_key -iv $encrypted_759c9d3c8277_iv -in $SSH_KEY -out travis_microkernel_rsa -d
+        - openssl aes-256-cbc -K $encrypted_1696de4fdefa_key -iv $encrypted_1696de4fdefa_iv -in $SSH_KEY -out travis_microkernel_rsa -d
         - eval "$(ssh-agent -s)"
         - chmod 600 travis_microkernel_rsa
         - cp $SSH_CONFIG ~/.ssh/config
@@ -86,7 +86,7 @@ jobs:
       name: "MPPA-256"
       if: (NOT type IN (pull_request))
       before_script:
-        - openssl aes-256-cbc -K $encrypted_759c9d3c8277_key -iv $encrypted_759c9d3c8277_iv -in $SSH_KEY -out travis_microkernel_rsa -d
+        - openssl aes-256-cbc -K $encrypted_1696de4fdefa_key -iv $encrypted_1696de4fdefa_iv -in $SSH_KEY -out travis_microkernel_rsa -d
         - eval "$(ssh-agent -s)"
         - chmod 600 travis_microkernel_rsa
         - cp $SSH_CONFIG ~/.ssh/config
@@ -108,7 +108,7 @@ jobs:
       name: "MPPA-256"
       if: (NOT type IN (pull_request))
       before_script:
-        - openssl aes-256-cbc -K $encrypted_759c9d3c8277_key -iv $encrypted_759c9d3c8277_iv -in $SSH_KEY -out travis_microkernel_rsa -d
+        - openssl aes-256-cbc -K $encrypted_1696de4fdefa_key -iv $encrypted_1696de4fdefa_iv -in $SSH_KEY -out travis_microkernel_rsa -d
         - eval "$(ssh-agent -s)"
         - chmod 600 travis_microkernel_rsa
         - cp $SSH_CONFIG ~/.ssh/config
@@ -130,7 +130,7 @@ jobs:
       name: "MPPA-256"
       if: (NOT type IN (pull_request))
       before_script:
-        - openssl aes-256-cbc -K $encrypted_759c9d3c8277_key -iv $encrypted_759c9d3c8277_iv -in $SSH_KEY -out travis_microkernel_rsa -d
+        - openssl aes-256-cbc -K $encrypted_1696de4fdefa_key -iv $encrypted_1696de4fdefa_iv -in $SSH_KEY -out travis_microkernel_rsa -d
         - eval "$(ssh-agent -s)"
         - chmod 600 travis_microkernel_rsa
         - cp $SSH_CONFIG ~/.ssh/config
