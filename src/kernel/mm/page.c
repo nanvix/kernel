@@ -218,8 +218,8 @@ PUBLIC int upage_inval(vaddr_t vaddr)
 
 #if (CLUSTER_HAS_TLB_SHOOTDOWN)
 	tlb_shootdown(vaddr);
-#else
-	kprintf("[kernel][mm] cannot shootdown the tlb");
+#elif !defined(__unix64__)
+	kprintf("[kernel][mm] cannot shootdown %x", vaddr);
 #endif
 
 	tlb_flush();
