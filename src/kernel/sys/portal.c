@@ -44,7 +44,7 @@ PUBLIC int kernel_portal_create(int local, int port)
 		return (-EINVAL);
 
 	/* Invalid port. */
-	if (!WITHIN(port, 0, PORTAL_PORT_NR))
+	if (!WITHIN(port, 0, KPORTAL_PORT_NR))
 		return (-EINVAL);
 
 	return (do_vportal_create(local, port));
@@ -68,7 +68,7 @@ PUBLIC int kernel_portal_allow(int portalid, int remote, int remote_port)
 		return (-EINVAL);
 
 	/* Invalid port ID. */
-	if (!WITHIN(remote_port, 0, PORTAL_PORT_NR))
+	if (!WITHIN(remote_port, 0, KPORTAL_PORT_NR))
 		return (-EINVAL);
 
 	return (do_vportal_allow(portalid, remote, remote_port));
@@ -92,7 +92,7 @@ PUBLIC int kernel_portal_open(int local, int remote, int remote_port)
 		return (-EINVAL);
 
 	/* Invalid port number. */
-	if (!WITHIN(remote_port, 0, PORTAL_PORT_NR))
+	if (!WITHIN(remote_port, 0, KPORTAL_PORT_NR))
 		return (-EINVAL);
 
 	return (do_vportal_open(local, remote, remote_port));
@@ -144,7 +144,7 @@ PUBLIC int kernel_portal_awrite(int portalid, const void * buffer, size_t size)
 		return (-EINVAL);
 
 	/* Invalid buffer size. */
-	if (size <= 0 || size > PORTAL_MAX_SIZE)
+	if (size <= 0 || size > HAL_PORTAL_MAX_SIZE)
 		return (-EINVAL);
 
 	/* Invalid buffer. */
@@ -172,7 +172,7 @@ PUBLIC int kernel_portal_aread(int portalid, void * buffer, size_t size)
 		return (-EINVAL);
 
 	/* Invalid buffer size. */
-	if (size <= 0 || size > PORTAL_MAX_SIZE)
+	if (size <= 0 || size > HAL_PORTAL_MAX_SIZE)
 		return (-EINVAL);
 
 	/* Invalid buffer. */

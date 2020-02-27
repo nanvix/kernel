@@ -70,19 +70,19 @@ enum portal_search_type {
  * @brief Composes the logic address based on portalid and one of it's ports.
  */
 #define DO_LADDRESS_COMPOSE(portalid, port) \
-	(portalid * PORTAL_PORT_NR + port)
+	(portalid * KPORTAL_PORT_NR + port)
 
 /**
  * @brief Extracts the portalid from vportalid.
  */
 #define GET_LADDRESS_FD(vportalid) \
-	(vportalid / PORTAL_PORT_NR)
+	(vportalid / KPORTAL_PORT_NR)
 
 /**
  * @brief Extracts the port number from vportalid.
  */
 #define GET_LADDRESS_PORT(vportalid) \
-	 (vportalid % PORTAL_PORT_NR)
+	 (vportalid % KPORTAL_PORT_NR)
 /**@}*/
 
 /**
@@ -169,7 +169,7 @@ struct portal_message_buffer
 		int src;           /* Data sender.       */
 		int dest;          /* Data destination.  */
 		unsigned int size; /* Message data size. */
-		char data[PORTAL_MAX_SIZE];
+		char data[HAL_PORTAL_MAX_SIZE];
 	} message;
 };
 
@@ -225,16 +225,16 @@ PRIVATE struct
  */
 PRIVATE struct portal
 {
-	struct resource resource;             /**< Underlying resource.        */
-	int refcount;                         /**< References count.           */
-	int hwfd;                             /**< Underlying file descriptor. */
-	int local;                            /**< Local node number.          */
-	int remote;                           /**< Target node number.         */
-	struct port ports[PORTAL_PORT_NR];    /**< HW ports.                   */
-	struct portal_message_buffer *buffer; /**< Data buffer resource.       */
-} ALIGN(sizeof(dword_t)) active_portals[(PORTAL_CREATE_MAX + PORTAL_OPEN_MAX)] = {
-	[0 ... (PORTAL_CREATE_MAX + PORTAL_OPEN_MAX - 1)] {
-		.ports[0 ... (PORTAL_PORT_NR - 1)] = {
+	struct resource resource;              /**< Underlying resource.        */
+	int refcount;                          /**< References count.           */
+	int hwfd;                              /**< Underlying file descriptor. */
+	int local;                             /**< Local node number.          */
+	int remote;                            /**< Target node number.         */
+	struct port ports[KPORTAL_PORT_NR]; /**< HW ports.                   */
+	struct portal_message_buffer *buffer;  /**< Data buffer resource.       */
+} ALIGN(sizeof(dword_t)) active_portals[(HAL_PORTAL_CREATE_MAX + HAL_PORTAL_OPEN_MAX)] = {
+	[0 ... (HAL_PORTAL_CREATE_MAX + HAL_PORTAL_OPEN_MAX - 1)] {
+		.ports[0 ... (KPORTAL_PORT_NR - 1)] = {
 			.status = 0,
 			.mbuffer = NULL
 		},
@@ -247,7 +247,7 @@ PRIVATE struct portal
  * @brief Resource pool.
  */
 PRIVATE const struct resource_pool portalpool = {
-	active_portals, (PORTAL_CREATE_MAX + PORTAL_OPEN_MAX), sizeof(struct portal)
+	active_portals, (HAL_PORTAL_CREATE_MAX + HAL_PORTAL_OPEN_MAX), sizeof(struct portal)
 };
 
 /*============================================================================*
@@ -290,11 +290,11 @@ PRIVATE int do_vportal_alloc(int portalid, int port)
 PRIVATE int do_port_alloc(int portalid)
 {
 	/* Checks if can exist an available port. */
-	if (active_portals[portalid].refcount == PORTAL_PORT_NR)
+	if (active_portals[portalid].refcount == KPORTAL_PORT_NR)
 		goto error;
 
 	/* Searches for a free port on the target portal. */
-	for (unsigned int i = 0; i < PORTAL_PORT_NR; ++i)
+	for (unsigned int i = 0; i < KPORTAL_PORT_NR; ++i)
 	{
 		if (!PORT_IS_USED(portalid, i))
 			return (i);
@@ -440,7 +440,7 @@ PRIVATE int do_message_search(int local_address, int remote_address)
  */
 PRIVATE int do_portal_search(int local, int remote, enum portal_search_type search_type)
 {
-	for (unsigned i = 0; i < (PORTAL_CREATE_MAX + PORTAL_OPEN_MAX); ++i)
+	for (unsigned i = 0; i < (HAL_PORTAL_CREATE_MAX + HAL_PORTAL_OPEN_MAX); ++i)
 	{
 		if (!resource_is_used(&active_portals[i].resource))
 			continue;
@@ -940,7 +940,7 @@ again:
 	t1 = clock_read();
 
 		/* Configures async aread. */
-		if ((ret = portal_aread(active_portals[fd].hwfd, (void *) &active_portals[fd].buffer->message, (KPORTAL_MESSAGE_HEADER_SIZE + PORTAL_MAX_SIZE))) < 0)
+		if ((ret = portal_aread(active_portals[fd].hwfd, (void *) &active_portals[fd].buffer->message, (KPORTAL_MESSAGE_HEADER_SIZE + HAL_PORTAL_MAX_SIZE))) < 0)
 			goto error;
 
 		if ((ret = portal_wait(active_portals[fd].hwfd)) < 0)
@@ -1041,7 +1041,7 @@ write:
 	t1 = clock_read();
 
 		/* Configures async aread. */
-		if ((ret = portal_awrite(active_portals[fd].hwfd, (void *) &active_portals[fd].ports[port].mbuffer->message, (KPORTAL_MESSAGE_HEADER_SIZE + PORTAL_MAX_SIZE))) < 0) {
+		if ((ret = portal_awrite(active_portals[fd].hwfd, (void *) &active_portals[fd].ports[port].mbuffer->message, (KPORTAL_MESSAGE_HEADER_SIZE + HAL_PORTAL_MAX_SIZE))) < 0) {
 			if (ret == -EAGAIN)
 				return (ret);
 			else
@@ -1133,7 +1133,7 @@ int do_vportal_ioctl(int portalid, unsigned request, va_list args)
 	switch (request)
 	{
 		/* Get the amount of data transfered so far. */
-		case PORTAL_IOCTL_GET_VOLUME:
+		case KPORTAL_IOCTL_GET_VOLUME:
 		{
 			size_t *volume;
 			volume = va_arg(args, size_t *);
@@ -1141,7 +1141,7 @@ int do_vportal_ioctl(int portalid, unsigned request, va_list args)
 		} break;
 
 		/* Get the cummulative transfer latency. */
-		case PORTAL_IOCTL_GET_LATENCY:
+		case KPORTAL_IOCTL_GET_LATENCY:
 		{
 			uint64_t *latency;
 			latency = va_arg(args, uint64_t *);
