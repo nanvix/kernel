@@ -33,23 +33,35 @@
 #define NANVIX_PORTAL_H_
 
 	#include <nanvix/hal.h>
+
+#ifdef __NANVIX_MICROKERNEL
+
 	#include <nanvix/const.h>
 	#include <posix/stdarg.h>
+
+#endif /* __NANVIX_MICROKERNEL */
 
 	/**
 	 * @name Requests for do_portal_ioctl().
 	 */
 	/**@{*/
-	#define PORTAL_IOCTL_GET_VOLUME  1 /**< Get the amount of data transferred so far. */
-	#define PORTAL_IOCTL_GET_LATENCY 2 /**< Get the cumulative transfer latency.       */
+	#define KPORTAL_IOCTL_GET_VOLUME  1 /**< Get the amount of data transferred so far. */
+	#define KPORTAL_IOCTL_GET_LATENCY 2 /**< Get the cumulative transfer latency.       */
 	/**@}*/
+
+	/**
+	 * @brief Number of ports per portal.
+	 */
+	#define KPORTAL_PORT_NR 16
 
 	/**
 	 * @brief Maximum number of virtual portals.
 	 *
 	 * Maximum number of virtual portals that may be created/opened.
 	 */
-	#define KPORTAL_MAX (PORTAL_CREATE_MAX + PORTAL_OPEN_MAX) * PORTAL_PORT_NR
+	#define KPORTAL_MAX (HAL_PORTAL_CREATE_MAX + HAL_PORTAL_OPEN_MAX)*KPORTAL_PORT_NR
+
+#ifdef __NANVIX_MICROKERNEL
 
 	/**
 	 * @brief Portal message header size.
@@ -167,6 +179,8 @@
 	 * a negative error code is returned instead.
 	 */
 	EXTERN int do_vportal_ioctl(int portalid, unsigned request, va_list args);
+
+#endif /* __NANVIX_MICROKERNEL */
 
 #endif /* NANVIX_PORTAL_H_ */
 
