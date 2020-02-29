@@ -90,7 +90,10 @@ PRIVATE inline struct pde *pgtab_map(struct pde *pgdir, vaddr_t vaddr)
 	 * accommodate the page table.
 	 */
 	if ((pgtab = kpage_get(false)) == NULL)
+	{
+		kprintf("[kernel][mm] cannot allocate page table");
 		return (NULL);
+	}
 
 	/*
 	 * Map kernel page.
@@ -280,7 +283,10 @@ PUBLIC int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame)
 	 */
 	pde = pde_get(pgdir, vaddr);
 	if (!pde_is_present(pde))
-		pde = pgtab_map(pgdir, vaddr);
+	{
+		if ((pde = pgtab_map(pgdir, vaddr)) == NULL)
+			return (-EAGAIN);
+	}
 
 	/*
 	 * Retrieve the page table entry

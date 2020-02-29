@@ -29,9 +29,19 @@
 #include <posix/errno.h>
 
 /**
- * @brief Reference count for page frames.
+ * @brief Length for bitmap of page frames.
  */
-PRIVATE int frames[NUM_UFRAMES] = {0, };
+#define FRAMES_LENGTH (NUM_UFRAMES/BITMAP_WORD_LENGTH)
+
+/**
+ * @brief Size for bitmap of page frames (in bytes)
+ */
+#define FRAMES_SIZE (FRAMES_LENGTH*sizeof(bitmap_t))
+
+/**
+ * @brief Bitmap of page frames.
+ */
+PRIVATE bitmap_t frames[FRAMES_LENGTH];
 
 /*============================================================================*
  * frame_is_allocated()                                                       *
@@ -45,11 +55,15 @@ PRIVATE int frames[NUM_UFRAMES] = {0, };
  */
 PUBLIC int frame_is_allocated(frame_t frame)
 {
+	bitmap_t bit;
+
 	/* Invalid page frame. */
 	if (!frame_is_valid_num(frame))
 		return (0);
 
-	return ((frames[frame_num_to_id(frame)] >= 0));
+	bit = frame_num_to_id(frame);
+
+	return (bitmap_check_bit(frames, bit));
 }
 
 /*============================================================================*
@@ -67,22 +81,22 @@ PUBLIC int frame_is_allocated(frame_t frame)
  */
 PUBLIC frame_t frame_alloc(void)
 {
-	/* Search for a free frame. */
-	for (frame_t i = 0; i < NUM_UFRAMES; i++)
-	{
-		/* Found it. */
-		if (frames[i] == 0)
-		{
-			frames[i] = 1;
-			dcache_invalidate();
+	bitmap_t bit;
 
-			return (frame_id_to_num(i));
-		}
+	/* Search for a free frame. */
+	bit = bitmap_first_free(frames, FRAMES_SIZE);
+
+	if (bit == BITMAP_FULL)
+	{
+		kprintf("[kernel][mm] page frame overflow");
+
+		return (FRAME_NULL);
 	}
 
-	kprintf("[kernel][mm] page frame overflow");
+	bitmap_set(frames, bit);
+	dcache_invalidate();
 
-	return (FRAME_NULL);
+	return (frame_id_to_num(bit));
 }
 
 /*============================================================================*
@@ -100,16 +114,20 @@ PUBLIC frame_t frame_alloc(void)
  */
 PUBLIC int frame_free(frame_t frame)
 {
+	bitmap_t bit;
+
 	if (!frame_is_valid_num(frame))
 		return (-EINVAL);
 
-	if (frames[frame_num_to_id(frame)] == 0)
+	bit = frame_num_to_id(frame);
+
+	if (bitmap_check_bit(frames, bit) == 0)
 	{
 		kprintf("[kernel][mm] double free on page frame %x", frame);
 		return (-EFAULT);
 	}
 
-	frames[frame_num_to_id(frame)]--;
+	bitmap_clear(frames, bit);
 	dcache_invalidate();
 
 	return (0);
@@ -132,12 +150,11 @@ PUBLIC void frame_init(void)
 	kprintf("[kernel][mm] initializing the page frame allocator");
 
 #ifndef __NANVIX_FAST_BOOT
-	for (frame_t i = 0; i < NUM_UFRAMES; i++)
-		frames[i] = 0;
+	kmemset(frames, 0, FRAMES_SIZE);
 #endif
 
-	#ifndef __SUPPRESS_TESTS
-		kprintf("[kernel][mm] running tests on the page frame allocator");
-		frame_test_driver();
-	#endif
+#ifndef __SUPPRESS_TESTS
+	kprintf("[kernel][mm] running tests on the page frame allocator");
+	frame_test_driver();
+#endif
 }
