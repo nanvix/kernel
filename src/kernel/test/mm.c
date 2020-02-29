@@ -27,10 +27,6 @@
 #include <nanvix/hlib.h>
 #include <posix/errno.h>
 
-/**
- * @cond release_test
- */
-
 /*============================================================================*
  * Frame Allocator Unit Tests                                                 *
  *============================================================================*/
@@ -575,15 +571,29 @@ PRIVATE void test_fault_upage_double_free(void)
  */
 PRIVATE void test_stress_upage_allocation_overflow(void)
 {
+	int expected;
+	unsigned num_upages;
+
+	if (NUM_KPAGES*(PAGE_SIZE/PTE_SIZE) < NUM_UFRAMES)
+	{
+		num_upages = NUM_KPAGES*(PAGE_SIZE/PTE_SIZE);
+		expected = -EFAULT;
+	}
+	else
+	{
+		num_upages = NUM_UFRAMES;
+		expected = -EAGAIN;
+	}
+
 	/* Allocate pages. */
-	for (unsigned i = 0; i < NUM_UPAGES; i++)
+	for (unsigned i = 0; i < num_upages; i++)
 		KASSERT(upage_alloc(root_pgdir, UBASE_VIRT + i*PAGE_SIZE) == 0);
 
 	/* Fail to allocate an extra page. */
-	KASSERT(upage_alloc(root_pgdir, UBASE_VIRT + NUM_UPAGES*PAGE_SIZE) == -EAGAIN);
+	KASSERT(upage_alloc(root_pgdir, UBASE_VIRT + NUM_UPAGES*PAGE_SIZE) == expected);
 
 	/* Release pages. */
-	for (unsigned i = 0; i < NUM_UPAGES; i++)
+	for (unsigned i = 0; i < num_upages; i++)
 		KASSERT(upage_free(root_pgdir, UBASE_VIRT + i*PAGE_SIZE) == 0);
 }
 
@@ -594,12 +604,17 @@ PRIVATE void test_stress_upage_allocation_overflow(void)
  */
 PRIVATE void test_stress_upage_allocation(void)
 {
+	unsigned num_upages;
+
+	num_upages = (NUM_KPAGES*(PAGE_SIZE/PTE_SIZE) < NUM_UFRAMES) ?
+		NUM_KPAGES*(PAGE_SIZE/PTE_SIZE) : NUM_UFRAMES;
+
 	/* Allocate pages. */
-	for (unsigned i = 0; i < NUM_UPAGES; i++)
+	for (unsigned i = 0; i < num_upages; i++)
 		KASSERT(upage_alloc(root_pgdir, UBASE_VIRT + i*PAGE_SIZE) == 0);
 
 	/* Release pages. */
-	for (unsigned i = 0; i < NUM_UPAGES; i++)
+	for (unsigned i = 0; i < num_upages; i++)
 		KASSERT(upage_free(root_pgdir, UBASE_VIRT + i*PAGE_SIZE) == 0);
 }
 
