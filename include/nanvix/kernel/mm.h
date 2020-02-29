@@ -330,7 +330,7 @@
 	 *
 	 * @author Pedro Henrique Penna
 	 */
-	static inline vaddr_t kpool_id_to_addr(int id)
+	static inline vaddr_t kpool_id_to_addr(unsigned id)
 	{
 		return (KPOOL_VIRT + (id << PAGE_SHIFT));
 	}
