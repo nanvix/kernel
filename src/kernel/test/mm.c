@@ -56,6 +56,8 @@ PRIVATE void test_api_frame_allocation(void)
 	frame_t frame;
 
 	KASSERT((frame = frame_alloc()) != FRAME_NULL);
+	KASSERT(frame >= (UBASE_PHYS >> PAGE_SHIFT));
+	KASSERT(frame < ((UBASE_PHYS + UMEM_SIZE) >> PAGE_SHIFT));
 	KASSERT(frame_free(frame) == 0);
 }
 
@@ -106,6 +108,25 @@ PRIVATE void test_fault_frame_double_free(void)
 	KASSERT((frame = frame_alloc()) != FRAME_NULL);
 	KASSERT(frame_free(frame) == 0);
 	KASSERT(frame_free(frame) == -EFAULT);
+}
+
+/**
+ * @brief Stress Test: Page Frame Address Translation
+ *
+ * @author Pedro Henrique Penna
+ */
+PRIVATE void test_stress_frame_translation(void)
+{
+	/* Release all page frames. */
+	for (frame_t i = 0; i < NUM_UFRAMES; i++)
+	{
+		frame_t frame;
+
+		KASSERT((frame = frame_id_to_num(i)) != FRAME_NULL);
+
+		KASSERT(frame >= (UBASE_PHYS >> PAGE_SHIFT));
+		KASSERT(frame < ((UBASE_PHYS + UMEM_SIZE) >> PAGE_SHIFT));
+	}
 }
 
 #if defined(__ENABLE_STRESS_TESTS)
@@ -166,6 +187,7 @@ PRIVATE struct
 	{ test_fault_frame_invalid_free,         "fault",  "invalid frame release"             },
 	{ test_fault_frame_bad_free,             "fault",  "bad frame release"                 },
 	{ test_fault_frame_double_free,          "fault",  "double frame release"              },
+	{ test_stress_frame_translation,         "stress", "frame address translation"         },
 #if defined(__ENABLE_STRESS_TESTS)
 	{ test_stress_frame_allocation,          "stress", "frame allocation"                  },
 	{ test_stress_frame_allocation_overflow, "stress", "frame allocation overflow"         },
