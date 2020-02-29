@@ -177,16 +177,16 @@ PRIVATE struct
 	const char *type;      /**< Name of test type. */
 	const char *name;      /**< Test Name.         */
 } frame_tests[] = {
-	{ test_api_frame_translation,            "api",    "frame address translation"         },
-	{ test_api_frame_allocation,             "api",    "frame allocation"                  },
+	{ test_api_frame_translation,            "api",    "frame address translation        " },
+	{ test_api_frame_allocation,             "api",    "frame allocation                 " },
 	{ test_fault_frame_invalid_translation,  "fault",  "invalid frame address translation" },
-	{ test_fault_frame_invalid_free,         "fault",  "invalid frame release"             },
-	{ test_fault_frame_bad_free,             "fault",  "bad frame release"                 },
-	{ test_fault_frame_double_free,          "fault",  "double frame release"              },
-	{ test_stress_frame_translation,         "stress", "frame address translation"         },
+	{ test_fault_frame_invalid_free,         "fault",  "invalid frame release            " },
+	{ test_fault_frame_bad_free,             "fault",  "bad frame release                " },
+	{ test_fault_frame_double_free,          "fault",  "double frame release             " },
+	{ test_stress_frame_translation,         "stress", "frame address translation        " },
 #if defined(__ENABLE_STRESS_TESTS)
-	{ test_stress_frame_allocation,          "stress", "frame allocation"                  },
-	{ test_stress_frame_allocation_overflow, "stress", "frame allocation overflow"         },
+	{ test_stress_frame_allocation,          "stress", "frame allocation                 " },
+	{ test_stress_frame_allocation_overflow, "stress", "frame allocation overflow        " },
 #endif
 	{ NULL,                                   NULL,     NULL                               },
 };
@@ -432,17 +432,17 @@ PRIVATE struct
 	const char *name;      /**< Test Name.         */
 } kpool_tests[] = {
 	{ test_api_kpage_translation,            "api",    "kernel page address translation" },
-	{ test_api_kpage_allocation,             "api",    "kernel page allocation"          },
-	{ test_api_kpage_write,                  "api",    "kernel page write"               },
-	{ test_api_kpage_clean_allocation,       "api",    "kernel page clean allocation"    },
-	{ test_fault_kpage_invalid_free,         "fault",  "kernel page invalid release"     },
-	{ test_fault_kpage_bad_free,             "fault",  "kernel page bad release"         },
-	{ test_fault_kpage_double_free,          "fault",  "kernel page double release"      },
+	{ test_api_kpage_allocation,             "api",    "kernel page allocation         " },
+	{ test_api_kpage_write,                  "api",    "kernel page write              " },
+	{ test_api_kpage_clean_allocation,       "api",    "kernel page clean allocation   " },
+	{ test_fault_kpage_invalid_free,         "fault",  "kernel page invalid release    " },
+	{ test_fault_kpage_bad_free,             "fault",  "kernel page bad release        " },
+	{ test_fault_kpage_double_free,          "fault",  "kernel page double release     " },
 	{ test_stress_kpage_translation,         "stress", "kernel page address translation" },
 #if defined(__ENABLE_STRESS_TESTS)
-	{ test_stress_kpage_allocation,          "stress", "kernel page allocation"          },
+	{ test_stress_kpage_allocation,          "stress", "kernel page allocation         " },
 	{ test_stress_kpage_allocation_overflow, "stress", "kernel page allocation overflow" },
-	{ test_stress_kpage_write,               "stress", "kernel page write"               },
+	{ test_stress_kpage_write,               "stress", "kernel page write              " },
 #endif
 	{ NULL,                                   NULL,     NULL                             },
 };
@@ -675,17 +675,17 @@ PRIVATE struct
 	const char *type;      /**< Name of test type. */
 	const char *name;      /**< Test Name.         */
 } upool_tests[] = {
-	{ test_api_upage_allocation,             "api",    "user page allocation"          },
-	{ test_api_upage_write,                  "api",    "user page write"               },
-	{ test_fault_upage_invalid_allocation,   "fault",  "user page invalid allocation"  },
-	{ test_fault_upage_double_allocation,    "fault",  "user page double allocation"   },
-	{ test_fault_upage_invalid_free,         "fault",  "user page invalid free"        },
-	{ test_fault_upage_bad_free,             "fault",  "user page bad free"            },
-	{ test_fault_upage_double_free,          "fault",  "user page double free"         },
+	{ test_api_upage_allocation,             "api",    "user page allocation         " },
+	{ test_api_upage_write,                  "api",    "user page write              " },
+	{ test_fault_upage_invalid_allocation,   "fault",  "user page invalid allocation " },
+	{ test_fault_upage_double_allocation,    "fault",  "user page double allocation  " },
+	{ test_fault_upage_invalid_free,         "fault",  "user page invalid free       " },
+	{ test_fault_upage_bad_free,             "fault",  "user page bad free           " },
+	{ test_fault_upage_double_free,          "fault",  "user page double free        " },
 #if defined(__ENABLE_STRESS_TESTS)
-	{ test_stress_upage_allocation,          "stress", "user page allocation"          },
+	{ test_stress_upage_allocation,          "stress", "user page allocation         " },
 	{ test_stress_upage_allocation_overflow, "stress", "user page allocation overflow" },
-	{ test_stress_upage_write,               "stress", "user page write"               },
+	{ test_stress_upage_write,               "stress", "user page write              " },
 #endif
 	{ NULL,                                   NULL,     NULL                           },
 };
