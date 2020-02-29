@@ -239,6 +239,10 @@ PRIVATE void test_api_kpage_allocation(void)
 	void *kpg;
 
 	KASSERT((kpg = kpage_get(0)) != NULL);
+
+	KASSERT(VADDR(kpg) >= KPOOL_VIRT);
+	KASSERT(VADDR(kpg) < (KPOOL_VIRT + KPOOL_SIZE));
+
 	KASSERT(kpage_put(kpg) == 0);
 }
 
@@ -325,6 +329,23 @@ PRIVATE void test_fault_kpage_double_free(void)
 	KASSERT((kpg = kpage_get(0)) != NULL);
 	KASSERT(kpage_put(kpg) == 0);
 	KASSERT(kpage_put(kpg) == -EFAULT);
+}
+
+/**
+ * @brief Stress test: Kernel Page Address Translation
+ *
+ * @author Pedro Henrique Penna
+ */
+PRIVATE void test_stress_kpage_translation(void)
+{
+	/* Allocate all kernel pages. */
+	for (unsigned i = 0; i < NUM_KPAGES; i++)
+	{
+		vaddr_t vaddr = kpool_id_to_addr(i);
+
+		KASSERT(vaddr >= KPOOL_VIRT);
+		KASSERT(vaddr < (KPOOL_VIRT + KPOOL_SIZE));
+	}
 }
 
 #if defined(__ENABLE_STRESS_TESTS)
@@ -421,6 +442,7 @@ PRIVATE struct
 	{ test_fault_kpage_invalid_free,         "fault",  "kernel page invalid release"     },
 	{ test_fault_kpage_bad_free,             "fault",  "kernel page bad release"         },
 	{ test_fault_kpage_double_free,          "fault",  "kernel page double release"      },
+	{ test_stress_kpage_translation,         "stress", "kernel page address translation" },
 #if defined(__ENABLE_STRESS_TESTS)
 	{ test_stress_kpage_allocation,          "stress", "kernel page allocation"          },
 	{ test_stress_kpage_allocation_overflow, "stress", "kernel page allocation overflow" },
