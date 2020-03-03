@@ -29,6 +29,16 @@
 #include <nanvix/hlib.h>
 #include <posix/errno.h>
 
+#ifndef __unix64__
+#if ((PGDIR_LENGTH*PDE_SIZE) > PAGE_SIZE)
+#error "page size too small"
+#endif
+
+#if ((PGTAB_LENGTH*PTE_SIZE) > PAGE_SIZE)
+#error "page size too small"
+#endif
+#endif
+
 /*============================================================================*
  * pgtab_map()                                                                *
  *============================================================================*/
