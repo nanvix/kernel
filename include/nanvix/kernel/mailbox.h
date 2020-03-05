@@ -52,11 +52,22 @@
 	#define MAILBOX_PORT_NR 16
 
 	/**
+	 * @brief Maximum number of HW mailboxes.
+	 *
+	 * Maximum number of active mailboxes that may be created/opened.
+	 *
+	 * @note This constant is based on the Hal exported mailboxes plus 1 relative
+	 * to when the user open a mailbox to the local node, what is supported by the
+	 * kernel but not by the Hal.
+	 */
+	#define HW_MAILBOX_MAX (MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX + 1)
+
+	/**
 	 * @brief Maximum number of virtual mailboxes.
 	 *
 	 * Maximum number of virtual mailboxes that may be created/opened.
 	 */
-	#define KMAILBOX_MAX (MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX) * MAILBOX_PORT_NR
+	#define KMAILBOX_MAX (HW_MAILBOX_MAX * MAILBOX_PORT_NR)
 
 	/**
 	 * @brief Mailbox message header size.
