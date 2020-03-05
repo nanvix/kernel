@@ -55,11 +55,18 @@
 	#define KPORTAL_PORT_NR 16
 
 	/**
+	 * @brief Maximum number of active portals.
+	 *
+	 * Maximum number of HW portals that may be created/opened.
+	 */
+	#define HW_PORTAL_MAX (HAL_PORTAL_CREATE_MAX + HAL_PORTAL_OPEN_MAX + 1)
+
+	/**
 	 * @brief Maximum number of virtual portals.
 	 *
 	 * Maximum number of virtual portals that may be created/opened.
 	 */
-	#define KPORTAL_MAX (HAL_PORTAL_CREATE_MAX + HAL_PORTAL_OPEN_MAX)*KPORTAL_PORT_NR
+	#define KPORTAL_MAX (HW_PORTAL_MAX * KPORTAL_PORT_NR)
 
 #ifdef __NANVIX_MICROKERNEL
 
