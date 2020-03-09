@@ -24,6 +24,7 @@
 
 #include <nanvix/hal.h>
 #include <nanvix/kernel/sync.h>
+#include <nanvix/kernel/syscall.h>
 #include <nanvix/hlib.h>
 #include <posix/errno.h>
 
@@ -32,23 +33,50 @@
 /**
  * @brief Search types for do_sync_search().
  */
-enum sync_search_type {
-	SYNC_SEARCH_INPUT = 0,
-	SYNC_SEARCH_OUTPUT = 1
+enum sync_type {
+	SYNC_INPUT = 0,
+	SYNC_OUTPUT = 1
 } resource_type_enum_t;
+
+/**
+ * @brief Virtual sync flags.
+ */
+#define VSYNC_STATUS_USED (1 << 0) /**< Used vsync? */
+
+/**
+ * @brief Asserts if the virtual sync is used.
+ */
+#define VSYNC_IS_USED(vsyncid) \
+	(virtual_syncs[vsyncid].status & VSYNC_STATUS_USED)
 
 /*============================================================================*
  * Control Structures.                                                        *
  *============================================================================*/
 
 /**
+ * @brief Auxiliar array to hold nodes list.
+ */
+int nodes_array[PROCESSOR_NOC_NODES_NUM];
+
+/**
  * @brief Table of virtual synchronization points.
  */
 PRIVATE struct
 {
-	int fd; /**< Index to table of active syncs. */
+	unsigned short status;    /**< VSync status flags.         */
+	enum sync_type sync_type; /**< Input / Output ?            */
+	int type;                 /**< ALL_FOR_ONE / ONE_FOR_ALL ? */
+	int masternum;            /**< Master node number.         */
+	int nnodes;               /**< Number of nodes involved.   */
+	uint64_t nodeslist;       /**< Node ID list.               */
 } ALIGN(sizeof(dword_t)) virtual_syncs[KSYNC_MAX] = {
-	[0 ... (KSYNC_MAX - 1)] = { .fd = -1 },
+	[0 ... (KSYNC_MAX - 1)] = {
+		.status = 0,
+		.type = -1,
+		.masternum = -1,
+		.nnodes = 0,
+		.nodeslist = 0ULL
+	},
 };
 
 /**
@@ -57,12 +85,10 @@ PRIVATE struct
 PRIVATE struct sync
 {
 	struct resource resource; /**< Underlying resource.        */
-	int refcount;             /**< References count.           */
 	int hwfd;                 /**< Underlying file descriptor. */
 	int masternum;            /**< Node number of the ONE.     */
-	int type;                 /**< Sync type.                  */
-	uint64_t nodeslist;       /**< Node ID list.               */
-} active_syncs[(SYNC_CREATE_MAX + SYNC_OPEN_MAX)];
+	uint64_t nodeslist;       /**< Nodeslist.                  */
+} ALIGN(sizeof(dword_t)) active_syncs[(SYNC_CREATE_MAX + SYNC_OPEN_MAX)];
 
 /**
  * @brief Resource pool.
@@ -72,72 +98,28 @@ PRIVATE const struct resource_pool syncpool = {
 };
 
 /*============================================================================*
- * do_vsync_is_valid()                                                         *
+ * do_sync_search()                                                           *
  *============================================================================*/
-
-/**
- * @brief Asserts whether or not a virtual synchronization point is valid.
- *
- * @param syncid ID of the target virtual synchronization point.
- *
- * @returns One if the virtual synchronization point is valid, and false
- * otherwise.
- *
- * @note This function is non-blocking.
- * @note This function is thread-safe.
- * @note This function is reentrant.
- */
-PRIVATE int do_vsync_is_valid(int syncid)
-{
-	return WITHIN(syncid, 0, KSYNC_MAX);
-}
-
-/*============================================================================*
- * do_sync_search()                                                        *
- *============================================================================*/
-
-/**
- * @name Helper Macros for do_sync_search()
- */
-/**@{*/
-
-/**
- * @brief Asserts an input sync.
- */
-#define SYNC_SEARCH_IS_INPUT(syncid,type) \
-	((type == SYNC_SEARCH_INPUT) && !resource_is_readable(&active_syncs[syncid].resource))
-
-/**
- * @brief Asserts an output sync.
- */
-#define SYNC_SEARCH_IS_OUTPUT(syncid,type) \
-	 ((type == SYNC_SEARCH_OUTPUT) && !resource_is_writable(&active_syncs[syncid].resource))
-/**@}*/
 
 /**
  * @brief Searches for a sync.
  *
  * Searches for an already existing sync in active_syncs.
  *
- * @param masternum    Logic ID of the master node.
- * @param nodeslist    Target nodes list.
- * @param sync_type    Type of synchronization type.
- * @param search_type  Type of the searched resource.
+ * @param masternum Logic ID of the master node.
+ * @param nodeslist Involved nodes list.
  *
- * @returns Upon successful completion, the ID of the sync found is
+ * @returns Upon successful completion, the ID of the HW sync found is
  * returned. Upon failure, a negative error code is returned instead.
  */
-PRIVATE int do_sync_search(int masternum, uint64_t nodeslist, int sync_type, enum sync_search_type search_type)
+PRIVATE int do_sync_search(int masternum, uint64_t nodeslist)
 {
 	for (int i = 0; i < (SYNC_CREATE_MAX + SYNC_OPEN_MAX); ++i)
 	{
 		if (!resource_is_used(&active_syncs[i].resource))
 			continue;
 
-		if (SYNC_SEARCH_IS_INPUT(i, search_type))
-			continue;
-
-		else if (SYNC_SEARCH_IS_OUTPUT(i, search_type))
+		if (!resource_is_readable(&active_syncs[i].resource))
 			continue;
 
 		/* Not the same master? */
@@ -148,10 +130,6 @@ PRIVATE int do_sync_search(int masternum, uint64_t nodeslist, int sync_type, enu
 		if (active_syncs[i].nodeslist != nodeslist)
 			continue;
 
-		/* Not the same type operation? */
-		if (active_syncs[i].type != sync_type)
-			continue;
-
 		return (i);
 	}
 
@@ -159,7 +137,7 @@ PRIVATE int do_sync_search(int masternum, uint64_t nodeslist, int sync_type, enu
 }
 
 /*============================================================================*
- * do_vsync_alloc()                                                        *
+ * do_vsync_alloc()                                                           *
  *============================================================================*/
 
 /**
@@ -173,7 +151,7 @@ PRIVATE int do_vsync_alloc(void)
 	for (int i = 0; i < KSYNC_MAX; ++i)
 	{
 		/* Found. */
-		if (virtual_syncs[i].fd < 0)
+		if (!VSYNC_IS_USED(i))
 			return (i);
 	}
 
@@ -181,7 +159,103 @@ PRIVATE int do_vsync_alloc(void)
 }
 
 /*============================================================================*
- * do_vsync_create()                                                           *
+ * sync_nodelist_is_valid()                                                   *
+ *============================================================================*/
+
+/**
+ * @brief Node list validation.
+ *
+ * @param local  Logic ID of local node.
+ * @param nodes  IDs of target NoC nodes.
+ * @param nnodes Number of target NoC nodes.
+ *
+ * @return Non zero if node list is valid and zero otherwise.
+ */
+PRIVATE int sync_nodelist_is_valid(int local, const int *nodes, int nnodes)
+{
+	uint64_t checks;
+
+	checks = 0ULL;
+
+	/* Build list of RX NoC nodes. */
+	for (int i = 0; i < nnodes; ++i)
+	{
+		/* Does a node appear twice? */
+		if (checks & (1ULL << nodes[i]))
+			return (0);
+
+		checks |= (1ULL << nodes[i]);
+	}
+
+	/* Local Node found. */
+	return (checks & (1ULL << local));
+}
+
+/*============================================================================*
+ * sync_is_local()                                                            *
+ *============================================================================*/
+
+/**
+ * @brief Sync local point validation.
+ *
+ * @param nodenum Logic ID of local node.
+ * @param nodes   IDs of target NoC nodes.
+ * @param nnodes  Number of target NoC nodes.
+ *
+ * @return Non zero if local point is valid and zero otherwise.
+ */
+PRIVATE int sync_is_local(int nodenum, const int *nodes, int nnodes)
+{
+	/* Underlying NoC node SHOULD be here. */
+	if (nodenum != nodes[0])
+		return (0);
+
+	/* Underlying NoC node SHOULD NOT be here. */
+	for (int i = 1; i < nnodes; i++)
+	{
+		if (nodenum == nodes[i])
+			return (0);
+	}
+
+	return (1);
+}
+
+/*============================================================================*
+ * sync_is_remote()                                                           *
+ *============================================================================*/
+
+/**
+ * @brief Sync remote point validation.
+ *
+ * @param nodenum Logic ID of local node.
+ * @param nodes   IDs of target NoC nodes.
+ * @param nnodes  Number of target NoC nodes.
+ *
+ * @return Non zero if remote point is valid and zero otherwise.
+ */
+PRIVATE int sync_is_remote(int nodenum, const int *nodes, int nnodes)
+{
+	int found = 0;
+
+	/* Underlying NoC node SHOULD NOT be here. */
+	if (nodenum == nodes[0])
+		return (0);
+
+	/* Underlying NoC node SHOULD be here. */
+	for (int i = 1; i < nnodes; i++)
+	{
+		if (nodenum == nodes[i])
+			found++;
+	}
+
+	if (found != 1)
+		return (0);
+
+	return (1);
+}
+
+/*============================================================================*
+ * do_vsync_create()                                                          *
  *============================================================================*/
 
 /**
@@ -196,14 +270,19 @@ PRIVATE int do_vsync_alloc(void)
  * synchronization point is returned. Upon failure, a negative error
  * code is returned instead.
  */
-PRIVATE int _do_sync_create(const int *nodes, int nnodes, int type, uint64_t nodeslist)
+PRIVATE int _do_sync_create(const int *nodes, int nnodes, int type)
 {
-	int hwfd;   /* File descriptor.       */
-	int syncid; /* Synchronization point. */
+	int hwfd;           /* File descriptor.       */
+	int syncid;         /* Synchronization point. */
+	uint64_t nodeslist; /* Target nodes list.     */
 
-	/* Search target hardware synchronization point. */
-	if ((syncid = do_sync_search(nodes[0], nodeslist, type, SYNC_SEARCH_INPUT)) >= 0)
-		return (syncid);
+	nodeslist = 0ULL;
+	for (int j = 0; j < nnodes; j++)
+		nodeslist |= (1ULL << nodes[j]);
+
+	/* Allocate a synchronization point. */
+	if ((syncid = do_sync_search(nodes[0], nodeslist)) >= 0)
+		return (-EBUSY);
 
 	/* Allocate a synchronization point. */
 	if ((syncid = resource_alloc(&syncpool)) < 0)
@@ -217,8 +296,6 @@ PRIVATE int _do_sync_create(const int *nodes, int nnodes, int type, uint64_t nod
 
 	/* Initialize synchronization point. */
 	active_syncs[syncid].hwfd      = hwfd;
-	active_syncs[syncid].type      = type;
-	active_syncs[syncid].refcount  = 0;
 	active_syncs[syncid].masternum = nodes[0];
 	active_syncs[syncid].nodeslist = nodeslist;
 
@@ -234,7 +311,6 @@ PRIVATE int _do_sync_create(const int *nodes, int nnodes, int type, uint64_t nod
  * @param nodes     Logic IDs of target nodes.
  * @param nnodes    Number of target nodes.
  * @param type      Type of synchronization point.
- * @param nodeslist Target nodes list.
  *
  * @returns Upon successful completion, the ID of the newly created
  * virtual synchronization point is returned. Upon failure, a negative
@@ -242,9 +318,27 @@ PRIVATE int _do_sync_create(const int *nodes, int nnodes, int type, uint64_t nod
  */
 PUBLIC int do_vsync_create(const int *nodes, int nnodes, int type)
 {
-	int syncid;         /* HW sync point ID.      */
 	int vsyncid;        /* Virtual sync point ID. */
 	uint64_t nodeslist; /* Target nodes list.     */
+	int nodenum;        /* Local node num.        */
+
+	nodenum = processor_node_get_num(0);
+
+	/* Invalid nodes list. */
+	if (!sync_nodelist_is_valid(nodenum, nodes, nnodes))
+		return (-EINVAL);
+
+	/* Checks the nodes list corretude. */
+	if (type == SYNC_ONE_TO_ALL)
+	{
+		if (!sync_is_remote(nodenum, nodes, nnodes))
+			return (-EINVAL);
+	}
+	else
+	{
+		if (!sync_is_local(nodenum, nodes, nnodes))
+			return (-EINVAL);
+	}
 
 	/* Allocate a virtual synchronization point. */
 	if ((vsyncid = do_vsync_alloc()) < 0)
@@ -254,20 +348,20 @@ PUBLIC int do_vsync_create(const int *nodes, int nnodes, int type)
 	for (int j = 0; j < nnodes; j++)
 		nodeslist |= (1ULL << nodes[j]);
 
-	/* Create a synchronization point. */
-	if ((syncid = _do_sync_create(nodes, nnodes, type, nodeslist)) < 0)
-		return (syncid);
-
 	/* Initialize virtual synchronization point. */
-	virtual_syncs[vsyncid].fd = syncid;
-	active_syncs[syncid].refcount++;
+	virtual_syncs[vsyncid].status   |= VSYNC_STATUS_USED;
+	virtual_syncs[vsyncid].type      = type;
+	virtual_syncs[vsyncid].sync_type = SYNC_INPUT;
+	virtual_syncs[vsyncid].masternum = nodes[0];
+	virtual_syncs[vsyncid].nnodes    = nnodes;
+	virtual_syncs[vsyncid].nodeslist = nodeslist;
 
 	dcache_invalidate();
 	return (vsyncid);
 }
 
 /*============================================================================*
- * do_vsync_open()                                                             *
+ * do_vsync_open()                                                            *
  *============================================================================*/
 
 /**
@@ -284,14 +378,10 @@ PUBLIC int do_vsync_create(const int *nodes, int nnodes, int type)
  *
  * @todo Check for Invalid Remote
  */
-PRIVATE int _do_sync_open(const int *nodes, int nnodes, int type, uint64_t nodeslist)
+PRIVATE int _do_sync_open(const int *nodes, int nnodes, int type)
 {
 	int hwfd;   /* File descriptor.       */
 	int syncid; /* Synchronization point. */
-
-	/* Search target hardware synchronization point. */
-	if ((syncid = do_sync_search(nodes[0], nodeslist, type, SYNC_SEARCH_OUTPUT)) >= 0)
-		return (syncid);
 
 	/* Allocate a synchronization point. */
 	if ((syncid = resource_alloc(&syncpool)) < 0)
@@ -306,10 +396,7 @@ PRIVATE int _do_sync_open(const int *nodes, int nnodes, int type, uint64_t nodes
 
 	/* Initialize synchronization point. */
 	active_syncs[syncid].hwfd      = hwfd;
-	active_syncs[syncid].type      = type;
-	active_syncs[syncid].refcount  = 0;
 	active_syncs[syncid].masternum = nodes[0];
-	active_syncs[syncid].nodeslist = nodeslist;
 
 	resource_set_wronly(&active_syncs[syncid].resource);
 	resource_set_notbusy(&active_syncs[syncid].resource);
@@ -323,7 +410,6 @@ PRIVATE int _do_sync_open(const int *nodes, int nnodes, int type, uint64_t nodes
  * @param nodes     Logic IDs of target nodes.
  * @param nnodes    Number of target nodes.
  * @param type      Type of synchronization point.
- * @param nodeslist Target nodes list.
  *
  * @returns Upon successful completion, the ID of the opened virtual
  * synchronization point is returned. Upon failure, a negative error
@@ -333,9 +419,27 @@ PRIVATE int _do_sync_open(const int *nodes, int nnodes, int type, uint64_t nodes
  */
 PUBLIC int do_vsync_open(const int *nodes, int nnodes, int type)
 {
-	int syncid;         /* HW sync point ID.      */
 	int vsyncid;        /* Virtual sync point ID. */
-	uint64_t nodeslist; /* Target nodes list.      */
+	uint64_t nodeslist; /* Target nodes list.     */
+	int nodenum;        /* Local node num.        */
+
+	nodenum = processor_node_get_num(0);
+
+	/* Invalid nodes list. */
+	if (!sync_nodelist_is_valid(nodenum, nodes, nnodes))
+		return (-EINVAL);
+
+	/* Checks the nodes list corretude. */
+	if (type == SYNC_ONE_TO_ALL)
+	{
+		if (!sync_is_local(nodenum, nodes, nnodes))
+			return (-EINVAL);
+	}
+	else
+	{
+		if (!sync_is_remote(nodenum, nodes, nnodes))
+			return (-EINVAL);
+	}
 
 	/* Allocate a virtual synchronization point. */
 	if ((vsyncid = do_vsync_alloc()) < 0)
@@ -345,13 +449,13 @@ PUBLIC int do_vsync_open(const int *nodes, int nnodes, int type)
 	for (int j = 0; j < nnodes; j++)
 		nodeslist |= (1ULL << nodes[j]);
 
-	/* Create a synchronization point. */
-	if ((syncid = _do_sync_open(nodes, nnodes, type, nodeslist)) < 0)
-		return (syncid);
-
 	/* Initialize virtual synchronization point. */
-	virtual_syncs[vsyncid].fd = syncid;
-	active_syncs[syncid].refcount++;
+	virtual_syncs[vsyncid].status   |= VSYNC_STATUS_USED;
+	virtual_syncs[vsyncid].type      = type;
+	virtual_syncs[vsyncid].sync_type = SYNC_OUTPUT;
+	virtual_syncs[vsyncid].masternum = nodes[0];
+	virtual_syncs[vsyncid].nnodes    = nnodes;
+	virtual_syncs[vsyncid].nodeslist = nodeslist;
 
 	dcache_invalidate();
 	return (vsyncid);
@@ -379,7 +483,6 @@ PRIVATE int _do_sync_release(int syncid, int (*release_fn)(int))
 
 	active_syncs[syncid].hwfd      = -1;
 	active_syncs[syncid].masternum = -1;
-	active_syncs[syncid].nodeslist = 0ULL;
 
 	resource_free(&syncpool, syncid);
 
@@ -388,7 +491,7 @@ PRIVATE int _do_sync_release(int syncid, int (*release_fn)(int))
 }
 
 /*============================================================================*
- * do_vsync_unlink()                                                           *
+ * do_vsync_unlink()                                                          *
  *============================================================================*/
 
 /**
@@ -401,35 +504,22 @@ PRIVATE int _do_sync_release(int syncid, int (*release_fn)(int))
  */
 PUBLIC int do_vsync_unlink(int syncid)
 {
-	int fd; /* Active_syncs table index. */
-
-	/* Invalid sync. */
-	if (!do_vsync_is_valid(syncid))
-		return (-EINVAL);
-
-	fd = virtual_syncs[syncid].fd;
-
 	/* Bad sync. */
-	if (!resource_is_used(&active_syncs[fd].resource))
+	if (!VSYNC_IS_USED(syncid))
 		return (-EBADF);
 
 	/* Bad sync. */
-	if (!resource_is_readable(&active_syncs[fd].resource))
+	if (virtual_syncs[syncid].sync_type != SYNC_INPUT)
 		return (-EBADF);
 
 	/* Unlink virtual synchronization point. */
-	virtual_syncs[syncid].fd = -1;
-	active_syncs[fd].refcount--;
-
-	/* Release underlying resource. */
-	if (active_syncs[fd].refcount == 0)
-		return (_do_sync_release(fd, sync_unlink));
+	virtual_syncs[syncid].status = 0;
 
 	return (0);
 }
 
 /*============================================================================*
- * do_vsync_close()                                                            *
+ * do_vsync_close()                                                           *
  *============================================================================*/
 
 /**
@@ -442,35 +532,22 @@ PUBLIC int do_vsync_unlink(int syncid)
  */
 PUBLIC int do_vsync_close(int syncid)
 {
-	int fd; /* Active_syncs table index. */
-
-	/* Invalid sync. */
-	if (!do_vsync_is_valid(syncid))
-		return (-EINVAL);
-
-	fd = virtual_syncs[syncid].fd;
-
 	/* Bad sync. */
-	if (!resource_is_used(&active_syncs[fd].resource))
+	if (!VSYNC_IS_USED(syncid))
 		return (-EBADF);
 
 	/* Bad sync. */
-	if (!resource_is_writable(&active_syncs[fd].resource))
+	if (virtual_syncs[syncid].sync_type != SYNC_OUTPUT)
 		return (-EBADF);
 
 	/* Close virtual synchronization point. */
-	virtual_syncs[syncid].fd = -1;
-	active_syncs[fd].refcount--;
-
-	/* Release underlying resource. */
-	if (active_syncs[fd].refcount == 0)
-		return (_do_sync_release(fd, sync_close));
+	virtual_syncs[syncid].status = 0;
 
 	return (0);
 }
 
 /*============================================================================*
- * do_vsync_wait()                                                             *
+ * do_vsync_wait()                                                            *
  *============================================================================*/
 
 /**
@@ -478,30 +555,71 @@ PUBLIC int do_vsync_close(int syncid)
  */
 PUBLIC int do_vsync_wait(int syncid)
 {
-	int fd; /* Active_syncs table index. */
-
-	/* Invalid sync. */
-	if (!do_vsync_is_valid(syncid))
-		return (-EINVAL);
-
-	fd = virtual_syncs[syncid].fd;
+	int fd;           /* HW file descriptor.         */
+	int ret;          /* Hal function return.        */
+	int nsignals = 1; /* Number of signals received. */
+	int nodenum = processor_node_get_num(core_get_id());
+	uint64_t nodeslist;
 
 	dcache_invalidate();
 
 	/* Bad sync. */
-	if (!resource_is_used(&active_syncs[fd].resource))
+	if (!VSYNC_IS_USED(syncid))
 		return (-EBADF);
 
 	/* Bad sync. */
-	if (!resource_is_readable(&active_syncs[fd].resource))
+	if (virtual_syncs[syncid].sync_type != SYNC_INPUT)
 		return (-EBADF);
 
 	/* Waits. */
-	return (sync_wait(active_syncs[fd].hwfd));
+	if (virtual_syncs[syncid].type == SYNC_ONE_TO_ALL)
+	{
+		nodeslist = 0ULL | (1ULL << virtual_syncs[syncid].masternum) | (1ULL << nodenum);
+		KASSERT((fd = do_sync_search(virtual_syncs[syncid].masternum, nodeslist)) >= 0);
+
+		/* Waits for the ONE release signal. */
+		ret = sync_wait(active_syncs[fd].hwfd);
+	}
+	else
+	{
+		for (int j = 0; j < PROCESSOR_NOC_NODES_NUM; ++j)
+		{
+			nodeslist = 0ULL | (1ULL << virtual_syncs[syncid].masternum);
+
+			if (virtual_syncs[syncid].nodeslist & (1ULL << j))
+			{
+				/* Doesn't wait for local signal. */
+				if (j == virtual_syncs[syncid].masternum)
+					continue;
+
+				nodeslist |= 1ULL << j;
+
+				/* Search for the correct fd to wait on. */
+				KASSERT((fd = do_sync_search(j, nodeslist)) >= 0);
+
+				/* Waits for the desired signal. */
+				if ((ret = sync_wait(active_syncs[fd].hwfd)) < 0)
+					return (ret);
+
+				ret = -1;
+
+				/* Check if all signals were received. */
+				if (++nsignals == virtual_syncs[syncid].nnodes)
+				{
+					ret = 0;
+					break;
+				}
+
+				nodeslist &= ~(1ULL << j);
+			}
+		}
+	}
+
+	return (ret);
 }
 
 /*============================================================================*
- * do_vsync_signal()                                                           *
+ * do_vsync_signal()                                                          *
  *============================================================================*/
 
 /**
@@ -509,26 +627,115 @@ PUBLIC int do_vsync_wait(int syncid)
  */
 PUBLIC int do_vsync_signal(int syncid)
 {
-	int fd; /* Active_syncs table index. */
+	int fd;      /* Active_syncs table index. */
+	int ret = 0; /* Hal function return.      */
 
-	/* Invalid sync. */
-	if (!do_vsync_is_valid(syncid))
-		return (-EINVAL);
+	/* Bad sync. */
+	if (!VSYNC_IS_USED(syncid))
+		return (-EBADF);
 
-	fd = virtual_syncs[syncid].fd;
+	/* Bad sync. */
+	if (virtual_syncs[syncid].sync_type != SYNC_OUTPUT)
+		return (-EBADF);
+
+	nodes_array[0] = processor_node_get_num(core_get_id());
 
 	dcache_invalidate();
 
-	/* Bad sync. */
-	if (!resource_is_used(&active_syncs[fd].resource))
-		return (-EBADF);
+	if (virtual_syncs[syncid].type == SYNC_ONE_TO_ALL)
+	{
+		/* Sends each one of ALL the signals to ONE. */
+		for (int i = 0, nsignals = 1; i < PROCESSOR_NOC_NODES_NUM; ++i)
+		{
+			/* Discards uninvolved nodes. */
+			if (!(virtual_syncs[syncid].nodeslist & (1ULL << i)))
+				continue;
 
-	/* Bad sync. */
-	if (!resource_is_writable(&active_syncs[fd].resource))
-		return (-EBADF);
+			/* Discards the master node. */
+			if (nodes_array[0] == i)
+				continue;
 
-	/* Sends signal. */
-	return (sync_signal(active_syncs[fd].hwfd));
+			nodes_array[1] = i;
+
+			/* Configure the output synchronization point. */
+			if ((fd = _do_sync_open(nodes_array, 2, SYNC_ONE_TO_ALL)) < 0)
+				return (fd);
+
+			/* Sends signal. */
+			if ((ret = sync_signal(active_syncs[fd].hwfd)) < 0)
+				return (ret);
+
+			/* Releases the HW signal sender. */
+			ret = _do_sync_release(fd, sync_close);
+
+			if (++nsignals == virtual_syncs[syncid].nnodes)
+				break;
+		}
+	}
+	else
+	{
+		nodes_array[1] = virtual_syncs[syncid].masternum;
+
+		/* Configure the output synchronization point. */
+		if ((fd = _do_sync_open(nodes_array, 2, SYNC_ONE_TO_ALL)) < 0)
+			return (fd);
+
+		/* Sends signal. */
+		if ((ret = sync_signal(active_syncs[fd].hwfd)) < 0)
+			return (ret);
+
+		/* Releases the HW signal sender. */
+		ret = _do_sync_release(fd, sync_close);
+	}
+
+	return (ret);
+}
+
+/*============================================================================*
+ * ksync_init()                                                               *
+ *============================================================================*/
+
+/**
+ * @todo TODO: Provide a detailed description for this function.
+ */
+PUBLIC void ksync_init(void)
+{
+	int nodes[2];
+	int nodenum = processor_node_get_num(0);
+
+	kprintf("[kernel][noc] initializing the ksync facility");
+
+	if (cluster_is_iocluster(cluster_get_num()))
+	{
+		for (int i = 0; i < PROCESSOR_NOC_IONODES_NUM / PROCESSOR_IOCLUSTERS_NUM; ++i)
+		{
+			nodes[1] = nodenum + i;
+
+			/* Creates all sync interfaces. */
+			for (int j = 0; j < PROCESSOR_NOC_NODES_NUM; ++j)
+			{
+				if (j == nodes[1])
+					continue;
+
+				nodes[0] = j;
+				KASSERT(_do_sync_create(nodes, 2, SYNC_ONE_TO_ALL) >= 0);
+			}
+		}
+	}
+	else
+	{
+		nodes[1] = nodenum;
+
+		/* Creates all sync interfaces. */
+		for (int i = 0; i < PROCESSOR_NOC_NODES_NUM; ++i)
+		{
+			if (i == nodes[1])
+				continue;
+
+			nodes[0] = i;
+			KASSERT(_do_sync_create(nodes, 2, SYNC_ONE_TO_ALL) >= 0);
+		}
+	}
 }
 
 #endif /* __TARGET_SYNC */

@@ -110,6 +110,11 @@
 	 */
 	EXTERN int do_vsync_signal(int syncid);
 
+	/**
+	 * @brief Initializes the synchronization facility.
+	 */
+	EXTERN void ksync_init(void);
+
 #endif /* NANVIX_SYNC_H_ */
 
 /**@}*/
