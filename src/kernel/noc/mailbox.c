@@ -200,7 +200,7 @@ PRIVATE struct
 	/**@}*/
 } ALIGN(sizeof(dword_t)) virtual_mailboxes[KMAILBOX_MAX] = {
 	[0 ... (KMAILBOX_MAX - 1)] = {
-		.status  =  0,
+		.status =  0,
 		.remote = -1
 	},
 };
@@ -216,8 +216,8 @@ PRIVATE struct mailbox
 	int nodenum;                           /**< Target node number.         */
 	struct port ports[MAILBOX_PORT_NR];    /**< Logic ports.                */
 	struct mailbox_message_buffer *buffer; /**< Data Buffer resource.       */
-} active_mailboxes[(MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX)] = {
-	[0 ... (MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX - 1)] {
+} active_mailboxes[HW_MAILBOX_MAX] = {
+	[0 ... (HW_MAILBOX_MAX - 1)] {
 		.ports[0 ... (MAILBOX_PORT_NR - 1)] = {
 			.status = 0,
 			.mbuffer = NULL,
@@ -230,7 +230,7 @@ PRIVATE struct mailbox
  * @brief Resource pool.
  */
 PRIVATE const struct resource_pool mbxpool = {
-	active_mailboxes, (MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX), sizeof(struct mailbox)
+	active_mailboxes, HW_MAILBOX_MAX, sizeof(struct mailbox)
 };
 
 /*============================================================================*
@@ -253,6 +253,11 @@ PRIVATE int do_vmailbox_alloc(int mbxid, int port)
 
 	if (VMAILBOX_IS_USED(vmbxid))
 		return (-1);
+
+	/* Initialize the vmailbox. */
+	virtual_mailboxes[vmbxid].status |= VMAILBOX_STATUS_USED;
+	virtual_mailboxes[vmbxid].volume  = 0ULL;
+	virtual_mailboxes[vmbxid].latency = 0ULL;
 
 	return (vmbxid);
 }
@@ -413,7 +418,7 @@ PRIVATE int do_message_search(int local_address)
  */
 PRIVATE int do_mailbox_search(int nodenum, enum mailbox_search_type search_type)
 {
-	for (int i = 0; i < (MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX); ++i)
+	for (int i = 0; i < HW_MAILBOX_MAX; ++i)
 	{
 		if (!resource_is_used(&active_mailboxes[i].resource))
 			continue;
@@ -511,9 +516,6 @@ PUBLIC int do_vmailbox_create(int local, int port)
 		return (-EBUSY);
 
 	/* Initialize virtual mailbox. */
-	virtual_mailboxes[vmbxid].status |= VMAILBOX_STATUS_USED;
-	virtual_mailboxes[vmbxid].volume  = 0ULL;
-	virtual_mailboxes[vmbxid].latency = 0ULL;
 	active_mailboxes[mbxid].ports[port].status |= PORT_STATUS_USED;
 	active_mailboxes[mbxid].refcount++;
 
@@ -536,8 +538,8 @@ PUBLIC int do_vmailbox_create(int local, int port)
  */
 PRIVATE int _do_mailbox_open(int remote)
 {
-	int hwfd;  /* File descriptor. */
-	int mbxid; /* Mailbox ID.      */
+	int hwfd = -1; /* File descriptor. */
+	int mbxid;     /* Mailbox ID.      */
 
 	/* Search target hardware mailbox. */
 	if ((mbxid = do_mailbox_search(remote, MAILBOX_SEARCH_OUTPUT)) >= 0)
@@ -547,11 +549,19 @@ PRIVATE int _do_mailbox_open(int remote)
 	if ((mbxid = resource_alloc(&mbxpool)) < 0)
 		return (-EAGAIN);
 
-	/* Open underlying output hardware mailbox. */
-	if ((hwfd = mailbox_open(remote)) < 0)
+	/* Checks if the remote is not the local node. */
+#ifdef __mppa256__
+	if (remote != processor_node_get_num(0) || cluster_is_iocluster(cluster_get_num()))
+#else
+	if (remote != processor_node_get_num(0))
+#endif
 	{
-		resource_free(&mbxpool, mbxid);
-		return (hwfd);
+		/* Open underlying output hardware mailbox. */
+		if ((hwfd = mailbox_open(remote)) < 0)
+		{
+			resource_free(&mbxpool, mbxid);
+			return (hwfd);
+		}
 	}
 
 	/* Initialize hardware mailbox. */
@@ -593,10 +603,7 @@ PUBLIC int do_vmailbox_open(int remote, int remote_port)
 		return (-EBUSY);
 
 	/* Initialize virtual mailbox. */
-	virtual_mailboxes[vmbxid].status |= VMAILBOX_STATUS_USED;
-	virtual_mailboxes[vmbxid].volume  = 0ULL;
-	virtual_mailboxes[vmbxid].latency = 0ULL;
-	virtual_mailboxes[vmbxid].remote  = DO_LADDRESS_COMPOSE(remote, remote_port);
+	virtual_mailboxes[vmbxid].remote = DO_LADDRESS_COMPOSE(remote, remote_port);
 	active_mailboxes[mbxid].ports[port].status |= PORT_STATUS_USED;
 	active_mailboxes[mbxid].refcount++;
 
@@ -619,7 +626,8 @@ PUBLIC int do_vmailbox_open(int remote, int remote_port)
  */
 PRIVATE int _do_mailbox_release(int mbxid, int (*release_fn)(int))
 {
-	int ret; /* HAL function return. */
+	int ret;  /* HAL function return.   */
+	int hwfd; /* HWFD allocated on HAL. */
 
 	/* Check if there is a data buffer allocated. */
 	if (active_mailboxes[mbxid].buffer != NULL)
@@ -628,8 +636,12 @@ PRIVATE int _do_mailbox_release(int mbxid, int (*release_fn)(int))
 			return (ret);
 	}
 
-	if ((ret = release_fn(active_mailboxes[mbxid].hwfd)) < 0)
-		return (ret);
+	/* Checks if there is a hwfd allocated to this mailbox. */
+	if ((hwfd = active_mailboxes[mbxid].hwfd) >= 0)
+	{
+		if ((ret = release_fn(hwfd)) < 0)
+			return (ret);
+	}
 
 	active_mailboxes[mbxid].hwfd    = -1;
 	active_mailboxes[mbxid].nodenum = -1;
@@ -726,7 +738,7 @@ PUBLIC int do_vmailbox_close(int mbxid)
 	port = GET_LADDRESS_PORT(mbxid);
 
 	/* Unlink virtual mailbox. */
-	virtual_mailboxes[mbxid].status &= ~VMAILBOX_STATUS_USED;
+	virtual_mailboxes[mbxid].status =  0;
 	virtual_mailboxes[mbxid].remote = -1;
 	active_mailboxes[fd].ports[port].status &= ~PORT_STATUS_USED;
 	active_mailboxes[fd].refcount--;
@@ -906,8 +918,8 @@ PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
 	int fd;      /* Hardware mailbox logic index.   */
 	int port;    /* HW port specified to vmailbox.  */
 	int mbuffer; /* Message buffer used to write.   */
-	uint64_t t1; /* Clock value before awrite call. */
-	uint64_t t2; /* Clock value after awrite call.  */
+	uint64_t t1 = 0; /* Clock value before awrite call. */
+	uint64_t t2 = 0; /* Clock value after awrite call.  */
 
 	/* Bad virtual mailbox. */
 	if (!VMAILBOX_IS_USED(mbxid))
@@ -937,7 +949,20 @@ PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
 	resource_set_async(&active_mailboxes[fd].resource);
 
 	active_mailboxes[fd].ports[port].mbuffer->message.dest = virtual_mailboxes[mbxid].remote;
-	kmemcpy((void *) &active_mailboxes[fd].ports[port].mbuffer->message.data, buffer, size);
+
+	t1 = clock_read();
+		kmemcpy((void *) &active_mailboxes[fd].ports[port].mbuffer->message.data, buffer, size);
+	t2 = clock_read();
+
+	/* Checks if the destination is the local node. */
+	if (active_mailboxes[fd].nodenum == processor_node_get_num(0))
+	{
+		/* Forwards the message to the mbuffers table. */
+		active_mailboxes[fd].ports[port].mbuffer->flags = 0 | MBUFFER_FLAGS_BUSY;
+		active_mailboxes[fd].ports[port].mbuffer = NULL;
+
+		goto finish;
+	}
 
 write:
 	t1 = clock_read();
@@ -951,15 +976,16 @@ write:
 
 	t2 = clock_read();
 
+	/* Releases the buffer allocated. */
+	do_mbuffer_free(active_mailboxes[fd].ports[port].mbuffer);
+	active_mailboxes[fd].ports[port].mbuffer = NULL;
+
+finish:
 	ret = size;
 
 	/* Update performance statistics. */
 	virtual_mailboxes[mbxid].latency += (t2 - t1);
 	virtual_mailboxes[mbxid].volume += ret;
-
-	/* Releases the buffer allocated. */
-	do_mbuffer_free(active_mailboxes[fd].ports[port].mbuffer);
-	active_mailboxes[fd].ports[port].mbuffer = NULL;
 
 	return (ret);
 }

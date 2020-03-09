@@ -225,15 +225,15 @@ PRIVATE struct
  */
 PRIVATE struct portal
 {
-	struct resource resource;              /**< Underlying resource.        */
-	int refcount;                          /**< References count.           */
-	int hwfd;                              /**< Underlying file descriptor. */
-	int local;                             /**< Local node number.          */
-	int remote;                            /**< Target node number.         */
-	struct port ports[KPORTAL_PORT_NR]; /**< HW ports.                   */
-	struct portal_message_buffer *buffer;  /**< Data buffer resource.       */
-} ALIGN(sizeof(dword_t)) active_portals[(HAL_PORTAL_CREATE_MAX + HAL_PORTAL_OPEN_MAX)] = {
-	[0 ... (HAL_PORTAL_CREATE_MAX + HAL_PORTAL_OPEN_MAX - 1)] {
+	struct resource resource;             /**< Underlying resource.        */
+	int refcount;                         /**< References count.           */
+	int hwfd;                             /**< Underlying file descriptor. */
+	int local;                            /**< Local node number.          */
+	int remote;                           /**< Target node number.         */
+	struct port ports[KPORTAL_PORT_NR];   /**< HW ports.                   */
+	struct portal_message_buffer *buffer; /**< Data buffer resource.       */
+} ALIGN(sizeof(dword_t)) active_portals[HW_PORTAL_MAX] = {
+	[0 ... (HW_PORTAL_MAX - 1)] {
 		.ports[0 ... (KPORTAL_PORT_NR - 1)] = {
 			.status = 0,
 			.mbuffer = NULL
@@ -247,7 +247,7 @@ PRIVATE struct portal
  * @brief Resource pool.
  */
 PRIVATE const struct resource_pool portalpool = {
-	active_portals, (HAL_PORTAL_CREATE_MAX + HAL_PORTAL_OPEN_MAX), sizeof(struct portal)
+	active_portals, HW_PORTAL_MAX, sizeof(struct portal)
 };
 
 /*============================================================================*
@@ -270,6 +270,11 @@ PRIVATE int do_vportal_alloc(int portalid, int port)
 
 	if (VPORTAL_IS_USED(vportalid))
 		return (-1);
+
+	/* Initialize the virtual portal. */
+	virtual_portals[vportalid].status |= VPORTAL_STATUS_USED;
+	virtual_portals[vportalid].volume  = 0ULL;
+	virtual_portals[vportalid].latency = 0ULL;
 
 	return (vportalid);
 }
@@ -440,7 +445,7 @@ PRIVATE int do_message_search(int local_address, int remote_address)
  */
 PRIVATE int do_portal_search(int local, int remote, enum portal_search_type search_type)
 {
-	for (unsigned i = 0; i < (HAL_PORTAL_CREATE_MAX + HAL_PORTAL_OPEN_MAX); ++i)
+	for (unsigned i = 0; i < HW_PORTAL_MAX; ++i)
 	{
 		if (!resource_is_used(&active_portals[i].resource))
 			continue;
@@ -499,6 +504,7 @@ PRIVATE int _do_portal_create(int local)
 		return (-EAGAIN);
 	}
 
+	/* Create underlying input hardware portal. */
 	if ((hwfd = portal_create(local)) < 0)
 	{
 		do_mbuffer_free(&portal_message_buffers[mbuffer]);
@@ -542,10 +548,7 @@ PUBLIC int do_vportal_create(int local, int port)
 		return (-EBUSY);
 
 	/* Initialize the new virtual portal. */
-	virtual_portals[vportalid].status |= VPORTAL_STATUS_USED;
 	virtual_portals[vportalid].remote  = -1;
-	virtual_portals[vportalid].volume  = 0ULL;
-	virtual_portals[vportalid].latency = 0ULL;
 	active_portals[portalid].ports[port].status |= PORT_STATUS_USED;
 	active_portals[portalid].refcount++;
 
@@ -610,8 +613,8 @@ PUBLIC int do_vportal_allow(int portalid, int remote, int remote_port)
  */
 PRIVATE int _do_portal_open(int local, int remote)
 {
-	int hwfd;     /* File descriptor. */
-	int portalid; /* Portal ID.       */
+	int hwfd = -1; /* File descriptor. */
+	int portalid;  /* Portal ID.       */
 
 	/* Search target hardware portal. */
 	if ((portalid = do_portal_search(local, remote, PORTAL_SEARCH_OUTPUT)) >= 0)
@@ -621,12 +624,18 @@ PRIVATE int _do_portal_open(int local, int remote)
 	if ((portalid = resource_alloc(&portalpool)) < 0)
 		return (-EAGAIN);
 
-	if ((hwfd = portal_open(local, remote)) < 0)
+	/* Checks if the remote is not the local node. */
+	if (remote != processor_node_get_num(0))
 	{
-		resource_free(&portalpool, portalid);
-		return (hwfd);
+		/* Open underlying output hardware portal. */
+		if ((hwfd = portal_open(local, remote)) < 0)
+		{
+			resource_free(&portalpool, portalid);
+			return (hwfd);
+		}
 	}
 
+	/* Initialize hardware portal. */
 	active_portals[portalid].hwfd     = hwfd;
 	active_portals[portalid].local    = local;
 	active_portals[portalid].remote   = remote;
@@ -666,10 +675,7 @@ PUBLIC int do_vportal_open(int local, int remote, int remote_port)
 		return (-EBUSY);
 
 	/* Initialize the new virtual portal. */
-	virtual_portals[vportalid].status |= VPORTAL_STATUS_USED;
 	virtual_portals[vportalid].remote  = DO_LADDRESS_COMPOSE(remote, remote_port);
-	virtual_portals[vportalid].volume  = 0ULL;
-	virtual_portals[vportalid].latency = 0ULL;
 	active_portals[portalid].ports[port].status |= PORT_STATUS_USED;
 	active_portals[portalid].refcount++;
 
@@ -692,16 +698,22 @@ PUBLIC int do_vportal_open(int local, int remote, int remote_port)
  */
 PRIVATE int _do_portal_release(int portalid, int (*release_fn)(int))
 {
-	int ret; /* HAL function return. */
+	int ret;  /* HAL function return. */
+	int hwfd; /* HWFD allocated on HAL. */
 
+	/* Check if there is a data buffer allocated. */
 	if (active_portals[portalid].buffer != NULL)
 	{
 		if ((ret = do_mbuffer_free(active_portals[portalid].buffer)) < 0)
 			return (ret);
 	}
 
-	if ((ret = release_fn(active_portals[portalid].hwfd)) < 0)
-		return (ret);
+	/* Checks if there is a hwfd allocated to this mailbox. */
+	if ((hwfd = active_portals[portalid].hwfd) >= 0)
+	{
+		if ((ret = release_fn(active_portals[portalid].hwfd)) < 0)
+			return (ret);
+	}
 
 	active_portals[portalid].hwfd   = -1;
 	active_portals[portalid].local  = -1;
@@ -779,8 +791,8 @@ PUBLIC int do_vportal_unlink(int portalid)
  */
 PUBLIC int do_vportal_close(int portalid)
 {
-	int fd;   /* Active portal logic ID.          */
-	int port; /* Port designed to vportal.        */
+	int fd;   /* Active portal logic ID.   */
+	int port; /* Port designed to vportal. */
 
 	/* Bad virtual portal. */
 	if (!VPORTAL_IS_USED(portalid))
@@ -999,8 +1011,8 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 	int port;          /* HW port specified to vportal.   */
 	int mbuffer;       /* Message buffer used to write.   */
 	int local_address; /* HW portal + port address.       */
-	uint64_t t1;       /* Clock value before awrite call. */
-	uint64_t t2;       /* Clock value after awrite call.  */
+	uint64_t t1 = 0;   /* Clock value before awrite call. */
+	uint64_t t2 = 0;   /* Clock value after awrite call.  */
 
 	/* Bad virtual portal. */
 	if (!VPORTAL_IS_USED(portalid))
@@ -1032,10 +1044,24 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 
 	resource_set_async(&active_portals[fd].resource);
 
+	/* Configure the message header. */
 	active_portals[fd].ports[port].mbuffer->message.src  = local_address;
 	active_portals[fd].ports[port].mbuffer->message.dest = virtual_portals[portalid].remote;
 	active_portals[fd].ports[port].mbuffer->message.size = size;
-	kmemcpy((void *) &active_portals[fd].ports[port].mbuffer->message.data, buffer, size);
+
+	t1 = clock_read();
+		kmemcpy((void *) &active_portals[fd].ports[port].mbuffer->message.data, buffer, size);
+	t2 = clock_read();
+
+	/* Checks if the destination is the local node. */
+	if (active_portals[fd].remote == processor_node_get_num(0))
+	{
+		/* Forwards the message to the mbuffers table. */
+		active_portals[fd].ports[port].mbuffer->flags = 0 | MBUFFER_FLAGS_BUSY;
+		active_portals[fd].ports[port].mbuffer = NULL;
+
+		goto finish;
+	}
 
 write:
 	t1 = clock_read();
@@ -1053,16 +1079,16 @@ write:
 
 	t2 = clock_read();
 
+	/* Releases the buffer allocated. */
+	do_mbuffer_free(active_portals[fd].ports[port].mbuffer);
+	active_portals[fd].ports[port].mbuffer = NULL;
+
+finish:
 	ret = size;
 
 	/* Update performance statistics. */
 	virtual_portals[portalid].latency += (t2 - t1);
 	virtual_portals[portalid].volume += ret;
-
-finish:
-	/* Releases the buffer allocated. */
-	do_mbuffer_free(active_portals[fd].ports[port].mbuffer);
-	active_portals[fd].ports[port].mbuffer = NULL;
 
 	return (ret);
 }
