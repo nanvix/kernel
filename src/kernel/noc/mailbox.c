@@ -163,7 +163,7 @@ struct mailbox_message_buffer
 struct mailbox_message_buffer mailbox_message_buffers[KMAILBOX_MESSAGE_BUFFERS_MAX] = {
 	[0 ... (KMAILBOX_MESSAGE_BUFFERS_MAX - 1)] = {
 		.message = {
-			.dest = KMAILBOX_MAX,
+			.dest = -1,
 			.data = {'\0'},
 		},
 	},
@@ -342,7 +342,7 @@ PRIVATE int do_mbuffer_free(struct mailbox_message_buffer * buffer)
 
 	/* Resets mbuffer original status. */
 	buffer->flags = 0;
-	buffer->message.dest = KMAILBOX_MAX;
+	buffer->message.dest = -1;
 	buffer->message.data[0] = '\0';
 
 	return (0);
@@ -381,6 +381,30 @@ PRIVATE int do_message_search(int local_address)
 
 	/* No message encountered. */
 	return (-1);
+}
+
+/*============================================================================*
+ * mailbox_nodenum_is_local()                                                 *
+ *============================================================================*/
+
+/**
+ * @brief Evaluates if the given nodenum is local to the cluster.
+ *
+ * @param nodenum Nodenum to be evaluated.
+ *
+ * @returns Non zero if @p nodenum is local to the current cluster. Zero is
+ * returned instead.
+ */
+PUBLIC int mailbox_nodenum_is_local(int nodenum)
+{
+	int local;
+
+	local = processor_node_get_num(0);
+
+	if (cluster_is_ccluster(cluster_get_num()))
+		return (nodenum == local);
+	else
+		return (WITHIN(nodenum, local, (local + (PROCESSOR_NOC_IONODES_NUM / PROCESSOR_IOCLUSTERS_NUM))));
 }
 
 /*============================================================================*
@@ -456,27 +480,18 @@ PRIVATE int _do_mailbox_create(int local)
 {
 	int hwfd;    /* File descriptor.      */
 	int mbxid;   /* Mailbox ID.           */
-	int mbuffer; /* Allocated mbuffer ID. */
 
 	/* Search target hardware mailbox. */
 	if ((mbxid = do_mailbox_search(local, MAILBOX_SEARCH_INPUT)) >= 0)
-		return (mbxid);
-
-	/* Allocate data buffer. */
-	if ((mbuffer = do_mbuffer_alloc()) < 0)
-		return (-EAGAIN);
+		return (-EBUSY);
 
 	/* Allocate resource. */
 	if ((mbxid = resource_alloc(&mbxpool)) < 0)
-	{
-		do_mbuffer_free(&mailbox_message_buffers[mbuffer]);
 		return (-EAGAIN);
-	}
 
 	/* Create underlying input hardware mailbox. */
 	if ((hwfd = mailbox_create(local)) < 0)
 	{
-		do_mbuffer_free(&mailbox_message_buffers[mbuffer]);
 		resource_free(&mbxpool, mbxid);
 		return (hwfd);
 	}
@@ -485,7 +500,6 @@ PRIVATE int _do_mailbox_create(int local)
 	active_mailboxes[mbxid].hwfd     = hwfd;
 	active_mailboxes[mbxid].refcount = 0;
 	active_mailboxes[mbxid].nodenum  = local;
-	active_mailboxes[mbxid].buffer   = &mailbox_message_buffers[mbuffer];
 	resource_set_rdonly(&active_mailboxes[mbxid].resource);
 	resource_set_notbusy(&active_mailboxes[mbxid].resource);
 
@@ -507,9 +521,13 @@ PUBLIC int do_vmailbox_create(int local, int port)
 	int mbxid;  /* Hardware mailbox ID. */
 	int vmbxid; /* Virtual mailbox ID.  */
 
-	/* Create hardware mailbox. */
-	if ((mbxid = _do_mailbox_create(local)) < 0)
-		return (mbxid);
+	/* Checks if the input mailbox is local. */
+	if (!mailbox_nodenum_is_local(local))
+		return (-EINVAL);
+
+	/* Search target hardware mailbox. */
+	if ((mbxid = do_mailbox_search(local, MAILBOX_SEARCH_INPUT)) < 0)
+		return (-EAGAIN);
 
 	/* Allocate a virtual mailbox. */
 	if ((vmbxid = do_vmailbox_alloc(mbxid, port)) < 0)
@@ -538,8 +556,8 @@ PUBLIC int do_vmailbox_create(int local, int port)
  */
 PRIVATE int _do_mailbox_open(int remote)
 {
-	int hwfd = -1; /* File descriptor. */
-	int mbxid;     /* Mailbox ID.      */
+	int hwfd;  /* File descriptor. */
+	int mbxid; /* Mailbox ID.      */
 
 	/* Search target hardware mailbox. */
 	if ((mbxid = do_mailbox_search(remote, MAILBOX_SEARCH_OUTPUT)) >= 0)
@@ -549,12 +567,9 @@ PRIVATE int _do_mailbox_open(int remote)
 	if ((mbxid = resource_alloc(&mbxpool)) < 0)
 		return (-EAGAIN);
 
-	/* Checks if the remote is not the local node. */
-#ifdef __mppa256__
-	if (remote != processor_node_get_num(0) || cluster_is_iocluster(cluster_get_num()))
-#else
+	hwfd = -1;
+
 	if (remote != processor_node_get_num(0))
-#endif
 	{
 		/* Open underlying output hardware mailbox. */
 		if ((hwfd = mailbox_open(remote)) < 0)
@@ -590,9 +605,9 @@ PUBLIC int do_vmailbox_open(int remote, int remote_port)
 	int vmbxid; /* Virtual mailbox ID.           */
 	int port;   /* Port allocated in local node. */
 
-	/* Create hardware mailbox. */
-	if ((mbxid = _do_mailbox_open(remote)) < 0)
-		return (mbxid);
+	/* Search target hardware mailbox. */
+	if ((mbxid = do_mailbox_search(remote, MAILBOX_SEARCH_OUTPUT)) < 0)
+		return (-EAGAIN);
 
 	/* Allocates a free port in the HW mailbox. */
 	if ((port = do_port_alloc(mbxid)) < 0)
@@ -628,13 +643,6 @@ PRIVATE int _do_mailbox_release(int mbxid, int (*release_fn)(int))
 {
 	int ret;  /* HAL function return.   */
 	int hwfd; /* HWFD allocated on HAL. */
-
-	/* Check if there is a data buffer allocated. */
-	if (active_mailboxes[mbxid].buffer != NULL)
-	{
-		if ((ret = do_mbuffer_free(active_mailboxes[mbxid].buffer)) < 0)
-			return (ret);
-	}
 
 	/* Checks if there is a hwfd allocated to this mailbox. */
 	if ((hwfd = active_mailboxes[mbxid].hwfd) >= 0)
@@ -697,10 +705,6 @@ PUBLIC int do_vmailbox_unlink(int mbxid)
 	active_mailboxes[fd].ports[port].status &= ~PORT_STATUS_USED;
 	active_mailboxes[fd].refcount--;
 
-	/* Release underlying hardware mailbox. */
-	if (active_mailboxes[fd].refcount == 0)
-		return (_do_mailbox_release(fd, mailbox_unlink));
-
 	return (0);
 }
 
@@ -743,52 +747,12 @@ PUBLIC int do_vmailbox_close(int mbxid)
 	active_mailboxes[fd].ports[port].status &= ~PORT_STATUS_USED;
 	active_mailboxes[fd].refcount--;
 
-	/* Release underlying hardware mailbox. */
-	if (active_mailboxes[fd].refcount == 0)
-		return (_do_mailbox_release(fd, mailbox_close));
-
 	return (0);
 }
 
 /*============================================================================*
  * do_vmailbox_aread()                                                        *
  *============================================================================*/
-
-/**
- * @brief Allocs a new message buffer and store the old
- * on message_buffers tab.
- *
- * @param fd Busy HW mailbox.
- *
- * @returns Upon successful completion, zero is returned.
- * A negative error number is returned instead.
- */
-PRIVATE int do_message_store(int fd)
-{
-	int dest;    /* Message destination.   */
-	int port;    /* Target port.           */
-	int mbuffer; /* New mbuffer allocated. */
-
-	dest = active_mailboxes[fd].buffer->message.dest;
-	port = GET_LADDRESS_PORT(dest);
-
-	/* Check if the destination port is opened to receive data. */
-	if (PORT_IS_USED(fd, port))
-	{
-		/* Allocate a message_buffer to hold the message. */
-		if ((mbuffer = do_mbuffer_alloc()) < 0)
-			return (-EBUSY);
-
-		/* Switch the mailbox buffer to use an empty one. */
-		active_mailboxes[fd].buffer->flags &= ~MBUFFER_FLAGS_USED;
-		active_mailboxes[fd].buffer = &mailbox_message_buffers[mbuffer];
-	}
-	/**
-	 * XXX - ELSE Discards the message.
-	 */
-
-	return (0);
-}
 
 /**
  * @todo TODO: Provide a detailed description for this function.
@@ -801,9 +765,9 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 	int dest;            /* Msg destination address.       */
 	int local_hwaddress; /* Vmailbox hardware address.     */
 	int mbuffer;         /* New alocated buffer.           */
-	struct mailbox_message_buffer *aux_buffer_ptr;
 	uint64_t t1;         /* Clock value before aread call. */
 	uint64_t t2;         /* Clock value after aread call.  */
+	struct mailbox_message_buffer *buffer_ptr;
 
 	/* Bad virtual mailbox. */
 	if (!VMAILBOX_IS_USED(mbxid))
@@ -828,80 +792,85 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 	/* Is there a pending message for this vmailbox? */
 	if ((mbuffer = do_message_search(local_hwaddress)) >= 0)
 	{
-		aux_buffer_ptr = &mailbox_message_buffers[mbuffer];
+		buffer_ptr = &mailbox_message_buffers[mbuffer];
 
 		t1 = clock_read();
-			kmemcpy(buffer, (void *) &aux_buffer_ptr->message.data, ret = size);
+			kmemcpy(buffer, (void *) &buffer_ptr->message.data, ret = size);
 		t2 = clock_read();
 
-		aux_buffer_ptr->flags &= ~MBUFFER_FLAGS_BUSY;
+		buffer_ptr->flags &= ~MBUFFER_FLAGS_BUSY;
 
 		/* Releases the message buffer. */
-		KASSERT(do_mbuffer_free(aux_buffer_ptr) == 0);
+		KASSERT(do_mbuffer_free(buffer_ptr) == 0);
 
 		goto finish;
 	}
 
-	/* There is a pending read in HW mailbox data buffer. */
-	if (MAILBOX_IS_BUSY(fd))
-	{
-		dest = active_mailboxes[fd].buffer->message.dest;
-		if (dest == local_hwaddress) {
-			t1 = clock_read();
-				kmemcpy(buffer, (void *) &active_mailboxes[fd].buffer->message.data, ret = size);
-			t2 = clock_read();
-
-			goto unlock_mailbox;
-		}
-		else if ((ret = do_message_store(fd)) < 0)
-			return (ret);
-	}
-
 again:
-	/* Sets the mailbox data buffer as busy. */
-	MAILBOX_SET_BUSY(fd);
+	/* Alloc data buffer to receive data. */
+	if ((mbuffer = do_mbuffer_alloc()) < 0)
+		return (-EAGAIN);
+
+	active_mailboxes[fd].ports[port].mbuffer = &mailbox_message_buffers[mbuffer];
+	buffer_ptr = active_mailboxes[fd].ports[port].mbuffer;
+
+keep_buffer:
+	/* Sets the receiver buffer as busy. */
+	buffer_ptr->flags |= MBUFFER_FLAGS_BUSY;
 
 	dcache_invalidate();
 
 	t1 = clock_read();
 
 		/* Setup asynchronous read. */
-		if ((ret = mailbox_aread(active_mailboxes[fd].hwfd, (void *) &active_mailboxes[fd].buffer->message, MAILBOX_MSG_SIZE)) < 0)
-			goto error;
+		if ((ret = mailbox_aread(active_mailboxes[fd].hwfd, (void *) &buffer_ptr->message, MAILBOX_MSG_SIZE)) < 0)
+			goto release_buffer;
 
 		if ((ret = mailbox_wait(active_mailboxes[fd].hwfd)) < 0)
-			goto error;
+			goto release_buffer;
 
 	t2 = clock_read();
 
 	/* Checks if the message is addressed for the requesting port. */
-	dest = active_mailboxes[fd].buffer->message.dest;
+	dest = buffer_ptr->message.dest;
+
 	if (dest != local_hwaddress)
 	{
-		if ((ret = do_message_store(fd)) < 0)
-			return (ret);
+		/* Check if the destination port is opened to receive data. */
+		if (PORT_IS_USED(fd, GET_LADDRESS_PORT(dest)))
+		{
+			/* Marks the buffer as not used for threads look for this message. */
+			buffer_ptr->flags &= ~MBUFFER_FLAGS_USED;
+			active_mailboxes[fd].ports[port].mbuffer = NULL;
 
-		goto again;
+			goto again;
+		}
+		else
+		{
+		/**
+		 * XXX - ELSE Discards the message.
+		 */
+			goto keep_buffer;
+		}
 	}
 
 	ret = size;
 
-	kmemcpy(buffer, (void *) &active_mailboxes[fd].buffer->message.data, size);
-
-unlock_mailbox:
-	/* Sets the mailbox data buffer as not busy. */
-	MAILBOX_SET_NOTBUSY(fd);
+	kmemcpy(buffer, (void *) &buffer_ptr->message.data, size);
 
 finish:
 	/* Update performance statistics. */
 	virtual_mailboxes[mbxid].latency += (t2 - t1);
 	virtual_mailboxes[mbxid].volume += ret;
 
-	dcache_invalidate();
-	return (ret);
+release_buffer:
+	/* Sets the mailbox data buffer as not busy. */
+	buffer_ptr->flags &= ~MBUFFER_FLAGS_BUSY;
 
-error:
-	MAILBOX_SET_NOTBUSY(fd);
+	KASSERT(do_mbuffer_free(buffer_ptr) == 0);
+	active_mailboxes[fd].ports[port].mbuffer = NULL;
+
+	dcache_invalidate();
 	return (ret);
 }
 
@@ -941,6 +910,7 @@ PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
 	if (active_mailboxes[fd].ports[port].mbuffer != NULL)
 		goto write;
 
+	/* Allocates a message buffer to send the message. */
 	if ((mbuffer = do_mbuffer_alloc()) < 0)
 		return (mbuffer);
 
@@ -977,7 +947,7 @@ write:
 	t2 = clock_read();
 
 	/* Releases the buffer allocated. */
-	do_mbuffer_free(active_mailboxes[fd].ports[port].mbuffer);
+	KASSERT(do_mbuffer_free(active_mailboxes[fd].ports[port].mbuffer) == 0);
 	active_mailboxes[fd].ports[port].mbuffer = NULL;
 
 finish:
@@ -1078,6 +1048,44 @@ int do_vmailbox_ioctl(int mbxid, unsigned request, va_list args)
 	}
 
 	return (ret);
+}
+
+/*============================================================================*
+ * kmailbox_init()                                                            *
+ *============================================================================*/
+
+/**
+ * @todo TODO: Provide a detailed description for this function.
+ */
+PUBLIC void kmailbox_init(void)
+{
+	int nodenum;
+
+	kprintf("[kernel][noc] initializing the kmailbox facility");
+
+	nodenum = processor_node_get_num(0);
+
+	if (cluster_is_iocluster(cluster_get_num()))
+	{
+		for (int i = 0; i < PROCESSOR_NOC_IONODES_NUM / PROCESSOR_IOCLUSTERS_NUM; ++i)
+		{
+			/* Create the input mailbox. */
+			KASSERT(_do_mailbox_create(nodenum + i) >= 0);
+
+			/* Opens all mailbox interfaces. */
+			for (int j = 0; j < PROCESSOR_NOC_NODES_NUM; ++j)
+				KASSERT(_do_mailbox_open(j) >= 0);
+		}
+	}
+	else
+	{
+		/* Create the input mailbox. */
+		KASSERT(_do_mailbox_create(nodenum) >= 0);
+
+		/* Opens all mailbox interfaces. */
+		for (int i = 0; i < PROCESSOR_NOC_NODES_NUM; ++i)
+			KASSERT(_do_mailbox_open(i) >= 0);
+	}
 }
 
 #endif /* __TARGET_HAS_MAILBOX */

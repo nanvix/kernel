@@ -175,10 +175,15 @@
 	 * @param request Request.
 	 * @param args    Additional arguments.
 	 *
-	 * @param Upon successful completion, zero is returned. Upon failure,
+	 * @returns Upon successful completion, zero is returned. Upon failure,
 	 * a negative error code is returned instead.
 	 */
 	EXTERN int do_vmailbox_ioctl(int mbxid, unsigned request, va_list args);
+
+	/**
+	 * @brief Initializes the mailbox facility.
+	 */
+	EXTERN void kmailbox_init(void);
 
 #endif /* NANVIX_MAILBOX_H_ */
 

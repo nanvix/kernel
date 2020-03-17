@@ -412,6 +412,30 @@ PRIVATE int do_message_search(int local_address, int remote_address)
 }
 
 /*============================================================================*
+ * portal_nodenum_is_local()                                                  *
+ *============================================================================*/
+
+/**
+ * @brief Evaluates if the given nodenum is local to the cluster.
+ *
+ * @param nodenum Nodenum to be evaluated.
+ *
+ * @returns Non zero if @p nodenum is local to the current cluster. Zero is
+ * returned instead.
+ */
+PUBLIC int portal_nodenum_is_local(int nodenum)
+{
+	int local;
+
+	local = processor_node_get_num(0);
+
+	if (cluster_is_ccluster(cluster_get_num()))
+		return (nodenum == local);
+	else
+		return (WITHIN(nodenum, local, (local + (PROCESSOR_NOC_IONODES_NUM / PROCESSOR_IOCLUSTERS_NUM))));
+}
+
+/*============================================================================*
  * do_portal_search()                                                         *
  *============================================================================*/
 
@@ -485,29 +509,20 @@ PRIVATE int do_portal_search(int local, int remote, enum portal_search_type sear
  */
 PRIVATE int _do_portal_create(int local)
 {
-	int hwfd;     /* File descriptor.     */
-	int portalid; /* Portal ID.           */
-	int mbuffer;  /* Alocated Mbuffer ID. */
+	int hwfd;     /* File descriptor. */
+	int portalid; /* Portal ID.       */
 
 	/* Search target hardware portal. */
 	if ((portalid = do_portal_search(local, -1, PORTAL_SEARCH_INPUT)) >= 0)
-		return (portalid);
-
-	/* Alloc data buffer. */
-	if ((mbuffer = do_mbuffer_alloc()) < 0)
-		return (-EAGAIN);
+		return (-EBUSY);
 
 	/* Allocate resource. */
 	if ((portalid = resource_alloc(&portalpool)) < 0)
-	{
-		do_mbuffer_free(&portal_message_buffers[mbuffer]);
 		return (-EAGAIN);
-	}
 
 	/* Create underlying input hardware portal. */
 	if ((hwfd = portal_create(local)) < 0)
 	{
-		do_mbuffer_free(&portal_message_buffers[mbuffer]);
 		resource_free(&portalpool, portalid);
 		return (hwfd);
 	}
@@ -517,7 +532,6 @@ PRIVATE int _do_portal_create(int local)
 	active_portals[portalid].local    = local;
 	active_portals[portalid].remote   = -1;
 	active_portals[portalid].refcount = 0;
-	active_portals[portalid].buffer   = &portal_message_buffers[mbuffer];
 	resource_set_rdonly(&active_portals[portalid].resource);
 	resource_set_notbusy(&active_portals[portalid].resource);
 
@@ -539,9 +553,13 @@ PUBLIC int do_vportal_create(int local, int port)
 	int portalid;  /* Hardware portal ID. */
 	int vportalid; /* Virtual portal ID.  */
 
-	/* Create hardware portal. */
-	if ((portalid = _do_portal_create(local)) < 0)
-		return (portalid);
+	/* Checks if the input portal is local. */
+	if (!portal_nodenum_is_local(local))
+		return (-EINVAL);
+
+	/* Search target hardware portal. */
+	if ((portalid = do_portal_search(local, -1, PORTAL_SEARCH_INPUT)) < 0)
+		return (-EAGAIN);
 
 	/* Allocate a virtual portal. */
 	if ((vportalid = do_vportal_alloc(portalid, port)) < 0)
@@ -613,19 +631,27 @@ PUBLIC int do_vportal_allow(int portalid, int remote, int remote_port)
  */
 PRIVATE int _do_portal_open(int local, int remote)
 {
-	int hwfd = -1; /* File descriptor. */
-	int portalid;  /* Portal ID.       */
+	int hwfd;     /* File descriptor. */
+	int portalid; /* Portal ID.       */
 
 	/* Search target hardware portal. */
 	if ((portalid = do_portal_search(local, remote, PORTAL_SEARCH_OUTPUT)) >= 0)
-		return (portalid);
+		return (-EBUSY);
 
 	/* Allocate resource. */
 	if ((portalid = resource_alloc(&portalpool)) < 0)
 		return (-EAGAIN);
 
-	/* Checks if the remote is not the local node. */
-	if (remote != processor_node_get_num(0))
+	hwfd = -1;
+
+	/* Checks if the remote is the local node. */
+	if (local == remote)
+	{
+		/* Asserts that @p local is local to the cluster. */
+		if (!portal_nodenum_is_local(local))
+			return (-EINVAL);
+	}
+	else
 	{
 		/* Open underlying output hardware portal. */
 		if ((hwfd = portal_open(local, remote)) < 0)
@@ -662,9 +688,13 @@ PUBLIC int do_vportal_open(int local, int remote, int remote_port)
 	int vportalid; /* Virtual portal ID.   */
 	int port;      /* Free port available. */
 
-	/* Opens a hardware portal. */
-	if ((portalid = _do_portal_open(local, remote)) < 0)
-		return (portalid);
+	/* Checks if the portal sender is local. */
+	if (!portal_nodenum_is_local(local))
+		return (-EINVAL);
+
+	/* Search target hardware portal. */
+	if ((portalid = do_portal_search(local, remote, PORTAL_SEARCH_OUTPUT)) < 0)
+		return (-EAGAIN);
 
 	/* Allocates a free port in the HW portal. */
 	if ((port = do_port_alloc(portalid)) < 0)
@@ -675,7 +705,7 @@ PUBLIC int do_vportal_open(int local, int remote, int remote_port)
 		return (-EBUSY);
 
 	/* Initialize the new virtual portal. */
-	virtual_portals[vportalid].remote  = DO_LADDRESS_COMPOSE(remote, remote_port);
+	virtual_portals[vportalid].remote = DO_LADDRESS_COMPOSE(remote, remote_port);
 	active_portals[portalid].ports[port].status |= PORT_STATUS_USED;
 	active_portals[portalid].refcount++;
 
@@ -701,14 +731,7 @@ PRIVATE int _do_portal_release(int portalid, int (*release_fn)(int))
 	int ret;  /* HAL function return. */
 	int hwfd; /* HWFD allocated on HAL. */
 
-	/* Check if there is a data buffer allocated. */
-	if (active_portals[portalid].buffer != NULL)
-	{
-		if ((ret = do_mbuffer_free(active_portals[portalid].buffer)) < 0)
-			return (ret);
-	}
-
-	/* Checks if there is a hwfd allocated to this mailbox. */
+	/* Checks if there is a hwfd allocated to this portal. */
 	if ((hwfd = active_portals[portalid].hwfd) >= 0)
 	{
 		if ((ret = release_fn(active_portals[portalid].hwfd)) < 0)
@@ -770,10 +793,6 @@ PUBLIC int do_vportal_unlink(int portalid)
 	active_portals[fd].ports[port].status &= ~PORT_STATUS_USED;
 	active_portals[fd].refcount--;
 
-	/* Release underlying hardware portal. */
-	if (active_portals[fd].refcount == 0)
-		return (_do_portal_release(fd, portal_unlink));
-
 	return (0);
 }
 
@@ -816,51 +835,12 @@ PUBLIC int do_vportal_close(int portalid)
 	active_portals[fd].ports[port].status &= ~PORT_STATUS_USED;
 	active_portals[fd].refcount--;
 
-	/* Release underlying hardware portal. */
-	if (active_portals[fd].refcount == 0)
-		return (_do_portal_release(fd, portal_close));
-
 	return (0);
 }
 
 /*============================================================================*
  * do_vportal_aread()                                                         *
  *============================================================================*/
-
-/**
- * @brief Allocs a new message buffer and store the old on message_buffers tab.
- *
- * @param fd Busy HW portal.
- *
- * @returns Upon successful completion, zero is returned.
- * A negative error number is returned instead.
- */
-PRIVATE int do_message_store(int fd)
-{
-	int dest;    /* Message destination.   */
-	int port;    /* Target port.           */
-	int mbuffer; /* New mbuffer allocated. */
-
-	dest = active_portals[fd].buffer->message.dest;
-	port = GET_LADDRESS_PORT(dest);
-
-	/* Check if the destination port is opened to receive data. */
-	if (PORT_IS_USED(fd, port))
-	{
-		/* Allocate a message_buffer to hold the message. */
-		if ((mbuffer = do_mbuffer_alloc()) < 0)
-			return (-EBUSY);
-
-		/* Switch the portal buffer to use an empty one. */
-		active_portals[fd].buffer->flags &= ~MBUFFER_FLAGS_USED;
-		active_portals[fd].buffer = &portal_message_buffers[mbuffer];
-	}
-	/**
-	 * XXX - ELSE Discards the message.
-	 */
-
-	return (0);
-}
 
 /**
  * @todo TODO: Provide a detailed description for this function.
@@ -878,7 +858,7 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 	int mbuffer;         /* New alocated buffer.           */
 	uint64_t t1;         /* Clock value before aread call. */
 	uint64_t t2;         /* Clock value after aread call.  */
-	struct portal_message_buffer *aux_buffer_ptr;
+	struct portal_message_buffer *buffer_ptr;
 
 	/* Bad virtual portal. */
 	if (!VPORTAL_IS_USED(portalid))
@@ -907,78 +887,76 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 	/* Is there a pending message for this vportal? */
 	if ((mbuffer = do_message_search(local_hwaddress, virtual_portals[portalid].remote)) >= 0)
 	{
-		aux_buffer_ptr = &portal_message_buffers[mbuffer];
+		buffer_ptr = &portal_message_buffers[mbuffer];
 
 		t1 = clock_read();
-			kmemcpy(buffer, (void *) &aux_buffer_ptr->message.data, ret = size);
+			kmemcpy(buffer, (void *) &buffer_ptr->message.data, ret = size);
 		t2 = clock_read();
 
-		aux_buffer_ptr->flags &= ~MBUFFER_FLAGS_BUSY;
+		buffer_ptr->flags &= ~MBUFFER_FLAGS_BUSY;
 
 		/* Releases the message buffer. */
-		KASSERT(do_mbuffer_free(aux_buffer_ptr) == 0);
+		KASSERT(do_mbuffer_free(buffer_ptr) == 0);
 
 		goto finish;
 	}
 
-	/* There is a pending read in HW portal data buffer. */
-	if (PORTAL_IS_BUSY(fd))
-	{
-		dest = active_portals[fd].buffer->message.dest;
-		src = active_portals[fd].buffer->message.src;
-
-		if ((dest == local_hwaddress) && (src == virtual_portals[portalid].remote))
-		{
-			t1 = clock_read();
-				kmemcpy(buffer, (void *) &active_portals[fd].buffer->message.data, ret = size);
-			t2 = clock_read();
-
-			goto unlock_portal;
-		}
-		else if ((ret = do_message_store(fd)) < 0)
-			return (ret);
-	}
-
 again:
+	/* Alloc data buffer to receive data. */
+	if ((mbuffer = do_mbuffer_alloc()) < 0)
+		return (-EAGAIN);
+
+	active_portals[fd].ports[port].mbuffer = &portal_message_buffers[mbuffer];
+	buffer_ptr = active_portals[fd].ports[port].mbuffer;
+
+keep_buffer:
 	/* Allows async write from remote. */
 	if ((ret = portal_allow(active_portals[fd].hwfd, GET_LADDRESS_FD(virtual_portals[portalid].remote))) < 0)
-		return (ret);
+		goto release_buffer;
 
-	/* Sets the portal data buffer as busy. */
-	PORTAL_SET_BUSY(fd);
+	/* Sets the receiver buffer as busy. */
+	buffer_ptr->flags |= MBUFFER_FLAGS_BUSY;
 
 	dcache_invalidate();
 
 	t1 = clock_read();
 
 		/* Configures async aread. */
-		if ((ret = portal_aread(active_portals[fd].hwfd, (void *) &active_portals[fd].buffer->message, (KPORTAL_MESSAGE_HEADER_SIZE + HAL_PORTAL_MAX_SIZE))) < 0)
-			goto error;
+		if ((ret = portal_aread(active_portals[fd].hwfd, (void *) &buffer_ptr->message, (KPORTAL_MESSAGE_HEADER_SIZE + HAL_PORTAL_MAX_SIZE))) < 0)
+			goto release_buffer;
 
 		if ((ret = portal_wait(active_portals[fd].hwfd)) < 0)
-			goto error;
+			goto release_buffer;
 
 	t2 = clock_read();
 
 	/* Checks if the message is addressed for the requesting port. */
-	dest = active_portals[fd].buffer->message.dest;
-	src = active_portals[fd].buffer->message.src;
+	dest = buffer_ptr->message.dest;
+	src = buffer_ptr->message.src;
 
 	if ((dest != local_hwaddress) || (src != virtual_portals[portalid].remote))
 	{
-		if ((ret = do_message_store(fd)) < 0)
-			return (ret);
+		/* Check if the destination port is opened to receive data. */
+		if (PORT_IS_USED(fd, GET_LADDRESS_PORT(dest)))
+		{
+			/* Marks the buffer as not used for threads look for this message. */
+			buffer_ptr->flags &= ~MBUFFER_FLAGS_USED;
+			active_portals[fd].ports[port].mbuffer = NULL;
 
-		goto again;
+			goto again;
+		}
+		else
+		{
+		/**
+		 * XXX - ELSE Discards the message.
+		 */
+			goto keep_buffer;
+		}
 	}
 
 	ret = size;
 
-	kmemcpy(buffer, (void *) &active_portals[fd].buffer->message.data, size);
-
-unlock_portal:
-	/* Sets the portal data buffer as not busy. */
-	PORTAL_SET_NOTBUSY(fd);
+	kmemcpy(buffer, (void *) &buffer_ptr->message.data, size);
 
 finish:
 	/* Updates performance statistics. */
@@ -989,11 +967,14 @@ finish:
 	virtual_portals[portalid].status &= ~VPORTAL_STATUS_ALLOWED;
 	virtual_portals[portalid].remote = -1;
 
-	dcache_invalidate();
-	return (ret);
+release_buffer:
+	/* Sets the portal data buffer as not busy. */
+	buffer_ptr->flags &= ~MBUFFER_FLAGS_BUSY;
 
-error:
-	PORTAL_SET_NOTBUSY(fd);
+	KASSERT(do_mbuffer_free(buffer_ptr) == 0);
+	active_portals[fd].ports[port].mbuffer = NULL;
+
+	dcache_invalidate();
 	return (ret);
 }
 
@@ -1034,6 +1015,7 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 	if (active_portals[fd].ports[port].mbuffer != NULL)
 		goto write;
 
+	/* Allocates a message buffer to send the message. */
 	if ((mbuffer = do_mbuffer_alloc()) < 0)
 		return (mbuffer);
 
@@ -1080,7 +1062,7 @@ write:
 	t2 = clock_read();
 
 	/* Releases the buffer allocated. */
-	do_mbuffer_free(active_portals[fd].ports[port].mbuffer);
+	KASSERT(do_mbuffer_free(active_portals[fd].ports[port].mbuffer) == 0);
 	active_portals[fd].ports[port].mbuffer = NULL;
 
 finish:
@@ -1181,6 +1163,44 @@ int do_vportal_ioctl(int portalid, unsigned request, va_list args)
 	}
 
 	return (ret);
+}
+
+/*============================================================================*
+ * kportal_init()                                                             *
+ *============================================================================*/
+
+/**
+ * @todo TODO: Provide a detailed description for this function.
+ */
+PUBLIC void kportal_init(void)
+{
+	int local;
+
+	kprintf("[kernel][noc] initializing the kportal facility");
+
+	local = processor_node_get_num(0);
+
+	if (cluster_is_iocluster(cluster_get_num()))
+	{
+		for (int i = 0; i < PROCESSOR_NOC_IONODES_NUM / PROCESSOR_IOCLUSTERS_NUM; ++i)
+		{
+			/* Create the input portal. */
+			KASSERT(_do_portal_create(local + i) >= 0);
+
+			/* Opens all portal interfaces. */
+			for (int j = 0; j < PROCESSOR_NOC_NODES_NUM; ++j)
+				KASSERT(_do_portal_open(local + i, j) >= 0);
+		}
+	}
+	else
+	{
+		/* Create the input portal. */
+		KASSERT(_do_portal_create(local) >= 0);
+
+		/* Opens all portal interfaces. */
+		for (int i = 0; i < PROCESSOR_NOC_NODES_NUM; ++i)
+			KASSERT(_do_portal_open(local, i) >= 0);
+	}
 }
 
 #endif /* __TARGET_HAS_PORTAL */
