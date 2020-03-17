@@ -33,6 +33,7 @@
  * system. It initializes and setups the IKC structures: (i) Sync.
  *
  * @see ksync_init().
+ * @see kmailbox_init().
  *
  * @author Joao Fellipe Uller
  */
@@ -42,5 +43,13 @@ PUBLIC void noc_init(void)
 
 	#if __TARGET_HAS_SYNC
 		ksync_init();
+	#endif
+
+	#if __TARGET_HAS_MAILBOX
+		kmailbox_init();
+	#endif
+
+	#if __TARGET_HAS_PORTAL
+		kportal_init();
 	#endif
 }

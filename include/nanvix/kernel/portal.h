@@ -187,6 +187,11 @@
 	 */
 	EXTERN int do_vportal_ioctl(int portalid, unsigned request, va_list args);
 
+	/**
+	 * @brief Initializes the portal facility.
+	 */
+	EXTERN void kportal_init(void);
+
 #endif /* __NANVIX_MICROKERNEL */
 
 #endif /* NANVIX_PORTAL_H_ */
