@@ -1046,6 +1046,8 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 	}
 
 write:
+	dcache_invalidate();
+
 	t1 = clock_read();
 
 		/* Configures async aread. */
@@ -1072,6 +1074,7 @@ finish:
 	virtual_portals[portalid].latency += (t2 - t1);
 	virtual_portals[portalid].volume += ret;
 
+	dcache_invalidate();
 	return (ret);
 }
 
