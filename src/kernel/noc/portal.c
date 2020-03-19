@@ -1178,29 +1178,14 @@ PUBLIC void kportal_init(void)
 
 	kprintf("[kernel][noc] initializing the kportal facility");
 
-	local = processor_node_get_num(0);
+	local = processor_node_get_num(core_get_id());
 
-	if (cluster_is_iocluster(cluster_get_num()))
-	{
-		for (int i = 0; i < PROCESSOR_NOC_IONODES_NUM / PROCESSOR_IOCLUSTERS_NUM; ++i)
-		{
-			/* Create the input portal. */
-			KASSERT(_do_portal_create(local + i) >= 0);
+	/* Create the input portal. */
+	KASSERT(_do_portal_create(local) >= 0);
 
-			/* Opens all portal interfaces. */
-			for (int j = 0; j < PROCESSOR_NOC_NODES_NUM; ++j)
-				KASSERT(_do_portal_open(local + i, j) >= 0);
-		}
-	}
-	else
-	{
-		/* Create the input portal. */
-		KASSERT(_do_portal_create(local) >= 0);
-
-		/* Opens all portal interfaces. */
-		for (int i = 0; i < PROCESSOR_NOC_NODES_NUM; ++i)
-			KASSERT(_do_portal_open(local, i) >= 0);
-	}
+	/* Opens all portal interfaces. */
+	for (int i = 0; i < PROCESSOR_NOC_NODES_NUM; ++i)
+		KASSERT(_do_portal_open(local, i) >= 0);
 }
 
 #endif /* __TARGET_HAS_PORTAL */
