@@ -138,7 +138,8 @@ PUBLIC void do_kcall2(void)
 				ret = kernel_sync_create(
 					(const int *)(long) sysboard[coreid].arg0,
 					(int) sysboard[coreid].arg1,
-					(int) sysboard[coreid].arg2
+					(int) sysboard[coreid].arg2,
+					(int) sysboard[coreid].arg3
 				);
 				break;
 
@@ -146,7 +147,8 @@ PUBLIC void do_kcall2(void)
 				ret = kernel_sync_open(
 					(const int *)(long) sysboard[coreid].arg0,
 					(int) sysboard[coreid].arg1,
-					(int) sysboard[coreid].arg2
+					(int) sysboard[coreid].arg2,
+					(int) sysboard[coreid].arg3
 				);
 				break;
 

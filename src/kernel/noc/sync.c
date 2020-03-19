@@ -66,6 +66,7 @@ PRIVATE struct
 	unsigned short status;    /**< VSync status flags.         */
 	enum sync_type sync_type; /**< Input / Output ?            */
 	int type;                 /**< ALL_FOR_ONE / ONE_FOR_ALL ? */
+	int local;                /**< Local node number.          */
 	int masternum;            /**< Master node number.         */
 	int nnodes;               /**< Number of nodes involved.   */
 	uint64_t nodeslist;       /**< Node ID list.               */
@@ -73,6 +74,7 @@ PRIVATE struct
 	[0 ... (KSYNC_MAX - 1)] = {
 		.status = 0,
 		.type = -1,
+		.local = -1,
 		.masternum = -1,
 		.nnodes = 0,
 		.nodeslist = 0ULL
@@ -308,35 +310,33 @@ PRIVATE int _do_sync_create(const int *nodes, int nnodes, int type)
 /**
  * @brief Creates a virtual synchronization point.
  *
- * @param nodes     Logic IDs of target nodes.
- * @param nnodes    Number of target nodes.
- * @param type      Type of synchronization point.
+ * @param nodes  Logic IDs of target nodes.
+ * @param nnodes Number of target nodes.
+ * @param type   Type of synchronization point.
+ * @param local  Local node number.
  *
  * @returns Upon successful completion, the ID of the newly created
  * virtual synchronization point is returned. Upon failure, a negative
  * error code is returned instead.
  */
-PUBLIC int do_vsync_create(const int *nodes, int nnodes, int type)
+PUBLIC int do_vsync_create(const int *nodes, int nnodes, int type, int local)
 {
 	int vsyncid;        /* Virtual sync point ID. */
 	uint64_t nodeslist; /* Target nodes list.     */
-	int nodenum;        /* Local node num.        */
-
-	nodenum = processor_node_get_num(0);
 
 	/* Invalid nodes list. */
-	if (!sync_nodelist_is_valid(nodenum, nodes, nnodes))
+	if (!sync_nodelist_is_valid(local, nodes, nnodes))
 		return (-EINVAL);
 
 	/* Checks the nodes list corretude. */
 	if (type == SYNC_ONE_TO_ALL)
 	{
-		if (!sync_is_remote(nodenum, nodes, nnodes))
+		if (!sync_is_remote(local, nodes, nnodes))
 			return (-EINVAL);
 	}
 	else
 	{
-		if (!sync_is_local(nodenum, nodes, nnodes))
+		if (!sync_is_local(local, nodes, nnodes))
 			return (-EINVAL);
 	}
 
@@ -352,6 +352,7 @@ PUBLIC int do_vsync_create(const int *nodes, int nnodes, int type)
 	virtual_syncs[vsyncid].status   |= VSYNC_STATUS_USED;
 	virtual_syncs[vsyncid].type      = type;
 	virtual_syncs[vsyncid].sync_type = SYNC_INPUT;
+	virtual_syncs[vsyncid].local     = local;
 	virtual_syncs[vsyncid].masternum = nodes[0];
 	virtual_syncs[vsyncid].nnodes    = nnodes;
 	virtual_syncs[vsyncid].nodeslist = nodeslist;
@@ -407,9 +408,10 @@ PRIVATE int _do_sync_open(const int *nodes, int nnodes, int type)
 /**
  * @brief Opens a virtual synchronization point.
  *
- * @param nodes     Logic IDs of target nodes.
- * @param nnodes    Number of target nodes.
- * @param type      Type of synchronization point.
+ * @param nodes  Logic IDs of target nodes.
+ * @param nnodes Number of target nodes.
+ * @param type   Type of synchronization point.
+ * @param local  Local node number.
  *
  * @returns Upon successful completion, the ID of the opened virtual
  * synchronization point is returned. Upon failure, a negative error
@@ -417,27 +419,24 @@ PRIVATE int _do_sync_open(const int *nodes, int nnodes, int type)
  *
  * @todo Check for Invalid Remote
  */
-PUBLIC int do_vsync_open(const int *nodes, int nnodes, int type)
+PUBLIC int do_vsync_open(const int *nodes, int nnodes, int type, int local)
 {
 	int vsyncid;        /* Virtual sync point ID. */
 	uint64_t nodeslist; /* Target nodes list.     */
-	int nodenum;        /* Local node num.        */
-
-	nodenum = processor_node_get_num(0);
 
 	/* Invalid nodes list. */
-	if (!sync_nodelist_is_valid(nodenum, nodes, nnodes))
+	if (!sync_nodelist_is_valid(local, nodes, nnodes))
 		return (-EINVAL);
 
 	/* Checks the nodes list corretude. */
 	if (type == SYNC_ONE_TO_ALL)
 	{
-		if (!sync_is_local(nodenum, nodes, nnodes))
+		if (!sync_is_local(local, nodes, nnodes))
 			return (-EINVAL);
 	}
 	else
 	{
-		if (!sync_is_remote(nodenum, nodes, nnodes))
+		if (!sync_is_remote(local, nodes, nnodes))
 			return (-EINVAL);
 	}
 
@@ -453,6 +452,7 @@ PUBLIC int do_vsync_open(const int *nodes, int nnodes, int type)
 	virtual_syncs[vsyncid].status   |= VSYNC_STATUS_USED;
 	virtual_syncs[vsyncid].type      = type;
 	virtual_syncs[vsyncid].sync_type = SYNC_OUTPUT;
+	virtual_syncs[vsyncid].local     = local;
 	virtual_syncs[vsyncid].masternum = nodes[0];
 	virtual_syncs[vsyncid].nnodes    = nnodes;
 	virtual_syncs[vsyncid].nodeslist = nodeslist;
@@ -558,7 +558,6 @@ PUBLIC int do_vsync_wait(int syncid)
 	int fd;           /* HW file descriptor.         */
 	int ret;          /* Hal function return.        */
 	int nsignals = 1; /* Number of signals received. */
-	int nodenum = processor_node_get_num(core_get_id());
 	uint64_t nodeslist;
 
 	dcache_invalidate();
@@ -574,7 +573,7 @@ PUBLIC int do_vsync_wait(int syncid)
 	/* Waits. */
 	if (virtual_syncs[syncid].type == SYNC_ONE_TO_ALL)
 	{
-		nodeslist = 0ULL | (1ULL << virtual_syncs[syncid].masternum) | (1ULL << nodenum);
+		nodeslist = 0ULL | (1ULL << virtual_syncs[syncid].masternum) | (1ULL << virtual_syncs[syncid].local);
 		KASSERT((fd = do_sync_search(virtual_syncs[syncid].masternum, nodeslist)) >= 0);
 
 		/* Waits for the ONE release signal. */
@@ -638,7 +637,7 @@ PUBLIC int do_vsync_signal(int syncid)
 	if (virtual_syncs[syncid].sync_type != SYNC_OUTPUT)
 		return (-EBADF);
 
-	nodes_array[0] = processor_node_get_num(core_get_id());
+	nodes_array[0] = virtual_syncs[syncid].local;
 
 	dcache_invalidate();
 
