@@ -823,7 +823,7 @@ keep_buffer:
 	t1 = clock_read();
 
 		/* Setup asynchronous read. */
-		if ((ret = mailbox_aread(active_mailboxes[fd].hwfd, (void *) &buffer_ptr->message, MAILBOX_MSG_SIZE)) < 0)
+		if ((ret = mailbox_aread(active_mailboxes[fd].hwfd, (void *) &buffer_ptr->message, HAL_MAILBOX_MSG_SIZE)) < 0)
 			goto release_buffer;
 
 		if ((ret = mailbox_wait(active_mailboxes[fd].hwfd)) < 0)
@@ -938,7 +938,7 @@ write:
 	t1 = clock_read();
 
 		/* Setup asynchronous write. */
-		if ((ret = mailbox_awrite(active_mailboxes[fd].hwfd, (void *) &active_mailboxes[fd].ports[port].mbuffer->message, MAILBOX_MSG_SIZE)) < 0)
+		if ((ret = mailbox_awrite(active_mailboxes[fd].hwfd, (void *) &active_mailboxes[fd].ports[port].mbuffer->message, HAL_MAILBOX_MSG_SIZE)) < 0)
 			return (ret);
 
 		if ((ret = mailbox_wait(active_mailboxes[fd].hwfd)) < 0)

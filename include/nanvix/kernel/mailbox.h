@@ -60,7 +60,7 @@
 	 * to when the user open a mailbox to the local node, what is supported by the
 	 * kernel but not by the Hal.
 	 */
-	#define HW_MAILBOX_MAX (MAILBOX_CREATE_MAX + MAILBOX_OPEN_MAX + 1)
+	#define HW_MAILBOX_MAX (HAL_MAILBOX_CREATE_MAX + HAL_MAILBOX_OPEN_MAX + 1)
 
 	/**
 	 * @brief Maximum number of virtual mailboxes.
@@ -88,7 +88,7 @@
 	 *
 	 * Maximum size of mailbox message data buffer.
 	 */
-	#define KMAILBOX_MESSAGE_SIZE (MAILBOX_MSG_SIZE - KMAILBOX_MESSAGE_HEADER_SIZE)
+	#define KMAILBOX_MESSAGE_SIZE (HAL_MAILBOX_MSG_SIZE - KMAILBOX_MESSAGE_HEADER_SIZE)
 
 	/**
 	 * @brief Creates a virtual mailbox.
