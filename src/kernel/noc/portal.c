@@ -427,7 +427,7 @@ PUBLIC int portal_nodenum_is_local(int nodenum)
 {
 	int local;
 
-	local = processor_node_get_num(0);
+	local = processor_node_get_num(core_get_id());
 
 	if (cluster_is_ccluster(cluster_get_num()))
 		return (nodenum == local);
