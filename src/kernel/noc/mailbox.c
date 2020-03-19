@@ -1059,33 +1059,18 @@ int do_vmailbox_ioctl(int mbxid, unsigned request, va_list args)
  */
 PUBLIC void kmailbox_init(void)
 {
-	int nodenum;
+	int local;
 
 	kprintf("[kernel][noc] initializing the kmailbox facility");
 
-	nodenum = processor_node_get_num(0);
+	local = processor_node_get_num(core_get_id());
 
-	if (cluster_is_iocluster(cluster_get_num()))
-	{
-		for (int i = 0; i < PROCESSOR_NOC_IONODES_NUM / PROCESSOR_IOCLUSTERS_NUM; ++i)
-		{
-			/* Create the input mailbox. */
-			KASSERT(_do_mailbox_create(nodenum + i) >= 0);
+	/* Create the input mailbox. */
+	KASSERT(_do_mailbox_create(local) >= 0);
 
-			/* Opens all mailbox interfaces. */
-			for (int j = 0; j < PROCESSOR_NOC_NODES_NUM; ++j)
-				KASSERT(_do_mailbox_open(j) >= 0);
-		}
-	}
-	else
-	{
-		/* Create the input mailbox. */
-		KASSERT(_do_mailbox_create(nodenum) >= 0);
-
-		/* Opens all mailbox interfaces. */
-		for (int i = 0; i < PROCESSOR_NOC_NODES_NUM; ++i)
-			KASSERT(_do_mailbox_open(i) >= 0);
-	}
+	/* Opens all mailbox interfaces. */
+	for (int i = 0; i < PROCESSOR_NOC_NODES_NUM; ++i)
+		KASSERT(_do_mailbox_open(i) >= 0);
 }
 
 #endif /* __TARGET_HAS_MAILBOX */
