@@ -1036,7 +1036,7 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 	t2 = clock_read();
 
 	/* Checks if the destination is the local node. */
-	if (active_portals[fd].remote == processor_node_get_num(0))
+	if (active_portals[fd].remote == active_portals[fd].local)
 	{
 		/* Forwards the message to the mbuffers table. */
 		active_portals[fd].ports[port].mbuffer->flags = 0 | MBUFFER_FLAGS_BUSY;
