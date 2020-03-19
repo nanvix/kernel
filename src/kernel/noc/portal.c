@@ -427,7 +427,7 @@ PUBLIC int portal_nodenum_is_local(int nodenum)
 {
 	int local;
 
-	local = processor_node_get_num(0);
+	local = processor_node_get_num(core_get_id());
 
 	if (cluster_is_ccluster(cluster_get_num()))
 		return (nodenum == local);
@@ -1036,7 +1036,7 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 	t2 = clock_read();
 
 	/* Checks if the destination is the local node. */
-	if (active_portals[fd].remote == processor_node_get_num(0))
+	if (active_portals[fd].remote == active_portals[fd].local)
 	{
 		/* Forwards the message to the mbuffers table. */
 		active_portals[fd].ports[port].mbuffer->flags = 0 | MBUFFER_FLAGS_BUSY;
@@ -1046,6 +1046,8 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 	}
 
 write:
+	dcache_invalidate();
+
 	t1 = clock_read();
 
 		/* Configures async aread. */
@@ -1072,6 +1074,7 @@ finish:
 	virtual_portals[portalid].latency += (t2 - t1);
 	virtual_portals[portalid].volume += ret;
 
+	dcache_invalidate();
 	return (ret);
 }
 
@@ -1178,29 +1181,14 @@ PUBLIC void kportal_init(void)
 
 	kprintf("[kernel][noc] initializing the kportal facility");
 
-	local = processor_node_get_num(0);
+	local = processor_node_get_num(core_get_id());
 
-	if (cluster_is_iocluster(cluster_get_num()))
-	{
-		for (int i = 0; i < PROCESSOR_NOC_IONODES_NUM / PROCESSOR_IOCLUSTERS_NUM; ++i)
-		{
-			/* Create the input portal. */
-			KASSERT(_do_portal_create(local + i) >= 0);
+	/* Create the input portal. */
+	KASSERT(_do_portal_create(local) >= 0);
 
-			/* Opens all portal interfaces. */
-			for (int j = 0; j < PROCESSOR_NOC_NODES_NUM; ++j)
-				KASSERT(_do_portal_open(local + i, j) >= 0);
-		}
-	}
-	else
-	{
-		/* Create the input portal. */
-		KASSERT(_do_portal_create(local) >= 0);
-
-		/* Opens all portal interfaces. */
-		for (int i = 0; i < PROCESSOR_NOC_NODES_NUM; ++i)
-			KASSERT(_do_portal_open(local, i) >= 0);
-	}
+	/* Opens all portal interfaces. */
+	for (int i = 0; i < PROCESSOR_NOC_NODES_NUM; ++i)
+		KASSERT(_do_portal_open(local, i) >= 0);
 }
 
 #endif /* __TARGET_HAS_PORTAL */

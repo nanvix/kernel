@@ -40,7 +40,7 @@
  * @retval -EINVAL At least 2 nodes and at most PROCESSOR_NOC_NODES_NUM must be involved.
  * @retval -EINVAL The type must be SYNC_ONE_TO_ALL or SYNC_ALL_TO_ONE.
  */
-PUBLIC int kernel_sync_create(const int *nodes, int nnodes, int type)
+PUBLIC int kernel_sync_create(const int *nodes, int nnodes, int type, int local)
 {
 	/* Invalid nodes list. */
 	if (nodes == NULL)
@@ -65,7 +65,7 @@ PUBLIC int kernel_sync_create(const int *nodes, int nnodes, int type)
 	if ((type != SYNC_ONE_TO_ALL) && (type != SYNC_ALL_TO_ONE))
 		return (-EINVAL);
 
-	return (do_vsync_create(nodes, nnodes, type));
+	return (do_vsync_create(nodes, nnodes, type, local));
 }
 
 /*============================================================================*
@@ -79,7 +79,7 @@ PUBLIC int kernel_sync_create(const int *nodes, int nnodes, int type)
  * @retval -EINVAL At least 2 nodes and at most PROCESSOR_NOC_NODES_NUM must be involved.
  * @retval -EINVAL The type must be SYNC_ONE_TO_ALL or SYNC_ALL_TO_ONE.
  */
-PUBLIC int kernel_sync_open(const int *nodes, int nnodes, int type)
+PUBLIC int kernel_sync_open(const int *nodes, int nnodes, int type, int local)
 {
 	/* Invalid nodes list. */
 	if (nodes == NULL)
@@ -104,7 +104,7 @@ PUBLIC int kernel_sync_open(const int *nodes, int nnodes, int type)
 	if ((type != SYNC_ONE_TO_ALL) && (type != SYNC_ALL_TO_ONE))
 		return (-EINVAL);
 
-	return (do_vsync_open(nodes, nnodes, type));
+	return (do_vsync_open(nodes, nnodes, type, local));
 }
 
 /*============================================================================*

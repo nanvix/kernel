@@ -279,8 +279,8 @@
 
 #ifdef __NANVIX_MICROKERNEL
 
-	EXTERN int kernel_sync_create(const int *, int, int);
-	EXTERN int kernel_sync_open(const int *, int, int);
+	EXTERN int kernel_sync_create(const int *, int, int, int);
+	EXTERN int kernel_sync_open(const int *, int, int, int);
 	EXTERN int kernel_sync_unlink(int);
 	EXTERN int kernel_sync_close(int);
 	EXTERN int kernel_sync_wait(int);

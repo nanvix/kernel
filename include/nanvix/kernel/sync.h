@@ -48,12 +48,13 @@
 	 * @param nodes  Logic IDs of target nodes.
 	 * @param nnodes Number of target nodes.
 	 * @param type   Type of synchronization point.
+	 * @param local  Local node number.
 	 *
 	 * @returns Upon successful completion, the ID of the newly created
 	 * virtual synchronization point is returned. Upon failure, a negative
 	 * error code is returned instead.
 	 */
-	EXTERN int do_vsync_create(const int *nodes, int nnodes, int type);
+	EXTERN int do_vsync_create(const int *nodes, int nnodes, int type, int local);
 
 	/**
 	 * @brief Opens a virtual synchronization point.
@@ -61,6 +62,7 @@
 	 * @param nodes  Logic IDs of target nodes.
 	 * @param nnodes Number of target nodes.
 	 * @param type   Type of synchronization point.
+	 * @param local  Local node number.
 	 *
 	 * @returns Upon successful completion, the ID of the opened virtual
 	 * synchronization point is returned. Upon failure, a negative error
@@ -68,7 +70,7 @@
 	 *
 	 * @todo Check for Invalid Remote
 	 */
-	EXTERN int do_vsync_open(const int *nodes, int nnodes, int type);
+	EXTERN int do_vsync_open(const int *nodes, int nnodes, int type, int local);
 
 	/**
 	 * @brief Destroys a virtual synchronization point.
