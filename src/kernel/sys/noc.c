@@ -32,64 +32,16 @@
  * @brief The kernel_node_get_num() function gets the NoC Node Number attached
  * with the core.
  *
- * @param coreid Attached Core ID.
- *
  * @return Positive number with successfully get the node number, negative
  * otherwise.
  *
  * @author João Vicente Souto
  */
-PUBLIC int kernel_node_get_num(int coreid)
+PUBLIC int kernel_node_get_num(void)
 {
-	/* Invalid core ID. */
-	if (!WITHIN(coreid, 0, CORES_NUM))
-		return (-EINVAL);
-
 #if (PROCESSOR_HAS_NOC)
-
-    return (processor_node_get_num(coreid));
-
+    return (processor_node_get_num());
 #else
-
 	return (0);
-
-#endif /* PROCESSOR_HAS_NOC */
-}
-
-/*============================================================================*
- * kernel_node_set_num()                                                      *
- *============================================================================*/
-
-/**
- * @brief The kernel_node_set_num() function exchange the NoC Node Number
- * attached with the core.
- *
- * @param coreid  Attached Core ID.
- * @param nodenum New NoC Node Number.
- *
- * @return Zero if successfully exchange the node number, non zero otherwise.
- *
- * @author João Vicente Souto
- */
-PUBLIC int kernel_node_set_num(int coreid, int nodenum)
-{
-	/* Invalid core ID. */
-	if (!WITHIN(coreid, 0, CORES_NUM))
-		return (-EINVAL);
-
-#if (PROCESSOR_HAS_NOC)
-
-	/* Invalid NoC node number. */
-	if (!WITHIN(nodenum, 0, PROCESSOR_NOC_NODES_NUM))
-		return (-EINVAL);
-
-	return (processor_node_set_num(coreid, nodenum));
-
-#else
-
-	UNUSED(nodenum);
-
-	return (-ENOSYS);
-
 #endif /* PROCESSOR_HAS_NOC */
 }
