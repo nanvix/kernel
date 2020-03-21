@@ -93,7 +93,7 @@ enum portal_search_type {
 /**
  * @brief Portal ports flags.
  */
-#define PORT_STATUS_USED (1 << 0) /**< Used port?   */
+#define PORT_STATUS_USED (1 << 0) /**< Used port? */
 
 /**
  * @brief Asserts if the port of portalid is used.
@@ -202,8 +202,9 @@ PRIVATE struct
 	 * @name Control Variables
 	 */
 	/**@{*/
-	unsigned short status; /**< Status.         */
-	int remote;            /**< Remote address. */
+	unsigned short status; /**< Status.            */
+	int remote;            /**< Remote address.    */
+	void *user_buffer;     /**< User level buffer. */
 	/**@}*/
 
 	/**
@@ -216,7 +217,8 @@ PRIVATE struct
 } ALIGN(sizeof(dword_t)) virtual_portals[KPORTAL_MAX] = {
 	[0 ... (KPORTAL_MAX - 1)] = {
 		.status = 0,
-		.remote = -1
+		.remote = -1,
+		.user_buffer = NULL
 	},
 };
 
@@ -235,7 +237,7 @@ PRIVATE struct portal
 } ALIGN(sizeof(dword_t)) active_portals[HW_PORTAL_MAX] = {
 	[0 ... (HW_PORTAL_MAX - 1)] {
 		.ports[0 ... (KPORTAL_PORT_NR - 1)] = {
-			.status = 0,
+			.status  = 0,
 			.mbuffer = NULL
 		},
 		.local  = -1,
@@ -853,8 +855,6 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 	int fd;              /* Hardware portal logic index.   */
 	int port;            /* Port used by vportal.          */
 	int local_hwaddress; /* Vportal hardware address.      */
-	int dest;            /* Message destination address.   */
-	int src;             /* Message sender address.        */
 	int mbuffer;         /* New alocated buffer.           */
 	uint64_t t1;         /* Clock value before aread call. */
 	uint64_t t2;         /* Clock value after aread call.  */
@@ -893,15 +893,19 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 			kmemcpy(buffer, (void *) &buffer_ptr->message.data, ret = size);
 		t2 = clock_read();
 
-		buffer_ptr->flags &= ~MBUFFER_FLAGS_BUSY;
+		ret = size;
 
-		/* Releases the message buffer. */
-		KASSERT(do_mbuffer_free(buffer_ptr) == 0);
+		/* Update performance statistics. */
+		virtual_portals[portalid].latency += (t2 - t1);
+		virtual_portals[portalid].volume += ret;
 
-		goto finish;
+		/* Revoke allow. */
+		virtual_portals[portalid].status &= ~VPORTAL_STATUS_ALLOWED;
+		virtual_portals[portalid].remote = -1;
+
+		goto release_buffer;
 	}
 
-again:
 	/* Alloc data buffer to receive data. */
 	if ((mbuffer = do_mbuffer_alloc()) < 0)
 		return (-EAGAIN);
@@ -909,7 +913,6 @@ again:
 	active_portals[fd].ports[port].mbuffer = &portal_message_buffers[mbuffer];
 	buffer_ptr = active_portals[fd].ports[port].mbuffer;
 
-keep_buffer:
 	/* Allows async write from remote. */
 	if ((ret = portal_allow(active_portals[fd].hwfd, GET_LADDRESS_FD(virtual_portals[portalid].remote))) < 0)
 		goto release_buffer;
@@ -925,47 +928,16 @@ keep_buffer:
 		if ((ret = portal_aread(active_portals[fd].hwfd, (void *) &buffer_ptr->message, (KPORTAL_MESSAGE_HEADER_SIZE + HAL_PORTAL_MAX_SIZE))) < 0)
 			goto release_buffer;
 
-		if ((ret = portal_wait(active_portals[fd].hwfd)) < 0)
-			goto release_buffer;
-
 	t2 = clock_read();
 
-	/* Checks if the message is addressed for the requesting port. */
-	dest = buffer_ptr->message.dest;
-	src = buffer_ptr->message.src;
-
-	if ((dest != local_hwaddress) || (src != virtual_portals[portalid].remote))
-	{
-		/* Check if the destination port is opened to receive data. */
-		if (PORT_IS_USED(fd, GET_LADDRESS_PORT(dest)))
-		{
-			/* Marks the buffer as not used for threads look for this message. */
-			buffer_ptr->flags &= ~MBUFFER_FLAGS_USED;
-			active_portals[fd].ports[port].mbuffer = NULL;
-
-			goto again;
-		}
-		else
-		{
-		/**
-		 * XXX - ELSE Discards the message.
-		 */
-			goto keep_buffer;
-		}
-	}
+	virtual_portals[portalid].user_buffer = buffer;
 
 	ret = size;
 
-	kmemcpy(buffer, (void *) &buffer_ptr->message.data, size);
-
-finish:
-	/* Updates performance statistics. */
+	/* Update performance statistics. */
 	virtual_portals[portalid].latency += (t2 - t1);
-	virtual_portals[portalid].volume  += ret;
 
-	/* Revoke allow. */
-	virtual_portals[portalid].status &= ~VPORTAL_STATUS_ALLOWED;
-	virtual_portals[portalid].remote = -1;
+	return (ret);
 
 release_buffer:
 	/* Sets the portal data buffer as not busy. */
@@ -992,8 +964,8 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 	int port;          /* HW port specified to vportal.   */
 	int mbuffer;       /* Message buffer used to write.   */
 	int local_address; /* HW portal + port address.       */
-	uint64_t t1 = 0;   /* Clock value before awrite call. */
-	uint64_t t2 = 0;   /* Clock value after awrite call.  */
+	uint64_t t1;       /* Clock value before awrite call. */
+	uint64_t t2;       /* Clock value after awrite call.  */
 
 	/* Bad virtual portal. */
 	if (!VPORTAL_IS_USED(portalid))
@@ -1046,35 +1018,21 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 	}
 
 write:
-	dcache_invalidate();
-
 	t1 = clock_read();
 
-		/* Configures async aread. */
-		if ((ret = portal_awrite(active_portals[fd].hwfd, (void *) &active_portals[fd].ports[port].mbuffer->message, (KPORTAL_MESSAGE_HEADER_SIZE + HAL_PORTAL_MAX_SIZE))) < 0) {
-			if (ret == -EAGAIN)
-				return (ret);
-			else
-				goto finish;
-		}
-
-		if ((ret = portal_wait(active_portals[fd].hwfd)) < 0)
+		/* Configures asynchronous write. */
+		if ((ret = portal_awrite(active_portals[fd].hwfd, (void *) &active_portals[fd].ports[port].mbuffer->message, (KPORTAL_MESSAGE_HEADER_SIZE + HAL_PORTAL_MAX_SIZE))) < 0)
 			return (ret);
 
 	t2 = clock_read();
-
-	/* Releases the buffer allocated. */
-	KASSERT(do_mbuffer_free(active_portals[fd].ports[port].mbuffer) == 0);
-	active_portals[fd].ports[port].mbuffer = NULL;
 
 finish:
 	ret = size;
 
 	/* Update performance statistics. */
 	virtual_portals[portalid].latency += (t2 - t1);
-	virtual_portals[portalid].volume += ret;
+	virtual_portals[portalid].volume  += ret;
 
-	dcache_invalidate();
 	return (ret);
 }
 
@@ -1083,36 +1041,181 @@ finish:
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @brief Wait implementation for input portals. Waits on a virtual
+ * portal to finish an asynchronous read.
+ *
+ * @param portalid Logic ID of the target virtual portal.
+ *
+ * @returns Upon successful completion, zero is returned if the operation
+ * finished on @p portalid. If the operation incurred in a re-addressing, ONE
+ * is returned. Upon failure, a negative error code is returned instead.
+ */
+PRIVATE int do_vportal_receiver_wait(int portalid)
+{
+	int ret;             /* HAL function return.          */
+	int fd;              /* Hardware portal logic index.  */
+	uint64_t t1;         /* Clock value before wait call. */
+	uint64_t t2;         /* Clock value after wait call.  */
+	int port;            /* Port used by vportal.         */
+	int src;             /* Msg source address.           */
+	int dest;            /* Msg destination address.      */
+	int size;            /* Underlying message size.      */
+	int local_hwaddress; /* Vportal hardware address.     */
+	struct portal_message_buffer *buffer_ptr;
+
+	fd = GET_LADDRESS_FD(portalid);
+	port = GET_LADDRESS_PORT(portalid);
+
+	t1 = clock_read();
+
+		if ((ret = portal_wait(active_portals[fd].hwfd)) < 0)
+			goto release_buffer;
+
+	t2 = clock_read();
+
+	local_hwaddress = DO_LADDRESS_COMPOSE(active_portals[fd].local, port);
+
+	buffer_ptr = active_portals[fd].ports[port].mbuffer;
+
+	/* Checks if the message is addressed for the requesting port. */
+	dest = buffer_ptr->message.dest;
+	src = buffer_ptr->message.src;
+
+	if ((dest != local_hwaddress) || (src != virtual_portals[portalid].remote))
+	{
+		/* Check if the destination port is opened to receive data. */
+		if (PORT_IS_USED(fd, GET_LADDRESS_PORT(dest)))
+		{
+			/* Marks the buffer as not used for threads look for this message. */
+			buffer_ptr->flags &= ~MBUFFER_FLAGS_USED;
+		}
+		else
+		{
+			/* Discards the message. */
+			buffer_ptr->flags &= ~MBUFFER_FLAGS_BUSY;
+
+			KASSERT(do_mbuffer_free(buffer_ptr) == 0);
+		}
+
+		active_portals[fd].ports[port].mbuffer = NULL;
+
+		/* Returns sinalizing that a message was read, but not for local port. */
+		return (1);
+	}
+	else
+	{
+		size = buffer_ptr->message.size;
+
+		kmemcpy(virtual_portals[portalid].user_buffer, (void *) &buffer_ptr->message.data, size);
+
+		/* Update performance statistics. */
+		virtual_portals[portalid].latency += (t2 - t1);
+		virtual_portals[portalid].volume  += size;
+
+		virtual_portals[portalid].user_buffer = NULL;
+
+		/* Revoke allow. */
+		virtual_portals[portalid].status &= ~VPORTAL_STATUS_ALLOWED;
+		virtual_portals[portalid].remote  = -1;
+
+		ret = 0;
+	}
+
+release_buffer:
+	/* Sets the portal data buffer as not busy. */
+	buffer_ptr->flags &= ~MBUFFER_FLAGS_BUSY;
+
+	KASSERT(do_mbuffer_free(buffer_ptr) == 0);
+	active_portals[fd].ports[port].mbuffer = NULL;
+
+	return (ret);
+}
+
+/**
+ * @brief Wait implementation for output portals. Waits on a virtual
+ * portal to finish an asynchronous write.
+ *
+ * @param portalid Logic ID of the sender virtual portal.
+ *
+ * @returns Upon successful completion, zero is returned. Upon failure,
+ * a negative error code is returned instead.
+ */
+PRIVATE int do_vportal_sender_wait(int portalid)
+{
+	int ret;     /* HAL function return.          */
+	int fd;      /* Vportal file descriptor.      */
+	int port;    /* Port used by vportal.         */
+	uint64_t t1; /* Clock value before wait call. */
+	uint64_t t2; /* Clock value after wait call.  */
+
+	fd = GET_LADDRESS_FD(portalid);
+	port = GET_LADDRESS_PORT(portalid);
+
+	t1 = clock_read();
+
+		/* Wait for asynchronous write to finish. */
+		if ((ret = portal_wait(active_portals[fd].hwfd)) < 0)
+			goto release_buffer;
+
+	t2 = clock_read();
+
+	/* Update performance statistics. */
+	virtual_portals[portalid].latency += (t2 - t1);
+
+release_buffer:
+	/* Releases the buffer allocated to write. */
+	KASSERT(do_mbuffer_free(active_portals[fd].ports[port].mbuffer) == 0);
+	active_portals[fd].ports[port].mbuffer = NULL;
+
+	return (ret);
+}
+
+/**
+ * @brief Waits on a virtual portal to finish an assynchronous operation.
+ *
+ * @param portalid Logic ID of the target virtual portal.
+ *
+ * @returns Upon successful completion, a positive number is returned.
+ * Upon failure, a negative error code is returned instead.
  */
 PUBLIC int do_vportal_wait(int portalid)
 {
-	int ret;       /* HAL function return.          */
-	int fd;        /* Hardware portal logic index.  */
-	uint64_t t1;   /* Clock value before wait call. */
-	uint64_t t2;   /* Clock value after wait call.  */
+	int ret;             /* Underlying function return. */
+	int fd;              /* HW portal logic index.      */
+	int port;            /* Port used by vportal.       */
+	int (*wait_fn)(int); /* Underlying wait function.   */
 
 	/* Bad virtual portal. */
 	if (!VPORTAL_IS_USED(portalid))
 		return (-EBADF);
 
 	fd = GET_LADDRESS_FD(portalid);
+	port = GET_LADDRESS_PORT(portalid);
+
+	/* Bad portal. */
+	if (!resource_is_used(&active_portals[fd].resource))
+		return (-EBADF);
+
+	/* Checks the underlying portal type. */
+	if (resource_is_readable(&active_portals[fd].resource))
+		wait_fn = do_vportal_receiver_wait;
+	else if (resource_is_writable(&active_portals[fd].resource))
+		wait_fn = do_vportal_sender_wait;
+	else
+		return (-EBADF);
 
 	/* Bad virtual portal. */
 	if (!resource_is_async(&active_portals[fd].resource))
 		return (-EBADF);
 
+	/* Previous operation already completed. */
+	if (active_portals[fd].ports[port].mbuffer == NULL)
+		return (0);
+
 	dcache_invalidate();
 
-	t1 = clock_read();
-
-		/* Wait for asynchronous operation. */
-		ret = portal_wait(active_portals[fd].hwfd);
-
-	t2 = clock_read();
-
-	/* Updates performance statistics. */
-	virtual_portals[portalid].latency += (t2 - t1);
+	/* Calls the underlying wait function according to the type of the portal. */
+	ret = wait_fn(portalid);
 
 	dcache_invalidate();
 	return (ret);
