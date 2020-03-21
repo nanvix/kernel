@@ -126,27 +126,6 @@ enum portal_search_type {
 	(portal_message_buffers[mbufferid].flags & MBUFFER_FLAGS_BUSY)
 /**@}*/
 
-/**
- * @name Helper Macros for portal status manipulation.
- */
-/**@{*/
-
-/**
- * @brief Asserts if the portal data buffer is busy.
- */
-#define PORTAL_IS_BUSY(portalid) \
-	(active_portals[portalid].buffer->flags & MBUFFER_FLAGS_BUSY)
-
-/**
- * @brief Sets the portal data buffer as busy / notbusy.
- */
-#define PORTAL_SET_BUSY(portalid) \
-	(active_portals[portalid].buffer->flags |= MBUFFER_FLAGS_BUSY)
-
-#define PORTAL_SET_NOTBUSY(portalid) \
-	(active_portals[portalid].buffer->flags &= ~MBUFFER_FLAGS_BUSY)
-/**@}*/
-
 /*============================================================================*
  * Control Structures.                                                        *
  *============================================================================*/
@@ -175,6 +154,7 @@ struct portal_message_buffer
 
 struct portal_message_buffer portal_message_buffers[KPORTAL_MESSAGE_BUFFERS_MAX] = {
 	[0 ... (KPORTAL_MESSAGE_BUFFERS_MAX - 1)] = {
+		.flags   = 0,
 		.message = {
 			.src  = -1,
 			.dest = -1,
@@ -227,13 +207,12 @@ PRIVATE struct
  */
 PRIVATE struct portal
 {
-	struct resource resource;             /**< Underlying resource.        */
-	int refcount;                         /**< References count.           */
-	int hwfd;                             /**< Underlying file descriptor. */
-	int local;                            /**< Local node number.          */
-	int remote;                           /**< Target node number.         */
-	struct port ports[KPORTAL_PORT_NR];   /**< HW ports.                   */
-	struct portal_message_buffer *buffer; /**< Data buffer resource.       */
+	struct resource resource;           /**< Underlying resource.        */
+	int refcount;                       /**< References count.           */
+	int hwfd;                           /**< Underlying file descriptor. */
+	int local;                          /**< Local node number.          */
+	int remote;                         /**< Target node number.         */
+	struct port ports[KPORTAL_PORT_NR]; /**< HW ports.                   */
 } ALIGN(sizeof(dword_t)) active_portals[HW_PORTAL_MAX] = {
 	[0 ... (HW_PORTAL_MAX - 1)] {
 		.ports[0 ... (KPORTAL_PORT_NR - 1)] = {
@@ -1042,6 +1021,8 @@ PRIVATE int do_vportal_receiver_wait(int portalid)
 	fd = GET_LADDRESS_FD(portalid);
 	port = GET_LADDRESS_PORT(portalid);
 
+	buffer_ptr = active_portals[fd].ports[port].mbuffer;
+
 	t1 = clock_read();
 
 		if ((ret = portal_wait(active_portals[fd].hwfd)) < 0)
@@ -1050,8 +1031,6 @@ PRIVATE int do_vportal_receiver_wait(int portalid)
 	t2 = clock_read();
 
 	local_hwaddress = DO_LADDRESS_COMPOSE(active_portals[fd].local, port);
-
-	buffer_ptr = active_portals[fd].ports[port].mbuffer;
 
 	/* Checks if the message is addressed for the requesting port. */
 	dest = buffer_ptr->message.dest;

@@ -114,19 +114,12 @@ enum mailbox_search_type {
 	(mailbox_message_buffers[mbufferid].flags & MBUFFER_FLAGS_BUSY)
 /**@}*/
 
-/**
- * @name Helper Macros for mailboxes operations.
- */
-/**@{*/
-
-/**@}*/
-
 /*============================================================================*
  * Control Structures.                                                        *
  *============================================================================*/
 
 /**
- * @brief Struct that represents a mailbox message buffer.
+ * @brief Mailbox message buffer.
  */
 struct mailbox_message_buffer
 {
@@ -147,6 +140,7 @@ struct mailbox_message_buffer
 
 struct mailbox_message_buffer mailbox_message_buffers[KMAILBOX_MESSAGE_BUFFERS_MAX] = {
 	[0 ... (KMAILBOX_MESSAGE_BUFFERS_MAX - 1)] = {
+		.flags   = 0,
 		.message = {
 			.dest = -1,
 			.data = {'\0'},
@@ -197,11 +191,11 @@ PRIVATE struct
  */
 PRIVATE struct mailbox
 {
-	struct resource resource;              /**< Underlying resource.        */
-	int refcount;                          /**< References count.           */
-	int hwfd;                              /**< Underlying file descriptor. */
-	int nodenum;                           /**< Target node number.         */
-	struct port ports[MAILBOX_PORT_NR];    /**< Logic ports.                */
+	struct resource resource;           /**< Underlying resource.        */
+	int refcount;                       /**< References count.           */
+	int hwfd;                           /**< Underlying file descriptor. */
+	int nodenum;                        /**< Target node number.         */
+	struct port ports[MAILBOX_PORT_NR]; /**< Logic ports.                */
 } active_mailboxes[HW_MAILBOX_MAX] = {
 	[0 ... (HW_MAILBOX_MAX - 1)] {
 		.ports[0 ... (MAILBOX_PORT_NR - 1)] = {
@@ -912,6 +906,8 @@ PRIVATE int do_vmailbox_receiver_wait(int mbxid)
 	fd = GET_LADDRESS_FD(mbxid);
 	port = GET_LADDRESS_PORT(mbxid);
 
+	buffer_ptr = active_mailboxes[fd].ports[port].mbuffer;
+
 	t1 = clock_read();
 
 		/* Wait for asynchronous read to finish. */
@@ -921,8 +917,6 @@ PRIVATE int do_vmailbox_receiver_wait(int mbxid)
 	t2 = clock_read();
 
 	local_hwaddress = DO_LADDRESS_COMPOSE(active_mailboxes[fd].nodenum, port);
-
-	buffer_ptr = active_mailboxes[fd].ports[port].mbuffer;
 
 	/* Checks if the message is addressed for the requesting port. */
 	dest = buffer_ptr->message.dest;
