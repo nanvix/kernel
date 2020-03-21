@@ -414,30 +414,6 @@ PRIVATE int do_message_search(int local_address, int remote_address)
 }
 
 /*============================================================================*
- * portal_nodenum_is_local()                                                  *
- *============================================================================*/
-
-/**
- * @brief Evaluates if the given nodenum is local to the cluster.
- *
- * @param nodenum Nodenum to be evaluated.
- *
- * @returns Non zero if @p nodenum is local to the current cluster. Zero is
- * returned instead.
- */
-PUBLIC int portal_nodenum_is_local(int nodenum)
-{
-	int local;
-
-	local = processor_node_get_num(core_get_id());
-
-	if (cluster_is_ccluster(cluster_get_num()))
-		return (nodenum == local);
-	else
-		return (WITHIN(nodenum, local, (local + (PROCESSOR_NOC_IONODES_NUM / PROCESSOR_IOCLUSTERS_NUM))));
-}
-
-/*============================================================================*
  * do_portal_search()                                                         *
  *============================================================================*/
 
@@ -556,7 +532,7 @@ PUBLIC int do_vportal_create(int local, int port)
 	int vportalid; /* Virtual portal ID.  */
 
 	/* Checks if the input portal is local. */
-	if (!portal_nodenum_is_local(local))
+	if (!node_is_local(local))
 		return (-EINVAL);
 
 	/* Search target hardware portal. */
@@ -650,7 +626,7 @@ PRIVATE int _do_portal_open(int local, int remote)
 	if (local == remote)
 	{
 		/* Asserts that @p local is local to the cluster. */
-		if (!portal_nodenum_is_local(local))
+		if (!node_is_local(local))
 			return (-EINVAL);
 	}
 	else
@@ -691,7 +667,7 @@ PUBLIC int do_vportal_open(int local, int remote, int remote_port)
 	int port;      /* Free port available. */
 
 	/* Checks if the portal sender is local. */
-	if (!portal_nodenum_is_local(local))
+	if (!node_is_local(local))
 		return (-EINVAL);
 
 	/* Search target hardware portal. */
@@ -1284,7 +1260,7 @@ PUBLIC void kportal_init(void)
 
 	kprintf("[kernel][noc] initializing the kportal facility");
 
-	local = processor_node_get_num(core_get_id());
+	local = processor_node_get_num();
 
 	/* Create the input portal. */
 	KASSERT(_do_portal_create(local) >= 0);

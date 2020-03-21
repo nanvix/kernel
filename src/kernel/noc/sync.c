@@ -700,40 +700,20 @@ PUBLIC int do_vsync_signal(int syncid)
 PUBLIC void ksync_init(void)
 {
 	int nodes[2];
-	int nodenum = processor_node_get_num(0);
+	int nodenum = processor_node_get_num();
 
 	kprintf("[kernel][noc] initializing the ksync facility");
 
-	if (cluster_is_iocluster(cluster_get_num()))
+	nodes[1] = nodenum;
+
+	/* Creates all sync interfaces. */
+	for (int i = 0; i < PROCESSOR_NOC_NODES_NUM; ++i)
 	{
-		for (int i = 0; i < PROCESSOR_NOC_IONODES_NUM / PROCESSOR_IOCLUSTERS_NUM; ++i)
-		{
-			nodes[1] = nodenum + i;
+		if (i == nodes[1])
+			continue;
 
-			/* Creates all sync interfaces. */
-			for (int j = 0; j < PROCESSOR_NOC_NODES_NUM; ++j)
-			{
-				if (j == nodes[1])
-					continue;
-
-				nodes[0] = j;
-				KASSERT(_do_sync_create(nodes, 2, SYNC_ONE_TO_ALL) >= 0);
-			}
-		}
-	}
-	else
-	{
-		nodes[1] = nodenum;
-
-		/* Creates all sync interfaces. */
-		for (int i = 0; i < PROCESSOR_NOC_NODES_NUM; ++i)
-		{
-			if (i == nodes[1])
-				continue;
-
-			nodes[0] = i;
-			KASSERT(_do_sync_create(nodes, 2, SYNC_ONE_TO_ALL) >= 0);
-		}
+		nodes[0] = i;
+		KASSERT(_do_sync_create(nodes, 2, SYNC_ONE_TO_ALL) >= 0);
 	}
 }
 

@@ -385,30 +385,6 @@ PRIVATE int do_message_search(int local_address)
 }
 
 /*============================================================================*
- * mailbox_nodenum_is_local()                                                 *
- *============================================================================*/
-
-/**
- * @brief Evaluates if the given nodenum is local to the cluster.
- *
- * @param nodenum Nodenum to be evaluated.
- *
- * @returns Non zero if @p nodenum is local to the current cluster. Zero is
- * returned instead.
- */
-PUBLIC int mailbox_nodenum_is_local(int nodenum)
-{
-	int local;
-
-	local = processor_node_get_num(0);
-
-	if (cluster_is_ccluster(cluster_get_num()))
-		return (nodenum == local);
-	else
-		return (WITHIN(nodenum, local, (local + (PROCESSOR_NOC_IONODES_NUM / PROCESSOR_IOCLUSTERS_NUM))));
-}
-
-/*============================================================================*
  * do_mailbox_search()                                                        *
  *============================================================================*/
 
@@ -523,7 +499,7 @@ PUBLIC int do_vmailbox_create(int local, int port)
 	int vmbxid; /* Virtual mailbox ID.  */
 
 	/* Checks if the input mailbox is local. */
-	if (!mailbox_nodenum_is_local(local))
+	if (!node_is_local(local))
 		return (-EINVAL);
 
 	/* Search target hardware mailbox. */
@@ -570,7 +546,7 @@ PRIVATE int _do_mailbox_open(int remote)
 
 	hwfd = -1;
 
-	if (remote != processor_node_get_num(0))
+	if (!node_is_local(remote))
 	{
 		/* Open underlying output hardware mailbox. */
 		if ((hwfd = mailbox_open(remote)) < 0)
@@ -896,7 +872,7 @@ PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
 	t2 = clock_read();
 
 	/* Checks if the destination is the local node. */
-	if (active_mailboxes[fd].nodenum == processor_node_get_num(0))
+	if (node_is_local(active_mailboxes[fd].nodenum))
 	{
 		/* Forwards the message to the mbuffers table. */
 		active_mailboxes[fd].ports[port].mbuffer->flags = 0 | MBUFFER_FLAGS_BUSY;
@@ -1164,7 +1140,7 @@ PUBLIC void kmailbox_init(void)
 
 	kprintf("[kernel][noc] initializing the kmailbox facility");
 
-	local = processor_node_get_num(core_get_id());
+	local = processor_node_get_num();
 
 	/* Create the input mailbox. */
 	KASSERT(_do_mailbox_create(local) >= 0);
