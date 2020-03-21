@@ -51,22 +51,32 @@ PRIVATE struct sysboard
 } ALIGN(CACHE_LINE_SIZE) sysboard[CORES_NUM];
 
 /**
+ * @brief Next core that may request an operation.
+ */
+static int sys_next_coreid = 0;
+
+/**
  * @brief Handles a system call IPI.
  */
 PUBLIC void do_kcall2(void)
 {
-	int coreid = 0 ;
+	int coreid = 0;
 	int ret = -ENOSYS;
 
 	semaphore_down(&syssem);
 
+		/* Sweeps the cores in a circular fashion. */
 		for (int i = 0; i < CORES_NUM; i++)
 		{
-			if (sysboard[i].pending)
+			if (sysboard[sys_next_coreid].pending)
 			{
-				coreid = i;
+				coreid = sys_next_coreid;
+				sys_next_coreid = (sys_next_coreid + 1) % CORES_NUM;
+
 				break;
 			}
+
+			sys_next_coreid = (sys_next_coreid + 1) % CORES_NUM;
 		}
 
 		/* Invalid system call number. */
