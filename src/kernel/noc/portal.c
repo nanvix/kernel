@@ -46,7 +46,8 @@ enum portal_search_type {
  * @brief Virtual portal flags.
  */
 #define VPORTAL_STATUS_USED    (1 << 0) /**< Used vportal? */
-#define VPORTAL_STATUS_ALLOWED (1 << 1) /**< Allowed?      */
+#define VPORTAL_STATUS_BUSY    (1 << 1) /**< Busy vportal? */
+#define VPORTAL_STATUS_ALLOWED (1 << 2) /**< Allowed?      */
 
 /**
  * @brief Asserts if the virtual portal is used.
@@ -55,10 +56,25 @@ enum portal_search_type {
 	(virtual_portals[vportalid].status & VPORTAL_STATUS_USED)
 
 /**
+ * @brief Asserts if the virtual portal is busy.
+ */
+#define VPORTAL_IS_BUSY(vportalid) \
+	(virtual_portals[vportalid].status & VPORTAL_STATUS_BUSY)
+
+/**
  * @brief Asserts if the virtual portal is allowed.
  */
 #define VPORTAL_IS_ALLOWED(vportalid) \
 	(virtual_portals[vportalid].status & VPORTAL_STATUS_ALLOWED)
+
+/**
+ * @brief VPortal Busy status operation macros.
+ */
+#define VPORTAL_SET_BUSY(vportalid) \
+	(virtual_portals[vportalid].status |= VPORTAL_STATUS_BUSY)
+
+#define VPORTAL_SET_NOTBUSY(vportalid) \
+	(virtual_portals[vportalid].status &= ~VPORTAL_STATUS_BUSY)
 /**@}*/
 
 /**
@@ -727,6 +743,10 @@ PUBLIC int do_vportal_unlink(int portalid)
 	if (!VPORTAL_IS_USED(portalid))
 		return (-EBADF);
 
+	/* Busy virtual portal. */
+	if (VPORTAL_IS_BUSY(portalid))
+		return (-EBUSY);
+
 	fd = GET_LADDRESS_FD(portalid);
 
 	/* Bad portal. */
@@ -774,6 +794,10 @@ PUBLIC int do_vportal_close(int portalid)
 	if (!VPORTAL_IS_USED(portalid))
 		return (-EBADF);
 
+	/* Busy virtual portal. */
+	if (VPORTAL_IS_BUSY(portalid))
+		return (-EBADF);
+
 	fd = GET_LADDRESS_FD(portalid);
 
 	/* Bad portal. */
@@ -817,6 +841,10 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 
 	/* Bad virtual portal. */
 	if (!VPORTAL_IS_USED(portalid))
+		return (-EBADF);
+
+	/* Busy virtual portal. */
+	if (VPORTAL_IS_BUSY(portalid))
 		return (-EBADF);
 
 	fd = GET_LADDRESS_FD(portalid);
@@ -865,6 +893,9 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 	if ((mbuffer = do_mbuffer_alloc()) < 0)
 		return (-EAGAIN);
 
+	/* Sets the virtual portal as busy. */
+	VPORTAL_SET_BUSY(portalid);
+
 	active_portals[fd].ports[port].mbuffer = &portal_message_buffers[mbuffer];
 	buffer_ptr = active_portals[fd].ports[port].mbuffer;
 
@@ -895,6 +926,9 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 	return (ret);
 
 release_buffer:
+	/* Sets the virtual portal as not busy. */
+	VPORTAL_SET_NOTBUSY(portalid);
+
 	/* Sets the portal data buffer as not busy. */
 	buffer_ptr->flags &= ~MBUFFER_FLAGS_BUSY;
 
@@ -925,6 +959,10 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 	/* Bad virtual portal. */
 	if (!VPORTAL_IS_USED(portalid))
 		return (-EBADF);
+
+	/* Busy virtual portal. */
+	if (VPORTAL_IS_BUSY(portalid))
+		return (-EBUSY);
 
 	fd = GET_LADDRESS_FD(portalid);
 
@@ -973,11 +1011,17 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 	}
 
 write:
+	/* Sets the virtual portal as busy. */
+	VPORTAL_SET_BUSY(portalid);
+
 	t1 = clock_read();
 
 		/* Configures asynchronous write. */
 		if ((ret = portal_awrite(active_portals[fd].hwfd, (void *) &active_portals[fd].ports[port].mbuffer->message, (KPORTAL_MESSAGE_HEADER_SIZE + HAL_PORTAL_MAX_SIZE))) < 0)
+		{
+			VPORTAL_SET_NOTBUSY(portalid);
 			return (ret);
+		}
 
 	t2 = clock_read();
 
@@ -1171,6 +1215,9 @@ PUBLIC int do_vportal_wait(int portalid)
 
 	/* Calls the underlying wait function according to the type of the portal. */
 	ret = wait_fn(portalid);
+
+	/* Sets the virtual portal as not busy. */
+	VPORTAL_SET_NOTBUSY(portalid);
 
 	dcache_invalidate();
 	return (ret);
