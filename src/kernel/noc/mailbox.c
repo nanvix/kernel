@@ -84,7 +84,7 @@ enum mailbox_search_type {
 /**
  * @brief Mailbox ports flags.
  */
-#define PORT_STATUS_USED (1 << 0) /**< Used port?   */
+#define PORT_STATUS_USED (1 << 0) /**< Used port? */
 
 /**
  * @brief Asserts if the port of mbxid is used.
@@ -187,8 +187,9 @@ PRIVATE struct
 	 * @name Control Variables
 	 */
 	/**@{*/
-	unsigned short status; /**< Status.         */
-	int remote;            /**< Remote address. */
+	unsigned short status; /**< Status.            */
+	int remote;            /**< Remote address.    */
+	void *user_buffer;     /**< User level buffer. */
 	/**@}*/
 
 	/**
@@ -201,7 +202,8 @@ PRIVATE struct
 } ALIGN(sizeof(dword_t)) virtual_mailboxes[KMAILBOX_MAX] = {
 	[0 ... (KMAILBOX_MAX - 1)] = {
 		.status =  0,
-		.remote = -1
+		.remote = -1,
+		.user_buffer = NULL
 	},
 };
 
@@ -219,7 +221,7 @@ PRIVATE struct mailbox
 } active_mailboxes[HW_MAILBOX_MAX] = {
 	[0 ... (HW_MAILBOX_MAX - 1)] {
 		.ports[0 ... (MAILBOX_PORT_NR - 1)] = {
-			.status = 0,
+			.status  = 0,
 			.mbuffer = NULL,
 		},
 		.nodenum = -1,
@@ -267,13 +269,12 @@ PRIVATE int do_vmailbox_alloc(int mbxid, int port)
  *============================================================================*/
 
 /**
- * @brief Searches for a free port on a HW mailbox.
+ * @brief Searches for a free port on @p mbxid.
  *
  * @param mbxid ID of the target HW mailbox.
  *
- * @returns Upon successful completion, the index of the available
- * port is returned. Upon failure, a negative number is returned
- * instead.
+ * @returns Upon successful completion, the index of the available port is
+ * returned. A negative number is returned instead.
  */
 PRIVATE int do_port_alloc(int mbxid)
 {
@@ -762,7 +763,6 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 	int ret;             /* HAL function return.           */
 	int fd;              /* HW mailbox logic index.        */
 	int port;            /* Port used by vmailbox.         */
-	int dest;            /* Msg destination address.       */
 	int local_hwaddress; /* Vmailbox hardware address.     */
 	int mbuffer;         /* New alocated buffer.           */
 	uint64_t t1;         /* Clock value before aread call. */
@@ -798,15 +798,15 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 			kmemcpy(buffer, (void *) &buffer_ptr->message.data, ret = size);
 		t2 = clock_read();
 
-		buffer_ptr->flags &= ~MBUFFER_FLAGS_BUSY;
+		ret = size;
 
-		/* Releases the message buffer. */
-		KASSERT(do_mbuffer_free(buffer_ptr) == 0);
+		/* Update performance statistics. */
+		virtual_mailboxes[mbxid].latency += (t2 - t1);
+		virtual_mailboxes[mbxid].volume  += ret;
 
-		goto finish;
+		goto release_buffer;
 	}
 
-again:
 	/* Alloc data buffer to receive data. */
 	if ((mbuffer = do_mbuffer_alloc()) < 0)
 		return (-EAGAIN);
@@ -814,7 +814,6 @@ again:
 	active_mailboxes[fd].ports[port].mbuffer = &mailbox_message_buffers[mbuffer];
 	buffer_ptr = active_mailboxes[fd].ports[port].mbuffer;
 
-keep_buffer:
 	/* Sets the receiver buffer as busy. */
 	buffer_ptr->flags |= MBUFFER_FLAGS_BUSY;
 
@@ -826,42 +825,14 @@ keep_buffer:
 		if ((ret = mailbox_aread(active_mailboxes[fd].hwfd, (void *) &buffer_ptr->message, HAL_MAILBOX_MSG_SIZE)) < 0)
 			goto release_buffer;
 
-		if ((ret = mailbox_wait(active_mailboxes[fd].hwfd)) < 0)
-			goto release_buffer;
-
 	t2 = clock_read();
 
-	/* Checks if the message is addressed for the requesting port. */
-	dest = buffer_ptr->message.dest;
+	virtual_mailboxes[mbxid].user_buffer = buffer;
 
-	if (dest != local_hwaddress)
-	{
-		/* Check if the destination port is opened to receive data. */
-		if (PORT_IS_USED(fd, GET_LADDRESS_PORT(dest)))
-		{
-			/* Marks the buffer as not used for threads look for this message. */
-			buffer_ptr->flags &= ~MBUFFER_FLAGS_USED;
-			active_mailboxes[fd].ports[port].mbuffer = NULL;
-
-			goto again;
-		}
-		else
-		{
-		/**
-		 * XXX - ELSE Discards the message.
-		 */
-			goto keep_buffer;
-		}
-	}
-
-	ret = size;
-
-	kmemcpy(buffer, (void *) &buffer_ptr->message.data, size);
-
-finish:
 	/* Update performance statistics. */
 	virtual_mailboxes[mbxid].latency += (t2 - t1);
-	virtual_mailboxes[mbxid].volume += ret;
+
+	return (ret);
 
 release_buffer:
 	/* Sets the mailbox data buffer as not busy. */
@@ -875,7 +846,7 @@ release_buffer:
 }
 
 /*============================================================================*
- * do_vmailbox_awrite()                                                         *
+ * do_vmailbox_awrite()                                                       *
  *============================================================================*/
 
 /**
@@ -887,8 +858,8 @@ PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
 	int fd;      /* Hardware mailbox logic index.   */
 	int port;    /* HW port specified to vmailbox.  */
 	int mbuffer; /* Message buffer used to write.   */
-	uint64_t t1 = 0; /* Clock value before awrite call. */
-	uint64_t t2 = 0; /* Clock value after awrite call.  */
+	uint64_t t1; /* Clock value before awrite call. */
+	uint64_t t2; /* Clock value after awrite call.  */
 
 	/* Bad virtual mailbox. */
 	if (!VMAILBOX_IS_USED(mbxid))
@@ -941,21 +912,14 @@ write:
 		if ((ret = mailbox_awrite(active_mailboxes[fd].hwfd, (void *) &active_mailboxes[fd].ports[port].mbuffer->message, HAL_MAILBOX_MSG_SIZE)) < 0)
 			return (ret);
 
-		if ((ret = mailbox_wait(active_mailboxes[fd].hwfd)) < 0)
-			return (ret);
-
 	t2 = clock_read();
-
-	/* Releases the buffer allocated. */
-	KASSERT(do_mbuffer_free(active_mailboxes[fd].ports[port].mbuffer) == 0);
-	active_mailboxes[fd].ports[port].mbuffer = NULL;
 
 finish:
 	ret = size;
 
 	/* Update performance statistics. */
 	virtual_mailboxes[mbxid].latency += (t2 - t1);
-	virtual_mailboxes[mbxid].volume += ret;
+	virtual_mailboxes[mbxid].volume  += ret;
 
 	return (ret);
 }
@@ -965,36 +929,173 @@ finish:
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @brief Wait implementation for input mailboxes. Waits on a virtual
+ * mailbox to finish an asynchronous read.
+ *
+ * @param mbxid Logic ID of the target virtual mailbox.
+ *
+ * @returns Upon successful completion, zero is returned if the operation
+ * finished on @p mbxid. If the operation incurred in a re-addressing, ONE
+ * is returned. Upon failure, a negative error code is returned instead.
+ */
+PRIVATE int do_vmailbox_receiver_wait(int mbxid)
+{
+	int ret;             /* HAL function return.          */
+	int fd;              /* Vmailbox file descriptor.     */
+	uint64_t t1;         /* Clock value before wait call. */
+	uint64_t t2;         /* Clock value after wait call.  */
+	int port;            /* Port used by vmailbox.        */
+	int dest;            /* Msg destination address.      */
+	int local_hwaddress; /* Vmailbox hardware address.    */
+	struct mailbox_message_buffer *buffer_ptr;
+
+	fd = GET_LADDRESS_FD(mbxid);
+	port = GET_LADDRESS_PORT(mbxid);
+
+	t1 = clock_read();
+
+		/* Wait for asynchronous read to finish. */
+		if ((ret = mailbox_wait(active_mailboxes[fd].hwfd)) < 0)
+			goto release_buffer;
+
+	t2 = clock_read();
+
+	local_hwaddress = DO_LADDRESS_COMPOSE(active_mailboxes[fd].nodenum, port);
+
+	buffer_ptr = active_mailboxes[fd].ports[port].mbuffer;
+
+	/* Checks if the message is addressed for the requesting port. */
+	dest = buffer_ptr->message.dest;
+
+	if (dest != local_hwaddress)
+	{
+		/* Check if the destination port is opened to receive data. */
+		if (PORT_IS_USED(fd, GET_LADDRESS_PORT(dest)))
+		{
+			/* Marks the buffer as not used for threads look for this message. */
+			buffer_ptr->flags &= ~MBUFFER_FLAGS_USED;
+		}
+		else
+		{
+			/* Discards the message. */
+			buffer_ptr->flags &= ~MBUFFER_FLAGS_BUSY;
+
+			KASSERT(do_mbuffer_free(buffer_ptr) == 0);
+		}
+
+		active_mailboxes[fd].ports[port].mbuffer = NULL;
+
+		/* Returns sinalizing that a message was read, but not for local port. */
+		return (1);
+	}
+	else
+	{
+		kmemcpy(virtual_mailboxes[mbxid].user_buffer, (void *) &buffer_ptr->message.data, KMAILBOX_MESSAGE_SIZE);
+
+		/* Update performance statistics. */
+		virtual_mailboxes[mbxid].latency += (t2 - t1);
+		virtual_mailboxes[mbxid].volume  += KMAILBOX_MESSAGE_SIZE;
+
+		virtual_mailboxes[mbxid].user_buffer = NULL;
+
+		ret = 0;
+	}
+
+release_buffer:
+	/* Sets the mailbox data buffer as not busy. */
+	buffer_ptr->flags &= ~MBUFFER_FLAGS_BUSY;
+
+	KASSERT(do_mbuffer_free(buffer_ptr) == 0);
+	active_mailboxes[fd].ports[port].mbuffer = NULL;
+
+	return (ret);
+}
+
+/**
+ * @brief Wait implementation for output mailboxes. Waits on a virtual
+ * mailbox to finish an asynchronous write.
+ *
+ * @param mbxid Logic ID of the sender virtual mailbox.
+ *
+ * @returns Upon successful completion, zero is returned. Upon failure,
+ * a negative error code is returned instead.
+ */
+PRIVATE int do_vmailbox_sender_wait(int mbxid)
+{
+	int ret;     /* HAL function return.          */
+	int fd;      /* Vmailbox file descriptor.     */
+	int port;    /* Port used by vmailbox.        */
+	uint64_t t1; /* Clock value before wait call. */
+	uint64_t t2; /* Clock value after wait call.  */
+
+	fd = GET_LADDRESS_FD(mbxid);
+	port = GET_LADDRESS_PORT(mbxid);
+
+	t1 = clock_read();
+
+		/* Wait for asynchronous write to finish. */
+		if ((ret = mailbox_wait(active_mailboxes[fd].hwfd)) < 0)
+			goto release_buffer;
+
+	t2 = clock_read();
+
+	/* Update performance statistics. */
+	virtual_mailboxes[mbxid].latency += (t2 - t1);
+
+release_buffer:
+	/* Releases the buffer allocated to write. */
+	KASSERT(do_mbuffer_free(active_mailboxes[fd].ports[port].mbuffer) == 0);
+	active_mailboxes[fd].ports[port].mbuffer = NULL;
+
+	return (ret);
+}
+
+/**
+ * @brief Waits on a virtual mailbox to finish an assynchronous operation.
+ *
+ * @param mbxid Logic ID of the target virtual mailbox.
+ *
+ * @returns Upon successful completion, a positive number is returned.
+ * Upon failure, a negative error code is returned instead.
  */
 PUBLIC int do_vmailbox_wait(int mbxid)
 {
-	int ret;     /* HAL function return.                     */
-	int fd;      /* Active mailbox index of virtual mailbox. */
-	uint64_t t1; /* Clock value before wait call.            */
-	uint64_t t2; /* Clock value after wait call.             */
+	int ret;             /* HAL function return.      */
+	int fd;              /* Vmailbox file descriptor. */
+	int port;            /* Port used by vmailbox.    */
+	int (*wait_fn)(int); /* Underlying wait function. */
 
 	/* Bad virtual mailbox. */
 	if (!VMAILBOX_IS_USED(mbxid))
 		return (-EBADF);
 
 	fd = GET_LADDRESS_FD(mbxid);
+	port = GET_LADDRESS_PORT(mbxid);
+
+	/* Bad mailbox. */
+	if (!resource_is_used(&active_mailboxes[fd].resource))
+		return (-EBADF);
+
+	/* Checks the underlying mailbox type. */
+	if (resource_is_readable(&active_mailboxes[fd].resource))
+		wait_fn = do_vmailbox_receiver_wait;
+	else if (resource_is_writable(&active_mailboxes[fd].resource))
+		wait_fn = do_vmailbox_sender_wait;
+	else
+		return (-EBADF);
 
 	/* Bad virtual mailbox. */
 	if (!resource_is_async(&active_mailboxes[fd].resource))
 		return (-EBADF);
 
+	/* Previous operation already completed. */
+	if (active_mailboxes[fd].ports[port].mbuffer == NULL)
+		return (0);
+
 	dcache_invalidate();
 
-	t1 = clock_read();
-
-		/* Wait for asynchronous operation. */
-		ret = mailbox_wait(active_mailboxes[fd].hwfd);
-
-	t2 = clock_read();
-
-	/* Update performance statistics. */
-	virtual_mailboxes[mbxid].latency += (t2 - t1);
+	/* Calls the underlying wait function according to the type of the mailbox. */
+	ret = wait_fn(mbxid);
 
 	dcache_invalidate();
 	return (ret);
