@@ -144,7 +144,7 @@ PUBLIC int kernel_portal_awrite(int portalid, const void * buffer, size_t size)
 		return (-EINVAL);
 
 	/* Invalid buffer size. */
-	if (size <= 0 || size > HAL_PORTAL_MAX_SIZE)
+	if ((size == 0) || (size > HAL_PORTAL_MAX_SIZE))
 		return (-EINVAL);
 
 	/* Invalid buffer. */
@@ -172,7 +172,7 @@ PUBLIC int kernel_portal_aread(int portalid, void * buffer, size_t size)
 		return (-EINVAL);
 
 	/* Invalid buffer size. */
-	if (size <= 0 || size > HAL_PORTAL_MAX_SIZE)
+	if ((size == 0) || (size > HAL_PORTAL_MAX_SIZE))
 		return (-EINVAL);
 
 	/* Invalid buffer. */
