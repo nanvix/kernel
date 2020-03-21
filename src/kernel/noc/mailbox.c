@@ -119,21 +119,6 @@ enum mailbox_search_type {
  */
 /**@{*/
 
-/**
- * @brief Asserts if the mailbox data buffer is busy.
- */
-#define MAILBOX_IS_BUSY(mbxid) \
-	(active_mailboxes[mbxid].buffer->flags & MBUFFER_FLAGS_BUSY)
-
-/**
- * @brief Sets the mailbox data buffer as busy / notbusy.
- */
-#define MAILBOX_SET_BUSY(mbxid) \
-	(active_mailboxes[mbxid].buffer->flags |= MBUFFER_FLAGS_BUSY)
-
-#define MAILBOX_SET_NOTBUSY(mbxid) \
-	(active_mailboxes[mbxid].buffer->flags &= ~MBUFFER_FLAGS_BUSY)
-
 /**@}*/
 
 /*============================================================================*
@@ -217,7 +202,6 @@ PRIVATE struct mailbox
 	int hwfd;                              /**< Underlying file descriptor. */
 	int nodenum;                           /**< Target node number.         */
 	struct port ports[MAILBOX_PORT_NR];    /**< Logic ports.                */
-	struct mailbox_message_buffer *buffer; /**< Data Buffer resource.       */
 } active_mailboxes[HW_MAILBOX_MAX] = {
 	[0 ... (HW_MAILBOX_MAX - 1)] {
 		.ports[0 ... (MAILBOX_PORT_NR - 1)] = {
