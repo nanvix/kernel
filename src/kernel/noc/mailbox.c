@@ -47,12 +47,28 @@ enum mailbox_search_type {
  * @brief Virtual mailboxes flags.
  */
 #define VMAILBOX_STATUS_USED (1 << 0) /**< Used vmailbox? */
+#define VMAILBOX_STATUS_BUSY (1 << 1) /**< Busy vmailbox? */
 
 /**
  * @brief Asserts if the virtual mailbox is used.
  */
 #define VMAILBOX_IS_USED(vmbxid) \
 	(virtual_mailboxes[vmbxid].status & VMAILBOX_STATUS_USED)
+
+/**
+ * @brief Asserts if the virtual mailbox is busy.
+ */
+#define VMAILBOX_IS_BUSY(vmbxid) \
+	(virtual_mailboxes[vmbxid].status & VMAILBOX_STATUS_BUSY)
+
+/**
+ * @brief VMailbox Busy status operation macros.
+ */
+#define VMAILBOX_SET_BUSY(vmbxid) \
+	(virtual_mailboxes[vmbxid].status |= VMAILBOX_STATUS_BUSY)
+
+#define VMAILBOX_SET_NOTBUSY(vmbxid) \
+	(virtual_mailboxes[vmbxid].status &= ~VMAILBOX_STATUS_BUSY)
 /**@}*/
 
 /**
@@ -114,34 +130,12 @@ enum mailbox_search_type {
 	(mailbox_message_buffers[mbufferid].flags & MBUFFER_FLAGS_BUSY)
 /**@}*/
 
-/**
- * @name Helper Macros for mailboxes operations.
- */
-/**@{*/
-
-/**
- * @brief Asserts if the mailbox data buffer is busy.
- */
-#define MAILBOX_IS_BUSY(mbxid) \
-	(active_mailboxes[mbxid].buffer->flags & MBUFFER_FLAGS_BUSY)
-
-/**
- * @brief Sets the mailbox data buffer as busy / notbusy.
- */
-#define MAILBOX_SET_BUSY(mbxid) \
-	(active_mailboxes[mbxid].buffer->flags |= MBUFFER_FLAGS_BUSY)
-
-#define MAILBOX_SET_NOTBUSY(mbxid) \
-	(active_mailboxes[mbxid].buffer->flags &= ~MBUFFER_FLAGS_BUSY)
-
-/**@}*/
-
 /*============================================================================*
  * Control Structures.                                                        *
  *============================================================================*/
 
 /**
- * @brief Struct that represents a mailbox message buffer.
+ * @brief Mailbox message buffer.
  */
 struct mailbox_message_buffer
 {
@@ -162,6 +156,7 @@ struct mailbox_message_buffer
 
 struct mailbox_message_buffer mailbox_message_buffers[KMAILBOX_MESSAGE_BUFFERS_MAX] = {
 	[0 ... (KMAILBOX_MESSAGE_BUFFERS_MAX - 1)] = {
+		.flags   = 0,
 		.message = {
 			.dest = -1,
 			.data = {'\0'},
@@ -212,12 +207,11 @@ PRIVATE struct
  */
 PRIVATE struct mailbox
 {
-	struct resource resource;              /**< Underlying resource.        */
-	int refcount;                          /**< References count.           */
-	int hwfd;                              /**< Underlying file descriptor. */
-	int nodenum;                           /**< Target node number.         */
-	struct port ports[MAILBOX_PORT_NR];    /**< Logic ports.                */
-	struct mailbox_message_buffer *buffer; /**< Data Buffer resource.       */
+	struct resource resource;           /**< Underlying resource.        */
+	int refcount;                       /**< References count.           */
+	int hwfd;                           /**< Underlying file descriptor. */
+	int nodenum;                        /**< Target node number.         */
+	struct port ports[MAILBOX_PORT_NR]; /**< Logic ports.                */
 } active_mailboxes[HW_MAILBOX_MAX] = {
 	[0 ... (HW_MAILBOX_MAX - 1)] {
 		.ports[0 ... (MAILBOX_PORT_NR - 1)] = {
@@ -659,6 +653,10 @@ PUBLIC int do_vmailbox_unlink(int mbxid)
 	if (!VMAILBOX_IS_USED(mbxid))
 		return (-EBADF);
 
+	/* Busy virtual mailbox. */
+	if (VMAILBOX_IS_BUSY(mbxid))
+		return (-EBUSY);
+
 	fd = GET_LADDRESS_FD(mbxid);
 
 	/* Bad mailbox. */
@@ -706,6 +704,10 @@ PUBLIC int do_vmailbox_close(int mbxid)
 	if (!VMAILBOX_IS_USED(mbxid))
 		return (-EBADF);
 
+	/* Busy virtual mailbox. */
+	if (VMAILBOX_IS_BUSY(mbxid))
+		return (-EBADF);
+
 	fd = GET_LADDRESS_FD(mbxid);
 
 	/* Bad mailbox. */
@@ -749,6 +751,10 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 	if (!VMAILBOX_IS_USED(mbxid))
 		return (-EBADF);
 
+	/* Busy virtual mailbox. */
+	if (VMAILBOX_IS_BUSY(mbxid))
+		return (-EBADF);
+
 	fd = GET_LADDRESS_FD(mbxid);
 
 	/* Bad mailbox. */
@@ -787,6 +793,9 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 	if ((mbuffer = do_mbuffer_alloc()) < 0)
 		return (-EAGAIN);
 
+	/* Sets the virtual mailbox as busy. */
+	VMAILBOX_SET_BUSY(mbxid);
+
 	active_mailboxes[fd].ports[port].mbuffer = &mailbox_message_buffers[mbuffer];
 	buffer_ptr = active_mailboxes[fd].ports[port].mbuffer;
 
@@ -817,6 +826,9 @@ release_buffer:
 	KASSERT(do_mbuffer_free(buffer_ptr) == 0);
 	active_mailboxes[fd].ports[port].mbuffer = NULL;
 
+	/* Sets the virtual mailbox as not busy. */
+	VMAILBOX_SET_NOTBUSY(mbxid);
+
 	dcache_invalidate();
 	return (ret);
 }
@@ -840,6 +852,10 @@ PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
 	/* Bad virtual mailbox. */
 	if (!VMAILBOX_IS_USED(mbxid))
 		return (-EBADF);
+
+	/* Busy virtual mailbox. */
+	if (VMAILBOX_IS_BUSY(mbxid))
+		return (-EBUSY);
 
 	fd = GET_LADDRESS_FD(mbxid);
 
@@ -882,11 +898,17 @@ PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
 	}
 
 write:
+	/* Sets the virtual mailbox as busy. */
+	VMAILBOX_SET_BUSY(mbxid);
+
 	t1 = clock_read();
 
 		/* Setup asynchronous write. */
 		if ((ret = mailbox_awrite(active_mailboxes[fd].hwfd, (void *) &active_mailboxes[fd].ports[port].mbuffer->message, HAL_MAILBOX_MSG_SIZE)) < 0)
+		{
+			VMAILBOX_SET_NOTBUSY(mbxid);
 			return (ret);
+		}
 
 	t2 = clock_read();
 
@@ -928,6 +950,8 @@ PRIVATE int do_vmailbox_receiver_wait(int mbxid)
 	fd = GET_LADDRESS_FD(mbxid);
 	port = GET_LADDRESS_PORT(mbxid);
 
+	buffer_ptr = active_mailboxes[fd].ports[port].mbuffer;
+
 	t1 = clock_read();
 
 		/* Wait for asynchronous read to finish. */
@@ -937,8 +961,6 @@ PRIVATE int do_vmailbox_receiver_wait(int mbxid)
 	t2 = clock_read();
 
 	local_hwaddress = DO_LADDRESS_COMPOSE(active_mailboxes[fd].nodenum, port);
-
-	buffer_ptr = active_mailboxes[fd].ports[port].mbuffer;
 
 	/* Checks if the message is addressed for the requesting port. */
 	dest = buffer_ptr->message.dest;
@@ -1072,6 +1094,9 @@ PUBLIC int do_vmailbox_wait(int mbxid)
 
 	/* Calls the underlying wait function according to the type of the mailbox. */
 	ret = wait_fn(mbxid);
+
+	/* Sets the virtual mailbox as not busy. */
+	VMAILBOX_SET_NOTBUSY(mbxid);
 
 	dcache_invalidate();
 	return (ret);
