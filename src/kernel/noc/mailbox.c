@@ -124,10 +124,10 @@ enum mailbox_search_type {
  * @brief Asserts if the message buffer is in use / busy.
  */
 #define MBUFFER_IS_USED(mbufferid) \
-	(mailbox_message_buffers[mbufferid].flags & MBUFFER_FLAGS_USED)
+	(mbuffers[mbufferid].flags & MBUFFER_FLAGS_USED)
 
 #define MBUFFER_IS_BUSY(mbufferid) \
-	(mailbox_message_buffers[mbufferid].flags & MBUFFER_FLAGS_BUSY)
+	(mbuffers[mbufferid].flags & MBUFFER_FLAGS_BUSY)
 /**@}*/
 
 /*============================================================================*
@@ -137,7 +137,7 @@ enum mailbox_search_type {
 /**
  * @brief Mailbox message buffer.
  */
-struct mailbox_message_buffer
+struct mbuffer
 {
 	unsigned short flags; /* Flags. */
 
@@ -154,7 +154,7 @@ struct mailbox_message_buffer
 	} message;
 };
 
-struct mailbox_message_buffer mailbox_message_buffers[KMAILBOX_MESSAGE_BUFFERS_MAX] = {
+struct mbuffer mbuffers[KMAILBOX_MESSAGE_BUFFERS_MAX] = {
 	[0 ... (KMAILBOX_MESSAGE_BUFFERS_MAX - 1)] = {
 		.flags   = 0,
 		.message = {
@@ -170,7 +170,7 @@ struct mailbox_message_buffer mailbox_message_buffers[KMAILBOX_MESSAGE_BUFFERS_M
 struct port
 {
 	unsigned short status;                  /* Port status.           */
-	struct mailbox_message_buffer *mbuffer; /* Kernel buffer pointer. */
+	struct mbuffer *mbuffer; /* Kernel buffer pointer. */
 };
 
 /**
@@ -304,7 +304,7 @@ PRIVATE int do_mbuffer_alloc(void)
 	{
 		if (!(MBUFFER_IS_USED(i) || MBUFFER_IS_BUSY(i)))
 		{
-			mailbox_message_buffers[i].flags |= MBUFFER_FLAGS_USED;
+			mbuffers[i].flags |= MBUFFER_FLAGS_USED;
 
 			return (i);
 		}
@@ -325,7 +325,7 @@ PRIVATE int do_mbuffer_alloc(void)
  * @return Upon successful completion, zero is returned. Upon failure,
  * a negative number is returned instead.
  */
-PRIVATE int do_mbuffer_free(struct mailbox_message_buffer * buffer)
+PRIVATE int do_mbuffer_free(struct mbuffer * buffer)
 {
 	/* Bad mbuffer. */
 	if (buffer == NULL)
@@ -368,7 +368,7 @@ PRIVATE int do_message_search(int local_address)
 			continue;
 
 		/* Is this message addressed to the local_address? */
-		if (mailbox_message_buffers[i].message.dest != local_address)
+		if (mbuffers[i].message.dest != local_address)
 			continue;
 
 		return (i);
@@ -745,7 +745,7 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 	int mbuffer;         /* New alocated buffer.           */
 	uint64_t t1;         /* Clock value before aread call. */
 	uint64_t t2;         /* Clock value after aread call.  */
-	struct mailbox_message_buffer *buffer_ptr;
+	struct mbuffer *buffer_ptr;
 
 	/* Bad virtual mailbox. */
 	if (!VMAILBOX_IS_USED(mbxid))
@@ -774,7 +774,7 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 	/* Is there a pending message for this vmailbox? */
 	if ((mbuffer = do_message_search(local_hwaddress)) >= 0)
 	{
-		buffer_ptr = &mailbox_message_buffers[mbuffer];
+		buffer_ptr = &mbuffers[mbuffer];
 
 		t1 = clock_read();
 			kmemcpy(buffer, (void *) &buffer_ptr->message.data, ret = size);
@@ -796,7 +796,7 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 	/* Sets the virtual mailbox as busy. */
 	VMAILBOX_SET_BUSY(mbxid);
 
-	active_mailboxes[fd].ports[port].mbuffer = &mailbox_message_buffers[mbuffer];
+	active_mailboxes[fd].ports[port].mbuffer = &mbuffers[mbuffer];
 	buffer_ptr = active_mailboxes[fd].ports[port].mbuffer;
 
 	/* Sets the receiver buffer as busy. */
@@ -877,7 +877,7 @@ PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
 	if ((mbuffer = do_mbuffer_alloc()) < 0)
 		return (mbuffer);
 
-	active_mailboxes[fd].ports[port].mbuffer = &mailbox_message_buffers[mbuffer];
+	active_mailboxes[fd].ports[port].mbuffer = &mbuffers[mbuffer];
 
 	resource_set_async(&active_mailboxes[fd].resource);
 
@@ -945,7 +945,7 @@ PRIVATE int do_vmailbox_receiver_wait(int mbxid)
 	int port;            /* Port used by vmailbox.        */
 	int dest;            /* Msg destination address.      */
 	int local_hwaddress; /* Vmailbox hardware address.    */
-	struct mailbox_message_buffer *buffer_ptr;
+	struct mbuffer *buffer_ptr;
 
 	fd = GET_LADDRESS_FD(mbxid);
 	port = GET_LADDRESS_PORT(mbxid);
