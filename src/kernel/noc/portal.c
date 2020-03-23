@@ -45,9 +45,10 @@ enum portal_search_type {
 /**
  * @brief Virtual portal flags.
  */
-#define VPORTAL_STATUS_USED    (1 << 0) /**< Used vportal? */
-#define VPORTAL_STATUS_BUSY    (1 << 1) /**< Busy vportal? */
-#define VPORTAL_STATUS_ALLOWED (1 << 2) /**< Allowed?      */
+#define VPORTAL_STATUS_USED     (1 << 0) /**< Used vportal?       */
+#define VPORTAL_STATUS_BUSY     (1 << 1) /**< Busy vportal?       */
+#define VPORTAL_STATUS_ALLOWED  (1 << 2) /**< Allowed?            */
+#define VPORTAL_STATUS_FINISHED (1 << 3) /**< Finished operation? */
 
 /**
  * @brief Asserts if the virtual portal is used.
@@ -66,6 +67,12 @@ enum portal_search_type {
  */
 #define VPORTAL_IS_ALLOWED(vportalid) \
 	(virtual_portals[vportalid].status & VPORTAL_STATUS_ALLOWED)
+
+/**
+ * @brief Asserts if the virtual portal already finished last operation.
+ */
+#define VPORTAL_IS_FINISHED(vportalid) \
+	(virtual_portals[vportalid].status & VPORTAL_STATUS_FINISHED)
 
 /**
  * @brief VPortal Busy status operation macros.
@@ -118,40 +125,16 @@ enum portal_search_type {
 	(active_portals[portalid].ports[port].status & PORT_STATUS_USED)
 /**@}*/
 
-/**
- * @name Helper Macros for message buffers.
- */
-/**@{*/
-
-/**
- * @brief Message buffers flags.
- */
-#define MBUFFER_FLAGS_USED (1 << 0) /**< Used? */
-#define MBUFFER_FLAGS_BUSY (1 << 1) /**< Busy? */
-
-/**
- * @brief Asserts if the message buffer is in use.
- */
-#define MBUFFER_IS_USED(mbufferid) \
-	(portal_message_buffers[mbufferid].flags & MBUFFER_FLAGS_USED)
-
-/**
- * @brief Asserts if the message buffer is busy.
- */
-#define MBUFFER_IS_BUSY(mbufferid) \
-	(portal_message_buffers[mbufferid].flags & MBUFFER_FLAGS_BUSY)
-/**@}*/
-
 /*============================================================================*
  * Control Structures.                                                        *
  *============================================================================*/
 
 /**
- * @brief Struct that represents a portal message buffer.
+ * @brief Portal message buffer.
  */
-struct portal_message_buffer
+PRIVATE struct mbuffer
 {
-	unsigned short flags; /* Flags. */
+	struct resource resource; /**< Underlying resource. */
 
 	/**
 	 * @brief Structure that holds a message.
@@ -166,11 +149,8 @@ struct portal_message_buffer
 		unsigned int size; /* Message data size. */
 		char data[HAL_PORTAL_MAX_SIZE];
 	} message;
-};
-
-struct portal_message_buffer portal_message_buffers[KPORTAL_MESSAGE_BUFFERS_MAX] = {
+} mbuffers[KPORTAL_MESSAGE_BUFFERS_MAX] = {
 	[0 ... (KPORTAL_MESSAGE_BUFFERS_MAX - 1)] = {
-		.flags   = 0,
 		.message = {
 			.src  = -1,
 			.dest = -1,
@@ -181,12 +161,19 @@ struct portal_message_buffer portal_message_buffers[KPORTAL_MESSAGE_BUFFERS_MAX]
 };
 
 /**
+ * @brief Mbuffer resource pool.
+ */
+PRIVATE const struct resource_pool mbufferpool = {
+	mbuffers, KPORTAL_MESSAGE_BUFFERS_MAX, sizeof(struct mbuffer)
+};
+
+/**
  * @brief Struct that represents a port abstraction.
  */
 struct port
 {
-	unsigned short status;                 /* Port status.           */
-	struct portal_message_buffer *mbuffer; /* Kernel buffer pointer. */
+	unsigned short status; /* Port status.      */
+	short mbufferid;       /* Kernel mbufferid. */
 };
 
 /**
@@ -232,8 +219,8 @@ PRIVATE struct portal
 } ALIGN(sizeof(dword_t)) active_portals[HW_PORTAL_MAX] = {
 	[0 ... (HW_PORTAL_MAX - 1)] {
 		.ports[0 ... (KPORTAL_PORT_NR - 1)] = {
-			.status  = 0,
-			.mbuffer = NULL
+			.status    =  0,
+			.mbufferid = -1
 		},
 		.local  = -1,
 		.remote = -1,
@@ -307,60 +294,59 @@ error:
 }
 
 /*============================================================================*
- * do_mbuffer_alloc()                                                         *
+ * do_vportal_release_mbuffer()                                               *
  *============================================================================*/
 
 /**
- * @brief Allocates a message buffer from message_buffers tab.
- *
- * @return Upon successful completion, the index of the allocated buffer
- * on message_buffer tab is returned. Upon failure, a negative number is
- * returned instead.
+ * @brief Mbuffer release keep/discard message constants.
  */
-PRIVATE int do_mbuffer_alloc(void)
-{
-	for (unsigned int i = 0; i < KPORTAL_MESSAGE_BUFFERS_MAX; ++i)
-	{
-		if (!(MBUFFER_IS_USED(i) || MBUFFER_IS_BUSY(i)))
-		{
-			portal_message_buffers[i].flags |= MBUFFER_FLAGS_USED;
-
-			return (i);
-		}
-	}
-
-	return (-1);
-}
-
-/*============================================================================*
- * do_mbuffer_free()                                                          *
- *============================================================================*/
+#define DISCARD_MESSAGE 0
+#define KEEP_MESSAGE    1
 
 /**
- * @brief Releases a message buffer from message_buffers tab.
+ * @brief Releases the message buffer allocated to @p portalid.
  *
- * @param buffer The target buffer to be freed.
+ * @param portalid The virtual portal that will have its mbuffer freed.
+ * @param keep_msg Keep / Discard the mbuffer message?
  *
  * @return Upon successful completion, zero is returned. Upon failure,
  * a negative number is returned instead.
  */
-PRIVATE int do_mbuffer_free(struct portal_message_buffer * buffer)
+PRIVATE int do_vportal_release_mbuffer(int portalid, int keep_msg)
 {
-	/* Bad mbuffer. */
-	if (buffer == NULL)
+	int fd;
+	int port;
+	int mbufferid;
+
+	/* Invalid portalid. */
+	if (!WITHIN(portalid, 0, KPORTAL_MAX))
 		return (-EINVAL);
 
-	/* Buffer have data to be read. */
-	if (buffer->flags & MBUFFER_FLAGS_BUSY)
-		return (-EBUSY);
+	fd = GET_LADDRESS_FD(portalid);
+	port = GET_LADDRESS_PORT(portalid);
 
-	/* Resets mbuffer original status. */
-	buffer->flags = 0;
-	buffer->message.src  = -1;
-	buffer->message.dest = -1;
-	buffer->message.size =  0;
-	buffer->message.data[0] = '\0';
+	/* Gets the mbufferid used by the virtual portal. */
+	mbufferid = active_portals[fd].ports[port].mbufferid;
 
+	/* Resets the vportal mbufferid. */
+	active_portals[fd].ports[port].mbufferid = -1;
+
+	if (keep_msg)
+	{
+		/* Sets the mbuffer as not used keeping its message. */
+		resource_set_busy(&mbuffers[mbufferid].resource);
+	}
+	else
+	{
+		/* Frees the mbuffer resource. */
+		mbuffers[mbufferid].message.src  = -1;
+		mbuffers[mbufferid].message.dest = -1;
+		mbuffers[mbufferid].message.size =  0;
+		mbuffers[mbufferid].message.data[0] = '\0';
+		resource_free(&mbufferpool, mbufferid);
+	}
+
+	dcache_invalidate();
 	return (0);
 }
 
@@ -382,22 +368,22 @@ PRIVATE int do_message_search(int local_address, int remote_address)
 {
 	for (unsigned int i = 0; i < KPORTAL_MESSAGE_BUFFERS_MAX; ++i)
 	{
-		/* Is the buffer being used by another portal? */
-		if (MBUFFER_IS_USED(i))
+		/* Is the buffer being used? */
+		if (!resource_is_used(&mbuffers[i].resource))
 			continue;
 
 		/* The buffer contains a stored message? */
-		if (!MBUFFER_IS_BUSY(i))
+		if (!resource_is_busy(&mbuffers[i].resource))
 			continue;
 
 		/* Is this message addressed to the local_address? */
-		if (portal_message_buffers[i].message.dest != local_address)
+		if (mbuffers[i].message.dest != local_address)
 			continue;
 
 		/* Is the message sender the expected? */
 		if (remote_address != -1)
 		{
-			if (portal_message_buffers[i].message.src != remote_address)
+			if (mbuffers[i].message.src != remote_address)
 				continue;
 		}
 
@@ -834,10 +820,9 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 	int fd;              /* Hardware portal logic index.   */
 	int port;            /* Port used by vportal.          */
 	int local_hwaddress; /* Vportal hardware address.      */
-	int mbuffer;         /* New alocated buffer.           */
+	int mbufferid;       /* New alocated buffer.           */
 	uint64_t t1;         /* Clock value before aread call. */
 	uint64_t t2;         /* Clock value after aread call.  */
-	struct portal_message_buffer *buffer_ptr;
 
 	/* Bad virtual portal. */
 	if (!VPORTAL_IS_USED(portalid))
@@ -861,6 +846,9 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 	if (!VPORTAL_IS_ALLOWED(portalid))
 		return (-EACCES);
 
+	/* Sets the virtual portal as busy. */
+	VPORTAL_SET_BUSY(portalid);
+
 	port = GET_LADDRESS_PORT(portalid);
 
 	local_hwaddress = DO_LADDRESS_COMPOSE(active_portals[fd].local, port);
@@ -868,12 +856,12 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 	resource_set_async(&active_portals[fd].resource);
 
 	/* Is there a pending message for this vportal? */
-	if ((mbuffer = do_message_search(local_hwaddress, virtual_portals[portalid].remote)) >= 0)
+	if ((mbufferid = do_message_search(local_hwaddress, virtual_portals[portalid].remote)) >= 0)
 	{
-		buffer_ptr = &portal_message_buffers[mbuffer];
+		active_portals[fd].ports[port].mbufferid = mbufferid;
 
 		t1 = clock_read();
-			kmemcpy(buffer, (void *) &buffer_ptr->message.data, ret = size);
+			kmemcpy(buffer, (void *) &mbuffers[mbufferid].message.data, ret = size);
 		t2 = clock_read();
 
 		ret = size;
@@ -884,35 +872,34 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 
 		/* Revoke allow. */
 		virtual_portals[portalid].status &= ~VPORTAL_STATUS_ALLOWED;
-		virtual_portals[portalid].remote = -1;
+		virtual_portals[portalid].remote  = -1;
+
+		/* Marks that the virtual portal already finished its read. */
+		virtual_portals[portalid].status |= VPORTAL_STATUS_FINISHED;
 
 		goto release_buffer;
 	}
 
 	/* Alloc data buffer to receive data. */
-	if ((mbuffer = do_mbuffer_alloc()) < 0)
+	if ((mbufferid = resource_alloc(&mbufferpool)) < 0)
+	{
+		VPORTAL_SET_NOTBUSY(portalid);
 		return (-EAGAIN);
+	}
 
-	/* Sets the virtual portal as busy. */
-	VPORTAL_SET_BUSY(portalid);
-
-	active_portals[fd].ports[port].mbuffer = &portal_message_buffers[mbuffer];
-	buffer_ptr = active_portals[fd].ports[port].mbuffer;
+	active_portals[fd].ports[port].mbufferid = mbufferid;
 
 	/* Allows async write from remote. */
 	if ((ret = portal_allow(active_portals[fd].hwfd, GET_LADDRESS_FD(virtual_portals[portalid].remote))) < 0)
-		goto release_buffer;
-
-	/* Sets the receiver buffer as busy. */
-	buffer_ptr->flags |= MBUFFER_FLAGS_BUSY;
+		goto error;
 
 	dcache_invalidate();
 
 	t1 = clock_read();
 
 		/* Configures async aread. */
-		if ((ret = portal_aread(active_portals[fd].hwfd, (void *) &buffer_ptr->message, (KPORTAL_MESSAGE_HEADER_SIZE + HAL_PORTAL_MAX_SIZE))) < 0)
-			goto release_buffer;
+		if ((ret = portal_aread(active_portals[fd].hwfd, (void *) &mbuffers[mbufferid].message, (KPORTAL_MESSAGE_HEADER_SIZE + HAL_PORTAL_MAX_SIZE))) < 0)
+			goto error;
 
 	t2 = clock_read();
 
@@ -925,15 +912,12 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 
 	return (ret);
 
-release_buffer:
+error:
 	/* Sets the virtual portal as not busy. */
 	VPORTAL_SET_NOTBUSY(portalid);
 
-	/* Sets the portal data buffer as not busy. */
-	buffer_ptr->flags &= ~MBUFFER_FLAGS_BUSY;
-
-	KASSERT(do_mbuffer_free(buffer_ptr) == 0);
-	active_portals[fd].ports[port].mbuffer = NULL;
+release_buffer:
+	KASSERT(do_vportal_release_mbuffer(portalid, DISCARD_MESSAGE) == 0);
 
 	dcache_invalidate();
 	return (ret);
@@ -951,7 +935,7 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 	int ret;           /* HAL function return.            */
 	int fd;            /* Hardware portal logic index.    */
 	int port;          /* HW port specified to vportal.   */
-	int mbuffer;       /* Message buffer used to write.   */
+	int mbufferid;     /* Message buffer used to write.   */
 	int local_address; /* HW portal + port address.       */
 	uint64_t t1;       /* Clock value before awrite call. */
 	uint64_t t2;       /* Clock value after awrite call.  */
@@ -976,15 +960,21 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 
 	port = GET_LADDRESS_PORT(portalid);
 
-	/* Allocate the message buffer that will be used to write. */
-	if (active_portals[fd].ports[port].mbuffer != NULL)
+	/* Sets the virtual portal as busy. */
+	VPORTAL_SET_BUSY(portalid);
+
+	/* Checks if there is already a mbuffer allocated. */
+	if ((mbufferid = active_portals[fd].ports[port].mbufferid) >= 0)
 		goto write;
 
 	/* Allocates a message buffer to send the message. */
-	if ((mbuffer = do_mbuffer_alloc()) < 0)
-		return (mbuffer);
+	if ((mbufferid = resource_alloc(&mbufferpool)) < 0)
+	{
+		ret = mbufferid;
+		goto error;
+	}
 
-	active_portals[fd].ports[port].mbuffer = &portal_message_buffers[mbuffer];
+	active_portals[fd].ports[port].mbufferid = mbufferid;
 
 	/* Calculate the addresses to be included in the message header. */
 	local_address = DO_LADDRESS_COMPOSE(active_portals[fd].local, port);
@@ -992,36 +982,32 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 	resource_set_async(&active_portals[fd].resource);
 
 	/* Configure the message header. */
-	active_portals[fd].ports[port].mbuffer->message.src  = local_address;
-	active_portals[fd].ports[port].mbuffer->message.dest = virtual_portals[portalid].remote;
-	active_portals[fd].ports[port].mbuffer->message.size = size;
+	mbuffers[mbufferid].message.src  = local_address;
+	mbuffers[mbufferid].message.dest = virtual_portals[portalid].remote;
+	mbuffers[mbufferid].message.size = size;
 
 	t1 = clock_read();
-		kmemcpy((void *) &active_portals[fd].ports[port].mbuffer->message.data, buffer, size);
+		kmemcpy((void *) &mbuffers[mbufferid].message.data, buffer, size);
 	t2 = clock_read();
 
 	/* Checks if the destination is the local node. */
 	if (active_portals[fd].remote == active_portals[fd].local)
 	{
 		/* Forwards the message to the mbuffers table. */
-		active_portals[fd].ports[port].mbuffer->flags = 0 | MBUFFER_FLAGS_BUSY;
-		active_portals[fd].ports[port].mbuffer = NULL;
+		do_vportal_release_mbuffer(portalid, KEEP_MESSAGE);
+
+		/* Marks that the virtual portal already finished its read. */
+		virtual_portals[portalid].status |= VPORTAL_STATUS_FINISHED;
 
 		goto finish;
 	}
 
 write:
-	/* Sets the virtual portal as busy. */
-	VPORTAL_SET_BUSY(portalid);
-
 	t1 = clock_read();
 
 		/* Configures asynchronous write. */
-		if ((ret = portal_awrite(active_portals[fd].hwfd, (void *) &active_portals[fd].ports[port].mbuffer->message, (KPORTAL_MESSAGE_HEADER_SIZE + HAL_PORTAL_MAX_SIZE))) < 0)
-		{
-			VPORTAL_SET_NOTBUSY(portalid);
-			return (ret);
-		}
+		if ((ret = portal_awrite(active_portals[fd].hwfd, (void *) &mbuffers[mbufferid].message, (KPORTAL_MESSAGE_HEADER_SIZE + HAL_PORTAL_MAX_SIZE))) < 0)
+			goto error;
 
 	t2 = clock_read();
 
@@ -1032,6 +1018,10 @@ finish:
 	virtual_portals[portalid].latency += (t2 - t1);
 	virtual_portals[portalid].volume  += ret;
 
+	return (ret);
+
+error:
+	VPORTAL_SET_NOTBUSY(portalid);
 	return (ret);
 }
 
@@ -1053,22 +1043,23 @@ PRIVATE int do_vportal_receiver_wait(int portalid)
 {
 	int ret;             /* HAL function return.          */
 	int fd;              /* Hardware portal logic index.  */
-	uint64_t t1;         /* Clock value before wait call. */
-	uint64_t t2;         /* Clock value after wait call.  */
 	int port;            /* Port used by vportal.         */
 	int src;             /* Msg source address.           */
 	int dest;            /* Msg destination address.      */
 	int size;            /* Underlying message size.      */
 	int local_hwaddress; /* Vportal hardware address.     */
-	struct portal_message_buffer *buffer_ptr;
+	int mbufferid;       /* Allocated mbufferid.          */
+	uint64_t t1;         /* Clock value before wait call. */
+	uint64_t t2;         /* Clock value after wait call.  */
 
 	fd = GET_LADDRESS_FD(portalid);
 	port = GET_LADDRESS_PORT(portalid);
 
-	buffer_ptr = active_portals[fd].ports[port].mbuffer;
+	mbufferid = active_portals[fd].ports[port].mbufferid;
 
 	t1 = clock_read();
 
+		/* Wait for asynchronous read to finish. */
 		if ((ret = portal_wait(active_portals[fd].hwfd)) < 0)
 			goto release_buffer;
 
@@ -1077,8 +1068,8 @@ PRIVATE int do_vportal_receiver_wait(int portalid)
 	local_hwaddress = DO_LADDRESS_COMPOSE(active_portals[fd].local, port);
 
 	/* Checks if the message is addressed for the requesting port. */
-	dest = buffer_ptr->message.dest;
-	src = buffer_ptr->message.src;
+	dest = mbuffers[mbufferid].message.dest;
+	src  = mbuffers[mbufferid].message.src;
 
 	if ((dest != local_hwaddress) || (src != virtual_portals[portalid].remote))
 	{
@@ -1086,26 +1077,22 @@ PRIVATE int do_vportal_receiver_wait(int portalid)
 		if (PORT_IS_USED(fd, GET_LADDRESS_PORT(dest)))
 		{
 			/* Marks the buffer as not used for threads look for this message. */
-			buffer_ptr->flags &= ~MBUFFER_FLAGS_USED;
+			do_vportal_release_mbuffer(portalid, KEEP_MESSAGE);
 		}
 		else
 		{
 			/* Discards the message. */
-			buffer_ptr->flags &= ~MBUFFER_FLAGS_BUSY;
-
-			KASSERT(do_mbuffer_free(buffer_ptr) == 0);
+			do_vportal_release_mbuffer(portalid, DISCARD_MESSAGE);
 		}
-
-		active_portals[fd].ports[port].mbuffer = NULL;
 
 		/* Returns sinalizing that a message was read, but not for local port. */
 		return (1);
 	}
 	else
 	{
-		size = buffer_ptr->message.size;
+		size = mbuffers[mbufferid].message.size;
 
-		kmemcpy(virtual_portals[portalid].user_buffer, (void *) &buffer_ptr->message.data, size);
+		kmemcpy(virtual_portals[portalid].user_buffer, (void *) &mbuffers[mbufferid].message.data, size);
 
 		/* Update performance statistics. */
 		virtual_portals[portalid].latency += (t2 - t1);
@@ -1121,11 +1108,7 @@ PRIVATE int do_vportal_receiver_wait(int portalid)
 	}
 
 release_buffer:
-	/* Sets the portal data buffer as not busy. */
-	buffer_ptr->flags &= ~MBUFFER_FLAGS_BUSY;
-
-	KASSERT(do_mbuffer_free(buffer_ptr) == 0);
-	active_portals[fd].ports[port].mbuffer = NULL;
+	do_vportal_release_mbuffer(portalid, DISCARD_MESSAGE);
 
 	return (ret);
 }
@@ -1143,12 +1126,10 @@ PRIVATE int do_vportal_sender_wait(int portalid)
 {
 	int ret;     /* HAL function return.          */
 	int fd;      /* Vportal file descriptor.      */
-	int port;    /* Port used by vportal.         */
 	uint64_t t1; /* Clock value before wait call. */
 	uint64_t t2; /* Clock value after wait call.  */
 
 	fd = GET_LADDRESS_FD(portalid);
-	port = GET_LADDRESS_PORT(portalid);
 
 	t1 = clock_read();
 
@@ -1162,9 +1143,7 @@ PRIVATE int do_vportal_sender_wait(int portalid)
 	virtual_portals[portalid].latency += (t2 - t1);
 
 release_buffer:
-	/* Releases the buffer allocated to write. */
-	KASSERT(do_mbuffer_free(active_portals[fd].ports[port].mbuffer) == 0);
-	active_portals[fd].ports[port].mbuffer = NULL;
+	do_vportal_release_mbuffer(portalid, DISCARD_MESSAGE);
 
 	return (ret);
 }
@@ -1188,12 +1167,26 @@ PUBLIC int do_vportal_wait(int portalid)
 	if (!VPORTAL_IS_USED(portalid))
 		return (-EBADF);
 
+	/* Virtual portal already finished its last operation. */
+	if (VPORTAL_IS_FINISHED(portalid))
+	{
+		virtual_portals[portalid].status &= ~VPORTAL_STATUS_FINISHED;
+		ret = 0;
+		goto finish;
+	}
+
+	/* Unconfigured operation over this virtual portal. */
+	if (!VPORTAL_IS_BUSY(portalid))
+		return (-EBADF);
+
 	fd = GET_LADDRESS_FD(portalid);
 	port = GET_LADDRESS_PORT(portalid);
 
-	/* Bad portal. */
-	if (!resource_is_used(&active_portals[fd].resource))
-		return (-EBADF);
+	ret = -EBADF;
+
+	/* Invalid mbufferid. */
+	if (active_portals[fd].ports[port].mbufferid < 0)
+		goto finish;
 
 	/* Checks the underlying portal type. */
 	if (resource_is_readable(&active_portals[fd].resource))
@@ -1201,21 +1194,18 @@ PUBLIC int do_vportal_wait(int portalid)
 	else if (resource_is_writable(&active_portals[fd].resource))
 		wait_fn = do_vportal_sender_wait;
 	else
-		return (-EBADF);
+		goto finish;
 
 	/* Bad virtual portal. */
 	if (!resource_is_async(&active_portals[fd].resource))
-		return (-EBADF);
-
-	/* Previous operation already completed. */
-	if (active_portals[fd].ports[port].mbuffer == NULL)
-		return (0);
+		goto finish;
 
 	dcache_invalidate();
 
 	/* Calls the underlying wait function according to the type of the portal. */
 	ret = wait_fn(portalid);
 
+finish:
 	/* Sets the virtual portal as not busy. */
 	VPORTAL_SET_NOTBUSY(portalid);
 
