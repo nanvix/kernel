@@ -860,6 +860,8 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 	if (!VPORTAL_IS_USED(portalid))
 		return (-EBADF);
 
+	dcache_invalidate();
+
 	/* Busy virtual portal. */
 	if (VPORTAL_IS_BUSY(portalid))
 		return (-EBADF);

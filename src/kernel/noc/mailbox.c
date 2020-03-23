@@ -771,6 +771,8 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 	if (!VMAILBOX_IS_USED(mbxid))
 		return (-EBADF);
 
+	dcache_invalidate();
+
 	/* Busy virtual mailbox. */
 	if (VMAILBOX_IS_BUSY(mbxid))
 		return (-EBADF);
