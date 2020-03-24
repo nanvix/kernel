@@ -147,6 +147,8 @@ PRIVATE struct mbuffer
 	},
 };
 
+PRIVATE spinlock_t mbuffers_lock;
+
 /**
  * @brief Mbuffer resource pool.
  */
@@ -278,6 +280,18 @@ error:
 }
 
 /*============================================================================*
+ * do_mbuffers_lock_init()                                                    *
+ *============================================================================*/
+
+/**
+ * @brief Initializes the mbuffers table lock.
+ */
+PRIVATE void do_mbuffers_lock_init(void)
+{
+	spinlock_init(&mbuffers_lock);
+}
+
+/*============================================================================*
  * do_vmailbox_release_mbuffer()                                              *
  *============================================================================*/
 
@@ -309,6 +323,9 @@ PRIVATE int do_vmailbox_release_mbuffer(int mbxid, int keep_msg)
 	fd = GET_LADDRESS_FD(mbxid);
 	port = GET_LADDRESS_PORT(mbxid);
 
+	/* Locks the mbuffers table. */
+	spinlock_lock(&mbuffers_lock);
+
 	/* Gets the mbufferid used by the virtual mailbox. */
 	mbufferid = active_mailboxes[fd].ports[port].mbufferid;
 
@@ -328,6 +345,9 @@ PRIVATE int do_vmailbox_release_mbuffer(int mbxid, int keep_msg)
 		resource_free(&mbufferpool, mbufferid);
 	}
 
+	/* Unlocks the mbuffers table. */
+	spinlock_unlock(&mbuffers_lock);
+
 	dcache_invalidate();
 	return (0);
 }
@@ -346,6 +366,15 @@ PRIVATE int do_vmailbox_release_mbuffer(int mbxid, int keep_msg)
  */
 PRIVATE int do_message_search(int local_address)
 {
+	int ret;
+
+	ret = -1;
+
+	dcache_invalidate();
+
+	/* Locks the mbuffers table. */
+	spinlock_lock(&mbuffers_lock);
+
 	for (unsigned int i = 0; i < KMAILBOX_MESSAGE_BUFFERS_MAX; ++i)
 	{
 		/* Is the buffer being used? */
@@ -360,11 +389,14 @@ PRIVATE int do_message_search(int local_address)
 		if (mbuffers[i].message.dest != local_address)
 			continue;
 
-		return (i);
+		ret = i;
+		break;
 	}
 
-	/* No message encountered. */
-	return (-1);
+	/* Unlocks the mbuffers table. */
+	spinlock_unlock(&mbuffers_lock);
+
+	return (ret);
 }
 
 /*============================================================================*
@@ -739,6 +771,8 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 	if (!VMAILBOX_IS_USED(mbxid))
 		return (-EBADF);
 
+	dcache_invalidate();
+
 	/* Busy virtual mailbox. */
 	if (VMAILBOX_IS_BUSY(mbxid))
 		return (-EBADF);
@@ -783,7 +817,7 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 		goto release_buffer;
 	}
 
-	/* Alloc data buffer to receive data. */
+	/* Allocates a data buffer to receive data. */
 	if ((mbufferid = resource_alloc(&mbufferpool)) < 0)
 	{
 		VMAILBOX_SET_NOTBUSY(mbxid);
@@ -1048,6 +1082,8 @@ PUBLIC int do_vmailbox_wait(int mbxid)
 	if (!VMAILBOX_IS_USED(mbxid))
 		return (-EBADF);
 
+	dcache_invalidate();
+
 	/* Virtual mailbox already finished its last operation. */
 	if (VMAILBOX_IS_FINISHED(mbxid))
 	{
@@ -1080,8 +1116,6 @@ PUBLIC int do_vmailbox_wait(int mbxid)
 	/* Bad virtual mailbox. */
 	if (!resource_is_async(&active_mailboxes[fd].resource))
 		goto finish;
-
-	dcache_invalidate();
 
 	/* Calls the underlying wait function according to the type of the mailbox. */
 	ret = wait_fn(mbxid);
@@ -1165,6 +1199,9 @@ PUBLIC void kmailbox_init(void)
 	/* Opens all mailbox interfaces. */
 	for (int i = 0; i < PROCESSOR_NOC_NODES_NUM; ++i)
 		KASSERT(_do_mailbox_open(i) >= 0);
+
+	/* Initializes the mbuffers table lock. */
+	do_mbuffers_lock_init();
 }
 
 #endif /* __TARGET_HAS_MAILBOX */

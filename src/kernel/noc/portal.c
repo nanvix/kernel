@@ -160,6 +160,8 @@ PRIVATE struct mbuffer
 	},
 };
 
+PRIVATE spinlock_t mbuffers_lock;
+
 /**
  * @brief Mbuffer resource pool.
  */
@@ -294,6 +296,18 @@ error:
 }
 
 /*============================================================================*
+ * do_mbuffers_lock_init()                                                    *
+ *============================================================================*/
+
+/**
+ * @brief Initializes the mbuffers table lock.
+ */
+PRIVATE void do_mbuffers_lock_init(void)
+{
+	spinlock_init(&mbuffers_lock);
+}
+
+/*============================================================================*
  * do_vportal_release_mbuffer()                                               *
  *============================================================================*/
 
@@ -325,6 +339,9 @@ PRIVATE int do_vportal_release_mbuffer(int portalid, int keep_msg)
 	fd = GET_LADDRESS_FD(portalid);
 	port = GET_LADDRESS_PORT(portalid);
 
+	/* Locks the mbuffers table. */
+	spinlock_lock(&mbuffers_lock);
+
 	/* Gets the mbufferid used by the virtual portal. */
 	mbufferid = active_portals[fd].ports[port].mbufferid;
 
@@ -346,6 +363,9 @@ PRIVATE int do_vportal_release_mbuffer(int portalid, int keep_msg)
 		resource_free(&mbufferpool, mbufferid);
 	}
 
+	/* Unlocks the mbuffers table. */
+	spinlock_unlock(&mbuffers_lock);
+
 	dcache_invalidate();
 	return (0);
 }
@@ -366,6 +386,15 @@ PRIVATE int do_vportal_release_mbuffer(int portalid, int keep_msg)
  */
 PRIVATE int do_message_search(int local_address, int remote_address)
 {
+	int ret;
+
+	ret = -1;
+
+	dcache_invalidate();
+
+	/* Locks the mbuffers table. */
+	spinlock_lock(&mbuffers_lock);
+
 	for (unsigned int i = 0; i < KPORTAL_MESSAGE_BUFFERS_MAX; ++i)
 	{
 		/* Is the buffer being used? */
@@ -387,11 +416,14 @@ PRIVATE int do_message_search(int local_address, int remote_address)
 				continue;
 		}
 
-		return (i);
+		ret = i;
+		break;
 	}
 
-	/* No message encountered. */
-	return (-1);
+	/* Unlocks the mbuffers table. */
+	spinlock_unlock(&mbuffers_lock);
+
+	return (ret);
 }
 
 /*============================================================================*
@@ -828,6 +860,8 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 	if (!VPORTAL_IS_USED(portalid))
 		return (-EBADF);
 
+	dcache_invalidate();
+
 	/* Busy virtual portal. */
 	if (VPORTAL_IS_BUSY(portalid))
 		return (-EBADF);
@@ -880,7 +914,7 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 		goto release_buffer;
 	}
 
-	/* Alloc data buffer to receive data. */
+	/* Allocates a data buffer to receive data. */
 	if ((mbufferid = resource_alloc(&mbufferpool)) < 0)
 	{
 		VPORTAL_SET_NOTBUSY(portalid);
@@ -1167,6 +1201,8 @@ PUBLIC int do_vportal_wait(int portalid)
 	if (!VPORTAL_IS_USED(portalid))
 		return (-EBADF);
 
+	dcache_invalidate();
+
 	/* Virtual portal already finished its last operation. */
 	if (VPORTAL_IS_FINISHED(portalid))
 	{
@@ -1199,8 +1235,6 @@ PUBLIC int do_vportal_wait(int portalid)
 	/* Bad virtual portal. */
 	if (!resource_is_async(&active_portals[fd].resource))
 		goto finish;
-
-	dcache_invalidate();
 
 	/* Calls the underlying wait function according to the type of the portal. */
 	ret = wait_fn(portalid);
@@ -1284,6 +1318,9 @@ PUBLIC void kportal_init(void)
 	/* Opens all portal interfaces. */
 	for (int i = 0; i < PROCESSOR_NOC_NODES_NUM; ++i)
 		KASSERT(_do_portal_open(local, i) >= 0);
+
+	/* Initializes the mbuffers table lock. */
+	do_mbuffers_lock_init();
 }
 
 #endif /* __TARGET_HAS_PORTAL */
