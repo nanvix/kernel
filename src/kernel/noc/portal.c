@@ -22,6 +22,9 @@
  * SOFTWARE.
  */
 
+/* Must come first. */
+#define __NEED_RESOURCE
+
 #include <nanvix/hal.h>
 #include <nanvix/kernel/portal.h>
 #include <nanvix/hlib.h>
@@ -134,7 +137,10 @@ enum portal_search_type {
  */
 PRIVATE struct mbuffer
 {
-	struct resource resource; /**< Underlying resource. */
+	/*
+	 * XXX: Don't Touch! This Must Come First!
+	 */
+	struct resource resource; /**< Generic resource information. */
 
 	/**
 	 * @brief Structure that holds a message.
@@ -212,12 +218,16 @@ PRIVATE struct
  */
 PRIVATE struct portal
 {
-	struct resource resource;           /**< Underlying resource.        */
-	int refcount;                       /**< References count.           */
-	int hwfd;                           /**< Underlying file descriptor. */
-	int local;                          /**< Local node number.          */
-	int remote;                         /**< Target node number.         */
-	struct port ports[KPORTAL_PORT_NR]; /**< HW ports.                   */
+	/*
+	 * XXX: Don't Touch! This Must Come First!
+	 */
+	struct resource resource;           /**< Generic resource information. */
+
+	int refcount;                       /**< References count.             */
+	int hwfd;                           /**< Underlying file descriptor.   */
+	int local;                          /**< Local node number.            */
+	int remote;                         /**< Target node number.           */
+	struct port ports[KPORTAL_PORT_NR]; /**< HW ports.                     */
 } ALIGN(sizeof(dword_t)) active_portals[HW_PORTAL_MAX] = {
 	[0 ... (HW_PORTAL_MAX - 1)] {
 		.ports[0 ... (KPORTAL_PORT_NR - 1)] = {

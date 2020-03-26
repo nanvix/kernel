@@ -22,6 +22,9 @@
  * SOFTWARE.
  */
 
+/* Must come first. */
+#define __NEED_RESOURCE
+
 #include <nanvix/hal.h>
 #include <nanvix/kernel/sync.h>
 #include <nanvix/kernel/syscall.h>
@@ -86,10 +89,14 @@ PRIVATE struct
  */
 PRIVATE struct sync
 {
-	struct resource resource; /**< Underlying resource.        */
-	int hwfd;                 /**< Underlying file descriptor. */
-	int masternum;            /**< Node number of the ONE.     */
-	uint64_t nodeslist;       /**< Nodeslist.                  */
+	/*
+	 * XXX: Don't Touch! This Must Come First!
+	 */
+	struct resource resource; /**< Generic resource information. */
+
+	int hwfd;                 /**< Underlying file descriptor.   */
+	int masternum;            /**< Node number of the ONE.       */
+	uint64_t nodeslist;       /**< Nodeslist.                    */
 } ALIGN(sizeof(dword_t)) active_syncs[(SYNC_CREATE_MAX + SYNC_OPEN_MAX)];
 
 /**

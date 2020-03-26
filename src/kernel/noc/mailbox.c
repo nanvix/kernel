@@ -22,6 +22,9 @@
  * SOFTWARE.
  */
 
+/* Must come first. */
+#define __NEED_RESOURCE
+
 #include <nanvix/hal.h>
 #include <nanvix/kernel/mailbox.h>
 #include <nanvix/hlib.h>
@@ -125,7 +128,10 @@ enum mailbox_search_type {
  */
 PRIVATE struct mbuffer
 {
-	struct resource resource; /**< Underlying resource. */
+	/*
+	 * XXX: Don't Touch! This Must Come First!
+	 */
+	struct resource resource; /**< Generic resource information. */
 
 	/**
 	 * @brief Structure that holds a message.
@@ -199,11 +205,15 @@ PRIVATE struct
  */
 PRIVATE struct mailbox
 {
-	struct resource resource;           /**< Underlying resource.        */
-	int refcount;                       /**< References count.           */
-	int hwfd;                           /**< Underlying file descriptor. */
-	int nodenum;                        /**< Target node number.         */
-	struct port ports[MAILBOX_PORT_NR]; /**< Logic ports.                */
+	/*
+	 * XXX: Don't Touch! This Must Come First!
+	 */
+	struct resource resource;           /**< Generic resource information. */
+
+	int refcount;                       /**< References count.             */
+	int hwfd;                           /**< Underlying file descriptor.   */
+	int nodenum;                        /**< Target node number.           */
+	struct port ports[MAILBOX_PORT_NR]; /**< Logic ports.                  */
 } active_mailboxes[HW_MAILBOX_MAX] = {
 	[0 ... (HW_MAILBOX_MAX - 1)] {
 		.ports[0 ... (MAILBOX_PORT_NR - 1)] = {
