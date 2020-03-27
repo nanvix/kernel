@@ -230,6 +230,7 @@ PRIVATE struct portal
 	int remote;                         /**< Target node number.           */
 	spinlock_t lock;                    /**< Protection.                   */
 	struct port ports[KPORTAL_PORT_NR]; /**< HW ports.                     */
+	int allowed;
 } ALIGN(sizeof(dword_t)) active_portals[HW_PORTAL_MAX] = {
 	[0 ... (HW_PORTAL_MAX - 1)] {
 		.ports[0 ... (KPORTAL_PORT_NR - 1)] = {
@@ -237,7 +238,8 @@ PRIVATE struct portal
 			.mbufferid = -1
 		},
 		.local  = -1,
-		.remote = -1
+		.remote = -1,
+		.allowed = 0
 	},
 };
 
@@ -564,6 +566,7 @@ PRIVATE int _do_portal_create(int local)
 	active_portals[portalid].hwfd     = hwfd;
 	active_portals[portalid].local    = local;
 	active_portals[portalid].remote   = -1;
+	active_portals[portalid].allowed  = 0;
 	active_portals[portalid].refcount = 0;
 	resource_set_rdonly(&active_portals[portalid].resource);
 	resource_set_notbusy(&active_portals[portalid].resource);
@@ -1023,10 +1026,16 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 
 	active_portals[fd].ports[port].mbufferid = mbufferid;
 
+	if (active_portals[fd].allowed)
+		goto read;
+
 	/* Allows async write from remote. */
 	if ((ret = portal_allow(active_portals[fd].hwfd, GET_LADDRESS_FD(virtual_portals[portalid].remote))) < 0)
 		goto discard_message;
 
+	active_portals[fd].allowed = 1;
+
+read:
 	t1 = clock_read();
 
 		/* Configures async aread. */
@@ -1036,6 +1045,8 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 	t2 = clock_read();
 
 	virtual_portals[portalid].user_buffer = buffer;
+
+	active_portals[fd].allowed = 0;
 
 	ret = size;
 
