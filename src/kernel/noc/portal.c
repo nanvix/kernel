@@ -210,8 +210,7 @@ PRIVATE struct
 	[0 ... (KPORTAL_MAX - 1)] = {
 		.status = 0,
 		.remote = -1,
-		.user_buffer = NULL,
-		.lock = SPINLOCK_UNLOCKED
+		.user_buffer = NULL
 	},
 };
 
@@ -238,8 +237,7 @@ PRIVATE struct portal
 			.mbufferid = -1
 		},
 		.local  = -1,
-		.remote = -1,
-		.lock = SPINLOCK_UNLOCKED,
+		.remote = -1
 	},
 };
 
@@ -307,6 +305,32 @@ PRIVATE int do_port_alloc(int portalid)
 
 error:
 	return (-1);
+}
+
+/*============================================================================*
+ * do_active_portals_locks_init()                                             *
+ *============================================================================*/
+
+/**
+ * @brief Initializes the mbuffers table lock.
+ */
+PRIVATE void do_active_portals_locks_init(void)
+{
+	for (int i = 0; i < HW_PORTAL_MAX; ++i)
+		spinlock_init(&active_portals[i].lock);
+}
+
+/*============================================================================*
+ * do_virtual_portals_locks_init()                                            *
+ *============================================================================*/
+
+/**
+ * @brief Initializes the mbuffers table lock.
+ */
+PRIVATE void do_virtual_portals_locks_init(void)
+{
+	for (int i = 0; i < KPORTAL_MAX; ++i)
+		spinlock_init(&virtual_portals[i].lock);
 }
 
 /*============================================================================*
@@ -775,23 +799,13 @@ PUBLIC int do_vportal_unlink(int portalid)
 
 	fd = GET_LADDRESS_FD(portalid);
 
-	spinlock_lock(&active_portals[fd].lock);
+	/* Bad portal. */
+	if (!resource_is_used(&active_portals[fd].resource))
+		return (-EBADF);
 
-		/* Bad portal. */
-		if (!resource_is_used(&active_portals[fd].resource))
-		{
-			spinlock_unlock(&active_portals[fd].lock);
-			return (-EBADF);
-		}
-
-		/* Bad portal. */
-		if (!resource_is_readable(&active_portals[fd].resource))
-		{
-			spinlock_unlock(&active_portals[fd].lock);
-			return (-EBADF);
-		}
-
-	spinlock_unlock(&active_portals[fd].lock);
+	/* Bad portal. */
+	if (!resource_is_readable(&active_portals[fd].resource))
+		return (-EBADF);
 
 	port = GET_LADDRESS_PORT(portalid);
 
@@ -846,23 +860,19 @@ PUBLIC int do_vportal_close(int portalid)
 
 	fd = GET_LADDRESS_FD(portalid);
 
-	spinlock_lock(&active_portals[fd].lock);
+	/* Bad portal. */
+	if (!resource_is_used(&active_portals[fd].resource))
+	{
+		spinlock_unlock(&active_portals[fd].lock);
+		return (-EBADF);
+	}
 
-		/* Bad portal. */
-		if (!resource_is_used(&active_portals[fd].resource))
-		{
-			spinlock_unlock(&active_portals[fd].lock);
-			return (-EBADF);
-		}
-
-		/* Bad portal. */
-		if (!resource_is_writable(&active_portals[fd].resource))
-		{
-			spinlock_unlock(&active_portals[fd].lock);
-			return (-EBADF);
-		}
-
-	spinlock_unlock(&active_portals[fd].lock);
+	/* Bad portal. */
+	if (!resource_is_writable(&active_portals[fd].resource))
+	{
+		spinlock_unlock(&active_portals[fd].lock);
+		return (-EBADF);
+	}
 
 	port = GET_LADDRESS_PORT(portalid);
 
@@ -894,13 +904,16 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 	uint64_t t1;         /* Clock value before aread call. */
 	uint64_t t2;         /* Clock value after aread call.  */
 
-	/* Bad virtual portal. */
-	if (!VPORTAL_IS_USED(portalid))
-		return (-EBADF);
-
 	fd = GET_LADDRESS_FD(portalid);
 
 	spinlock_lock(&virtual_portals[portalid].lock);
+
+		/* Bad virtual portal. */
+		if (!VPORTAL_IS_USED(portalid))
+		{
+			spinlock_unlock(&virtual_portals[portalid].lock);
+			return (-EBADF);
+		}
 
 		/* Busy virtual portal. */
 		if (VPORTAL_IS_BUSY(portalid))
@@ -916,6 +929,16 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 
 	port = GET_LADDRESS_PORT(portalid);
 	local_hwaddress = DO_LADDRESS_COMPOSE(active_portals[fd].local, port);
+
+	ret = (-EBADF);
+
+	/* Bad portal. */
+	if (!resource_is_used(&active_portals[fd].resource))
+		goto release_virtual;
+
+	/* Bad portal. */
+	if (!resource_is_readable(&active_portals[fd].resource))
+		goto release_virtual;
 
 	/* Is there a pending message for this vportal? */
 	if ((mbufferid = do_message_search(local_hwaddress, virtual_portals[portalid].remote)) >= 0)
@@ -940,23 +963,13 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 		return (size);
 	}
 
+	if (active_portals[fd].local == active_portals[fd].remote)
+	{
+		ret = -ENOMSG;
+		goto release_virtual;
+	}
+
 	spinlock_lock(&active_portals[fd].lock);
-
-		ret = (-EBADF);
-
-		/* Bad portal. */
-		if (!resource_is_used(&active_portals[fd].resource))
-		{
-			spinlock_unlock(&active_portals[fd].lock);
-			goto release_virtual;
-		}
-
-		/* Bad portal. */
-		if (!resource_is_readable(&active_portals[fd].resource))
-		{
-			spinlock_unlock(&active_portals[fd].lock);
-			goto release_virtual;
-		}
 
 		ret = (-EACCES);
 
@@ -1068,6 +1081,16 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 	fd = GET_LADDRESS_FD(portalid);
 	port = GET_LADDRESS_PORT(portalid);
 
+	ret = (-EBADF);
+
+	/* Bad portal. */
+	if (!resource_is_used(&active_portals[fd].resource))
+		goto release_virtual;
+
+	/* Bad portal. */
+	if (!resource_is_writable(&active_portals[fd].resource))
+		goto release_virtual;
+
 	/* Checks if there is already a mbuffer allocated. */
 	if ((mbufferid = active_portals[fd].ports[port].mbufferid) < 0)
 	{
@@ -1094,16 +1117,16 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 
 		active_portals[fd].ports[port].mbufferid = mbufferid;
 
-		/**
-		 * TODO: Verify if the local_address/remote == active_portals[fd].local/remote.
-		 * So, we can eliminate the concurrency without locking arctive_portals[fd]
-		 */
 		/* Checks if the destination is the local node. */
 		if (active_portals[fd].remote == active_portals[fd].local)
 		{
 			/* Forwards the message to the mbuffers table. */
 			do_vportal_release_mbuffer(mbufferid, KEEP_MESSAGE);
 			active_portals[fd].ports[port].mbufferid = -1;
+
+			/* Update performance statistics. */
+			virtual_portals[portalid].latency += (t2 - t1);
+			virtual_portals[portalid].volume  += size;
 
 			/* Marks that the virtual portal already finished its read. */
 			virtual_portals[portalid].status |= VPORTAL_STATUS_FINISHED;
@@ -1113,22 +1136,6 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 	}
 
 	spinlock_lock(&active_portals[fd].lock);
-
-		ret = (-EBADF);
-
-		/* Bad portal. */
-		if (!resource_is_used(&active_portals[fd].resource))
-		{
-			spinlock_unlock(&active_portals[fd].lock);
-			goto release_virtual;
-		}
-
-		/* Bad portal. */
-		if (!resource_is_writable(&active_portals[fd].resource))
-		{
-			spinlock_unlock(&active_portals[fd].lock);
-			goto release_virtual;
-		}
 
 		ret = (-EBUSY);
 
@@ -1163,7 +1170,7 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 
 	/* Update performance statistics. */
 	virtual_portals[portalid].latency += (t2 - t1);
-	virtual_portals[portalid].volume  += ret;
+	virtual_portals[portalid].volume  += size;
 
 	return (size);
 
@@ -1344,7 +1351,7 @@ PUBLIC int do_vportal_wait(int portalid)
 
 	spinlock_lock(&active_portals[fd].lock);
 
-		/* Bad mailbox. */
+		/* Bad portal. */
 		if (!resource_is_busy(&active_portals[fd].resource))
 		{
 			spinlock_unlock(&active_portals[fd].lock);
@@ -1454,6 +1461,12 @@ PUBLIC void kportal_init(void)
 
 	/* Initializes the mbuffers table lock. */
 	do_mbuffers_lock_init();
+
+	/* Initializes the active portals locks. */
+	do_active_portals_locks_init();
+
+	/* Initializes the virtual portals locks. */
+	do_virtual_portals_locks_init();
 }
 
 #endif /* __TARGET_HAS_PORTAL */
