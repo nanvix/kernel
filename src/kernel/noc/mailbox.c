@@ -1135,7 +1135,6 @@ PRIVATE int do_vmailbox_receiver_wait(int mbxid)
 	port = GET_LADDRESS_PORT(mbxid);
 
 	mbufferid = active_mailboxes[fd].ports[port].mbufferid;
-	active_mailboxes[fd].ports[port].mbufferid = -1;
 
 	t1 = clock_read();
 
@@ -1173,6 +1172,7 @@ PRIVATE int do_vmailbox_receiver_wait(int mbxid)
 
 release_buffer:
 	do_vmailbox_release_mbuffer(mbufferid, keep_rule);
+	active_mailboxes[fd].ports[port].mbufferid = -1;
 
 	return (ret);
 }
@@ -1199,7 +1199,6 @@ PRIVATE int do_vmailbox_sender_wait(int mbxid)
 	port = GET_LADDRESS_PORT(mbxid);
 
 	mbufferid = active_mailboxes[fd].ports[port].mbufferid;
-	active_mailboxes[fd].ports[port].mbufferid = -1;
 
 	t1 = clock_read();
 
@@ -1214,6 +1213,7 @@ PRIVATE int do_vmailbox_sender_wait(int mbxid)
 
 release_buffer:
 	do_vmailbox_release_mbuffer(mbufferid, DISCARD_MESSAGE);
+	active_mailboxes[fd].ports[port].mbufferid = -1;
 
 	return (ret);
 }
