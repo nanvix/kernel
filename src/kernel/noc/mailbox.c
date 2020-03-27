@@ -376,6 +376,26 @@ PRIVATE int do_vmailbox_release_mbuffer(int mbufferid, int keep_msg)
 	return (0);
 }
 
+/**
+ * @brief Allocates a message buffer.
+ *
+ * @return Upon successful completion, mbufferid returned. Upon failure,
+ * a negative number is returned instead.
+ */
+PRIVATE int do_vmailbox_alloc_mbuffer(void)
+{
+	int mbufferid;
+
+	spinlock_lock(&mbuffers_lock);
+
+		/* Allocates a data buffer to receive data. */
+		mbufferid = resource_alloc(&mbufferpool);
+
+	spinlock_unlock(&mbuffers_lock);
+
+	return (mbufferid);
+}
+
 /*============================================================================*
  * do_message_search()                                                        *
  *============================================================================*/
@@ -910,7 +930,7 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 	spinlock_unlock(&active_mailboxes[fd].lock);
 
 	/* Allocates a data buffer to receive data. */
-	if ((mbufferid = resource_alloc(&mbufferpool)) < 0)
+	if ((mbufferid = do_vmailbox_alloc_mbuffer()) < 0)
 	{
 		ret = mbufferid;
 		goto release_active;
@@ -1004,7 +1024,7 @@ PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
 	if ((mbufferid = active_mailboxes[fd].ports[port].mbufferid) < 0)
 	{
 		/* Allocates a message buffer to send the message. */
-		if ((mbufferid = resource_alloc(&mbufferpool)) < 0)
+		if ((mbufferid = do_vmailbox_alloc_mbuffer()) < 0)
 		{
 			ret = mbufferid;
 			goto release_virtual;
