@@ -314,7 +314,7 @@ error:
  *============================================================================*/
 
 /**
- * @brief Initializes the mbuffers table lock.
+ * @brief Initializes the active portals locks.
  */
 PRIVATE void do_active_portals_locks_init(void)
 {
@@ -327,7 +327,7 @@ PRIVATE void do_active_portals_locks_init(void)
  *============================================================================*/
 
 /**
- * @brief Initializes the mbuffers table lock.
+ * @brief Initializes the virtual_portals locks.
  */
 PRIVATE void do_virtual_portals_locks_init(void)
 {
@@ -627,10 +627,7 @@ PUBLIC int do_vportal_create(int local, int port)
 PUBLIC int do_vportal_allow(int portalid, int remote, int remote_port)
 {
 	int fd;  /* Active portal logic ID. */
-
-	/* Bad virtual portal. */
-	if (!VPORTAL_IS_USED(portalid))
-		return (-EBADF);
+	int ret; /* Function return.        */
 
 	fd = GET_LADDRESS_FD(portalid);
 
@@ -642,14 +639,28 @@ PUBLIC int do_vportal_allow(int portalid, int remote, int remote_port)
 	if (!resource_is_readable(&active_portals[fd].resource))
 		return (-EBADF);
 
-	/* Vportal already allowed a write. */
-	if (VPORTAL_IS_ALLOWED(portalid))
-		return(-EBUSY);
+	/* Locks the virtual portal to operate over it. */
+	spinlock_lock(&virtual_portals[portalid].lock);
 
-	virtual_portals[portalid].status |= VPORTAL_STATUS_ALLOWED;
-	virtual_portals[portalid].remote  = DO_LADDRESS_COMPOSE(remote, remote_port);
+		ret = -EBADF;
 
-	return (0);
+		/* Bad virtual portal. */
+		if (!VPORTAL_IS_USED(portalid))
+			goto unlock;
+
+		/* Vportal already allowed a write. */
+		if (VPORTAL_IS_ALLOWED(portalid))
+			goto unlock;
+
+		virtual_portals[portalid].status |= VPORTAL_STATUS_ALLOWED;
+		virtual_portals[portalid].remote  = DO_LADDRESS_COMPOSE(remote, remote_port);
+
+		ret = 0;
+
+unlock:
+	spinlock_unlock(&virtual_portals[portalid].lock);
+
+	return (ret);
 }
 
 /*============================================================================*
@@ -929,6 +940,14 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 
 	fd = GET_LADDRESS_FD(portalid);
 
+	/* Bad portal. */
+	if (!resource_is_used(&active_portals[fd].resource))
+		return (-EBADF);
+
+	/* Bad portal. */
+	if (!resource_is_readable(&active_portals[fd].resource))
+		return (-EBADF);
+
 	spinlock_lock(&virtual_portals[portalid].lock);
 
 		/* Bad virtual portal. */
@@ -945,6 +964,13 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 			return (-EBUSY);
 		}
 
+		/* Unallowed operation. */
+		if (!VPORTAL_IS_ALLOWED(portalid))
+		{
+			spinlock_unlock(&virtual_portals[portalid].lock);
+			return (-EACCES);
+		}
+
 		/* Sets the virtual portal as busy. */
 		VPORTAL_SET_BUSY(portalid);
 
@@ -952,16 +978,6 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 
 	port = GET_LADDRESS_PORT(portalid);
 	local_hwaddress = DO_LADDRESS_COMPOSE(active_portals[fd].local, port);
-
-	ret = (-EBADF);
-
-	/* Bad portal. */
-	if (!resource_is_used(&active_portals[fd].resource))
-		goto release_virtual;
-
-	/* Bad portal. */
-	if (!resource_is_readable(&active_portals[fd].resource))
-		goto release_virtual;
 
 	/* Is there a pending message for this vportal? */
 	if ((mbufferid = do_message_search(local_hwaddress, virtual_portals[portalid].remote)) >= 0)
@@ -986,6 +1002,7 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 		return (size);
 	}
 
+	/* Checks if the receiver is for local messages. */
 	if (active_portals[fd].local == active_portals[fd].remote)
 	{
 		ret = -ENOMSG;
@@ -993,15 +1010,6 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 	}
 
 	spinlock_lock(&active_portals[fd].lock);
-
-		ret = (-EACCES);
-
-		/* Unallowed operation. */
-		if (!VPORTAL_IS_ALLOWED(portalid))
-		{
-			spinlock_unlock(&active_portals[fd].lock);
-			goto release_virtual;
-		}
 
 		ret = (-EBUSY);
 
@@ -1026,6 +1034,7 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 
 	active_portals[fd].ports[port].mbufferid = mbufferid;
 
+	/* Checks if the portal already sent an allow and failed after that. */
 	if (active_portals[fd].allowed)
 		goto read;
 
@@ -1033,6 +1042,7 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 	if ((ret = portal_allow(active_portals[fd].hwfd, GET_LADDRESS_FD(virtual_portals[portalid].remote))) < 0)
 		goto discard_message;
 
+	/* Sinalizes that this active already have an allow configured. */
 	active_portals[fd].allowed = 1;
 
 read:
@@ -1048,12 +1058,10 @@ read:
 
 	active_portals[fd].allowed = 0;
 
-	ret = size;
-
 	/* Update performance statistics. */
 	virtual_portals[portalid].latency += (t2 - t1);
 
-	return (ret);
+	return (size);
 
 discard_message:
 	KASSERT(do_vportal_release_mbuffer(mbufferid, DISCARD_MESSAGE) == 0);
@@ -1184,16 +1192,7 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 
 		/* Configures asynchronous write. */
 		if ((ret = portal_awrite(active_portals[fd].hwfd, (void *) &mbuffers[mbufferid].message, (KPORTAL_MESSAGE_HEADER_SIZE + HAL_PORTAL_MAX_SIZE))) < 0)
-		{
-			do_vportal_release_mbuffer(mbufferid, DISCARD_MESSAGE);
-			active_portals[fd].ports[port].mbufferid = -1;
-
-			spinlock_lock(&active_portals[fd].lock);
-				resource_set_notbusy(&active_portals[fd].resource);
-			spinlock_unlock(&active_portals[fd].lock);
-
-			goto release_virtual;
-		}
+			goto release_active;
 
 	t2 = clock_read();
 
@@ -1202,6 +1201,11 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 	virtual_portals[portalid].volume  += size;
 
 	return (size);
+
+release_active:
+	spinlock_lock(&active_portals[fd].lock);
+		resource_set_notbusy(&active_portals[fd].resource);
+	spinlock_unlock(&active_portals[fd].lock);
 
 release_virtual:
 	spinlock_lock(&virtual_portals[portalid].lock);
