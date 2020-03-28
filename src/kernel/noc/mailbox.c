@@ -373,7 +373,6 @@ PRIVATE int do_vmailbox_release_mbuffer(int mbufferid, int keep_msg)
 	/* Unlocks the mbuffers table. */
 	spinlock_unlock(&mbuffers_lock);
 
-	dcache_invalidate();
 	return (0);
 }
 
@@ -414,8 +413,6 @@ PRIVATE int do_message_search(int local_address)
 	int ret;
 
 	ret = -1;
-
-	dcache_invalidate();
 
 	/* Locks the mbuffers table. */
 	spinlock_lock(&mbuffers_lock);
@@ -575,6 +572,7 @@ PUBLIC int do_vmailbox_create(int local, int port)
 	active_mailboxes[mbxid].refcount++;
 
 	dcache_invalidate();
+
 	return (vmbxid);
 }
 
@@ -660,6 +658,7 @@ PUBLIC int do_vmailbox_open(int remote, int remote_port)
 	active_mailboxes[mbxid].refcount++;
 
 	dcache_invalidate();
+
 	return (vmbxid);
 }
 
@@ -693,6 +692,7 @@ PRIVATE int _do_mailbox_release(int mbxid, int (*release_fn)(int))
 	resource_free(&mbxpool, mbxid);
 
 	dcache_invalidate();
+
 	return (0);
 }
 
@@ -1097,7 +1097,6 @@ release_virtual:
 		VMAILBOX_SET_NOTBUSY(mbxid);
 	spinlock_unlock(&virtual_mailboxes[mbxid].lock);
 
-	dcache_invalidate();
 	return (ret);
 }
 
@@ -1230,8 +1229,6 @@ PUBLIC int do_vmailbox_wait(int mbxid)
 	int fd;              /* Vmailbox file descriptor. */
 	int port;            /* Port used by vmailbox.    */
 	int (*wait_fn)(int); /* Underlying wait function. */
-
-	dcache_invalidate();
 
 	spinlock_lock(&virtual_mailboxes[mbxid].lock);
 
