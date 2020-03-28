@@ -373,6 +373,7 @@ PRIVATE int do_vmailbox_release_mbuffer(int mbufferid, int keep_msg)
 	/* Unlocks the mbuffers table. */
 	spinlock_unlock(&mbuffers_lock);
 
+	dcache_invalidate();
 	return (0);
 }
 
@@ -1076,16 +1077,7 @@ PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
 
 		/* Setup asynchronous write. */
 		if ((ret = mailbox_awrite(active_mailboxes[fd].hwfd, (void *) &mbuffers[mbufferid].message, HAL_MAILBOX_MSG_SIZE)) < 0)
-		{
-			do_vmailbox_release_mbuffer(mbufferid, DISCARD_MESSAGE);
-			active_mailboxes[fd].ports[port].mbufferid = -1;
-
-			spinlock_lock(&active_mailboxes[fd].lock);
-				resource_set_notbusy(&active_mailboxes[fd].resource);
-			spinlock_unlock(&active_mailboxes[fd].lock);
-
-			goto release_virtual;
-		}
+			goto release_active;
 
 	t2 = clock_read();
 
@@ -1095,11 +1087,17 @@ PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
 
 	return (size);
 
+release_active:
+	spinlock_lock(&active_mailboxes[fd].lock);
+		resource_set_notbusy(&active_mailboxes[fd].resource);
+	spinlock_unlock(&active_mailboxes[fd].lock);
+
 release_virtual:
 	spinlock_lock(&virtual_mailboxes[mbxid].lock);
 		VMAILBOX_SET_NOTBUSY(mbxid);
 	spinlock_unlock(&virtual_mailboxes[mbxid].lock);
 
+	dcache_invalidate();
 	return (ret);
 }
 
@@ -1233,6 +1231,8 @@ PUBLIC int do_vmailbox_wait(int mbxid)
 	int port;            /* Port used by vmailbox.    */
 	int (*wait_fn)(int); /* Underlying wait function. */
 
+	dcache_invalidate();
+
 	spinlock_lock(&virtual_mailboxes[mbxid].lock);
 
 		/* Bad virtual mailbox. */
@@ -1242,11 +1242,11 @@ PUBLIC int do_vmailbox_wait(int mbxid)
 			return (-EBADF);
 		}
 
-		/* Busy virtual mailbox. */
+		/* virtual mailbox not set as busy. */
 		if (!VMAILBOX_IS_BUSY(mbxid))
 		{
 			spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-			return (-EBUSY);
+			return (-EBADF);
 		}
 	
 	spinlock_unlock(&virtual_mailboxes[mbxid].lock);
