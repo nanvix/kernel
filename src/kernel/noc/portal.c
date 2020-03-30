@@ -979,37 +979,45 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 	port = GET_LADDRESS_PORT(portalid);
 	local_hwaddress = DO_LADDRESS_COMPOSE(active_portals[fd].local, port);
 
-	/* Is there a pending message for this vportal? */
-	if ((mbufferid = do_message_search(local_hwaddress, virtual_portals[portalid].remote)) >= 0)
-	{
-		t1 = clock_read();
-			kmemcpy(buffer, (void *) &mbuffers[mbufferid].message.data, ret = size);
-		t2 = clock_read();
-
-		/* Update performance statistics. */
-		virtual_portals[portalid].latency += (t2 - t1);
-		virtual_portals[portalid].volume += ret;
-
-		/* Revoke allow. */
-		virtual_portals[portalid].status &= ~VPORTAL_STATUS_ALLOWED;
-		virtual_portals[portalid].remote  = -1;
-
-		/* Marks that the virtual portal already finished its read. */
-		virtual_portals[portalid].status |= VPORTAL_STATUS_FINISHED;
-
-		KASSERT(do_vportal_release_mbuffer(mbufferid, DISCARD_MESSAGE) == 0);
-
-		return (size);
-	}
-
-	/* Checks if the receiver is for local messages. */
-	if (active_portals[fd].local == active_portals[fd].remote)
-	{
-		ret = -ENOMSG;
-		goto release_virtual;
-	}
-
 	spinlock_lock(&active_portals[fd].lock);
+
+		/* Is there a pending message for this vportal? */
+		if ((mbufferid = do_message_search(local_hwaddress, virtual_portals[portalid].remote)) >= 0)
+		{
+			/* TODO: @Uller será que da problema liberar o lock aqui?
+			 * Tipo, outra thread não pode querer consumir ou mexer no mesmo
+			 * mbufferid até nós darmos discard certo?
+			 **/
+			spinlock_unlock(&active_portals[fd].lock);
+
+			t1 = clock_read();
+				kmemcpy(buffer, (void *) &mbuffers[mbufferid].message.data, ret = size);
+			t2 = clock_read();
+
+			/* Update performance statistics. */
+			virtual_portals[portalid].latency += (t2 - t1);
+			virtual_portals[portalid].volume += ret;
+
+			/* Revoke allow. */
+			virtual_portals[portalid].status &= ~VPORTAL_STATUS_ALLOWED;
+			virtual_portals[portalid].remote  = -1;
+
+			/* Marks that the virtual portal already finished its read. */
+			virtual_portals[portalid].status |= VPORTAL_STATUS_FINISHED;
+
+			KASSERT(do_vportal_release_mbuffer(mbufferid, DISCARD_MESSAGE) == 0);
+
+			return (size);
+		}
+
+		ret = -ENOMSG;
+
+		/* Checks if the receiver is for local messages. */
+		if (active_portals[fd].local == active_portals[fd].remote)
+		{
+			spinlock_unlock(&active_portals[fd].lock);
+			goto release_virtual;
+		}
 
 		ret = (-EBUSY);
 
@@ -1254,45 +1262,55 @@ PRIVATE int do_vportal_receiver_wait(int portalid)
 
 		/* Wait for asynchronous read to finish. */
 		if ((ret = portal_wait(active_portals[fd].hwfd)) < 0)
+		{
+			spinlock_lock(&active_portals[fd].lock);
 			goto release_buffer;
+		}
 
 	t2 = clock_read();
 
-	local_hwaddress = DO_LADDRESS_COMPOSE(active_portals[fd].local, port);
+	spinlock_lock(&active_portals[fd].lock);
 
-	/* Checks if the message is addressed for the requesting port. */
-	dest = mbuffers[mbufferid].message.dest;
-	src  = mbuffers[mbufferid].message.src;
+		local_hwaddress = DO_LADDRESS_COMPOSE(active_portals[fd].local, port);
 
-	if ((dest != local_hwaddress) || (src != virtual_portals[portalid].remote))
-	{
-		keep_rule = PORT_IS_USED(fd, GET_LADDRESS_PORT(dest));
+		/* Checks if the message is addressed for the requesting port. */
+		dest = mbuffers[mbufferid].message.dest;
+		src  = mbuffers[mbufferid].message.src;
 
-		/* Returns sinalizing that a message was read, but not for local port. */
-		ret = 1;
-	}
-	else
-	{
-		size = mbuffers[mbufferid].message.size;
+		if ((dest != local_hwaddress) || (src != virtual_portals[portalid].remote))
+		{
+			keep_rule = PORT_IS_USED(fd, GET_LADDRESS_PORT(dest));
 
-		kmemcpy(virtual_portals[portalid].user_buffer, (void *) &mbuffers[mbufferid].message.data, size);
+			/* Returns sinalizing that a message was read, but not for local port. */
+			ret = 1;
+		}
+		else
+		{
+			size = mbuffers[mbufferid].message.size;
 
-		/* Update performance statistics. */
-		virtual_portals[portalid].latency += (t2 - t1);
-		virtual_portals[portalid].volume  += size;
+			kmemcpy(virtual_portals[portalid].user_buffer, (void *) &mbuffers[mbufferid].message.data, size);
 
-		virtual_portals[portalid].user_buffer = NULL;
+			/* Update performance statistics. */
+			virtual_portals[portalid].latency += (t2 - t1);
+			virtual_portals[portalid].volume  += size;
 
-		/* Revoke allow. */
-		virtual_portals[portalid].status &= ~VPORTAL_STATUS_ALLOWED;
-		virtual_portals[portalid].remote  = -1;
+			virtual_portals[portalid].user_buffer = NULL;
 
-		ret = 0;
-	}
+			/* Revoke allow. */
+			virtual_portals[portalid].status &= ~VPORTAL_STATUS_ALLOWED;
+			virtual_portals[portalid].remote  = -1;
+
+			ret = 0;
+		}
 
 release_buffer:
-	do_vportal_release_mbuffer(mbufferid, keep_rule);
-	active_portals[fd].ports[port].mbufferid = -1;
+
+		do_vportal_release_mbuffer(mbufferid, keep_rule);
+		active_portals[fd].ports[port].mbufferid = -1;
+
+		resource_set_notbusy(&active_portals[fd].resource);
+
+	spinlock_unlock(&active_portals[fd].lock);
 
 	return (ret);
 }
@@ -1332,8 +1350,14 @@ PRIVATE int do_vportal_sender_wait(int portalid)
 	virtual_portals[portalid].latency += (t2 - t1);
 
 release_buffer:
-	do_vportal_release_mbuffer(mbufferid, DISCARD_MESSAGE);
-	active_portals[fd].ports[port].mbufferid = -1;
+	spinlock_lock(&active_portals[fd].lock);
+
+		do_vportal_release_mbuffer(mbufferid, DISCARD_MESSAGE);
+		active_portals[fd].ports[port].mbufferid = -1;
+
+		resource_set_notbusy(&active_portals[fd].resource);
+
+	spinlock_unlock(&active_portals[fd].lock);
 
 	return (ret);
 }
@@ -1407,10 +1431,6 @@ PUBLIC int do_vportal_wait(int portalid)
 
 	/* Calls the underlying wait function according to the type of the portal. */
 	ret = wait_fn(portalid);
-
-	spinlock_lock(&active_portals[fd].lock);
-		resource_set_notbusy(&active_portals[fd].resource);
-	spinlock_unlock(&active_portals[fd].lock);
 
 release_virtual:
 	spinlock_lock(&virtual_portals[portalid].lock);
