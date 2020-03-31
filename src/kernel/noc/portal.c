@@ -1013,7 +1013,7 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 		ret = -ENOMSG;
 
 		/* Checks if the receiver is for local messages. */
-		if (active_portals[fd].local == active_portals[fd].remote)
+		if (active_portals[fd].local == GET_LADDRESS_FD(virtual_portals[portalid].remote))
 		{
 			spinlock_unlock(&active_portals[fd].lock);
 			goto release_virtual;
@@ -1044,7 +1044,12 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 
 	/* Checks if the portal already sent an allow and failed after that. */
 	if (active_portals[fd].allowed)
+	{
+		if (active_portals[fd].remote != GET_LADDRESS_FD(virtual_portals[portalid].remote))
+			goto discard_message;
+
 		goto read;
+	}
 
 	/* Allows async write from remote. */
 	if ((ret = portal_allow(active_portals[fd].hwfd, GET_LADDRESS_FD(virtual_portals[portalid].remote))) < 0)
@@ -1052,6 +1057,7 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 
 	/* Sinalizes that this active already have an allow configured. */
 	active_portals[fd].allowed = 1;
+	active_portals[fd].remote = GET_LADDRESS_FD(virtual_portals[portalid].remote);
 
 read:
 	t1 = clock_read();
@@ -1065,6 +1071,7 @@ read:
 	virtual_portals[portalid].user_buffer = buffer;
 
 	active_portals[fd].allowed = 0;
+	active_portals[fd].remote = -1;
 
 	/* Update performance statistics. */
 	virtual_portals[portalid].latency += (t2 - t1);
