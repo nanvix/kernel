@@ -214,6 +214,7 @@ PRIVATE struct mailbox
 	int refcount;                       /**< References count.             */
 	int hwfd;                           /**< Underlying file descriptor.   */
 	int nodenum;                        /**< Target node number.           */
+	spinlock_t lock;                    /**< Protection.                   */
 	struct port ports[MAILBOX_PORT_NR]; /**< Logic ports.                  */
 } active_mailboxes[HW_MAILBOX_MAX] = {
 	[0 ... (HW_MAILBOX_MAX - 1)] {
@@ -249,7 +250,7 @@ PRIVATE const struct resource_pool mbxpool = {
 PRIVATE int do_vmailbox_alloc(int mbxid, int port)
 {
 	int vmbxid; /* Virtual mailbox ID. */
-	
+
 	vmbxid = DO_LADDRESS_COMPOSE(mbxid, port);
 
 	spinlock_lock(&virtual_mailboxes[mbxid].lock);
@@ -299,6 +300,19 @@ PRIVATE int do_port_alloc(int mbxid)
 
 error:
 	return (-1);
+}
+
+/*============================================================================*
+ * do_active_mailboxes_locks_init()                                           *
+ *============================================================================*/
+
+/**
+ * @brief Initializes the mbuffers table lock.
+ */
+PRIVATE void do_active_mailboxes_locks_init(void)
+{
+	for (int i = 0; i < HW_MAILBOX_MAX; ++i)
+		spinlock_init(&active_mailboxes[i].lock);
 }
 
 /*============================================================================*
@@ -885,31 +899,48 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 
 	local_hwaddress = DO_LADDRESS_COMPOSE(active_mailboxes[fd].nodenum, port);
 
-	/* Is there a pending message for this vmailbox? */
-	if ((mbufferid = do_message_search(local_hwaddress)) >= 0)
-	{
-		t1 = clock_read();
-			kmemcpy(buffer, (void *) &mbuffers[mbufferid].message.data, ret = size);
-		t2 = clock_read();
+	spinlock_lock(&active_mailboxes[fd].lock);
 
-		/* Update performance statistics. */
-		virtual_mailboxes[mbxid].latency += (t2 - t1);
-		virtual_mailboxes[mbxid].volume  += ret;
+		/* Is there a pending message for this vmailbox? */
+		if ((mbufferid = do_message_search(local_hwaddress)) >= 0)
+		{
+			spinlock_unlock(&active_mailboxes[fd].lock);
 
-		/* Marks that the virtual mailbox already finished its read. */
-		virtual_mailboxes[mbxid].status |= VMAILBOX_STATUS_FINISHED;
+			t1 = clock_read();
+				kmemcpy(buffer, (void *) &mbuffers[mbufferid].message.data, ret = size);
+			t2 = clock_read();
 
-		KASSERT(do_vmailbox_release_mbuffer(mbufferid, DISCARD_MESSAGE) == 0);
+			/* Update performance statistics. */
+			virtual_mailboxes[mbxid].latency += (t2 - t1);
+			virtual_mailboxes[mbxid].volume  += ret;
 
-		return (ret);
-	}
+			/* Marks that the virtual mailbox already finished its read. */
+			virtual_mailboxes[mbxid].status |= VMAILBOX_STATUS_FINISHED;
 
+			KASSERT(do_vmailbox_release_mbuffer(mbufferid, DISCARD_MESSAGE) == 0);
+
+			return (ret);
+		}
+
+		ret = (-EBUSY);
+
+		/* Bad mailbox. */
+		if (resource_is_busy(&active_mailboxes[fd].resource))
+		{
+			spinlock_unlock(&active_mailboxes[fd].lock);
+			goto release_virtual;
+		}
+
+		/* Sets the mailbox as busy. */
+		resource_set_busy(&active_mailboxes[fd].resource);
+
+	spinlock_unlock(&active_mailboxes[fd].lock);
 
 	/* Allocates a data buffer to receive data. */
 	if ((mbufferid = do_vmailbox_alloc_mbuffer()) < 0)
 	{
 		ret = mbufferid;
-		goto release_virtual;
+		goto release_active;
 	}
 
 	active_mailboxes[fd].ports[port].mbufferid = mbufferid;
@@ -932,6 +963,11 @@ PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
 discard_message:
 	active_mailboxes[fd].ports[port].mbufferid = -1;
 	KASSERT(do_vmailbox_release_mbuffer(mbufferid, DISCARD_MESSAGE) == 0);
+
+release_active:
+	spinlock_lock(&active_mailboxes[fd].lock);
+		resource_set_notbusy(&active_mailboxes[fd].resource);
+	spinlock_unlock(&active_mailboxes[fd].lock);
 
 release_virtual:
 	spinlock_lock(&virtual_mailboxes[mbxid].lock);
@@ -1027,11 +1063,27 @@ PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
 		}
 	}
 
+	spinlock_lock(&active_mailboxes[fd].lock);
+
+		ret = (-EBUSY);
+
+		/* Bad mailbox. */
+		if (resource_is_busy(&active_mailboxes[fd].resource))
+		{
+			spinlock_unlock(&active_mailboxes[fd].lock);
+			goto release_virtual;
+		}
+
+		/* Sets the mailbox as busy. */
+		resource_set_busy(&active_mailboxes[fd].resource);
+
+	spinlock_unlock(&active_mailboxes[fd].lock);
+
 	t1 = clock_read();
 
 		/* Setup asynchronous write. */
 		if ((ret = mailbox_awrite(active_mailboxes[fd].hwfd, (void *) &mbuffers[mbufferid].message, HAL_MAILBOX_MSG_SIZE)) < 0)
-			goto release_virtual;
+			goto release_active;
 
 	t2 = clock_read();
 
@@ -1040,6 +1092,11 @@ PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
 	virtual_mailboxes[mbxid].volume  += size;
 
 	return (size);
+
+release_active:
+	spinlock_lock(&active_mailboxes[fd].lock);
+		resource_set_notbusy(&active_mailboxes[fd].resource);
+	spinlock_unlock(&active_mailboxes[fd].lock);
 
 release_virtual:
 	spinlock_lock(&virtual_mailboxes[mbxid].lock);
@@ -1086,40 +1143,48 @@ PRIVATE int do_vmailbox_receiver_wait(int mbxid)
 
 		/* Wait for asynchronous read to finish. */
 		if ((ret = mailbox_wait(active_mailboxes[fd].hwfd)) < 0)
+		{
+			spinlock_lock(&active_mailboxes[fd].lock);
 			goto release_buffer;
+		}
 
 	t2 = clock_read();
 
+	spinlock_lock(&active_mailboxes[fd].lock);
 
-	local_hwaddress = DO_LADDRESS_COMPOSE(active_mailboxes[fd].nodenum, port);
+		local_hwaddress = DO_LADDRESS_COMPOSE(active_mailboxes[fd].nodenum, port);
 
-	/* Checks if the message is addressed for the requesting port. */
-	dest = mbuffers[mbufferid].message.dest;
+		/* Checks if the message is addressed for the requesting port. */
+		dest = mbuffers[mbufferid].message.dest;
 
-	if (dest != local_hwaddress)
-	{
-		/* Keep message? true (KEEP_MESSAGE) : false (DISCARD_MESSAGE) */
-		keep_rule = PORT_IS_USED(fd, GET_LADDRESS_PORT(dest));
+		if (dest != local_hwaddress)
+		{
+			/* Keep message? true (KEEP_MESSAGE) : false (DISCARD_MESSAGE) */
+			keep_rule = PORT_IS_USED(fd, GET_LADDRESS_PORT(dest));
 
-		/* Returns sinalizing that a message was read, but not for local port. */
-		ret = 1;
-	}
-	else
-	{
-		kmemcpy(virtual_mailboxes[mbxid].user_buffer, (void *) &mbuffers[mbufferid].message.data, KMAILBOX_MESSAGE_SIZE);
+			/* Returns sinalizing that a message was read, but not for local port. */
+			ret = 1;
+		}
+		else
+		{
+			kmemcpy(virtual_mailboxes[mbxid].user_buffer, (void *) &mbuffers[mbufferid].message.data, KMAILBOX_MESSAGE_SIZE);
 
-		/* Update performance statistics. */
-		virtual_mailboxes[mbxid].latency += (t2 - t1);
-		virtual_mailboxes[mbxid].volume  += KMAILBOX_MESSAGE_SIZE;
+			/* Update performance statistics. */
+			virtual_mailboxes[mbxid].latency += (t2 - t1);
+			virtual_mailboxes[mbxid].volume  += KMAILBOX_MESSAGE_SIZE;
 
-		virtual_mailboxes[mbxid].user_buffer = NULL;
+			virtual_mailboxes[mbxid].user_buffer = NULL;
 
-		ret = 0;
-	}
+			ret = 0;
+		}
 
 release_buffer:
-	active_mailboxes[fd].ports[port].mbufferid = -1;
-	do_vmailbox_release_mbuffer(mbufferid, keep_rule);
+		active_mailboxes[fd].ports[port].mbufferid = -1;
+		do_vmailbox_release_mbuffer(mbufferid, keep_rule);
+
+		resource_set_notbusy(&active_mailboxes[fd].resource);
+
+	spinlock_unlock(&active_mailboxes[fd].lock);
 
 	return (ret);
 }
@@ -1159,8 +1224,14 @@ PRIVATE int do_vmailbox_sender_wait(int mbxid)
 	virtual_mailboxes[mbxid].latency += (t2 - t1);
 
 release_buffer:
-	active_mailboxes[fd].ports[port].mbufferid = -1;
-	do_vmailbox_release_mbuffer(mbufferid, DISCARD_MESSAGE);
+	spinlock_lock(&active_mailboxes[fd].lock);
+
+		active_mailboxes[fd].ports[port].mbufferid = -1;
+		do_vmailbox_release_mbuffer(mbufferid, DISCARD_MESSAGE);
+
+		resource_set_notbusy(&active_mailboxes[fd].resource);
+
+	spinlock_unlock(&active_mailboxes[fd].lock);
 
 	return (ret);
 }
@@ -1195,7 +1266,7 @@ PUBLIC int do_vmailbox_wait(int mbxid)
 			spinlock_unlock(&virtual_mailboxes[mbxid].lock);
 			return (-EBADF);
 		}
-	
+
 	spinlock_unlock(&virtual_mailboxes[mbxid].lock);
 
 	/* Virtual mailbox already finished its last operation. */
@@ -1210,6 +1281,17 @@ PUBLIC int do_vmailbox_wait(int mbxid)
 	port = GET_LADDRESS_PORT(mbxid);
 
 	ret = (-EBADF);
+
+	spinlock_lock(&active_mailboxes[fd].lock);
+
+		/* Bad mailbox. */
+		if (!resource_is_busy(&active_mailboxes[fd].resource))
+		{
+			spinlock_unlock(&active_mailboxes[fd].lock);
+			goto release_virtual;
+		}
+
+	spinlock_unlock(&active_mailboxes[fd].lock);
 
 	/* Invalid mbufferid. */
 	if (active_mailboxes[fd].ports[port].mbufferid < 0)
@@ -1308,6 +1390,9 @@ PUBLIC void kmailbox_init(void)
 
 	/* Initializes the mbuffers table lock. */
 	do_mbuffers_lock_init();
+
+	/* Initializes the active mailboxes locks. */
+	do_active_mailboxes_locks_init();
 
 	/* Initializes the virtual mailboxes locks. */
 	do_virtual_mailboxes_locks_init();
