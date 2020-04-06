@@ -228,6 +228,7 @@ PRIVATE struct portal
 	int hwfd;                           /**< Underlying file descriptor.   */
 	int local;                          /**< Local node number.            */
 	int remote;                         /**< Target node number.           */
+	int allowed;                        /**< Allowed verification.         */
 	spinlock_t lock;                    /**< Protection.                   */
 	struct port ports[KPORTAL_PORT_NR]; /**< HW ports.                     */
 } ALIGN(sizeof(dword_t)) active_portals[HW_PORTAL_MAX] = {
@@ -238,6 +239,7 @@ PRIVATE struct portal
 		},
 		.local  = -1,
 		.remote = -1,
+		.allowed = 0
 	},
 };
 
@@ -574,6 +576,7 @@ PRIVATE int _do_portal_create(int local)
 	active_portals[portalid].hwfd     = hwfd;
 	active_portals[portalid].local    = local;
 	active_portals[portalid].remote   = -1;
+	active_portals[portalid].allowed  = 0;
 	active_portals[portalid].refcount = 0;
 	resource_set_rdonly(&active_portals[portalid].resource);
 	resource_set_notbusy(&active_portals[portalid].resource);
@@ -654,6 +657,8 @@ PUBLIC int do_vportal_allow(int portalid, int remote, int remote_port)
 		/* Bad virtual portal. */
 		if (!VPORTAL_IS_USED(portalid))
 			goto unlock;
+
+		ret = -EBUSY;
 
 		/* Vportal already allowed a write. */
 		if (VPORTAL_IS_ALLOWED(portalid))
@@ -1038,10 +1043,31 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 
 	active_portals[fd].ports[port].mbufferid = mbufferid;
 
-	/* Allows async write from remote. */
-	if ((ret = portal_allow(active_portals[fd].hwfd, GET_LADDRESS_FD(virtual_portals[portalid].remote))) < 0)
-		goto discard_message;
+	/* Checks if the portal already sent an allow and failed after that. */
+	if (active_portals[fd].allowed)
+	{
+		if (active_portals[fd].remote != GET_LADDRESS_FD(virtual_portals[portalid].remote))
+		{
+			/**
+			* TODO: For João Uller: What situation implies in a discard here?
+			* What do we do if this happened? Do we not have a message and cannot
+			* configure another read? This is possible?
+			*/
+			ret = (-EINVAL);
 
+			goto discard_message;
+		}
+	}
+	else
+	{
+		/* Allows async write from remote. */
+		if ((ret = portal_allow(active_portals[fd].hwfd, GET_LADDRESS_FD(virtual_portals[portalid].remote))) < 0)
+			goto discard_message;
+
+		/* Sinalizes that this active already have an allow configured. */
+		active_portals[fd].allowed = 1;
+		active_portals[fd].remote = GET_LADDRESS_FD(virtual_portals[portalid].remote);
+	}
 
 	t1 = clock_read();
 
@@ -1052,6 +1078,9 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 	t2 = clock_read();
 
 	virtual_portals[portalid].user_buffer = buffer;
+
+	active_portals[fd].allowed = 0;
+	active_portals[fd].remote = -1;
 
 	/* Update performance statistics. */
 	virtual_portals[portalid].latency += (t2 - t1);
