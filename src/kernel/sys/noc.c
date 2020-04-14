@@ -23,6 +23,7 @@
  */
 
 #include <nanvix/hal.h>
+#include <posix/errno.h>
 
 /*============================================================================*
  * kernel_node_get_num()                                                      *
@@ -44,4 +45,26 @@ PUBLIC int kernel_node_get_num(void)
 #else
 	return (0);
 #endif /* PROCESSOR_HAS_NOC */
+}
+
+/*============================================================================*
+ * kernel_cluster_get_num()                                                   *
+ *============================================================================*/
+
+/**
+ * @brief Returns the logical ID of the underlying cluster.
+ *
+ * @return Upon successful completion the logical ID of the underlying
+ * cluster is returned. Upon failure, a negative error code is returned
+ * instead..
+ *
+ * @author Pedro Henrique Penna
+ */
+PUBLIC int kernel_cluster_get_num(void)
+{
+#if (PROCESSOR_IS_MULTICLUSTER)
+    return (cluster_get_num());
+#else
+	return (-ENOSYS);
+#endif /* PROCESSOR_IS_MULTICLUSTER */
 }
