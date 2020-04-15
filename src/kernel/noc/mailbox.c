@@ -240,37 +240,40 @@ PRIVATE const struct resource_pool mbxpool = {
 /**
  * @brief Searches for a free virtual mailbox.
  *
- * @param mbxid Target mailbox ID.
- * @param port  Target port number on @p mbxid.
+ * @param fd    Target mailbox ID.
+ * @param port  Target port number on @p fd.
  *
  * @returns Upon successful completion, the index of the virtual
  * mailbox in virtual_mailboxes tab is returned. Upon failure,
  * a negative number is returned instead.
  */
-PRIVATE int do_vmailbox_alloc(int mbxid, int port)
+PRIVATE int do_vmailbox_alloc(int fd, int port)
 {
-	int vmbxid; /* Virtual mailbox ID. */
+	int ret;   /* Return value.       */
+	int mbxid; /* Virtual mailbox ID. */
 
-	vmbxid = DO_LADDRESS_COMPOSE(mbxid, port);
+	mbxid = DO_LADDRESS_COMPOSE(fd, port);
 
 	spinlock_lock(&virtual_mailboxes[mbxid].lock);
 
 		/* Is it already used? */
-		if (VMAILBOX_IS_USED(vmbxid))
-			vmbxid = (-EINVAL);
+		if (VMAILBOX_IS_USED(mbxid))
+			ret = (-EINVAL);
 
 		/* Sets resource used. */
 		else
 		{
 			/* Initialize the vmailbox. */
-			virtual_mailboxes[vmbxid].status |= VMAILBOX_STATUS_USED;
-			virtual_mailboxes[vmbxid].volume  = 0ULL;
-			virtual_mailboxes[vmbxid].latency = 0ULL;
+			virtual_mailboxes[mbxid].status |= VMAILBOX_STATUS_USED;
+			virtual_mailboxes[mbxid].volume  = 0ULL;
+			virtual_mailboxes[mbxid].latency = 0ULL;
+
+			ret = mbxid;
 		}
 
 	spinlock_unlock(&virtual_mailboxes[mbxid].lock);
 
-	return (vmbxid);
+	return (ret);
 }
 
 /*============================================================================*
