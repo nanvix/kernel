@@ -257,37 +257,40 @@ PRIVATE const struct resource_pool portalpool = {
 /**
  * @brief Searches for a free virtual portal.
  *
- * @param portalid ID of the target HW portal.
- * @param port     Port number in the specified portalid.
+ * @param fd   ID of the target HW portal.
+ * @param port Port number in the specified fd.
  *
  * @returns Upon successful completion, the index of the virtual
  * portal in virtual_portals tab is returned. Upon failure, a
  * negative number is returned instead.
  */
-PRIVATE int do_vportal_alloc(int portalid, int port)
+PRIVATE int do_vportal_alloc(int fd, int port)
 {
-	int vportalid; /* Virtual mailbox ID. */
+	int ret;      /* Return value.       */
+	int portalid; /* Virtual mailbox ID. */
 	
-	vportalid = DO_LADDRESS_COMPOSE(portalid, port);
+	portalid = DO_LADDRESS_COMPOSE(fd, port);
 
 	spinlock_lock(&virtual_portals[portalid].lock);
 
 		/* Is it already used? */
-		if (VPORTAL_IS_USED(vportalid))
-			vportalid = (-EINVAL);
+		if (VPORTAL_IS_USED(portalid))
+			ret = (-EINVAL);
 
 		/* Sets used. */
 		else
 		{
 			/* Initialize the virtual portal. */
-			virtual_portals[vportalid].status |= VPORTAL_STATUS_USED;
-			virtual_portals[vportalid].volume  = 0ULL;
-			virtual_portals[vportalid].latency = 0ULL;
+			virtual_portals[portalid].status |= VPORTAL_STATUS_USED;
+			virtual_portals[portalid].volume  = 0ULL;
+			virtual_portals[portalid].latency = 0ULL;
+
+			ret = portalid;
 		}
 
 	spinlock_unlock(&virtual_portals[portalid].lock);
 
-	return (vportalid);
+	return (ret);
 }
 
 /*============================================================================*
