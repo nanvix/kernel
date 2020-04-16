@@ -240,37 +240,40 @@ PRIVATE const struct resource_pool mbxpool = {
 /**
  * @brief Searches for a free virtual mailbox.
  *
- * @param mbxid Target mailbox ID.
- * @param port  Target port number on @p mbxid.
+ * @param fd    Target mailbox ID.
+ * @param port  Target port number on @p fd.
  *
  * @returns Upon successful completion, the index of the virtual
  * mailbox in virtual_mailboxes tab is returned. Upon failure,
  * a negative number is returned instead.
  */
-PRIVATE int do_vmailbox_alloc(int mbxid, int port)
+PRIVATE int do_vmailbox_alloc(int fd, int port)
 {
-	int vmbxid; /* Virtual mailbox ID. */
+	int ret;   /* Return value.       */
+	int mbxid; /* Virtual mailbox ID. */
 
-	vmbxid = DO_LADDRESS_COMPOSE(mbxid, port);
+	mbxid = DO_LADDRESS_COMPOSE(fd, port);
 
 	spinlock_lock(&virtual_mailboxes[mbxid].lock);
 
 		/* Is it already used? */
-		if (VMAILBOX_IS_USED(vmbxid))
-			vmbxid = (-EINVAL);
+		if (VMAILBOX_IS_USED(mbxid))
+			ret = (-EINVAL);
 
 		/* Sets resource used. */
 		else
 		{
 			/* Initialize the vmailbox. */
-			virtual_mailboxes[vmbxid].status |= VMAILBOX_STATUS_USED;
-			virtual_mailboxes[vmbxid].volume  = 0ULL;
-			virtual_mailboxes[vmbxid].latency = 0ULL;
+			virtual_mailboxes[mbxid].status |= VMAILBOX_STATUS_USED;
+			virtual_mailboxes[mbxid].volume  = 0ULL;
+			virtual_mailboxes[mbxid].latency = 0ULL;
+
+			ret = mbxid;
 		}
 
 	spinlock_unlock(&virtual_mailboxes[mbxid].lock);
 
-	return (vmbxid);
+	return (ret);
 }
 
 /*============================================================================*
@@ -278,23 +281,23 @@ PRIVATE int do_vmailbox_alloc(int mbxid, int port)
  *============================================================================*/
 
 /**
- * @brief Searches for a free port on @p mbxid.
+ * @brief Searches for a free port on @p fd.
  *
- * @param mbxid ID of the target HW mailbox.
+ * @param fd ID of the target HW mailbox.
  *
  * @returns Upon successful completion, the index of the available port is
  * returned. A negative number is returned instead.
  */
-PRIVATE int do_port_alloc(int mbxid)
+PRIVATE int do_port_alloc(int fd)
 {
 	/* Checks if can exist an available port. */
-	if (active_mailboxes[mbxid].refcount == MAILBOX_PORT_NR)
+	if (active_mailboxes[fd].refcount == MAILBOX_PORT_NR)
 		goto error;
 
 	/* Searches for a free port on the target mailbox. */
 	for (unsigned int i = 0; i < MAILBOX_PORT_NR; ++i)
 	{
-		if (!PORT_IS_USED(mbxid, i))
+		if (!PORT_IS_USED(fd, i))
 			return (i);
 	}
 
@@ -522,32 +525,32 @@ PRIVATE int do_mailbox_search(int nodenum, enum mailbox_search_type search_type)
  */
 PRIVATE int _do_mailbox_create(int local)
 {
+	int fd;    /* Mailbox ID.      */
 	int hwfd;  /* File descriptor. */
-	int mbxid; /* Mailbox ID.      */
 
 	/* Search target hardware mailbox. */
-	if ((mbxid = do_mailbox_search(local, MAILBOX_SEARCH_INPUT)) >= 0)
+	if ((fd = do_mailbox_search(local, MAILBOX_SEARCH_INPUT)) >= 0)
 		return (-EBUSY);
 
 	/* Allocate resource. */
-	if ((mbxid = resource_alloc(&mbxpool)) < 0)
+	if ((fd = resource_alloc(&mbxpool)) < 0)
 		return (-EAGAIN);
 
 	/* Create underlying input hardware mailbox. */
 	if ((hwfd = mailbox_create(local)) < 0)
 	{
-		resource_free(&mbxpool, mbxid);
+		resource_free(&mbxpool, fd);
 		return (hwfd);
 	}
 
 	/* Initialize hardware mailbox. */
-	active_mailboxes[mbxid].hwfd     = hwfd;
-	active_mailboxes[mbxid].refcount = 0;
-	active_mailboxes[mbxid].nodenum  = local;
-	resource_set_rdonly(&active_mailboxes[mbxid].resource);
-	resource_set_notbusy(&active_mailboxes[mbxid].resource);
+	active_mailboxes[fd].hwfd     = hwfd;
+	active_mailboxes[fd].refcount = 0;
+	active_mailboxes[fd].nodenum  = local;
+	resource_set_rdonly(&active_mailboxes[fd].resource);
+	resource_set_notbusy(&active_mailboxes[fd].resource);
 
-	return (mbxid);
+	return (fd);
 }
 
 /**
@@ -562,27 +565,27 @@ PRIVATE int _do_mailbox_create(int local)
  */
 PUBLIC int do_vmailbox_create(int local, int port)
 {
-	int mbxid;  /* Hardware mailbox ID. */
-	int vmbxid; /* Virtual mailbox ID.  */
+	int fd;    /* Hardware mailbox ID. */
+	int mbxid; /* Virtual mailbox ID.  */
 
 	/* Checks if the input mailbox is local. */
 	if (!node_is_local(local))
 		return (-EINVAL);
 
 	/* Search target hardware mailbox. */
-	if ((mbxid = do_mailbox_search(local, MAILBOX_SEARCH_INPUT)) < 0)
+	if ((fd = do_mailbox_search(local, MAILBOX_SEARCH_INPUT)) < 0)
 		return (-EAGAIN);
 
 	/* Allocate a virtual mailbox. */
-	if ((vmbxid = do_vmailbox_alloc(mbxid, port)) < 0)
+	if ((mbxid = do_vmailbox_alloc(fd, port)) < 0)
 		return (-EBUSY);
 
 	/* Initialize virtual mailbox. */
-	active_mailboxes[mbxid].ports[port].status |= PORT_STATUS_USED;
-	active_mailboxes[mbxid].refcount++;
+	active_mailboxes[fd].ports[port].status |= PORT_STATUS_USED;
+	active_mailboxes[fd].refcount++;
 
 	dcache_invalidate();
-	return (vmbxid);
+	return (mbxid);
 }
 
 /*============================================================================*
@@ -600,15 +603,15 @@ PUBLIC int do_vmailbox_create(int local, int port)
  */
 PRIVATE int _do_mailbox_open(int remote)
 {
-	int hwfd;  /* File descriptor. */
-	int mbxid; /* Mailbox ID.      */
+	int fd;   /* Mailbox ID.      */
+	int hwfd; /* File descriptor. */
 
 	/* Search target hardware mailbox. */
-	if ((mbxid = do_mailbox_search(remote, MAILBOX_SEARCH_OUTPUT)) >= 0)
-		return (mbxid);
+	if ((fd = do_mailbox_search(remote, MAILBOX_SEARCH_OUTPUT)) >= 0)
+		return (fd);
 
 	/* Allocate resource. */
-	if ((mbxid = resource_alloc(&mbxpool)) < 0)
+	if ((fd = resource_alloc(&mbxpool)) < 0)
 		return (-EAGAIN);
 
 	hwfd = -1;
@@ -618,19 +621,19 @@ PRIVATE int _do_mailbox_open(int remote)
 		/* Open underlying output hardware mailbox. */
 		if ((hwfd = mailbox_open(remote)) < 0)
 		{
-			resource_free(&mbxpool, mbxid);
+			resource_free(&mbxpool, fd);
 			return (hwfd);
 		}
 	}
 
 	/* Initialize hardware mailbox. */
-	active_mailboxes[mbxid].hwfd     = hwfd;
-	active_mailboxes[mbxid].refcount = 0;
-	active_mailboxes[mbxid].nodenum  = remote;
-	resource_set_wronly(&active_mailboxes[mbxid].resource);
-	resource_set_notbusy(&active_mailboxes[mbxid].resource);
+	active_mailboxes[fd].hwfd     = hwfd;
+	active_mailboxes[fd].refcount = 0;
+	active_mailboxes[fd].nodenum  = remote;
+	resource_set_wronly(&active_mailboxes[fd].resource);
+	resource_set_notbusy(&active_mailboxes[fd].resource);
 
-	return (mbxid);
+	return (fd);
 }
 
 /**
@@ -645,29 +648,29 @@ PRIVATE int _do_mailbox_open(int remote)
  */
 PUBLIC int do_vmailbox_open(int remote, int remote_port)
 {
-	int mbxid;  /* Hardware mailbox ID.          */
-	int vmbxid; /* Virtual mailbox ID.           */
+	int fd;     /* Hardware mailbox ID.          */
+	int mbxid;  /* Virtual mailbox ID.           */
 	int port;   /* Port allocated in local node. */
 
 	/* Search target hardware mailbox. */
-	if ((mbxid = do_mailbox_search(remote, MAILBOX_SEARCH_OUTPUT)) < 0)
+	if ((fd = do_mailbox_search(remote, MAILBOX_SEARCH_OUTPUT)) < 0)
 		return (-EAGAIN);
 
 	/* Allocates a free port in the HW mailbox. */
-	if ((port = do_port_alloc(mbxid)) < 0)
+	if ((port = do_port_alloc(fd)) < 0)
 		return (-EAGAIN);
 
 	/* Allocate a virtual mailbox. */
-	if ((vmbxid = do_vmailbox_alloc(mbxid, port)) < 0)
+	if ((mbxid = do_vmailbox_alloc(fd, port)) < 0)
 		return (-EBUSY);
 
 	/* Initialize virtual mailbox. */
-	virtual_mailboxes[vmbxid].remote = DO_LADDRESS_COMPOSE(remote, remote_port);
-	active_mailboxes[mbxid].ports[port].status |= PORT_STATUS_USED;
-	active_mailboxes[mbxid].refcount++;
+	virtual_mailboxes[mbxid].remote = DO_LADDRESS_COMPOSE(remote, remote_port);
+	active_mailboxes[fd].ports[port].status |= PORT_STATUS_USED;
+	active_mailboxes[fd].refcount++;
 
 	dcache_invalidate();
-	return (vmbxid);
+	return (mbxid);
 }
 
 /*============================================================================*
