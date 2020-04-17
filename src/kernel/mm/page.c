@@ -225,12 +225,12 @@ PUBLIC int upage_inval(vaddr_t vaddr)
 		return (-EINVAL);
 
 #if (!CORE_HAS_TLB_HW)
-	tlb_inval(TLB_INSTRUCTION, vaddr);
-	tlb_inval(TLB_DATA, vaddr);
+	KASSERT(tlb_inval(TLB_INSTRUCTION, vaddr) == 0);
+	KASSERT(tlb_inval(TLB_DATA, vaddr) == 0);
 #endif
 
 #if (CLUSTER_HAS_TLB_SHOOTDOWN)
-	tlb_shootdown(vaddr);
+	KASSERT(tlb_shootdown(vaddr) == 0);
 #elif !defined(__unix64__)
 	kprintf("[kernel][mm] cannot shootdown %x", vaddr);
 #endif
