@@ -88,6 +88,7 @@ PUBLIC void kmain(int argc, const char *argv[])
 #endif
 	mm_init();
 	noc_init();
+	syscall_init();
 
 	kprintf("[kernel][dev] enabling hardware interrupts");
 	interrupts_enable();

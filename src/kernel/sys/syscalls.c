@@ -491,7 +491,6 @@ PUBLIC int do_kcall(
 			sysboard[coreid].arg4 = arg4;
 			sysboard[coreid].syscall_nr = syscall_nr;
 			sysboard[coreid].pending = 1;
-			semaphore_init(&sysboard[coreid].syssem, 0);
 
 			semaphore_up(&syssem);
 			semaphore_down(&sysboard[coreid].syssem);
@@ -514,4 +513,17 @@ PUBLIC int do_kcall(
 	}
 
 	return (ret);
+}
+
+/**
+ * @brief Initializes the Syscall system.
+ */
+PUBLIC void syscall_init(void)
+{
+	for (unsigned coreid = 0; coreid < CORES_NUM; ++coreid)
+	{
+		sysboard[coreid].syscall_nr = -1;
+		sysboard[coreid].pending    =  0;
+		semaphore_init(&sysboard[coreid].syssem, 0);
+	}
 }
