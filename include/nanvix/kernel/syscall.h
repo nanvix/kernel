@@ -385,7 +385,20 @@
 	 */
 	EXTERN int kernel_excp_resume(void);
 
-#endif
+#endif /* (THREAD_MAX > 1) */
+
+#endif /* __NANVIX_MICROKERNEL */
+
+/*============================================================================*
+ * Initialization Calls                                                       *
+ *============================================================================*/
+
+#ifdef __NANVIX_MICROKERNEL
+
+	/**
+	 * @brief Initializes the Syscall system.
+	 */
+	EXTERN void syscall_init(void);
 
 #endif /* __NANVIX_MICROKERNEL */
 
