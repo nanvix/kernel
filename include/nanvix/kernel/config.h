@@ -29,8 +29,8 @@
  * @brief Kernel Configuration
  */
 
-#ifndef NANVIX_CONFIG_H_
-#define NANVIX_CONFIG_H_
+#ifndef NANVIX_KERNEL_CONFIG_H_
+#define NANVIX_KERNEL_CONFIG_H_
 
 	/**
 	 * @name Synchronization Primitives
@@ -56,4 +56,4 @@
 
 /**@}*/
 
-#endif /* NANVIX_CONFIG_H_ */
+#endif /* NANVIX_KERNEL_CONFIG_H_ */
