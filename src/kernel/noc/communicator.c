@@ -74,7 +74,7 @@ PUBLIC int communicator_alloc(
 		spinlock_unlock(&comm->lock);
 	}
 
-	return (-EINVAL);
+	return (-EAGAIN);
 }
 
 /*============================================================================*
@@ -166,6 +166,11 @@ PUBLIC ssize_t communicator_operate(
 		{
 			if (!resource_is_readable(&comm->resource))
 				goto error;
+
+			ret = (-EACCES);
+
+			if (!communicator_is_allowed(comm))
+				goto error;
 		}
 
 		/* Bad communicator (COMM_TYPE_OUTPUT). */
@@ -184,11 +189,14 @@ PUBLIC ssize_t communicator_operate(
 			&comm->stats
 		);
 
-		/* Successfully complete communication? */
-		if (ret >= 0)
-		{
-			if (ret == COMM_STATUS_RECEIVED)
+        /* Successfully complete communication? */
+        if (ret >= 0)
+        {
+            if (ret == COMM_STATUS_RECEIVED)
+            {
 				communicator_set_finished(comm);
+				communicator_set_notallowed(comm);
+            }
 
 			ret = comm->config.size;
 
@@ -255,6 +263,11 @@ PUBLIC int communicator_wait(
 	);
 
 	spinlock_lock(&comm->lock);
+
+		/* Revoke communicator allow. */
+		if (ret == COMM_STATUS_SUCCESS)
+			communicator_set_notallowed(comm);
+
 release:
 		comm->config.buffer = NULL;
         comm->config.size   = 0ULL;
