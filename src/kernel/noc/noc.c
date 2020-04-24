@@ -23,9 +23,6 @@
  */
 
 #include <nanvix/kernel/noc.h>
-#include <nanvix/kernel/portal.h>
-#include <nanvix/kernel/mailbox.h>
-#include <nanvix/kernel/sync.h>
 #include <nanvix/hlib.h>
 
 /**

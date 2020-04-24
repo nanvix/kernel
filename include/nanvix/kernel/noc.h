@@ -26,6 +26,9 @@
 #define NANVIX_NOC_H_
 
 	#include <nanvix/hal.h>
+	#include <nanvix/kernel/portal.h>
+	#include <nanvix/kernel/sync.h>
+	#include <nanvix/kernel/mailbox.h>
 
 #ifdef __NANVIX_MICROKERNEL
 
