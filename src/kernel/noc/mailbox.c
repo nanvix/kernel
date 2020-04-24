@@ -26,125 +26,51 @@
 #define __NEED_RESOURCE
 
 #include <nanvix/hal.h>
-#include <nanvix/kernel/mailbox.h>
 #include <nanvix/hlib.h>
+#include <nanvix/kernel/mailbox.h>
 #include <posix/errno.h>
 #include <posix/stdarg.h>
+
+#include "communicator.h"
+#include "mbuffer.h"
+#include "active.h"
+#include "mailbox.h"
 
 #if __TARGET_HAS_MAILBOX
 
 /**
- * @brief Search types for do_mailbox_search().
- */
-enum mailbox_search_type {
-	MAILBOX_SEARCH_INPUT = 0,
-	MAILBOX_SEARCH_OUTPUT = 1
-} resource_type_enum_t;
-
-/**
- * @name Helper Macros for virtual mailboxes flags manipulation.
+ * @brief Extracts fd and port from mbxid.
  */
 /**@{*/
-
-/**
- * @brief Virtual mailboxes flags.
- */
-#define VMAILBOX_STATUS_USED     (1 << 0) /**< Used vmailbox?      */
-#define VMAILBOX_STATUS_BUSY     (1 << 1) /**< Busy vmailbox?      */
-#define VMAILBOX_STATUS_FINISHED (1 << 2) /**< Finished operation? */
-
-/**
- * @brief Asserts if the virtual mailbox is used.
- */
-#define VMAILBOX_IS_USED(vmbxid) \
-	(virtual_mailboxes[vmbxid].status & VMAILBOX_STATUS_USED)
-
-/**
- * @brief Asserts if the virtual mailbox is busy.
- */
-#define VMAILBOX_IS_BUSY(vmbxid) \
-	(virtual_mailboxes[vmbxid].status & VMAILBOX_STATUS_BUSY)
-
-/**
- * @brief Asserts if the virtual mailbox already finished last operation.
- */
-#define VMAILBOX_IS_FINISHED(vmbxid) \
-	(virtual_mailboxes[vmbxid].status & VMAILBOX_STATUS_FINISHED)
-
-/**
- * @brief VMailbox Busy status operation macros.
- */
-#define VMAILBOX_SET_BUSY(vmbxid) \
-	(virtual_mailboxes[vmbxid].status |= VMAILBOX_STATUS_BUSY)
-
-#define VMAILBOX_SET_NOTBUSY(vmbxid) \
-	(virtual_mailboxes[vmbxid].status &= ~VMAILBOX_STATUS_BUSY)
+#define GET_LADDRESS_FD(mbxid)   (mbxid / MAILBOX_PORT_NR)
+#define GET_LADDRESS_PORT(mbxid) (mbxid % MAILBOX_PORT_NR)
 /**@}*/
 
-/**
- * @name Helper Macros for logic addresses operations.
- */
-/**@{*/
-
-/**
- * @brief Composes the logic address based on @p mbxid @p port.
- */
-#define DO_LADDRESS_COMPOSE(mbxid, port) \
-	(mbxid * MAILBOX_PORT_NR + port)
-
-/**
- * @brief Extracts mbxid and port from vmbxid.
- */
-#define GET_LADDRESS_FD(vmbxid) \
-	(vmbxid / MAILBOX_PORT_NR)
-
-#define GET_LADDRESS_PORT(vmbxid) \
-	 (vmbxid % MAILBOX_PORT_NR)
-/**@}*/
-
-/**
- * @name Helper Macros for ports status manipulation.
- */
-/**@{*/
-
-/**
- * @brief Mailbox ports flags.
- */
-#define PORT_STATUS_USED (1 << 0) /**< Used port? */
-
-/**
- * @brief Asserts if the port of mbxid is used.
- */
-#define PORT_IS_USED(mbxid,port) \
-	(active_mailboxes[mbxid].ports[port].status & PORT_STATUS_USED)
-/**@}*/
+#define MAILBOX_MBUFFER_SRC (-1)
 
 /*============================================================================*
  * Control Structures.                                                        *
  *============================================================================*/
 
+/*----------------------------------------------------------------------------*
+ * Mailbox Message Buffer.                                                    *
+ *----------------------------------------------------------------------------*/
+
 /**
  * @brief Mailbox message buffer.
  */
-PRIVATE struct mbuffer
+PRIVATE union ubuffer
 {
-	/*
-	 * XXX: Don't Touch! This Must Come First!
-	 */
-	struct resource resource; /**< Generic resource information. */
-
-	/**
-	 * @brief Structure that holds a message.
-	 *
-	 * @note Parameters aside the data buffer must be included in header size
-	 * on include/nanvix/kernel/mailbox.h -> KMAILBOX_MESSAGE_HEADER_SIZE.
-	 */
-	struct mailbox_message
+	struct mbuffer abstract;
+	struct
 	{
-		int dest; /* Data destination. */
-		char data[KMAILBOX_MESSAGE_SIZE];
-	} message;
-} mbuffers[KMAILBOX_MESSAGE_BUFFERS_MAX] = {
+		/*
+		* XXX: Don't Touch! This Must Come First!
+		*/
+		struct resource resource;
+		struct mailbox_message message;
+	};
+} ubuffers[KMAILBOX_MESSAGE_BUFFERS_MAX] = {
 	[0 ... (KMAILBOX_MESSAGE_BUFFERS_MAX - 1)] = {
 		.message = {
 			.dest = -1,
@@ -153,1252 +79,211 @@ PRIVATE struct mbuffer
 	},
 };
 
-PRIVATE spinlock_t mbuffers_lock;
-
 /**
  * @brief Mbuffer resource pool.
  */
-PRIVATE const struct resource_pool mbufferpool = {
-	mbuffers, KMAILBOX_MESSAGE_BUFFERS_MAX, sizeof(struct mbuffer)
+PRIVATE struct mbuffer_pool ubufferpool = {
+	ubuffers,
+	KMAILBOX_MESSAGE_BUFFERS_MAX,
+	sizeof(union ubuffer),
+	SPINLOCK_UNLOCKED
 };
 
-/**
- * @brief Struct that represents a port abstraction.
- */
-struct port
-{
-	unsigned short status; /* Port status.      */
-	short mbufferid;       /* Kernel mbufferid. */
-};
+/*----------------------------------------------------------------------------*
+ * Physical Mailboxes.                                                        *
+ *----------------------------------------------------------------------------*/
 
-/**
- * @brief Table of virtual mailboxes.
- */
-PRIVATE struct
-{
-	/**
-	 * @name Control Variables
-	 */
-	/**@{*/
-	unsigned short status; /**< Status.            */
-	int remote;            /**< Remote address.    */
-	void *user_buffer;     /**< User level buffer. */
-	spinlock_t lock;       /**< Protection.        */
-	/**@}*/
+int wrapper_mailbox_open(int, int);
+int wrapper_mailbox_allow(struct active *, int);
+int wrapper_mailbox_copy(struct mbuffer *, const struct comm_config *, int);
 
-	/**
-	 * @name Performance Statistics
-	 */
-	/**@{*/
-	size_t volume;    /**< Amount of data transferred. */
-	uint64_t latency; /**< Transfer latency.           */
-	/**@}*/
-} ALIGN(sizeof(dword_t)) virtual_mailboxes[KMAILBOX_MAX] = {
-	[0 ... (KMAILBOX_MAX - 1)] = {
-		.status =  0,
-		.remote = -1,
-		.user_buffer = NULL
-	},
-};
-
-/**
- * @brief Table of active mailboxes.
- */
-PRIVATE struct mailbox
-{
-	/*
-	 * XXX: Don't Touch! This Must Come First!
-	 */
-	struct resource resource;           /**< Generic resource information. */
-
-	int refcount;                       /**< References count.             */
-	int hwfd;                           /**< Underlying file descriptor.   */
-	int nodenum;                        /**< Target node number.           */
-	spinlock_t lock;                    /**< Protection.                   */
-	struct port ports[MAILBOX_PORT_NR]; /**< Logic ports.                  */
-} active_mailboxes[HW_MAILBOX_MAX] = {
-	[0 ... (HW_MAILBOX_MAX - 1)] {
-		.ports[0 ... (MAILBOX_PORT_NR - 1)] = {
-			.status    =  0,
+struct port ports[HW_MAILBOX_MAX][MAILBOX_PORT_NR] = {
+	[0 ... (HW_MAILBOX_MAX - 1)] = {
+		[0 ... (MAILBOX_PORT_NR - 1)] = {
+			.resource  = {0, },
 			.mbufferid = -1,
+		}
+	}
+};
+
+struct active mailboxes[HW_MAILBOX_MAX] = {
+	[0 ... (HW_MAILBOX_MAX - 1)] {
+		.resource   = {0, },
+		.hwfd       = -1,
+		.local      = -1,
+		.remote     = -1,
+		.refcount   =  0,
+		.size       = HAL_MAILBOX_MSG_SIZE,
+		.portpool   = {
+			.ports  = NULL,
+			.nports = MAILBOX_PORT_NR,
 		},
-		.nodenum = -1,
+		.mbufferpool = &ubufferpool,
+		.do_create   = mailbox_create,
+		.do_open     = wrapper_mailbox_open,
+		.do_allow    = wrapper_mailbox_allow,
+		.do_aread    = mailbox_aread,
+		.do_awrite   = mailbox_awrite,
+		.do_wait     = mailbox_wait,
+		.do_copy     = wrapper_mailbox_copy,
 	},
 };
 
-/**
- * @brief Resource pool.
- */
-PRIVATE const struct resource_pool mbxpool = {
-	active_mailboxes, HW_MAILBOX_MAX, sizeof(struct mailbox)
+struct active_pool mbxpool = {
+	mailboxes, HW_MAILBOX_MAX
 };
 
 /*============================================================================*
- * do_vmailbox_alloc()                                                        *
+ * do_mailbox_table_init()                                                    *
  *============================================================================*/
 
-/**
- * @brief Searches for a free virtual mailbox.
- *
- * @param fd    Target mailbox ID.
- * @param port  Target port number on @p fd.
- *
- * @returns Upon successful completion, the index of the virtual
- * mailbox in virtual_mailboxes tab is returned. Upon failure,
- * a negative number is returned instead.
- */
-PRIVATE int do_vmailbox_alloc(int fd, int port)
-{
-	int ret;   /* Return value.       */
-	int mbxid; /* Virtual mailbox ID. */
-
-	mbxid = DO_LADDRESS_COMPOSE(fd, port);
-
-	spinlock_lock(&virtual_mailboxes[mbxid].lock);
-
-		/* Is it already used? */
-		if (VMAILBOX_IS_USED(mbxid))
-			ret = (-EINVAL);
-
-		/* Sets resource used. */
-		else
-		{
-			/* Initialize the vmailbox. */
-			virtual_mailboxes[mbxid].status |= VMAILBOX_STATUS_USED;
-			virtual_mailboxes[mbxid].volume  = 0ULL;
-			virtual_mailboxes[mbxid].latency = 0ULL;
-
-			ret = mbxid;
-		}
-
-	spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-
-	return (ret);
-}
-
-/*============================================================================*
- * do_port_alloc()                                                            *
- *============================================================================*/
-
-/**
- * @brief Searches for a free port on @p fd.
- *
- * @param fd ID of the target HW mailbox.
- *
- * @returns Upon successful completion, the index of the available port is
- * returned. A negative number is returned instead.
- */
-PRIVATE int do_port_alloc(int fd)
-{
-	/* Checks if can exist an available port. */
-	if (active_mailboxes[fd].refcount == MAILBOX_PORT_NR)
-		goto error;
-
-	/* Searches for a free port on the target mailbox. */
-	for (unsigned int i = 0; i < MAILBOX_PORT_NR; ++i)
-	{
-		if (!PORT_IS_USED(fd, i))
-			return (i);
-	}
-
-error:
-	return (-1);
-}
-
-/*============================================================================*
- * do_active_mailboxes_locks_init()                                           *
- *============================================================================*/
 
 /**
  * @brief Initializes the mbuffers table lock.
  */
-PRIVATE void do_active_mailboxes_locks_init(void)
+void do_mailbox_table_init(void)
 {
 	for (int i = 0; i < HW_MAILBOX_MAX; ++i)
-		spinlock_init(&active_mailboxes[i].lock);
+	{
+		spinlock_init(&mailboxes[i].lock);
+
+		mailboxes[i].portpool.ports = ports[i];
+	}
 }
 
-/*============================================================================*
- * do_virtual_mailboxes_locks_init()                                          *
- *============================================================================*/
-
-/**
- * @brief Initializes the mbuffers table lock.
- */
-PRIVATE void do_virtual_mailboxes_locks_init(void)
+int wrapper_mailbox_open(int local, int remote)
 {
-	for (int i = 0; i < KMAILBOX_MAX; ++i)
-		spinlock_init(&virtual_mailboxes[i].lock);
+	UNUSED(local);
+
+	return (mailbox_open(remote));
 }
 
-/*============================================================================*
- * do_mbuffers_lock_init()                                                    *
- *============================================================================*/
-
-/**
- * @brief Initializes the mbuffers table lock.
- */
-PRIVATE void do_mbuffers_lock_init(void)
+int wrapper_mailbox_allow(struct active * act, int remote)
 {
-	spinlock_init(&mbuffers_lock);
-}
-
-/*============================================================================*
- * do_vmailbox_release_mbuffer()                                              *
- *============================================================================*/
-
-/**
- * @brief Mbuffer release keep/discard message constants.
- */
-#define DISCARD_MESSAGE 0
-#define KEEP_MESSAGE    1
-
-/**
- * @brief Releases the message buffer allocated to @p mbxid.
- *
- * @param mbufferid mbuffer id to release.
- * @param keep_msg  Keep / Discard the mbuffer message?
- *
- * @return Upon successful completion, zero is returned. Upon failure,
- * a negative number is returned instead.
- */
-PRIVATE int do_vmailbox_release_mbuffer(int mbufferid, int keep_msg)
-{
-	/* Invalid mbufferid. */
-	if (!WITHIN(mbufferid, 0, KMAILBOX_MESSAGE_BUFFERS_MAX))
-		return (-EINVAL);
-
-	/* Locks the mbuffers table. */
-	spinlock_lock(&mbuffers_lock);
-
-		/* Sets the mbuffer as not used keeping its message. */
-		if (keep_msg)
-			resource_set_busy(&mbuffers[mbufferid].resource);
-
-		/* Frees the mbuffer resource. */
-		else
-		{
-			mbuffers[mbufferid].message.dest    = -1;
-			mbuffers[mbufferid].message.data[0] = '\0';
-			resource_free(&mbufferpool, mbufferid);
-		}
-
-	/* Unlocks the mbuffers table. */
-	spinlock_unlock(&mbuffers_lock);
+	UNUSED(act);
+	UNUSED(remote);
 
 	return (0);
 }
 
-/**
- * @brief Allocates a message buffer.
- *
- * @return Upon successful completion, mbufferid returned. Upon failure,
- * a negative number is returned instead.
- */
-PRIVATE int do_vmailbox_alloc_mbuffer(void)
+int wrapper_mailbox_copy(struct mbuffer * buf, const struct comm_config * config, int type)
 {
-	int mbufferid;
+	void * to;
+	void * from;
+	union ubuffer * ubuf;
 
-	spinlock_lock(&mbuffers_lock);
+	ubuf = (union ubuffer *) buf;
 
-		/* Allocates a data buffer to receive data. */
-		mbufferid = resource_alloc(&mbufferpool);
-
-	spinlock_unlock(&mbuffers_lock);
-
-	return (mbufferid);
-}
-
-/*============================================================================*
- * do_message_search()                                                        *
- *============================================================================*/
-
-/**
- * @brief Searches for a stored message destinated to @p local_address.
- *
- * @param local_address Local HW address for which the messages come.
- *
- * @returns Upon successful completion, the mbuffer that contains the first
- * message found is returned. A negative error number is returned instead.
- */
-PRIVATE int do_message_search(int local_address)
-{
-	int ret;
-
-	ret = -1;
-
-	/* Locks the mbuffers table. */
-	spinlock_lock(&mbuffers_lock);
-
-	for (unsigned int i = 0; i < KMAILBOX_MESSAGE_BUFFERS_MAX; ++i)
+	if (type == ACTIVE_COPY_TO_MBUFFER)
 	{
-		/* Is the buffer being used? */
-		if (!resource_is_used(&mbuffers[i].resource))
-			continue;
-
-		/* The buffer contains a stored message? */
-		if (!resource_is_busy(&mbuffers[i].resource))
-			continue;
-
-		/* Is this message addressed to the local_address? */
-		if (mbuffers[i].message.dest != local_address)
-			continue;
-
-		ret = i;
-		break;
+		to   = (void *) ubuf->message.data;
+		from = (void *) config->buffer;
+	}
+	else
+	{
+		to   = (void *) config->buffer;
+		from = (void *) ubuf->message.data;
 	}
 
-	/* Unlocks the mbuffers table. */
-	spinlock_unlock(&mbuffers_lock);
+	kmemcpy(to, from, config->size);
 
-	return (ret);
+	return (0);
 }
 
 /*============================================================================*
- * do_mailbox_search()                                                        *
+ * do_mailbox_alloc()                                                         *
  *============================================================================*/
 
 /**
- * @name Helper Macros for do_mailbox_search()
- */
-/**@{*/
-
-/**
- * @brief Asserts an input mailbox.
- */
-#define MAILBOX_SEARCH_IS_INPUT(mbxid,type) \
-	((type == MAILBOX_SEARCH_INPUT) && !resource_is_readable(&active_mailboxes[mbxid].resource))
-
-/**
- * @brief Asserts an output mailbox.
- */
-#define MAILBOX_SEARCH_IS_OUTPUT(mbxid,type) \
-	 ((type == MAILBOX_SEARCH_OUTPUT) && !resource_is_writable(&active_mailboxes[mbxid].resource))
-/**@}*/
-
-/**
- * @brief Searches for an active HW mailbox.
+ * @brief Creates a physical mailbox.
  *
- * Searches for a mailbox in the table of active mailboxes.
+ * @param nodenum Logic node ID.
+ * @param port  Target port in @p nodenum node.
  *
- * @param nodenum     Logic ID of the requesting node.
- * @param search_type Type of the searched resource.
- *
- * @returns Upon successful completion, the ID of the mailbox found is
+ * @returns Upon successful completion, the ID of the active mailbox is
  * returned. Upon failure, a negative error code is returned instead.
  */
-PRIVATE int do_mailbox_search(int nodenum, enum mailbox_search_type search_type)
+PUBLIC int do_mailbox_alloc(int local, int remote, int port, int type)
 {
-	for (int i = 0; i < HW_MAILBOX_MAX; ++i)
-	{
-		if (!resource_is_used(&active_mailboxes[i].resource))
-			continue;
-
-		if (MAILBOX_SEARCH_IS_INPUT(i, search_type))
-			continue;
-
-		else if (MAILBOX_SEARCH_IS_OUTPUT(i, search_type))
-			continue;
-
-		/* Not the node we are looking for. */
-		if (active_mailboxes[i].nodenum != nodenum)
-			continue;
-
-		return (i);
-	}
-
-	return (-1);
-}
-
-/*============================================================================*
- * do_vmailbox_create()                                                       *
- *============================================================================*/
-
-/**
- * @brief Creates a hardware mailbox.
- *
- * @param local Logic ID of the target local node.
- *
- * @returns Upon successful completion, the ID of the newly created
- * hardware mailbox is returned. Upon failure, a negative error code
- * is returned instead.
- */
-PRIVATE int _do_mailbox_create(int local)
-{
-	int fd;    /* Mailbox ID.      */
-	int hwfd;  /* File descriptor. */
-
-	/* Search target hardware mailbox. */
-	if ((fd = do_mailbox_search(local, MAILBOX_SEARCH_INPUT)) >= 0)
-		return (-EBUSY);
-
-	/* Allocate resource. */
-	if ((fd = resource_alloc(&mbxpool)) < 0)
-		return (-EAGAIN);
-
-	/* Create underlying input hardware mailbox. */
-	if ((hwfd = mailbox_create(local)) < 0)
-	{
-		resource_free(&mbxpool, fd);
-		return (hwfd);
-	}
-
-	/* Initialize hardware mailbox. */
-	active_mailboxes[fd].hwfd     = hwfd;
-	active_mailboxes[fd].refcount = 0;
-	active_mailboxes[fd].nodenum  = local;
-	resource_set_rdonly(&active_mailboxes[fd].resource);
-	resource_set_notbusy(&active_mailboxes[fd].resource);
-
-	return (fd);
+	return (active_alloc(&mbxpool, local, remote, port, type));
 }
 
 /**
- * @brief Creates a virtual mailbox.
+ * @brief Unlink a physical mailbox.
  *
- * @param local Logic ID of the target local node.
- * @param port  Target port in @p local node.
- *
- * @returns Upon successful completion, the ID of the newly created
- * virtual mailbox is returned. Upon failure, a negative error code
- * is returned instead.
- */
-PUBLIC int do_vmailbox_create(int local, int port)
-{
-	int fd;    /* Hardware mailbox ID. */
-	int mbxid; /* Virtual mailbox ID.  */
-
-	/* Checks if the input mailbox is local. */
-	if (!node_is_local(local))
-		return (-EINVAL);
-
-	/* Search target hardware mailbox. */
-	if ((fd = do_mailbox_search(local, MAILBOX_SEARCH_INPUT)) < 0)
-		return (-EAGAIN);
-
-	/* Allocate a virtual mailbox. */
-	if ((mbxid = do_vmailbox_alloc(fd, port)) < 0)
-		return (-EBUSY);
-
-	/* Initialize virtual mailbox. */
-	active_mailboxes[fd].ports[port].status |= PORT_STATUS_USED;
-	active_mailboxes[fd].refcount++;
-
-	dcache_invalidate();
-	return (mbxid);
-}
-
-/*============================================================================*
- * do_vmailbox_open()                                                         *
- *============================================================================*/
-
-/**
- * @brief Opens a hardware mailbox.
- *
- * @param remote Logic ID of the target remote node.
- *
- * @returns Upon successful completion, the ID of the newly opened
- * hardware mailbox is returned. Upon failure, a negative error code
- * is returned instead.
- */
-PRIVATE int _do_mailbox_open(int remote)
-{
-	int fd;   /* Mailbox ID.      */
-	int hwfd; /* File descriptor. */
-
-	/* Search target hardware mailbox. */
-	if ((fd = do_mailbox_search(remote, MAILBOX_SEARCH_OUTPUT)) >= 0)
-		return (fd);
-
-	/* Allocate resource. */
-	if ((fd = resource_alloc(&mbxpool)) < 0)
-		return (-EAGAIN);
-
-	hwfd = -1;
-
-	if (!node_is_local(remote))
-	{
-		/* Open underlying output hardware mailbox. */
-		if ((hwfd = mailbox_open(remote)) < 0)
-		{
-			resource_free(&mbxpool, fd);
-			return (hwfd);
-		}
-	}
-
-	/* Initialize hardware mailbox. */
-	active_mailboxes[fd].hwfd     = hwfd;
-	active_mailboxes[fd].refcount = 0;
-	active_mailboxes[fd].nodenum  = remote;
-	resource_set_wronly(&active_mailboxes[fd].resource);
-	resource_set_notbusy(&active_mailboxes[fd].resource);
-
-	return (fd);
-}
-
-/**
- * @brief Opens a virtual mailbox.
- *
- * @param remote      Logic ID of the target remote node.
- * @param remote_port Target port in @p remote node.
- *
- * @returns Upon successful completion, the ID of the newly opened
- * virtual mailbox is returned. Upon failure, a negative error code
- * is returned instead.
- */
-PUBLIC int do_vmailbox_open(int remote, int remote_port)
-{
-	int fd;     /* Hardware mailbox ID.          */
-	int mbxid;  /* Virtual mailbox ID.           */
-	int port;   /* Port allocated in local node. */
-
-	/* Search target hardware mailbox. */
-	if ((fd = do_mailbox_search(remote, MAILBOX_SEARCH_OUTPUT)) < 0)
-		return (-EAGAIN);
-
-	/* Allocates a free port in the HW mailbox. */
-	if ((port = do_port_alloc(fd)) < 0)
-		return (-EAGAIN);
-
-	/* Allocate a virtual mailbox. */
-	if ((mbxid = do_vmailbox_alloc(fd, port)) < 0)
-		return (-EBUSY);
-
-	/* Initialize virtual mailbox. */
-	virtual_mailboxes[mbxid].remote = DO_LADDRESS_COMPOSE(remote, remote_port);
-	active_mailboxes[fd].ports[port].status |= PORT_STATUS_USED;
-	active_mailboxes[fd].refcount++;
-
-	dcache_invalidate();
-	return (mbxid);
-}
-
-/*============================================================================*
- * _do_mailbox_release()                                                      *
- *============================================================================*/
-
-/**
- * @brief Releases a hardware mailbox.
- *
- * @param mbxid      ID of the target hardware mailbox.
- * @param release_fn Release function.
+ * @param fd Physical mailbox ID.
  *
  * @returns Upon successful completion, zero is returned. Upon
  * failure, a negative error code is returned instead.
  */
-PRIVATE int _do_mailbox_release(int mbxid, int (*release_fn)(int))
+PUBLIC int do_mailbox_release(int mbxid)
 {
-	int ret;  /* HAL function return.   */
-	int hwfd; /* HWFD allocated on HAL. */
-
-	/* Checks if there is a hwfd allocated to this mailbox. */
-	if ((hwfd = active_mailboxes[mbxid].hwfd) >= 0)
-	{
-		if ((ret = release_fn(hwfd)) < 0)
-			return (ret);
-	}
-
-	active_mailboxes[mbxid].hwfd    = -1;
-	active_mailboxes[mbxid].nodenum = -1;
-	resource_free(&mbxpool, mbxid);
-
-	dcache_invalidate();
-	return (0);
+	return (active_release(&mbxpool, mbxid));
 }
 
 /*============================================================================*
- * do_vmailbox_unlink()                                                       *
- *============================================================================*/
-
-/**
- * @brief Unlinks a created virtual mailbox.
- *
- * @param mbxid Logic ID of the target virtual mailbox.
- *
- * @returns Upon successful completion, zero is returned. Upon
- * failure, a negative error code is returned instead.
- */
-PUBLIC int do_vmailbox_unlink(int mbxid)
-{
-	int ret;             /* Function return.         */
-	int fd;              /* Active mailbox logic ID. */
-	int port;            /* Vmbx logic port ID.      */
-	int local_hwaddress; /* Local HW address.        */
-
-	spinlock_lock(&virtual_mailboxes[mbxid].lock);
-
-		/* Bad virtual mailbox. */
-		if (!VMAILBOX_IS_USED(mbxid))
-		{
-			spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-			return (-EBADF);
-		}
-
-		/* Busy virtual mailbox. */
-		if (VMAILBOX_IS_BUSY(mbxid))
-		{
-			spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-			return (-EBUSY);
-		}
-
-		VMAILBOX_SET_BUSY(mbxid);
-
-	spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-
-	fd = GET_LADDRESS_FD(mbxid);
-
-	ret = (-EBADF);
-
-	/* Bad mailbox. */
-	if (!resource_is_used(&active_mailboxes[fd].resource))
-		goto release_virtual;
-
-	/* Bad mailbox. */
-	if (!resource_is_readable(&active_mailboxes[fd].resource))
-		goto release_virtual;
-
-	port = GET_LADDRESS_PORT(mbxid);
-	local_hwaddress = DO_LADDRESS_COMPOSE(active_mailboxes[fd].nodenum, port);
-
-	ret = (-EBUSY);
-
-	/* Check if exist pending messages for this port. */
-	if (do_message_search(local_hwaddress) >= 0)
-		goto release_virtual;
-
-	/* Unlink virtual mailbox. */
-	virtual_mailboxes[mbxid].status = 0;
-	active_mailboxes[fd].ports[port].status &= ~PORT_STATUS_USED;
-	active_mailboxes[fd].refcount--;
-
-	ret = 0;
-
-release_virtual:
-	spinlock_lock(&virtual_mailboxes[mbxid].lock);
-		VMAILBOX_SET_NOTBUSY(mbxid);
-	spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-
-	return (ret);
-}
-
-/*============================================================================*
- * do_vmailbox_close()                                                        *
- *============================================================================*/
-
-/**
- * @brief Closes an opened virtual mailbox.
- *
- * @param mbxid Logic ID of the target virtual mailbox.
- *
- * @returns Upon successful completion, zero is returned. Upon
- * failure, a negative error code is returned instead.
- */
-PUBLIC int do_vmailbox_close(int mbxid)
-{
-	int ret;  /* Function return.               */
-	int fd;   /* Active mailbox logic ID.       */
-	int port; /* Virtual mailbox logic port ID. */
-
-	spinlock_lock(&virtual_mailboxes[mbxid].lock);
-
-		/* Bad virtual mailbox. */
-		if (!VMAILBOX_IS_USED(mbxid))
-		{
-			spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-			return (-EBADF);
-		}
-
-		/* Busy virtual mailbox. */
-		if (VMAILBOX_IS_BUSY(mbxid))
-		{
-			spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-			return (-EBADF);
-		}
-
-		VMAILBOX_SET_BUSY(mbxid);
-
-	spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-
-	fd = GET_LADDRESS_FD(mbxid);
-
-	ret = (-EBADF);
-
-	/* Bad mailbox. */
-	if (!resource_is_used(&active_mailboxes[fd].resource))
-		goto release_virtual;
-
-	/* Bad mailbox. */
-	if (!resource_is_writable(&active_mailboxes[fd].resource))
-		goto release_virtual;
-
-	port = GET_LADDRESS_PORT(mbxid);
-
-	/* Unlink virtual mailbox. */
-	virtual_mailboxes[mbxid].remote = -1;
-	virtual_mailboxes[mbxid].status =  0;
-	active_mailboxes[fd].ports[port].status &= ~PORT_STATUS_USED;
-	active_mailboxes[fd].refcount--;
-
-	ret = 0;
-
-release_virtual:
-	spinlock_lock(&virtual_mailboxes[mbxid].lock);
-		VMAILBOX_SET_NOTBUSY(mbxid);
-	spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-
-	return (ret);
-}
-
-/*============================================================================*
- * do_vmailbox_aread()                                                        *
+ * do_mailbox_aread()                                                         *
  *============================================================================*/
 
 /**
  * @todo TODO: Provide a detailed description for this function.
  */
-PUBLIC int do_vmailbox_aread(int mbxid, void *buffer, size_t size)
+PUBLIC ssize_t do_mailbox_aread(int mbxid, const struct comm_config * config, struct pstats * stats)
 {
-	int ret;             /* HAL function return.           */
-	int fd;              /* HW mailbox logic index.        */
-	int port;            /* Port used by vmailbox.         */
-	int local_hwaddress; /* Vmailbox hardware address.     */
-	int mbufferid;       /* New alocated buffer.           */
-	uint64_t t1;         /* Clock value before aread call. */
-	uint64_t t2;         /* Clock value after aread call.  */
-
-	spinlock_lock(&virtual_mailboxes[mbxid].lock);
-
-		/* Bad virtual mailbox. */
-		if (!VMAILBOX_IS_USED(mbxid))
-		{
-			spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-			return (-EBADF);
-		}
-
-		/* Busy virtual mailbox. */
-		if (VMAILBOX_IS_BUSY(mbxid))
-		{
-			spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-			return (-EBUSY);
-		}
-
-		/* Sets the virtual mailbox as busy. */
-		VMAILBOX_SET_BUSY(mbxid);
-
-	spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-
-	fd = GET_LADDRESS_FD(mbxid);
-	port = GET_LADDRESS_PORT(mbxid);
-
-	ret = (-EBADF);
-
-	/* Bad mailbox. */
-	if (!resource_is_used(&active_mailboxes[fd].resource))
-		goto release_virtual;
-
-	/* Bad mailbox. */
-	if (!resource_is_readable(&active_mailboxes[fd].resource))
-		goto release_virtual;
-
-	local_hwaddress = DO_LADDRESS_COMPOSE(active_mailboxes[fd].nodenum, port);
-
-	spinlock_lock(&active_mailboxes[fd].lock);
-
-		/* Is there a pending message for this vmailbox? */
-		if ((mbufferid = do_message_search(local_hwaddress)) >= 0)
-		{
-			spinlock_unlock(&active_mailboxes[fd].lock);
-
-			t1 = clock_read();
-				kmemcpy(buffer, (void *) &mbuffers[mbufferid].message.data, ret = size);
-			t2 = clock_read();
-
-			/* Update performance statistics. */
-			virtual_mailboxes[mbxid].latency += (t2 - t1);
-			virtual_mailboxes[mbxid].volume  += ret;
-
-			/* Marks that the virtual mailbox already finished its read. */
-			virtual_mailboxes[mbxid].status |= VMAILBOX_STATUS_FINISHED;
-
-			KASSERT(do_vmailbox_release_mbuffer(mbufferid, DISCARD_MESSAGE) == 0);
-
-			return (ret);
-		}
-
-		ret = (-EBUSY);
-
-		/* Bad mailbox. */
-		if (resource_is_busy(&active_mailboxes[fd].resource))
-		{
-			spinlock_unlock(&active_mailboxes[fd].lock);
-			goto release_virtual;
-		}
-
-		/* Sets the mailbox as busy. */
-		resource_set_busy(&active_mailboxes[fd].resource);
-
-	spinlock_unlock(&active_mailboxes[fd].lock);
-
-	/* Allocates a data buffer to receive data. */
-	if ((mbufferid = do_vmailbox_alloc_mbuffer()) < 0)
-	{
-		ret = mbufferid;
-		goto release_active;
-	}
-
-	active_mailboxes[fd].ports[port].mbufferid = mbufferid;
-
-	t1 = clock_read();
-
-		/* Setup asynchronous read. */
-		if ((ret = mailbox_aread(active_mailboxes[fd].hwfd, (void *) &mbuffers[mbufferid].message, HAL_MAILBOX_MSG_SIZE)) < 0)
-			goto discard_message;
-
-	t2 = clock_read();
-
-	virtual_mailboxes[mbxid].user_buffer = buffer;
-
-	/* Update performance statistics. */
-	virtual_mailboxes[mbxid].latency += (t2 - t1);
-
-	return (size);
-
-discard_message:
-	active_mailboxes[fd].ports[port].mbufferid = -1;
-	KASSERT(do_vmailbox_release_mbuffer(mbufferid, DISCARD_MESSAGE) == 0);
-
-release_active:
-	spinlock_lock(&active_mailboxes[fd].lock);
-		resource_set_notbusy(&active_mailboxes[fd].resource);
-	spinlock_unlock(&active_mailboxes[fd].lock);
-
-release_virtual:
-	spinlock_lock(&virtual_mailboxes[mbxid].lock);
-		VMAILBOX_SET_NOTBUSY(mbxid);
-	spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-
-	return (ret);
+	return (active_aread(&mbxpool, mbxid, config, stats));
 }
 
 /*============================================================================*
- * do_vmailbox_awrite()                                                       *
+ * do_mailbox_awrite()                                                        *
  *============================================================================*/
 
 /**
  * @todo TODO: Provide a detailed description for this function.
  */
-PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
+PUBLIC ssize_t do_mailbox_awrite(int mbxid, const struct comm_config * config, struct pstats * stats)
 {
-	int ret;       /* HAL function return.            */
-	int fd;        /* Hardware mailbox logic index.   */
-	int port;      /* HW port specified to vmailbox.  */
-	int mbufferid; /* Message buffer used to write.   */
-	uint64_t t1;   /* Clock value before awrite call. */
-	uint64_t t2;   /* Clock value after awrite call.  */
-
-	spinlock_lock(&virtual_mailboxes[mbxid].lock);
-
-		/* Bad virtual mailbox. */
-		if (!VMAILBOX_IS_USED(mbxid))
-		{
-			spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-			return (-EBADF);
-		}
-
-		/* Busy virtual mailbox. */
-		if (VMAILBOX_IS_BUSY(mbxid))
-		{
-			spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-			return (-EBUSY);
-		}
-
-		/* Sets the virtual mailbox as busy. */
-		VMAILBOX_SET_BUSY(mbxid);
-
-	spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-
-	fd = GET_LADDRESS_FD(mbxid);
-	port = GET_LADDRESS_PORT(mbxid);
-
-	ret = (-EBADF);
-
-	/* Bad virtual mailbox. */
-	if (!resource_is_used(&active_mailboxes[fd].resource))
-		goto release_virtual;
-
-	/* Bad virtual mailbox. */
-	if (!resource_is_writable(&active_mailboxes[fd].resource))
-		goto release_virtual;
-
-	/* Checks if there is already a mbuffer allocated. */
-	if ((mbufferid = active_mailboxes[fd].ports[port].mbufferid) < 0)
-	{
-		/* Allocates a message buffer to send the message. */
-		if ((mbufferid = do_vmailbox_alloc_mbuffer()) < 0)
-		{
-			ret = mbufferid;
-			goto release_virtual;
-		}
-
-		mbuffers[mbufferid].message.dest = virtual_mailboxes[mbxid].remote;
-
-		t1 = clock_read();
-			kmemcpy((void *) &mbuffers[mbufferid].message.data, buffer, size);
-		t2 = clock_read();
-
-		active_mailboxes[fd].ports[port].mbufferid = mbufferid;
-
-		/* Checks if the destination is the local node. */
-		if (node_is_local(active_mailboxes[fd].nodenum))
-		{
-			/* Forwards the message to the mbuffers table. */
-			active_mailboxes[fd].ports[port].mbufferid = -1;
-			do_vmailbox_release_mbuffer(mbufferid, KEEP_MESSAGE);
-
-			/* Marks that the virtual mailbox already finished its read. */
-			virtual_mailboxes[mbxid].status |= VMAILBOX_STATUS_FINISHED;
-
-			/* Update performance statistics. */
-			virtual_mailboxes[mbxid].latency += (t2 - t1);
-			virtual_mailboxes[mbxid].volume  += size;
-
-			return (size);
-		}
-	}
-
-	spinlock_lock(&active_mailboxes[fd].lock);
-
-		ret = (-EBUSY);
-
-		/* Bad mailbox. */
-		if (resource_is_busy(&active_mailboxes[fd].resource))
-		{
-			spinlock_unlock(&active_mailboxes[fd].lock);
-			goto release_virtual;
-		}
-
-		/* Sets the mailbox as busy. */
-		resource_set_busy(&active_mailboxes[fd].resource);
-
-	spinlock_unlock(&active_mailboxes[fd].lock);
-
-	t1 = clock_read();
-
-		/* Setup asynchronous write. */
-		if ((ret = mailbox_awrite(active_mailboxes[fd].hwfd, (void *) &mbuffers[mbufferid].message, HAL_MAILBOX_MSG_SIZE)) < 0)
-			goto release_active;
-
-	t2 = clock_read();
-
-	/* Update performance statistics. */
-	virtual_mailboxes[mbxid].latency += (t2 - t1);
-	virtual_mailboxes[mbxid].volume  += size;
-
-	return (size);
-
-release_active:
-	spinlock_lock(&active_mailboxes[fd].lock);
-		resource_set_notbusy(&active_mailboxes[fd].resource);
-	spinlock_unlock(&active_mailboxes[fd].lock);
-
-release_virtual:
-	spinlock_lock(&virtual_mailboxes[mbxid].lock);
-		VMAILBOX_SET_NOTBUSY(mbxid);
-	spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-
-	return (ret);
+	return (active_awrite(&mbxpool, mbxid, config, stats));
 }
 
 /*============================================================================*
- * do_vmailbox_wait()                                                         *
+ * do_mailbox_wait()                                                          *
  *============================================================================*/
 
 /**
- * @brief Wait implementation for input mailboxes. Waits on a virtual
- * mailbox to finish an asynchronous read.
+ * @brief Waits on a mailbox to finish an assynchronous operation.
  *
- * @param mbxid Logic ID of the target virtual mailbox.
- *
- * @returns Upon successful completion, zero is returned if the operation
- * finished on @p mbxid. If the operation incurred in a re-addressing, ONE
- * is returned. Upon failure, a negative error code is returned instead.
- */
-PRIVATE int do_vmailbox_receiver_wait(int mbxid)
-{
-	int ret;             /* HAL function return.          */
-	int fd;              /* Vmailbox file descriptor.     */
-	int port;            /* Port used by vmailbox.        */
-	int dest;            /* Msg destination address.      */
-	int keep_rule;       /* Discard rule.                 */
-	int local_hwaddress; /* Vmailbox hardware address.    */
-	int mbufferid;       /* Allocated mbufferid.          */
-	uint64_t t1;         /* Clock value before wait call. */
-	uint64_t t2;         /* Clock value after wait call.  */
-
-	keep_rule = DISCARD_MESSAGE;
-
-	fd = GET_LADDRESS_FD(mbxid);
-	port = GET_LADDRESS_PORT(mbxid);
-
-	mbufferid = active_mailboxes[fd].ports[port].mbufferid;
-
-	t1 = clock_read();
-
-		/* Wait for asynchronous read to finish. */
-		if ((ret = mailbox_wait(active_mailboxes[fd].hwfd)) < 0)
-		{
-			spinlock_lock(&active_mailboxes[fd].lock);
-			goto release_buffer;
-		}
-
-	t2 = clock_read();
-
-	spinlock_lock(&active_mailboxes[fd].lock);
-
-		local_hwaddress = DO_LADDRESS_COMPOSE(active_mailboxes[fd].nodenum, port);
-
-		/* Checks if the message is addressed for the requesting port. */
-		dest = mbuffers[mbufferid].message.dest;
-
-		if (dest != local_hwaddress)
-		{
-			/* Keep message? true (KEEP_MESSAGE) : false (DISCARD_MESSAGE) */
-			keep_rule = PORT_IS_USED(fd, GET_LADDRESS_PORT(dest));
-
-			/* Returns sinalizing that a message was read, but not for local port. */
-			ret = 1;
-		}
-		else
-		{
-			kmemcpy(virtual_mailboxes[mbxid].user_buffer, (void *) &mbuffers[mbufferid].message.data, KMAILBOX_MESSAGE_SIZE);
-
-			/* Update performance statistics. */
-			virtual_mailboxes[mbxid].latency += (t2 - t1);
-			virtual_mailboxes[mbxid].volume  += KMAILBOX_MESSAGE_SIZE;
-
-			virtual_mailboxes[mbxid].user_buffer = NULL;
-
-			ret = 0;
-		}
-
-release_buffer:
-		active_mailboxes[fd].ports[port].mbufferid = -1;
-		do_vmailbox_release_mbuffer(mbufferid, keep_rule);
-
-		resource_set_notbusy(&active_mailboxes[fd].resource);
-
-	spinlock_unlock(&active_mailboxes[fd].lock);
-
-	return (ret);
-}
-
-/**
- * @brief Wait implementation for output mailboxes. Waits on a virtual
- * mailbox to finish an asynchronous write.
- *
- * @param mbxid Logic ID of the sender virtual mailbox.
- *
- * @returns Upon successful completion, zero is returned. Upon failure,
- * a negative error code is returned instead.
- */
-PRIVATE int do_vmailbox_sender_wait(int mbxid)
-{
-	int ret;       /* HAL function return.          */
-	int fd;        /* Vmailbox file descriptor.     */
-	int port;      /* Port used by vmailbox.        */
-	int mbufferid; /* Allocated mbufferid.          */
-	uint64_t t1;   /* Clock value before wait call. */
-	uint64_t t2;   /* Clock value after wait call.  */
-
-	fd = GET_LADDRESS_FD(mbxid);
-	port = GET_LADDRESS_PORT(mbxid);
-
-	mbufferid = active_mailboxes[fd].ports[port].mbufferid;
-
-	t1 = clock_read();
-
-		/* Wait for asynchronous write to finish. */
-		if ((ret = mailbox_wait(active_mailboxes[fd].hwfd)) < 0)
-			goto release_buffer;
-
-	t2 = clock_read();
-
-	/* Update performance statistics. */
-	virtual_mailboxes[mbxid].latency += (t2 - t1);
-
-release_buffer:
-	spinlock_lock(&active_mailboxes[fd].lock);
-
-		active_mailboxes[fd].ports[port].mbufferid = -1;
-		do_vmailbox_release_mbuffer(mbufferid, DISCARD_MESSAGE);
-
-		resource_set_notbusy(&active_mailboxes[fd].resource);
-
-	spinlock_unlock(&active_mailboxes[fd].lock);
-
-	return (ret);
-}
-
-/**
- * @brief Waits on a virtual mailbox to finish an assynchronous operation.
- *
- * @param mbxid Logic ID of the target virtual mailbox.
+ * @param fd Logic ID of the target mailbox.
  *
  * @returns Upon successful completion, a positive number is returned.
  * Upon failure, a negative error code is returned instead.
  */
-PUBLIC int do_vmailbox_wait(int mbxid)
+PUBLIC int do_mailbox_wait(int mbxid, const struct comm_config * config, struct pstats * stats)
 {
-	int ret;             /* HAL function return.      */
-	int fd;              /* Vmailbox file descriptor. */
-	int port;            /* Port used by vmailbox.    */
-	int (*wait_fn)(int); /* Underlying wait function. */
-
-	spinlock_lock(&virtual_mailboxes[mbxid].lock);
-
-		/* Bad virtual mailbox. */
-		if (!VMAILBOX_IS_USED(mbxid))
-		{
-			spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-			return (-EBADF);
-		}
-
-		/* virtual mailbox not set as busy. */
-		if (!VMAILBOX_IS_BUSY(mbxid))
-		{
-			spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-			return (-EBADF);
-		}
-
-	spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-
-	/* Virtual mailbox already finished its last operation. */
-	if (VMAILBOX_IS_FINISHED(mbxid))
-	{
-		virtual_mailboxes[mbxid].status &= ~VMAILBOX_STATUS_FINISHED;
-		ret = 0;
-		goto release_virtual;
-	}
-
-	fd = GET_LADDRESS_FD(mbxid);
-	port = GET_LADDRESS_PORT(mbxid);
-
-	ret = (-EBADF);
-
-	spinlock_lock(&active_mailboxes[fd].lock);
-
-		/* Bad mailbox. */
-		if (!resource_is_busy(&active_mailboxes[fd].resource))
-		{
-			spinlock_unlock(&active_mailboxes[fd].lock);
-			goto release_virtual;
-		}
-
-	spinlock_unlock(&active_mailboxes[fd].lock);
-
-	/* Invalid mbufferid. */
-	if (active_mailboxes[fd].ports[port].mbufferid < 0)
-		goto release_virtual;
-
-	/* Checks the underlying mailbox type. */
-	if (resource_is_readable(&active_mailboxes[fd].resource))
-		wait_fn = do_vmailbox_receiver_wait;
-	else if (resource_is_writable(&active_mailboxes[fd].resource))
-		wait_fn = do_vmailbox_sender_wait;
-	else
-		goto release_virtual;
-
-	/* Calls the underlying wait function according to the type of the mailbox. */
-	ret = wait_fn(mbxid);
-
-release_virtual:
-	spinlock_lock(&virtual_mailboxes[mbxid].lock);
-		VMAILBOX_SET_NOTBUSY(mbxid);
-	spinlock_unlock(&virtual_mailboxes[mbxid].lock);
-
-	return (ret);
+	return (active_wait(&mbxpool, mbxid, config, stats));
 }
 
 /*============================================================================*
- * do_vmailbox_ioctl()                                                        *
+ * Initialization functions                                                   *
  *============================================================================*/
 
 /**
  * @todo TODO: Provide a detailed description for this function.
  */
-int do_vmailbox_ioctl(int mbxid, unsigned request, va_list args)
-{
-	int ret = 0;
-	int fd;
-
-	/* Bad virtual mailbox. */
-	if (!VMAILBOX_IS_USED(mbxid))
-		return (-EBADF);
-
-	fd = GET_LADDRESS_FD(mbxid);
-
-	/* Bad virtual mailbox. */
-	if (!resource_is_used(&active_mailboxes[fd].resource))
-		return (-EBADF);
-
-	/* Parse request. */
-	switch (request)
-	{
-		/* Get the amount of data transferred so far. */
-		case MAILBOX_IOCTL_GET_VOLUME:
-		{
-			size_t *volume;
-			volume = va_arg(args, size_t *);
-			*volume = virtual_mailboxes[mbxid].volume;
-		} break;
-
-		/* Get the cumulative transfer latency. */
-		case MAILBOX_IOCTL_GET_LATENCY:
-		{
-			uint64_t *latency;
-			latency = va_arg(args, uint64_t *);
-			*latency = virtual_mailboxes[mbxid].latency;
-		} break;
-
-		/* Operation not supported. */
-		default:
-			ret = (-ENOTSUP);
-			break;
-	}
-
-	return (ret);
-}
-
-/*============================================================================*
- * kmailbox_init()                                                            *
- *============================================================================*/
-
-/**
- * @todo TODO: Provide a detailed description for this function.
- */
-PUBLIC void kmailbox_init(void)
+PUBLIC void do_mailbox_init(void)
 {
 	int local;
-
-	kprintf("[kernel][noc] initializing the kmailbox facility");
 
 	local = processor_node_get_num();
 
 	/* Create the input mailbox. */
-	KASSERT(_do_mailbox_create(local) >= 0);
+	KASSERT(active_create(&mbxpool, local) >= 0);
 
 	/* Opens all mailbox interfaces. */
 	for (int i = 0; i < PROCESSOR_NOC_NODES_NUM; ++i)
-		KASSERT(_do_mailbox_open(i) >= 0);
-
-	/* Initializes the mbuffers table lock. */
-	do_mbuffers_lock_init();
+		KASSERT(active_open(&mbxpool, local, i) >= 0);
 
 	/* Initializes the active mailboxes locks. */
-	do_active_mailboxes_locks_init();
-
-	/* Initializes the virtual mailboxes locks. */
-	do_virtual_mailboxes_locks_init();
+	do_mailbox_table_init();
 }
 
 #endif /* __TARGET_HAS_MAILBOX */
