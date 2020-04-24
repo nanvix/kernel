@@ -69,6 +69,7 @@
 			struct
 			{
 				int src;
+				int size;
 				char pdata[MBUFFER_DEFAULT_DATA_SIZE - sizeof(int)];
 			};
 			char data[MBUFFER_DEFAULT_DATA_SIZE];
