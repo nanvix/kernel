@@ -84,6 +84,8 @@
 	typedef ssize_t (* hw_awrite_fn)(int mbxid, const void *buffer, size_t size);
     typedef int (* hw_wait_fn)(int);
 	typedef int (* hw_copy_fn)(struct mbuffer *, const struct comm_config *, int);
+	typedef int (* hw_config_fn)(struct mbuffer *, const struct comm_config *);
+	typedef int (* hw_check_fn)(struct mbuffer *, const struct comm_config *);
     /**@}*/
 
 	/**
@@ -122,6 +124,7 @@
 		int local;                /**< Target node number.           */
 		int remote;               /**< Target node number.           */
 		int refcount;             /**< Target node number.           */
+
 		size_t size;
 
 		struct port_pool portpool;
@@ -134,6 +137,8 @@
 		const hw_awrite_fn do_awrite;
 		const hw_wait_fn do_wait;
 		const hw_copy_fn do_copy;
+		const hw_config_fn do_header_config;
+		const hw_check_fn do_header_check;
 
 		spinlock_t lock;          /**< Protection.                   */
 	};
