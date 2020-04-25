@@ -188,6 +188,16 @@
 	EXTERN int do_vportal_ioctl(int portalid, unsigned request, va_list args);
 
 	/**
+	 * @brief Gets the @p portalid logic port.
+	 *
+	 * @param portalid Target portal.
+	 *
+	 * @returns Upon successful completion, the logic port is returned.
+	 * Upon failure, a negative error code is returned instead.
+	 */
+	EXTERN int do_vportal_get_port(int portalid);
+
+	/**
 	 * @brief Initializes the portal facility.
 	 */
 	EXTERN void kportal_init(void);

@@ -181,6 +181,16 @@
 	EXTERN int do_vmailbox_ioctl(int mbxid, unsigned request, va_list args);
 
 	/**
+	 * @brief Gets the @p mbxid logic port.
+	 *
+	 * @param mbxid Target mailbox.
+	 *
+	 * @returns Upon successful completion, the logic port is returned.
+	 * Upon failure, a negative error code is returned instead.
+	 */
+	EXTERN int do_vmailbox_get_port(int mbxid);
+
+	/**
 	 * @brief Initializes the mailbox facility.
 	 */
 	EXTERN void kmailbox_init(void);

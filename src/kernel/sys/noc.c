@@ -23,6 +23,7 @@
  */
 
 #include <nanvix/hal.h>
+#include <nanvix/kernel/noc.h>
 #include <posix/errno.h>
 
 /*============================================================================*
@@ -67,4 +68,35 @@ PUBLIC int kernel_cluster_get_num(void)
 #else
 	return (-ENOSYS);
 #endif /* PROCESSOR_IS_MULTICLUSTER */
+}
+
+/*============================================================================*
+ * kernel_comm_get_port()                                                     *
+ *============================================================================*/
+
+/**
+ * @brief Returns the virtual communicator logic port.
+ *
+ * @param id   Virtual communicator id.
+ * @param type Type of the communicator (MAILBOX ? PORTAL)
+ *
+ * @return Upon successful completion the logical port ID of the underlying
+ * communicator is returned. Upon failure, a negative error code is returned
+ * instead.
+ *
+ * @author João Fellipe Uller
+ */
+PUBLIC int kernel_comm_get_port(int id, int type)
+{
+#if (__TARGET_HAS_MAILBOX)
+	if (type == COMM_TYPE_MAILBOX)
+		return (do_vmailbox_get_port(id));
+#endif /* TARGET_HAS_MAILBOX */
+
+#if (__TARGET_HAS_PORTAL)
+	if (type == COMM_TYPE_PORTAL)
+		return (do_vportal_get_port(id));
+#endif /* TARGET_HAS_PORTAL */
+
+	return (-ENOSYS);
 }

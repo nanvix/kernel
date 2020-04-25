@@ -105,8 +105,9 @@
 	#define NR_excp_pause      51 /**< kernel_excp_pause()      */
 	#define NR_excp_resume     52 /**< kernel_excp_resume()     */
 	#define NR_cluster_get_num 53 /**< kernel_cluster_get_num() */
+	#define NR_comm_get_port   54 /**< kernel_comm_get_port()   */
 
-	#define NR_last_kcall      54 /**< NR_SYSCALLS definer      */
+	#define NR_last_kcall      55 /**< NR_SYSCALLS definer      */
 	/**@}*/
 
 /*============================================================================*
@@ -272,6 +273,7 @@
 
 	EXTERN int kernel_node_get_num(void);
 	EXTERN int kernel_cluster_get_num(void);
+	EXTERN int kernel_comm_get_port(int, int);
 
 /*============================================================================*
  * Sync Kernel Calls                                                          *
