@@ -30,6 +30,53 @@
 #if __TARGET_HAS_SYNC
 
 /*============================================================================*
+ * sync_nodelist_is_valid()                                                   *
+ *============================================================================*/
+
+/**
+ * @brief Node list validation.
+ *
+ * @param nodes      IDs of target NoC nodes.
+ * @param nnodes     Number of target NoC nodes.
+ * @param is_the_one True if the local node is the ONE of the rule.
+ *
+ * @return Non zero if node list is valid and zero otherwise.
+ */
+PRIVATE int sync_nodelist_is_valid(const int * nodes, int nnodes, int is_the_one)
+{
+	int local;       /* Local node.          */
+	uint64_t checks; /* Bit-stream of nodes. */
+
+	checks = 0ULL;
+	local  = processor_node_get_num();
+
+	/* Is the local the one? */
+	if (is_the_one && (nodes[0] != local))
+		return (0);
+
+	/* Isn't the local the one? */
+	if (!is_the_one && (nodes[0] == local))
+		return (0);
+
+	/* Build nodelist. */
+	for (int i = 0; i < nnodes; ++i)
+	{
+		/* Invalid node. */
+		if (!WITHIN(nodes[i], 0, PROCESSOR_NOC_NODES_NUM))
+			return (0);
+
+		/* Does a node appear twice? */
+		if (checks & (1ULL << nodes[i]))
+			return (0);
+
+		checks |= (1ULL << nodes[i]);
+	}
+
+	/* Is the local node founded? */
+	return (checks & (1ULL << local));
+}
+
+/*============================================================================*
  * kernel_sync_create()                                                       *
  *============================================================================*/
 
@@ -40,7 +87,7 @@
  * @retval -EINVAL At least 2 nodes and at most PROCESSOR_NOC_NODES_NUM must be involved.
  * @retval -EINVAL The type must be SYNC_ONE_TO_ALL or SYNC_ALL_TO_ONE.
  */
-PUBLIC int kernel_sync_create(const int *nodes, int nnodes, int type, int local)
+PUBLIC int kernel_sync_create(const int * nodes, int nnodes, int type)
 {
 	/* Invalid nodes list. */
 	if (nodes == NULL)
@@ -50,22 +97,19 @@ PUBLIC int kernel_sync_create(const int *nodes, int nnodes, int type, int local)
 	if (!WITHIN(nnodes, 2, (PROCESSOR_NOC_NODES_NUM + 1)))
 		return(-EINVAL);
 
-	/* Bad nodes list location. */
-	if (!mm_check_area(VADDR(nodes), sizeof(int) * nnodes, UMEM_AREA))
-		return(-EFAULT);
-
-	/* Bad nodes list. */
-	for (int i = 0; i < nnodes; i++)
-	{
-		if (!WITHIN(nodes[i], 0, PROCESSOR_NOC_NODES_NUM))
-			return (-EINVAL);
-	}
-
 	/* Bad sync type. */
 	if ((type != SYNC_ONE_TO_ALL) && (type != SYNC_ALL_TO_ONE))
 		return (-EINVAL);
 
-	return (do_vsync_create(nodes, nnodes, type, local));
+	/* Bad nodes list location. */
+	if (!mm_check_area(VADDR(nodes), sizeof(int) * nnodes, UMEM_AREA))
+		return(-EFAULT);
+
+	/* Invalid nodes list. */
+	if (!sync_nodelist_is_valid(nodes, nnodes, (type == SYNC_ALL_TO_ONE)))
+		return (-EINVAL);
+
+	return (do_vsync_create(nodes, nnodes, type));
 }
 
 /*============================================================================*
@@ -79,7 +123,7 @@ PUBLIC int kernel_sync_create(const int *nodes, int nnodes, int type, int local)
  * @retval -EINVAL At least 2 nodes and at most PROCESSOR_NOC_NODES_NUM must be involved.
  * @retval -EINVAL The type must be SYNC_ONE_TO_ALL or SYNC_ALL_TO_ONE.
  */
-PUBLIC int kernel_sync_open(const int *nodes, int nnodes, int type, int local)
+PUBLIC int kernel_sync_open(const int *nodes, int nnodes, int type)
 {
 	/* Invalid nodes list. */
 	if (nodes == NULL)
@@ -89,22 +133,19 @@ PUBLIC int kernel_sync_open(const int *nodes, int nnodes, int type, int local)
 	if (!WITHIN(nnodes, 2, (PROCESSOR_NOC_NODES_NUM + 1)))
 		return(-EINVAL);
 
-	/* Bad nodes list location. */
-	if (!mm_check_area(VADDR(nodes), sizeof(int) * nnodes, UMEM_AREA))
-		return(-EFAULT);
-
-	/* Bad nodes list. */
-	for (int i = 0; i < nnodes; i++)
-	{
-		if (!WITHIN(nodes[i], 0, PROCESSOR_NOC_NODES_NUM))
-			return (-EINVAL);
-	}
-
 	/* Bad sync type. */
 	if ((type != SYNC_ONE_TO_ALL) && (type != SYNC_ALL_TO_ONE))
 		return (-EINVAL);
 
-	return (do_vsync_open(nodes, nnodes, type, local));
+	/* Bad nodes list location. */
+	if (!mm_check_area(VADDR(nodes), sizeof(int) * nnodes, UMEM_AREA))
+		return(-EFAULT);
+
+	/* Invalid nodes list. */
+	if (!sync_nodelist_is_valid(nodes, nnodes, (type == SYNC_ONE_TO_ALL)))
+		return (-EINVAL);
+
+	return (do_vsync_open(nodes, nnodes, type));
 }
 
 /*============================================================================*

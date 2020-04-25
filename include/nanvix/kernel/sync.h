@@ -54,7 +54,7 @@
 	 * virtual synchronization point is returned. Upon failure, a negative
 	 * error code is returned instead.
 	 */
-	EXTERN int do_vsync_create(const int *nodes, int nnodes, int type, int local);
+	EXTERN int do_vsync_create(const int * nodes, int nnodes, int type);
 
 	/**
 	 * @brief Opens a virtual synchronization point.
@@ -70,7 +70,7 @@
 	 *
 	 * @todo Check for Invalid Remote
 	 */
-	EXTERN int do_vsync_open(const int *nodes, int nnodes, int type, int local);
+	EXTERN int do_vsync_open(const int * nodes, int nnodes, int type);
 
 	/**
 	 * @brief Destroys a virtual synchronization point.
