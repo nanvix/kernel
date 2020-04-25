@@ -37,6 +37,14 @@
 
 #if __TARGET_HAS_MAILBOX
 
+/**
+ * @brief Extracts fd and port from mbxid.
+ */
+/**@{*/
+#define GET_LADDRESS_FD(mbxid)   (mbxid / MAILBOX_PORT_NR)
+#define GET_LADDRESS_PORT(mbxid) (mbxid % MAILBOX_PORT_NR)
+/**@}*/
+
 /*============================================================================*
  * Virtual mailbox structure                                                  *
  *============================================================================*/
@@ -289,6 +297,32 @@ int do_vmailbox_ioctl(int mbxid, unsigned request, va_list args)
 			args
 		)
 	);
+}
+
+/*============================================================================*
+ * do_vmailbox_get_port()                                                     *
+ *============================================================================*/
+
+/**
+ * @todo TODO: Provide a detailed description for this function.
+ */
+int do_vmailbox_get_port(int mbxid)
+{
+	int ret;
+
+	if (!WITHIN(mbxid, 0, KMAILBOX_MAX))
+		return (-EINVAL);
+
+	spinlock_lock(&virtual_mailboxes[mbxid].lock);
+
+		if (!resource_is_used(&virtual_mailboxes[mbxid].resource))
+			ret = (-EBADF);
+		else
+			ret = (GET_LADDRESS_PORT(virtual_mailboxes[mbxid].config.fd));
+
+	spinlock_unlock(&virtual_mailboxes[mbxid].lock);
+
+	return (ret);
 }
 
 /*============================================================================*

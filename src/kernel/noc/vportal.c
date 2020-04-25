@@ -36,6 +36,14 @@
 
 #if __TARGET_HAS_PORTAL
 
+/**
+ * @brief Extracts fd and port from portalid.
+ */
+/**@{*/
+#define GET_LADDRESS_FD(portalid)   (portalid / KPORTAL_PORT_NR)
+#define GET_LADDRESS_PORT(portalid) (portalid % KPORTAL_PORT_NR)
+/**@}*/
+
 /*============================================================================*
  * Virtual portal structure                                                   *
  *============================================================================*/
@@ -336,6 +344,32 @@ int do_vportal_ioctl(int portalid, unsigned request, va_list args)
 			args
 		)
 	);
+}
+
+/*============================================================================*
+ * do_vportal_get_port()                                                      *
+ *============================================================================*/
+
+/**
+ * @todo TODO: Provide a detailed description for this function.
+ */
+int do_vportal_get_port(int portalid)
+{
+	int ret;
+
+	if (!WITHIN(portalid, 0, KPORTAL_MAX))
+		return (-EINVAL);
+
+	spinlock_lock(&virtual_portals[portalid].lock);
+
+		if (!resource_is_used(&virtual_portals[portalid].resource))
+			ret = (-EBADF);
+		else
+			ret = (GET_LADDRESS_PORT(virtual_portals[portalid].config.fd));
+
+	spinlock_unlock(&virtual_portals[portalid].lock);
+
+	return (ret);
 }
 
 /*============================================================================*

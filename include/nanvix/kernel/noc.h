@@ -30,6 +30,12 @@
 	#include <nanvix/kernel/sync.h>
 	#include <nanvix/kernel/mailbox.h>
 
+/**
+ * @brief Comm_type constants.
+ */
+#define COMM_TYPE_MAILBOX 1
+#define COMM_TYPE_PORTAL  2
+
 #ifdef __NANVIX_MICROKERNEL
 
 	/**

@@ -32,8 +32,6 @@
 	#include <nanvix/kernel/syscall.h>
 	#include <nanvix/kernel/mm.h>
 	#include <nanvix/kernel/thread.h>
-	#include <nanvix/kernel/sync.h>
-	#include <nanvix/kernel/mailbox.h>
-	#include <nanvix/kernel/portal.h>
+	#include <nanvix/kernel/noc.h>
 
 #endif /* NANVIX_KERNEL_KERNEL_H_ */

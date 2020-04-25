@@ -436,6 +436,13 @@ PUBLIC int do_kcall(
 			ret = 0;
 			break;
 
+		case NR_comm_get_port:
+			ret = kernel_comm_get_port(
+				(int) arg0,
+				(int) arg1
+			);
+			break;
+
 #if __TARGET_HAS_SYNC
 		case NR_sync_wait:
 			ret = kernel_sync_wait(
