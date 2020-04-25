@@ -22,21 +22,35 @@
  * SOFTWARE.
  */
 
-#ifndef NANVIX_NOC_H_
-#define NANVIX_NOC_H_
+/**
+ * @defgroup kernel-mailbox Mailbox Facility
+ * @ingroup kernel
+ *
+ * @brief Mailbox Facility
+ */
+
+#ifndef NANVIX_KPORTAL_H_
+#define NANVIX_KPORTAL_H_
 
 	#include <nanvix/hal.h>
-	#include <nanvix/kernel/portal.h>
-	#include <nanvix/kernel/sync.h>
-	#include <nanvix/kernel/mailbox.h>
+	#include <nanvix/const.h>
+    #include <nanvix/hlib.h>
+	#include <posix/stdarg.h>
+    #include <posix/errno.h>
 
-#ifdef __NANVIX_MICROKERNEL
+    /**
+    * @brief Composes the logic address based on @p fd @p port.
+    */
+    #define DO_LADDRESS_COMPOSE(fd, port) (fd * KPORTAL_PORT_NR + port)
 
-	/**
-	 * @brief Initializes the NoC system.
-	 */
-	EXTERN void noc_init(void);
+    EXTERN int do_portal_alloc(int, int, int, int);
+    EXTERN int do_portal_release(int);
+    EXTERN ssize_t do_portal_aread(int, const struct comm_config *, struct pstats *);
+    EXTERN ssize_t do_portal_awrite(int, const struct comm_config *, struct pstats *);
+    EXTERN int do_portal_wait(int, const struct comm_config *, struct pstats *);
 
-#endif
+    EXTERN void do_portal_init(void);
 
-#endif /** NANVIX_NOC_H_ */
+#endif /* NANVIX_KMAILBOX_H_ */
+
+/**@}*/

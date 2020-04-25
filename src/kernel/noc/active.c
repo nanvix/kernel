@@ -293,7 +293,7 @@ PUBLIC ssize_t active_aread(
 	struct pstats * stats
 )
 {
-	ssize_t ret;             /* Return value.                  */
+	ssize_t ret;         /* Return value.                  */
 	int remote;
 	int mbufferid;       /* New alocated buffer.           */
 	int local_addr;      /* Vmailbox hardware address.     */
@@ -356,6 +356,9 @@ PUBLIC ssize_t active_aread(
 		/* Allow communication. */
 		if ((ret = active->do_allow(active, remote)) < 0)
 			goto error;
+
+		active_set_allowed(active);
+		active->remote = remote;
 
 		/* Allocates a data buffer to receive data. */
 		if ((mbufferid = mbuffer_alloc(active->mbufferpool)) < 0)
@@ -443,7 +446,7 @@ PUBLIC ssize_t active_awrite(
 			
 			buf = mbuffer_get(active->mbufferpool, mbufferid);
 
-			buf->message.dest = config->remote;
+			active->do_header_config(buf, config);
 
 			t1 = clock_read();
 				active->do_copy(buf, config, ACTIVE_COPY_TO_MBUFFER);
@@ -517,9 +520,7 @@ PUBLIC int active_wait(
 )
 {
 	int ret;       /* Return value.                   */
-	int src;      /* Msg destination address.        */
 	int dest;      /* Msg destination address.        */
-	int local_addr;     /* Vmailbox hardware address.      */
 	int mbufferid; /* Allocated mbufferid.            */
 	int keep_rule; /* Discard rule.                   */
 	uint64_t t1;   /* Clock value before awrite call. */
@@ -570,18 +571,11 @@ PUBLIC int active_wait(
 			{
 				buf = mbuffer_get(active->mbufferpool, mbufferid);
 
-				src   = buf->message.src;
 				dest  = buf->message.dest;
-
-				local_addr = ACTIVE_LADDRESS_COMPOSE(
-					active->local,
-					ACTIVE_GET_LADDRESS_PORT(active, id),
-					ACTIVE_GET_NR_PORTS(active)
-				);
 
 				/* Checks if the message is addressed for the requesting port. */
 				/* Consumes the message. */
-				if ((local_addr == dest) && (config->remote == -1 || (config->remote != -1 && config->remote == src)))
+				if (active->do_header_check(buf, config))
 					active->do_copy(buf, config, ACTIVE_COPY_FROM_MBUFFER);
 
 				/* Ignore the message. */
@@ -734,36 +728,3 @@ PUBLIC int active_open(const struct active_pool * pool, int local, int remote)
 
 	return (active - pool->actives);
 }
-
-// /*============================================================================*
-//  * _do_mailbox_release()                                                      *
-//  *============================================================================*/
-
-// /**
-//  * @brief Releases a hardware mailbox.
-//  *
-//  * @param fd         ID of the target hardware mailbox.
-//  * @param release_fn Release function.
-//  *
-//  * @returns Upon successful completion, zero is returned. Upon
-//  * failure, a negative error code is returned instead.
-//  */
-// PRIVATE int _do_mailbox_release(int fd, int (*release_fn)(int))
-// {
-// 	int ret;  /* Return value.   */
-// 	int hwfd; /* HWFD allocated on HAL. */
-
-// 	/* Checks if there is a hwfd allocated to this mailbox. */
-// 	if ((hwfd = active_mailboxes[fd].hwfd) >= 0)
-// 	{
-// 		if ((ret = release_fn(hwfd)) < 0)
-// 			return (ret);
-// 	}
-
-// 	active_mailboxes[fd].hwfd    = -1;
-// 	active_mailboxes[fd].nodenum = -1;
-// 	resource_free(&mbxpool, fd);
-
-// 	dcache_invalidate();
-// 	return (0);
-// }

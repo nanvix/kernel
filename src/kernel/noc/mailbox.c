@@ -96,8 +96,10 @@ PRIVATE struct mbuffer_pool ubufferpool = {
 int wrapper_mailbox_open(int, int);
 int wrapper_mailbox_allow(struct active *, int);
 int wrapper_mailbox_copy(struct mbuffer *, const struct comm_config *, int);
+int mailbox_header_config(struct mbuffer *, const struct comm_config *);
+int mailbox_header_check(struct mbuffer *, const struct comm_config *);
 
-struct port ports[HW_MAILBOX_MAX][MAILBOX_PORT_NR] = {
+PRIVATE struct port ports[HW_MAILBOX_MAX][MAILBOX_PORT_NR] = {
 	[0 ... (HW_MAILBOX_MAX - 1)] = {
 		[0 ... (MAILBOX_PORT_NR - 1)] = {
 			.resource  = {0, },
@@ -118,14 +120,16 @@ struct active mailboxes[HW_MAILBOX_MAX] = {
 			.ports  = NULL,
 			.nports = MAILBOX_PORT_NR,
 		},
-		.mbufferpool = &ubufferpool,
-		.do_create   = mailbox_create,
-		.do_open     = wrapper_mailbox_open,
-		.do_allow    = wrapper_mailbox_allow,
-		.do_aread    = mailbox_aread,
-		.do_awrite   = mailbox_awrite,
-		.do_wait     = mailbox_wait,
-		.do_copy     = wrapper_mailbox_copy,
+		.mbufferpool      = &ubufferpool,
+		.do_create        = mailbox_create,
+		.do_open          = wrapper_mailbox_open,
+		.do_allow         = wrapper_mailbox_allow,
+		.do_aread         = mailbox_aread,
+		.do_awrite        = mailbox_awrite,
+		.do_wait          = mailbox_wait,
+		.do_copy          = wrapper_mailbox_copy,
+		.do_header_config = mailbox_header_config,
+		.do_header_check  = mailbox_header_check,
 	},
 };
 
@@ -188,6 +192,20 @@ int wrapper_mailbox_copy(struct mbuffer * buf, const struct comm_config * config
 	kmemcpy(to, from, config->size);
 
 	return (0);
+}
+
+int mailbox_header_config(struct mbuffer * mbuf, const struct comm_config * config)
+{
+	mbuf->message.dest = config->remote;
+
+	return (0);
+}
+
+int mailbox_header_check(struct mbuffer * mbuf, const struct comm_config * config)
+{
+	int local_addr = ACTIVE_LADDRESS_COMPOSE(processor_node_get_num(), GET_LADDRESS_PORT(config->fd), MAILBOX_PORT_NR);
+
+	return (mbuf->message.dest == local_addr);
 }
 
 /*============================================================================*
