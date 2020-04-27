@@ -31,8 +31,6 @@
 #include <posix/errno.h>
 #include <posix/stdarg.h>
 
-#include "communicator.h"
-#include "mbuffer.h"
 #include "active.h"
 #include "mailbox.h"
 
@@ -108,6 +106,12 @@ PRIVATE struct port ports[HW_MAILBOX_MAX][MAILBOX_PORT_NR] = {
 	}
 };
 
+PRIVATE short fifos[HW_MAILBOX_MAX][MAILBOX_PORT_NR] = {
+	[0 ... (HW_MAILBOX_MAX - 1)] = {
+		[0 ... (MAILBOX_PORT_NR - 1)] = -1,
+	}
+};
+
 struct active mailboxes[HW_MAILBOX_MAX] = {
 	[0 ... (HW_MAILBOX_MAX - 1)] {
 		.resource   = {0, },
@@ -116,9 +120,17 @@ struct active mailboxes[HW_MAILBOX_MAX] = {
 		.remote     = -1,
 		.refcount   =  0,
 		.size       = HAL_MAILBOX_MSG_SIZE,
-		.portpool   = {
-			.ports  = NULL,
-			.nports = MAILBOX_PORT_NR,
+		.portpool       = {
+			.ports      = NULL,
+			.nports     = MAILBOX_PORT_NR,
+			.used_ports = 0,
+		},
+		.requests         = {
+			.head         = 0,
+			.tail         = 0,
+			.max_capacity = MAILBOX_PORT_NR,
+			.nelements    = 0,
+			.fifo         = NULL,
 		},
 		.mbufferpool      = &ubufferpool,
 		.do_create        = mailbox_create,
@@ -152,6 +164,7 @@ void do_mailbox_table_init(void)
 		spinlock_init(&mailboxes[i].lock);
 
 		mailboxes[i].portpool.ports = ports[i];
+		mailboxes[i].requests.fifo  = fifos[i];
 	}
 }
 
