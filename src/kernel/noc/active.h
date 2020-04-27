@@ -39,6 +39,7 @@
 	#include <posix/stdarg.h>
 
 	#include "mbuffer.h"
+	#include "port.h"
 	#include "communicator.h"
 
 	/**
@@ -89,30 +90,20 @@
     /**@}*/
 
 	/**
-	* @brief Struct that represents a port abstraction.
-	*/
-	struct port
+	 * @brief Circular FIFO to hold write requests.
+	 */
+	struct requests_fifo
 	{
-		/*
-		* XXX: Don't Touch! This Must Come First!
-		*/
-		struct resource resource; /**< Generic resource information. */
-
-		/**
-		* @brief Operation Variables
-		*/
-		short mbufferid; /* Kernel mbufferid. */
-	};
-
-	struct port_pool
-	{
-		struct port * ports; /**< Pool of ports.   */
-		const int nports;    /**< Number of ports. */
+		short head;         /**< Index of the first element. */
+		short tail;         /**< Index of the last element.  */
+		short max_capacity; /**< Max number of elements.     */
+		short nelements;    /**< Nr of elements in the fifo. */
+		short * fifo;       /**< Buffer to store elements.   */
 	};
 
 	/**
-	* @brief Table of active mailboxes.
-	*/
+	 * @brief Table of active mailboxes.
+	 */
 	struct active
 	{
 		/*
@@ -129,6 +120,7 @@
 
 		struct port_pool portpool;
 		struct mbuffer_pool * mbufferpool;
+		struct requests_fifo requests;
 	
 		const hw_create_fn do_create;
 		const hw_open_fn do_open;

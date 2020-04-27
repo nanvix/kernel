@@ -30,44 +30,95 @@
 #include <posix/errno.h>
 #include <posix/stdarg.h>
 
-#include "communicator.h"
-#include "mbuffer.h"
 #include "active.h"
 
 /*============================================================================*
- * active_choose_port()                                                       *
+ * do_register_request()                                                      *
  *============================================================================*/
 
 /**
- * @brief Searches for a free port on @p fd.
+ * @brief Request a operation for @p mbxid on the physical mailbox @p fd.
  *
- * @param fd ID of the target HW mailbox.
+ * @param mbxid Virtual mailbox ID.
+ * @param fd    Physical mailbox ID.
  *
- * @returns Upon successful completion, the index of the available port is
- * returned. A negative number is returned instead.
+ * @returns Upon successful register, zero is returned. Upon failure,
+ * a negative error code is returned instead.
  */
-PRIVATE int active_choose_port(const struct active * active)
+PRIVATE int do_request_operation(struct active * active, int port)
 {
-	int ret; /* Return value. */
-	const struct port_pool * pool = &active->portpool;
+	int head;
+	struct requests_fifo * requests;
 
-	ret = (-EINVAL);
+	requests = &active->requests;
 
-	/* Checks if can exist an available port. */
-	if (active->refcount < pool->nports)
-	{
-		/* Searches for a free port on the target mailbox. */
-		for (int i = 0; i < pool->nports; ++i)
-		{
-			if (resource_is_used(&pool->ports[i].resource))
-				continue;
+	/* Is the FIFO full? */
+	if (requests->nelements == requests->max_capacity)
+		return (-EBUSY);
 
-			ret = i;
-			break;
-		}
-	}
+	/* Register request. */
+	head = requests->head;
+	requests->fifo[head] = port;
 
-	return (ret);
+	/* Updates head. */
+	requests->head = (head + 1) % requests->max_capacity;
+	requests->nelements++;
+
+	return (0);
+}
+
+/*============================================================================*
+ * do_request_complete()                                                      *
+ *============================================================================*/
+
+/**
+ * @brief Complete a operation on the physical mailbox @p fd.
+ *
+ * @param mbxid Virtual mailbox ID.
+ * @param fd       Physical mailbox ID.
+ *
+ * @returns Upon successful register, zero is returned. Upon failure,
+ * a negative error code is returned instead.
+ */
+PRIVATE int do_request_complete(struct active * active, int port)
+{
+	int tail;
+	struct requests_fifo * requests;
+
+	requests = &active->requests;
+
+	tail = requests->tail;
+
+	/* Isn't it his turn? */
+	if (requests->fifo[tail] != port)
+		return (-EINVAL);
+
+	/* Complete the request. */
+	requests->fifo[tail] = -1;
+	requests->tail = (tail + 1) % requests->max_capacity;
+	requests->nelements--;
+
+	return (0);
+}
+
+/*============================================================================*
+ * do_request_verify()                                                        *
+ *============================================================================*/
+
+/**
+ * @brief Verifies if is the turns of the @p mbxid.
+ *
+ * @param mbxid Virtual mailbox ID.
+ * @param fd       Physical mailbox ID.
+ *
+ * @returns Non-zero if is its turns, zero otherwise.
+ */
+PRIVATE int do_request_verify(struct active * active, int port)
+{
+	if (!active->requests.nelements)
+		return (0);
+
+	return (active->requests.fifo[active->requests.tail] == port);
 }
 
 /*============================================================================*
@@ -181,6 +232,7 @@ PUBLIC int active_alloc(
 	int actid;              /* Hardware mailbox ID. */
 	struct port   * port;
 	struct active * active;
+	struct port_pool * portpool;
 
 	ret = (-EINVAL);
 
@@ -189,13 +241,14 @@ PUBLIC int active_alloc(
 		return (actid);
 
 	active = &pool->actives[actid];
+	portpool = &active->portpool;
 
 	spinlock_lock(&active->lock);
 
 		/* Choose a port of output mailbox. */
 		if (type == COMM_TYPE_OUTPUT)
 		{
-			if ((portid = active_choose_port(active)) < 0)
+			if ((portid = portpool_choose_port(portpool)) < 0)
 			{
 				ret = portid;
 				goto error;
@@ -206,7 +259,7 @@ PUBLIC int active_alloc(
 		else if (!WITHIN(portid, 0, ACTIVE_GET_NR_PORTS(active)))
 			goto error;
 
-		port = &active->portpool.ports[portid];
+		port = &portpool->ports[portid];
 
 		/* Is the *port free? */
 		if (!resource_is_used(&port->resource))
@@ -214,6 +267,8 @@ PUBLIC int active_alloc(
 			/* Initialize mailbox. */
 			resource_set_used(&port->resource);
 			active->refcount++;
+
+			portpool->used_ports++;
 
 			ret = ACTIVE_LADDRESS_COMPOSE(actid, portid, ACTIVE_GET_NR_PORTS(active));
 		}
@@ -240,9 +295,11 @@ PUBLIC int active_release(const struct active_pool * pool, int id)
 	int dest;
 	struct port * port;
 	struct active * active;
+	struct port_pool * portpool;
 
 	active = &pool->actives[ACTIVE_GET_LADDRESS_FD(pool->actives, id)];
-	port   = &active->portpool.ports[ACTIVE_GET_LADDRESS_PORT(active, id)];
+	portpool = &active->portpool;
+	port   = &portpool->ports[ACTIVE_GET_LADDRESS_PORT(active, id)];
 
 	spinlock_lock(&active->lock);
 
@@ -269,6 +326,8 @@ PUBLIC int active_release(const struct active_pool * pool, int id)
 			/* Releases mailbox. */
 			resource_set_unused(&port->resource);
 			active->refcount--;
+
+			portpool->used_ports--;
 
 			ret = 0;
 		}
@@ -419,12 +478,15 @@ PUBLIC ssize_t active_awrite(
 	int mbufferid; /* Message buffer used to write.   */
 	uint64_t t1;   /* Clock value before awrite call. */
 	uint64_t t2;   /* Clock value after awrite call.  */
+	int port_nr;
 	struct port * port;
 	struct mbuffer * buf;
 	struct active * active;
 
 	active = &pool->actives[ACTIVE_GET_LADDRESS_FD(pool->actives, id)];
-	port   = &active->portpool.ports[ACTIVE_GET_LADDRESS_PORT(active, id)];
+
+	port_nr = ACTIVE_GET_LADDRESS_PORT(active, id);
+	port   = &active->portpool.ports[port_nr];
 
 	spinlock_lock(&active->lock);
 
@@ -473,6 +535,20 @@ PUBLIC ssize_t active_awrite(
 			buf = mbuffer_get(active->mbufferpool, mbufferid);
 
 		ret = (-EBUSY);
+
+		/* Checks if the current port already requested an operation. */
+		if (!port_is_requested(port))
+		{
+			/* Request an operation. */
+			if (do_request_operation(active, port_nr) < 0)
+				goto error;
+
+			port_set_requested(port);
+		}
+
+		/* Check if it is the current comm's turn. */
+		if (!do_request_verify(active, port_nr))
+			goto error;
 
 		/* Bad mailbox. */
 		if (resource_is_busy(&active->resource))
@@ -525,12 +601,15 @@ PUBLIC int active_wait(
 	int keep_rule; /* Discard rule.                   */
 	uint64_t t1;   /* Clock value before awrite call. */
 	uint64_t t2;   /* Clock value after awrite call.  */
+	int port_nr;
 	struct port * port;
 	struct mbuffer * buf;
 	struct active * active;
 
 	active = &pool->actives[ACTIVE_GET_LADDRESS_FD(pool->actives, id)];
-	port   = &active->portpool.ports[ACTIVE_GET_LADDRESS_PORT(active, id)];
+
+	port_nr = ACTIVE_GET_LADDRESS_PORT(active, id);
+	port   = &active->portpool.ports[port_nr];
 
 	spinlock_lock(&active->lock);
 
@@ -546,6 +625,10 @@ PUBLIC int active_wait(
 
 		/* Invalid mbufferid. */
 		if ((mbufferid = port->mbufferid) < 0)
+			goto error;
+
+		/* Not requested write. */
+		if ((resource_is_writable(&active->resource)) && !(do_request_verify(active, port_nr)))
 			goto error;
 
 	spinlock_unlock(&active->lock);
@@ -589,6 +672,12 @@ PUBLIC int active_wait(
 					/* Returns sinalizing that a message was read, but not for local port. */
 					ret = (COMM_STATUS_AGAIN);
 				}
+			}
+			else if (resource_is_writable(&active->resource))
+			{
+				KASSERT(do_request_complete(active, port_nr) == 0);
+
+				port_set_notrequested(port);
 			}
 
 			if (ret == COMM_STATUS_SUCCESS)
