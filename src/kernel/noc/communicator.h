@@ -23,103 +23,101 @@
  */
 
 /**
- * @defgroup kernel-mailbox Mailbox Facility
+ * @defgroup kernel-noc Noc Facility
  * @ingroup kernel
  *
- * @brief Mailbox Facility
+ * @brief Noc Facility
  */
 
 #ifndef NANVIX_NOC_COMMUNICATOR_H_
 #define NANVIX_NOC_COMMUNICATOR_H_
 
-#include <nanvix/hal.h>
-#include <nanvix/hlib.h>
-#include <nanvix/const.h>
-#include <nanvix/kernel/mailbox.h>
-#include <posix/errno.h>
-#include <posix/stdarg.h>
+	#include <nanvix/hal.h>
+	#include <nanvix/hlib.h>
+	#include <nanvix/const.h>
+	#include <posix/errno.h>
+	#include <posix/stdarg.h>
+
+	#include "active.h"
 
 	/**
-	 * @brief Resource flags.
+	 * @name Resource flags.
 	 */
 	/**@{*/
 	#define COMMUNICATOR_FLAGS_FINISHED (1 << 0) /**< Has it finished?     */
 	#define COMMUNICATOR_FLAGS_ALLOWED  (1 << 1) /**< Has it been allowed? */
 	/**@}*/
 
-    #define COMM_IOCTL_GET_VOLUME  (MAILBOX_IOCTL_GET_VOLUME)
-    #define COMM_IOCTL_GET_LATENCY (MAILBOX_IOCTL_GET_LATENCY)
+	/**
+	 * @name I/O Control types.
+	 */
+	/**@{*/
+	#define COMM_IOCTL_GET_VOLUME  (1) /**< Gets communication volume.  */
+	#define COMM_IOCTL_GET_LATENCY (2) /**< Gets communication latency. */
+	/**@}*/
 
-    #define COMM_TYPE_INPUT      (0)
-    #define COMM_TYPE_OUTPUT     (1)
+	/**
+	 * @brief Communicator initializer.
+	 */
+	#define COMMUNICATOR_INITIALIZER(_do_release, _do_comm, _do_wait) { \
+		.resource   = RESOURCE_INITIALIZER,                             \
+		.config     = ACTIVE_CONFIG_INITIALIZER,                        \
+		.stats      = PSTATS_INITIALIZER,                               \
+		.lock       = SPINLOCK_UNLOCKED,                                \
+		.do_release = _do_release,                                      \
+		.do_comm    = _do_comm,                                         \
+		.do_wait    = _do_wait,                                         \
+	}
 
-    #define COMM_STATUS_SUCCESS  (0)
-    #define COMM_STATUS_AGAIN    (1)
-    #define COMM_STATUS_RECEIVED (2)
+	/*============================================================================*
+	 * Communicator structure definition.                                         *
+	 *============================================================================*/
 
-    #define COMMUNICATOR_INITIALIZER {    \
-        .resource = RESOURCE_INITIALIZER, \
-        .config = {-1, -1, NULL, 0ULL},   \
-        .stats = {0ULL, 0ULL},            \
-        .lock = SPINLOCK_UNLOCKED         \
-    }
+	/**
+	* @brief Communicator structure.
+	*/
+	struct communicator
+	{
+		/*
+		 * XXX: Don't Touch! This Must Come First!
+		 */
+		struct resource resource;     /**< Generic resource information. */
 
-    struct comm_config
-    {
-        int fd;
-        int remote;          /**< Remote address.                          */
-        const void * buffer; /**< User level buffer.                       */
-        size_t size;
-    };
+		int flags;                    /**< Auxiliar flags.               */
+		struct active_config config;  /**< Communicaton configuration.   */
+		struct pstats stats;          /**< Performance Statistics.       */
+		spinlock_t lock;              /**< Protection.                   */
 
-    struct pstats
-    {
-        size_t volume;    /**< Amount of data transferred. */
-        uint64_t latency; /**< Transfer latency.           */
-    };
+		/**
+		 * @name Auxiliar functions.
+		 */
+		/**@{*/
+		active_release_fn do_release; /**< Active release function.      */
+		active_comm_fn do_comm;       /**< Active comm function.         */
+		active_wait_fn do_wait;       /**< Active wait function.         */
+		/**@}*/
+	};
 
-    /**
-    * @brief Communicator structure.
-    */
-    struct communicator
-    {
-        /*
-         * XXX: Don't Touch! This Must Come First!
-         */
-        struct resource resource;  /**< Generic resource information.            */
+	/**
+	* @brief Resource pool.
+	*/
+	struct communicator_pool
+	{
+		struct communicator * communicators; /**< Pool of communicators.   */
+		int ncommunicators;		             /**< Number of communicators. */
+	};
 
-        int flags;                 /**< Auxiliar flags.                          */
-        struct comm_config config; /**< Communicaton configuration.              */
-        struct pstats stats;       /**< Performance Statistics.                  */
+	/*============================================================================*
+	 * Communicator interface.                                                    *
+	 *============================================================================*/
 
-        spinlock_t lock;           /**< Protection.                              */
-    };
+	EXTERN int communicator_alloc(const struct communicator_pool *, struct active_config *, int);
+	EXTERN int communicator_free(const struct communicator_pool *, int, int);
+	EXTERN ssize_t communicator_operate(struct communicator *, int);
+	EXTERN int communicator_wait(struct communicator *);
+	EXTERN int communicator_ioctl(struct communicator *, unsigned, va_list);
 
-    /**
-    * @brief Resource pool.
-    */
-    struct communicator_pool
-    {
-        struct communicator * communicators; /**< Pool of communicators.       */
-        int ncommunicators;		             /**< Number of communicators.     */
-    };
-
-    /**
-    * @brief Resource allocation interface.
-    */
-    /**@{*/
-    typedef int (* active_free_fn)(int);
-    typedef ssize_t (* active_comm_fn)(int, const struct comm_config *, struct pstats *);
-    typedef int (* active_wait_fn)(int, const struct comm_config *, struct pstats *);
-    /**@}*/
-
-    EXTERN int communicator_alloc(const struct communicator_pool *, struct comm_config *, int);
-    EXTERN int communicator_free(const struct communicator_pool *, int, int, active_free_fn);
-    EXTERN ssize_t communicator_operate(struct communicator *, int, active_comm_fn);
-    EXTERN int communicator_wait(struct communicator *, active_wait_fn);
-    EXTERN int communicator_ioctl(struct communicator *, unsigned, va_list);
-
-    /**
+	/**
 	 * @brief Sets a communicator as finished.
 	 *
 	 * @param comm Target communicator.
@@ -139,7 +137,7 @@
 		comm->flags &= ~COMMUNICATOR_FLAGS_FINISHED;
 	}
 
-    /**
+	/**
 	 * @brief Sets a communicator as allowed.
 	 *
 	 * @param comm Target communicator.
@@ -159,7 +157,7 @@
 		comm->flags &= ~COMMUNICATOR_FLAGS_ALLOWED;
 	}
 
-    /**
+	/**
 	 * @brief Asserts whether or not a communicator is finished.
 	 *
 	 * @param comm Target communicator.

@@ -23,10 +23,10 @@
  */
 
 /**
- * @defgroup kernel-mailbox Mailbox Facility
+ * @defgroup kernel-noc Noc Facility
  * @ingroup kernel
  *
- * @brief Mailbox Facility
+ * @brief Noc Facility
  */
 
 #ifndef NANVIX_NOC_MBUFFER_H_
@@ -40,10 +40,12 @@
 #include <posix/stdarg.h>
 
 	/**
-	 * @brief Mbuffer release keep/discard message constants.
+	 * @name Release modes of mbuffers.
 	 */
-	#define MBUFFER_DISCARD_MESSAGE (0)
-	#define MBUFFER_KEEP_MESSAGE    (1)
+	/**@{*/
+	#define MBUFFER_DISCARD_MESSAGE (0) /**< Discard message and releases the mbuffer. */
+	#define MBUFFER_KEEP_MESSAGE    (1) /**< Keep message intact.                      */
+	/**@}*/
 
 	#define MBUFFER_DEFAULT_DATA_SIZE (2 * sizeof(int) + sizeof(char))
 
@@ -102,6 +104,10 @@
 		size_t mbuffer_size; /**< mbuffer size (in bytes). */
 		spinlock_t lock;
 	};
+
+	/*============================================================================*
+	 * Mbuffer interface.                                                         *
+	 *============================================================================*/
 
 	EXTERN int mbuffer_alloc(struct mbuffer_pool *);
 	EXTERN int mbuffer_release(struct mbuffer_pool *, int, int);

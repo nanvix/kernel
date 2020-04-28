@@ -39,23 +39,25 @@
 	/**@}*/
 
    /*============================================================================*
-	* Control Structures.                                                        *
+	* Port Structures.                                                           *
 	*============================================================================*/
 
 	/**
-	* @brief Struct that represents a port abstraction.
-	*/
+	 * @brief Struct that represents a port abstraction.
+	 */
 	struct port
 	{
 		/*
 		* XXX: Don't Touch! This Must Come First!
 		*/
 		struct resource resource; /**< Generic resource information. */
-
-		short flags;              /* Auxiliar flags.                 */
-		short mbufferid;          /* Mbuffer id.                     */
+		short flags;              /**< Auxiliar flags.               */
+		short mbufferid;          /**< Mbuffer ID.                   */
 	};
 
+	/**
+	 * @brief Port pool.
+	 */
 	struct port_pool
 	{
 		struct port * ports; /**< Pool of ports.      */
@@ -63,9 +65,13 @@
 		int used_ports;      /**< Nr of ports in use. */
 	};
 
-	PUBLIC int portpool_choose_port(const struct port_pool *);
+   /*============================================================================*
+	* Port interface.                                                            *
+	*============================================================================*/
 
-    /**
+	EXTERN int portpool_choose_port(const struct port_pool *);
+
+	/**
 	 * @brief Sets a port as requested.
 	 *
 	 * @param port Target port.

@@ -34,22 +34,17 @@
 
 	#include <nanvix/hal.h>
 	#include <nanvix/const.h>
-    #include <nanvix/hlib.h>
+	#include <nanvix/hlib.h>
 	#include <posix/stdarg.h>
-    #include <posix/errno.h>
+	#include <posix/errno.h>
 
-    /**
-    * @brief Composes the logic address based on @p fd @p port.
-    */
-    #define DO_LADDRESS_COMPOSE(fd, port) (fd * KPORTAL_PORT_NR + port)
+	EXTERN int do_portal_alloc(int, int, int, int);
+	EXTERN int do_portal_release(int);
+	EXTERN ssize_t do_portal_aread(int, const struct active_config *, struct pstats *);
+	EXTERN ssize_t do_portal_awrite(int, const struct active_config *, struct pstats *);
+	EXTERN int do_portal_wait(int, const struct active_config *, struct pstats *);
 
-    EXTERN int do_portal_alloc(int, int, int, int);
-    EXTERN int do_portal_release(int);
-    EXTERN ssize_t do_portal_aread(int, const struct comm_config *, struct pstats *);
-    EXTERN ssize_t do_portal_awrite(int, const struct comm_config *, struct pstats *);
-    EXTERN int do_portal_wait(int, const struct comm_config *, struct pstats *);
-
-    EXTERN void do_portal_init(void);
+	EXTERN void do_portal_init(void);
 
 #endif /* NANVIX_KMAILBOX_H_ */
 

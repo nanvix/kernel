@@ -37,10 +37,20 @@
  * communicator_alloc()                                                       *
  *============================================================================*/
 
+/**
+ * @brief Allocate a communicator resource.
+ *
+ * @param pool   Communicator resource pool.
+ * @param config Communication's configuration.
+ * @param type   Communication type (INPUT or OUTPUT).
+ *
+ * @returns Upon successful completion, the ID of the communicator is
+ * returned. Upon failure, a negative error code is returned instead.
+ */
 PUBLIC int communicator_alloc(
-    const struct communicator_pool * pool,
-    struct comm_config * config,
-    int type
+	const struct communicator_pool * pool,
+	struct active_config * config,
+	int type
 )
 {
 	struct communicator * comm;
@@ -60,11 +70,11 @@ PUBLIC int communicator_alloc(
 				comm->resource = RESOURCE_INITIALIZER;
 				comm->flags    = 0;
 				comm->config   = *config;
-				comm->stats    = (struct pstats){0ULL, 0ULL};
+				comm->stats    = PSTATS_INITIALIZER;
 
 				resource_set_used(&comm->resource);
 
-				if (type == COMM_TYPE_INPUT)
+				if (type == ACTIVE_TYPE_INPUT)
 					resource_set_rdonly(&comm->resource);
 				else
 					resource_set_wronly(&comm->resource);
@@ -85,23 +95,18 @@ PUBLIC int communicator_alloc(
  *============================================================================*/
 
 /**
- * @brief Dumb resource releaser.
+ * @brief Release a communicator resource.
  *
- * @param pool Target generic resource pool.
- * @param id   ID of the target resource.
+ * @param pool Communicator resource pool.
+ * @param id   Communicator ID.
+ * @param type Communication type (INPUT or OUTPUT).
  *
- * @note This function is non-blocking.
- * @note This function is @b NOT thread safe.
- * @note This function is reentrant.
+ * @returns Upon successful completion, zero is returned.
+ * Upon failure, a negative error code is returned instead.
  */
-PUBLIC int communicator_free(
-    const struct communicator_pool *pool,
-    int id,
-    int type,
-    active_free_fn do_free
-)
+PUBLIC int communicator_free(const struct communicator_pool * pool, int id, int type)
 {
-    int ret; /* Function return. */
+	int ret; /* Function return. */
 	struct communicator * comm;
 
 	KASSERT(pool != NULL);
@@ -117,14 +122,14 @@ PUBLIC int communicator_free(
 		if (!resource_is_used(&comm->resource))
 			goto error;
 
-        /* Bad communicator. */
-		if (type == COMM_TYPE_INPUT)
-        {
-            if (!resource_is_readable(&comm->resource))
-                goto error;
-        }
+		/* Bad communicator. */
+		if (type == ACTIVE_TYPE_INPUT)
+		{
+			if (!resource_is_readable(&comm->resource))
+				goto error;
+		}
 
-		/* Bad communicator (COMM_TYPE_OUTPUT). */
+		/* Bad communicator (ACTIVE_TYPE_OUTPUT). */
 		else if (!resource_is_writable(&comm->resource))
 			goto error;
 
@@ -135,7 +140,7 @@ PUBLIC int communicator_free(
 			goto error;
 
 		/* Releases communicator. */
-		if ((ret = do_free(comm->config.fd)) == 0)
+		if ((ret = comm->do_release(comm->config.fd)) == 0)
 			resource_set_unused(&comm->resource);
 
 error:
@@ -145,17 +150,19 @@ error:
 }
 
 /*============================================================================*
- * communicator_operate()                                                         *
+ * communicator_operate()                                                     *
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @brief Call an operation from active resource.
+ *
+ * @param comm Communicator resource.
+ * @param type Communication type (INPUT or OUTPUT).
+ *
+ * @returns Upon successful completion, positive number is returned.
+ * Upon failure, a negative error code is returned instead.
  */
-PUBLIC ssize_t communicator_operate(
-	struct communicator * comm,
-	int type,
-	active_comm_fn do_comm
-)
+PUBLIC ssize_t communicator_operate(struct communicator * comm, int type)
 {
 	ssize_t ret; /* Return value. */
 
@@ -170,7 +177,7 @@ PUBLIC ssize_t communicator_operate(
 			goto error;
 
 		/* Bad communicator. */
-		if (type == COMM_TYPE_INPUT)
+		if (type == ACTIVE_TYPE_INPUT)
 		{
 			if (!resource_is_readable(&comm->resource))
 				goto error;
@@ -181,7 +188,7 @@ PUBLIC ssize_t communicator_operate(
 				goto error;
 		}
 
-		/* Bad communicator (COMM_TYPE_OUTPUT). */
+		/* Bad communicator (ACTIVE_TYPE_OUTPUT). */
 		else if (!resource_is_writable(&comm->resource))
 			goto error;
 
@@ -191,20 +198,20 @@ PUBLIC ssize_t communicator_operate(
 		if (resource_is_busy(&comm->resource))
 			goto error;
 
-		ret = do_comm(
+		ret = comm->do_comm(
 			comm->config.fd,
 			&comm->config,
 			&comm->stats
 		);
 
-        /* Successfully complete communication? */
-        if (ret >= 0)
-        {
-            if (ret == COMM_STATUS_RECEIVED)
-            {
+		/* Successfully complete communication? */
+		if (ret >= 0)
+		{
+			if (ret == ACTIVE_COMM_RECEIVED)
+			{
 				communicator_set_finished(comm);
 				communicator_set_notallowed(comm);
-            }
+			}
 
 			ret = comm->config.size;
 
@@ -223,17 +230,14 @@ error:
  *============================================================================*/
 
 /**
- * @brief Waits on a communicator to finish an assynchronous operation.
+ * @brief Wait an operation on active resource.
  *
- * @param mbxid Logic ID of the target communicator.
+ * @param comm Communicator resource.
  *
- * @returns Upon successful completion, a positive number is returned.
+ * @returns Upon successful completion, zero is returned.
  * Upon failure, a negative error code is returned instead.
  */
-PUBLIC int communicator_wait(
-	struct communicator * comm,
-	active_wait_fn do_wait
-)
+PUBLIC int communicator_wait(struct communicator * comm)
 {
 	int ret; /* Return value. */
 
@@ -266,7 +270,7 @@ PUBLIC int communicator_wait(
 
 	spinlock_unlock(&comm->lock);
 
-	ret = do_wait(
+	ret = comm->do_wait(
 		comm->config.fd,
 		&comm->config,
 		&comm->stats
@@ -275,12 +279,12 @@ PUBLIC int communicator_wait(
 	spinlock_lock(&comm->lock);
 
 		/* Revoke communicator allow. */
-		if (ret == COMM_STATUS_SUCCESS)
+		if (ret == ACTIVE_COMM_SUCCESS)
 			communicator_set_notallowed(comm);
 
 release:
 		comm->config.buffer = NULL;
-        comm->config.size   = 0ULL;
+		comm->config.size   = 0ULL;
 		resource_set_notbusy(&comm->resource);
 	spinlock_unlock(&comm->lock);
 
@@ -288,16 +292,23 @@ release:
 }
 
 /*============================================================================*
- * communicator_ioctl()                                                        *
+ * communicator_ioctl()                                                       *
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @brief Request an I/O operation on a communicator.
+ *
+ * @param comm    Communicator resource.
+ * @param request Type of request.
+ * @param args    Arguments of the request.
+ *
+ * @returns Upon successful completion, zero is returned.
+ * Upon failure, a negative error code is returned instead.
  */
 PUBLIC int communicator_ioctl(
-    struct communicator * comm,
-    unsigned request,
-    va_list args
+	struct communicator * comm,
+	unsigned request,
+	va_list args
 )
 {
 	int ret; /* Return value. */

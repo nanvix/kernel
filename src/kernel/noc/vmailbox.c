@@ -32,7 +32,6 @@
 #include <posix/stdarg.h>
 
 #include "communicator.h"
-#include "active.h"
 #include "mailbox.h"
 
 #if __TARGET_HAS_MAILBOX
@@ -53,7 +52,7 @@
  * @brief Table of virtual mailboxes.
  */
 PRIVATE struct communicator ALIGN(sizeof(dword_t)) virtual_mailboxes[KMAILBOX_MAX] = {
-	[0 ... (KMAILBOX_MAX - 1)] = COMMUNICATOR_INITIALIZER
+	[0 ... (KMAILBOX_MAX - 1)] = COMMUNICATOR_INITIALIZER(do_mailbox_release, NULL, do_mailbox_wait)
 };
 
 /**
@@ -68,10 +67,12 @@ PRIVATE const struct communicator_pool vmbxpool = {
  *============================================================================*/
 
 /**
- * @brief Searches for a free virtual mailbox.
+ * @brief Allocate a virtual mailbox.
  *
- * @param fd    Target mailbox ID.
- * @param port  Target port number on @p fd.
+ * @param local  Local node ID.
+ * @param remote Remote node ID (It can be -1).
+ * @param port   Port ID.
+ * @param type   Communication type (INPUT or OUTPUT).
  *
  * @returns Upon successful completion, the index of the virtual
  * mailbox in virtual_mailboxes tab is returned. Upon failure,
@@ -81,18 +82,16 @@ PRIVATE int do_vmailbox_alloc(int local, int remote, int port, int type)
 {
 	int fd;    /* Active mailbox logic ID. */
 	int mbxid; /* Virtual mailbox ID.      */
-	struct comm_config config;
-
-	if (type == COMM_TYPE_OUTPUT)
-		config.remote = ACTIVE_LADDRESS_COMPOSE(remote, port, MAILBOX_PORT_NR);
-	else
-		config.remote = remote;
+	struct active_config config;
 
 	/* Allocates a physical mailbox port. */
 	if ((fd = do_mailbox_alloc(local, remote, port, type)) < 0)
 		return (fd);
 
-	config.fd = fd;
+	config.fd          = fd;
+	config.remote_addr = (type == ACTIVE_TYPE_OUTPUT) ?
+		ACTIVE_LADDRESS_COMPOSE(remote, port, MAILBOX_PORT_NR) :
+		(-1);
 
 	/* Allocates a communicator. */
 	if ((mbxid = communicator_alloc(&vmbxpool, &config, type)) < 0)
@@ -129,7 +128,7 @@ PUBLIC int do_vmailbox_create(int local, int port)
 			local,
 			-1,
 			port,
-			COMM_TYPE_INPUT
+			ACTIVE_TYPE_INPUT
 		)
 	);
 }
@@ -155,7 +154,7 @@ PUBLIC int do_vmailbox_open(int remote, int remote_port)
 			processor_node_get_num(),
 			remote,
 			remote_port,
-			COMM_TYPE_OUTPUT
+			ACTIVE_TYPE_OUTPUT
 		)
 	);
 }
@@ -174,14 +173,7 @@ PUBLIC int do_vmailbox_open(int remote, int remote_port)
  */
 PUBLIC int do_vmailbox_unlink(int mbxid)
 {
-	return (
-		communicator_free(
-			&vmbxpool,
-			mbxid,
-			COMM_TYPE_INPUT,
-			do_mailbox_release
-		)
-	);
+	return (communicator_free(&vmbxpool, mbxid, ACTIVE_TYPE_INPUT));
 }
 
 /*============================================================================*
@@ -198,14 +190,7 @@ PUBLIC int do_vmailbox_unlink(int mbxid)
  */
 PUBLIC int do_vmailbox_close(int mbxid)
 {
-	return (
-		communicator_free(
-			&vmbxpool,
-			mbxid,
-			COMM_TYPE_OUTPUT,
-			do_mailbox_release
-		)
-	);
+	return (communicator_free(&vmbxpool, mbxid, ACTIVE_TYPE_OUTPUT));
 }
 
 /*============================================================================*
@@ -213,25 +198,27 @@ PUBLIC int do_vmailbox_close(int mbxid)
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @brief Async reads from an virtual mailbox.
+ *
+ * @param mbxid  Virtual mailbox ID.
+ * @param buffer User buffer.
+ * @param size   Size of the buffer.
+ *
+ * @returns Upon successful completion, positive number is returned. Upon
+ * failure, a negative error code is returned instead.
  */
 PUBLIC int do_vmailbox_aread(int mbxid, void * buffer, size_t size)
 {
 	virtual_mailboxes[mbxid].config.buffer = buffer;
 	virtual_mailboxes[mbxid].config.size   = size;
+	virtual_mailboxes[mbxid].do_comm       = do_mailbox_aread;
 
 	/* Dummy allow for mailbox. */
 	spinlock_lock(&virtual_mailboxes[mbxid].lock);
 		communicator_set_allowed(&virtual_mailboxes[mbxid]);
 	spinlock_unlock(&virtual_mailboxes[mbxid].lock);
 
-	return (
-		communicator_operate(
-			&virtual_mailboxes[mbxid],
-			COMM_TYPE_INPUT,
-			do_mailbox_aread
-		)
-	);
+	return (communicator_operate(&virtual_mailboxes[mbxid], ACTIVE_TYPE_INPUT));
 }
 
 /*============================================================================*
@@ -239,20 +226,22 @@ PUBLIC int do_vmailbox_aread(int mbxid, void * buffer, size_t size)
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @brief Async write from an virtual mailbox.
+ *
+ * @param mbxid  Virtual mailbox ID.
+ * @param buffer User buffer.
+ * @param size   Size of the buffer.
+ *
+ * @returns Upon successful completion, positive number is returned. Upon
+ * failure, a negative error code is returned instead.
  */
 PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
 {
 	virtual_mailboxes[mbxid].config.buffer = buffer;
 	virtual_mailboxes[mbxid].config.size   = size;
+	virtual_mailboxes[mbxid].do_comm       = do_mailbox_awrite;
 
-	return (
-		communicator_operate(
-			&virtual_mailboxes[mbxid],
-			COMM_TYPE_OUTPUT,
-			do_mailbox_awrite
-		)
-	);
+	return (communicator_operate(&virtual_mailboxes[mbxid], ACTIVE_TYPE_OUTPUT));
 }
 
 /*============================================================================*
@@ -271,14 +260,9 @@ PUBLIC int do_vmailbox_wait(int mbxid)
 {
 	/* This is only a test. Remove it.*/
 	if (resource_is_readable(&virtual_mailboxes[mbxid].resource))
-		KASSERT(virtual_mailboxes[mbxid].config.remote == -1);
+		KASSERT(virtual_mailboxes[mbxid].config.remote_addr == -1);
 
-	return (
-		communicator_wait(
-			&virtual_mailboxes[mbxid],
-			do_mailbox_wait
-		)
-	);
+	return (communicator_wait(&virtual_mailboxes[mbxid]));
 }
 
 /*============================================================================*
@@ -286,17 +270,18 @@ PUBLIC int do_vmailbox_wait(int mbxid)
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @brief Request an I/O operation on a virtual mailbox.
+ *
+ * @param mbxid   Virtual mailbox ID.
+ * @param request Type of request.
+ * @param args    Arguments of the request.
+ *
+ * @returns Upon successful completion, zero is returned.
+ * Upon failure, a negative error code is returned instead.
  */
 int do_vmailbox_ioctl(int mbxid, unsigned request, va_list args)
 {
-	return (
-		communicator_ioctl(
-			&virtual_mailboxes[mbxid],
-			request,
-			args
-		)
-	);
+	return (communicator_ioctl(&virtual_mailboxes[mbxid], request, args));
 }
 
 /*============================================================================*
@@ -304,7 +289,12 @@ int do_vmailbox_ioctl(int mbxid, unsigned request, va_list args)
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @brief Gets a releated port id to a virtual mailbox.
+ *
+ * @param mbxid Logic ID of the target virtual mailbox.
+ *
+ * @returns Upon successful completion, a positive number is returned.
+ * Upon failure, a negative error code is returned instead.
  */
 int do_vmailbox_get_port(int mbxid)
 {
@@ -343,7 +333,7 @@ PRIVATE void do_virtual_mailboxes_locks_init(void)
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @brief Initializes the mailbox service.
  */
 PUBLIC void kmailbox_init(void)
 {

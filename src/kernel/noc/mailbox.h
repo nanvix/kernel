@@ -34,17 +34,17 @@
 
 	#include <nanvix/hal.h>
 	#include <nanvix/const.h>
-    #include <nanvix/hlib.h>
+	#include <nanvix/hlib.h>
 	#include <posix/stdarg.h>
-    #include <posix/errno.h>
+	#include <posix/errno.h>
 
-    EXTERN int do_mailbox_alloc(int, int, int, int);
-    EXTERN int do_mailbox_release(int);
-    EXTERN ssize_t do_mailbox_aread(int, const struct comm_config *, struct pstats *);
-    EXTERN ssize_t do_mailbox_awrite(int, const struct comm_config *, struct pstats *);
-    EXTERN int do_mailbox_wait(int, const struct comm_config *, struct pstats *);
+	EXTERN int do_mailbox_alloc(int, int, int, int);
+	EXTERN int do_mailbox_release(int);
+	EXTERN ssize_t do_mailbox_aread(int, const struct active_config *, struct pstats *);
+	EXTERN ssize_t do_mailbox_awrite(int, const struct active_config *, struct pstats *);
+	EXTERN int do_mailbox_wait(int, const struct active_config *, struct pstats *);
 
-    EXTERN void do_mailbox_init(void);
+	EXTERN void do_mailbox_init(void);
 
 #endif /* NANVIX_KMAILBOX_H_ */
 
