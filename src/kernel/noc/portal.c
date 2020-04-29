@@ -54,35 +54,17 @@
 /**
  * @brief Portal message buffer.
  */
-PRIVATE union ubuffer
-{
-	struct mbuffer abstract;
-	struct
-	{
-		/*
-		* XXX: Don't Touch! This Must Come First!
-		*/
-		struct resource resource;
-		struct portal_message message;
-	};
-} ubuffers[KPORTAL_MESSAGE_BUFFERS_MAX] = {
-	[0 ... (KPORTAL_MESSAGE_BUFFERS_MAX - 1)] = {
-		.message = {
-			.src  = -1,
-			.dest = -1,
-			.size =  0,
-			.data = {'\0'},
-		},
-	},
+PRIVATE union portal_mbuffer portalbuffers[KPORTAL_MESSAGE_BUFFERS_MAX] = {
+	[0 ... (KPORTAL_MESSAGE_BUFFERS_MAX - 1)] = MBUFFER_INITIALIZER
 };
 
 /**
  * @brief Ubuffer resource pool.
  */
 PRIVATE struct mbuffer_pool ubufferpool = {
-	ubuffers,
+	portalbuffers,
 	KPORTAL_MESSAGE_BUFFERS_MAX,
-	sizeof(union ubuffer),
+	sizeof(union portal_mbuffer),
 	SPINLOCK_UNLOCKED
 };
 
@@ -219,19 +201,19 @@ int wrapper_portal_copy(struct mbuffer * buf, const struct active_config * confi
 {
 	void * to;
 	void * from;
-	union ubuffer * ubuf;
+	union portal_mbuffer * pbuf;
 
-	ubuf = (union ubuffer *) buf;
+	pbuf = (union portal_mbuffer *) buf;
 
 	if (type == ACTIVE_COPY_TO_MBUFFER)
 	{
-		to   = (void *) ubuf->message.data;
+		to   = (void *) pbuf->message.data;
 		from = (void *) config->buffer;
 	}
 	else
 	{
 		to   = (void *) config->buffer;
-		from = (void *) ubuf->message.data;
+		from = (void *) pbuf->message.data;
 	}
 
 	kmemcpy(to, from, config->size);
@@ -253,9 +235,9 @@ int wrapper_portal_copy(struct mbuffer * buf, const struct active_config * confi
  */
 int portal_header_config(struct mbuffer * mbuf, const struct active_config * config)
 {
-	mbuf->message.src  = ACTIVE_LADDRESS_COMPOSE(processor_node_get_num(), GET_LADDRESS_PORT(config->fd), KPORTAL_PORT_NR);
-	mbuf->message.dest = config->remote_addr;
-	mbuf->message.size = config->size;
+	mbuf->message.header.src  = config->local_addr;
+	mbuf->message.header.dest = config->remote_addr;
+	mbuf->message.header.size = config->size;
 
 	return (0);
 }
@@ -274,9 +256,7 @@ int portal_header_config(struct mbuffer * mbuf, const struct active_config * con
  */
 int portal_header_check(struct mbuffer * mbuf, const struct active_config * config)
 {
-	int local_addr = ACTIVE_LADDRESS_COMPOSE(processor_node_get_num(), GET_LADDRESS_PORT(config->fd), KPORTAL_PORT_NR);
-
-	return ((mbuf->message.dest == local_addr) && (mbuf->message.src == config->remote_addr));
+	return ((mbuf->message.header.dest == config->local_addr) && (mbuf->message.header.src == config->remote_addr));
 }
 
 /*============================================================================*

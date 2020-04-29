@@ -57,33 +57,17 @@
 /**
  * @brief Mailbox message buffer.
  */
-PRIVATE union ubuffer
-{
-	struct mbuffer abstract;
-	struct
-	{
-		/*
-		* XXX: Don't Touch! This Must Come First!
-		*/
-		struct resource resource;
-		struct mailbox_message message;
-	};
-} ubuffers[KMAILBOX_MESSAGE_BUFFERS_MAX] = {
-	[0 ... (KMAILBOX_MESSAGE_BUFFERS_MAX - 1)] = {
-		.message = {
-			.dest = -1,
-			.data = {'\0'},
-		},
-	},
+PRIVATE union mailbox_mbuffer mbxbuffers[KMAILBOX_MESSAGE_BUFFERS_MAX] = {
+	[0 ... (KMAILBOX_MESSAGE_BUFFERS_MAX - 1)] = MBUFFER_INITIALIZER
 };
 
 /**
  * @brief Mbuffer resource pool.
  */
-PRIVATE struct mbuffer_pool ubufferpool = {
-	ubuffers,
+PRIVATE struct mbuffer_pool mbxbufferpool = {
+	mbxbuffers,
 	KMAILBOX_MESSAGE_BUFFERS_MAX,
-	sizeof(union ubuffer),
+	sizeof(union mailbox_mbuffer),
 	SPINLOCK_UNLOCKED
 };
 
@@ -141,7 +125,7 @@ struct active mailboxes[HW_MAILBOX_MAX] = {
 			.nelements    = 0,
 			.fifo         = NULL,
 		},
-		.mbufferpool      = &ubufferpool,
+		.mbufferpool      = &mbxbufferpool,
 		.do_create        = mailbox_create,
 		.do_open          = wrapper_mailbox_open,
 		.do_allow         = wrapper_mailbox_allow,
@@ -236,19 +220,19 @@ int wrapper_mailbox_copy(struct mbuffer * buf, const struct active_config * conf
 {
 	void * to;
 	void * from;
-	union ubuffer * ubuf;
+	union mailbox_mbuffer * mbuf;
 
-	ubuf = (union ubuffer *) buf;
+	mbuf = (union mailbox_mbuffer *) buf;
 
 	if (type == ACTIVE_COPY_TO_MBUFFER)
 	{
-		to   = (void *) ubuf->message.data;
+		to   = (void *) mbuf->message.data;
 		from = (void *) config->buffer;
 	}
 	else
 	{
 		to   = (void *) config->buffer;
-		from = (void *) ubuf->message.data;
+		from = (void *) mbuf->message.data;
 	}
 
 	kmemcpy(to, from, config->size);
@@ -270,7 +254,7 @@ int wrapper_mailbox_copy(struct mbuffer * buf, const struct active_config * conf
  */
 int mailbox_header_config(struct mbuffer * mbuf, const struct active_config * config)
 {
-	mbuf->message.dest = config->remote_addr;
+	mbuf->message.header.dest = config->remote_addr;
 
 	return (0);
 }
@@ -289,9 +273,7 @@ int mailbox_header_config(struct mbuffer * mbuf, const struct active_config * co
  */
 int mailbox_header_check(struct mbuffer * mbuf, const struct active_config * config)
 {
-	int local_addr = ACTIVE_LADDRESS_COMPOSE(processor_node_get_num(), GET_LADDRESS_PORT(config->fd), MAILBOX_PORT_NR);
-
-	return (mbuf->message.dest == local_addr);
+	return (mbuf->message.header.dest == config->local_addr);
 }
 
 /*============================================================================*

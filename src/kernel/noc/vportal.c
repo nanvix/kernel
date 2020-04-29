@@ -88,6 +88,7 @@ PRIVATE int do_vportal_alloc(int local, int remote, int port, int type)
 		return (fd);
 
 	config.fd          = fd;
+	config.local_addr  = ACTIVE_LADDRESS_COMPOSE(local, GET_LADDRESS_PORT(fd), KPORTAL_PORT_NR);
 	config.remote_addr = (type == ACTIVE_TYPE_OUTPUT) ?
 		(ACTIVE_LADDRESS_COMPOSE(remote, port, KPORTAL_PORT_NR)) :
 		(-1);

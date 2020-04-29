@@ -32,7 +32,7 @@
 
 #include "mbuffer.h"
 
-#if __TARGET_HAS_MAILBOX
+#if __TARGET_HAS_MAILBOX && __TARGET_HAS_PORTAL
 
 /*============================================================================*
  * mbuffer_alloc()                                                            *
@@ -40,6 +40,8 @@
 
 /**
  * @brief Allocates a message buffer.
+ *
+ * @param pool Mbuffer resource pool.
  *
  * @return Upon successful completion, mbufferid returned. Upon failure,
  * a negative number is returned instead.
@@ -67,8 +69,7 @@ PUBLIC int mbuffer_alloc(struct mbuffer_pool * pool)
 			if (!resource_is_used(&buf->resource))
 			{
 				buf->resource = RESOURCE_INITIALIZER;
-				buf->message.dest = -1;
-				kmemset(buf->message.data, '\0', MBUFFER_DEFAULT_DATA_SIZE);
+				buf->message  = MBUFFER_MESSAGE_INITIALIZER;
 
 				resource_set_used(&buf->resource);
 
@@ -87,10 +88,11 @@ PUBLIC int mbuffer_alloc(struct mbuffer_pool * pool)
  *============================================================================*/
 
 /**
- * @brief Releases the message buffer allocated to @p mbxid.
+ * @brief Releases the message buffer allocated to @p id.
  *
- * @param mbufferid mbuffer id to release.
- * @param keep_msg  Keep / Discard the mbuffer message?
+ * @param pool     Mbuffer resource pool.
+ * @param id       mbuffer id to release.
+ * @param keep_msg Keep / Discard the mbuffer message?
  *
  * @return Upon successful completion, zero is returned. Upon failure,
  * a negative number is returned instead.
@@ -123,8 +125,7 @@ PUBLIC int mbuffer_release(struct mbuffer_pool * pool, int id, int keep_msg)
 		/* Frees the mbuffer resource. */
 		else
 		{
-			buf->message.dest = -1;
-			kmemset(buf->message.data, '\0', MBUFFER_DEFAULT_DATA_SIZE);
+			buf->message = MBUFFER_MESSAGE_INITIALIZER;
 			resource_set_unused(&buf->resource);
 		}
 
@@ -141,7 +142,9 @@ PUBLIC int mbuffer_release(struct mbuffer_pool * pool, int id, int keep_msg)
 /**
  * @brief Searches for a stored message destinated to @p local_address.
  *
- * @param local_address Local HW address for which the messages come.
+ * @param pool Mbuffer resource pool.
+ * @param dest Destination of the message.
+ * @param srt  Source of the message.
  *
  * @returns Upon successful completion, the mbuffer that contains the first
  * message found is returned. A negative error number is returned instead.
@@ -178,11 +181,11 @@ PUBLIC int mbuffer_search(struct mbuffer_pool * pool, int dest, int src)
 				continue;
 
 			/* Is this message addressed to the dest? */
-			if (buf->message.dest != dest)
+			if (buf->message.header.dest != dest)
 				continue;
 
 			/* Is the message sender the expected? */
-			if (src != -1 && buf->message.src != src)
+			if (src != -1 && buf->message.header.src != src)
 				continue;
 
 			ret = i;
@@ -195,6 +198,18 @@ PUBLIC int mbuffer_search(struct mbuffer_pool * pool, int dest, int src)
 	return (ret);
 }
 
+/*============================================================================*
+ * mbuffer_get()                                                              *
+ *============================================================================*/
+
+/**
+ * @brief Gets a mbuffer struct pointer.
+ *
+ * @param pool Mbuffer resource pool.
+ * @param id Mbuffer ID.
+ *
+ * @returns Upon successful completion, A mbuffer pointer is returned.
+ */
 PUBLIC struct mbuffer * mbuffer_get(struct mbuffer_pool * pool, int id)
 {
 	char * base;
@@ -209,4 +224,4 @@ PUBLIC struct mbuffer * mbuffer_get(struct mbuffer_pool * pool, int id)
 	return (struct mbuffer *)(&base[mult(id, size)]);
 }
 
-#endif /* __TARGET_HAS_MAILBOX */
+#endif /* __TARGET_HAS_MAILBOX && __TARGET_HAS_PORTAL */

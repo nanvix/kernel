@@ -47,51 +47,116 @@
 	#define MBUFFER_KEEP_MESSAGE    (1) /**< Keep message intact.                      */
 	/**@}*/
 
-	#define MBUFFER_DEFAULT_DATA_SIZE (2 * sizeof(int) + sizeof(char))
+	/**
+	 * @brief Size of the mbuffer message header.
+	 */
+	#define MBUFFER_HEADER_SIZE sizeof(struct mbuffer_header)
 
-	struct mailbox_message
-	{
-		int dest; /* Data destination. */
-		char data[KMAILBOX_MESSAGE_SIZE];
-	};
+	/**
+	 * @brief Mbuffer message initializer.
+	 */
+	#define MBUFFER_MESSAGE_INITIALIZER (struct mbuffer_message){ \
+		.header = {-1, -1, 0},                                    \
+		.data   = '\0',                                           \
+	}
 
-	struct portal_message
-	{
-		int dest;          /* Data destination.  */
-		int src;           /* Data sender.       */
-		unsigned int size; /* Message data size. */
-		char data[HAL_PORTAL_MAX_SIZE];
-	};
+	/**
+	 * @brief Mbuffer initializer.
+	 */
+	#define MBUFFER_INITIALIZER {                   \
+		.abstract = {                               \
+			.resource = RESOURCE_INITIALIZER,       \
+			.message  = MBUFFER_MESSAGE_INITIALIZER \
+		}                                           \
+	}
 
-	struct mbuffer_message
+	/*============================================================================*
+	 * Auxiliar Structures.                                                       *
+	 *============================================================================*/
+
+	/**
+	 * @brief Mbuffer header.
+	 */
+	struct mbuffer_header
 	{
-		int dest;
-		union
-		{
-			struct
-			{
-				int src;
-				int size;
-				char pdata[MBUFFER_DEFAULT_DATA_SIZE - sizeof(int)];
-			};
-			char data[MBUFFER_DEFAULT_DATA_SIZE];
-		};
+		int dest; /* Data sender.       */
+		int src;  /* Data destination.  */
+		int size; /* Message data size. */
 	};
 
 	/**
-	 * @brief Mailbox message buffer.
+	 * @brief Abstract mbuffer message.
+	 */
+	struct mbuffer_message
+	{
+		struct mbuffer_header header; /* Header.     */
+		char data;                    /* First data. */
+	};
+
+	/*============================================================================*
+	 * Mbuffers structures.                                                       *
+	 *============================================================================*/
+
+	/**
+	 * @brief Mailbox message.
+	 */
+	struct mailbox_message
+	{
+		struct mbuffer_header header;                          /* Header. */
+		char data[HAL_MAILBOX_MSG_SIZE - MBUFFER_HEADER_SIZE]; /* Data.   */
+	};
+
+	/**
+	 * @brief Portal message.
+	 */
+	struct portal_message
+	{
+		struct mbuffer_header header;   /* Header. */
+		char data[HAL_PORTAL_MAX_SIZE]; /* Data.   */
+	};
+
+	/**
+	 * @brief Abstract mbuffer.
 	 */
 	struct mbuffer
 	{
 		/*
 		 * XXX: Don't Touch! This Must Come First!
 		 */
-		struct resource resource; /**< Generic resource information. */
+		struct resource resource;       /**< Generic resource information.   */
+		struct mbuffer_message message; /**< Structure that holds a message. */
+	};
 
-		/**
-		 * @brief Structure that holds a message.
-		 */
-		struct mbuffer_message message;
+	/**
+	 * @brief Mailbox mbuffer.
+	 */
+	union mailbox_mbuffer
+	{
+		struct mbuffer abstract;
+		struct
+		{
+			/*
+			* XXX: Don't Touch! This Must Come First!
+			*/
+			struct resource resource;       /**< Generic resource information. */
+			struct mailbox_message message; /**< Structure that holds a message. */
+		};
+	};
+
+	/**
+	 * @brief Portal mbuffer.
+	 */
+	union portal_mbuffer
+	{
+		struct mbuffer abstract;
+		struct
+		{
+			/*
+			* XXX: Don't Touch! This Must Come First!
+			*/
+			struct resource resource;       /**< Generic resource information. */
+			struct portal_message message; /**< Structure that holds a message. */
+		};
 	};
 
 	/**
