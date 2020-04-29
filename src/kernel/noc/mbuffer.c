@@ -51,6 +51,7 @@ PUBLIC int mbuffer_alloc(struct mbuffer_pool * pool)
 	int n = pool->nmbuffers;
 	size_t size = pool->mbuffer_size;
 
+	KASSERT(pool != NULL);
 	ret = (-EINVAL);
 
 	spinlock_lock(&pool->lock);
@@ -96,11 +97,16 @@ PUBLIC int mbuffer_alloc(struct mbuffer_pool * pool)
  */
 PUBLIC int mbuffer_release(struct mbuffer_pool * pool, int id, int keep_msg)
 {
-	char *base = (char *) pool->mbuffers;
-	size_t size = pool->mbuffer_size;
+	char * base;
+	size_t size;
 	struct mbuffer * buf;
 
-	buf = (struct mbuffer *)(&base[mult(id, size)]);
+	KASSERT(pool != NULL);
+	KASSERT(WITHIN(id, 0, pool->nmbuffers));
+
+	base = (char *) pool->mbuffers;
+	size = pool->mbuffer_size;
+	buf  = (struct mbuffer *)(&base[mult(id, size)]);
 
 	spinlock_lock(&pool->lock);
 
@@ -143,11 +149,16 @@ PUBLIC int mbuffer_release(struct mbuffer_pool * pool, int id, int keep_msg)
 PUBLIC int mbuffer_search(struct mbuffer_pool * pool, int dest, int src)
 {
 	int ret;
-	char *base = (char *) pool->mbuffers;
-	int n = pool->nmbuffers;
-	size_t size = pool->mbuffer_size;
+	char * base;
+	int n;
+	size_t size;
 
-	ret = (-EINVAL);
+	KASSERT(pool != NULL);
+
+	base = (char *) pool->mbuffers;
+	n    = pool->nmbuffers;
+	size = pool->mbuffer_size;
+	ret  = (-EINVAL);
 
 	/* Locks the mbuffers table. */
 	spinlock_lock(&pool->lock);
@@ -186,8 +197,14 @@ PUBLIC int mbuffer_search(struct mbuffer_pool * pool, int dest, int src)
 
 PUBLIC struct mbuffer * mbuffer_get(struct mbuffer_pool * pool, int id)
 {
-	char *base = (char *) pool->mbuffers;
-	size_t size = pool->mbuffer_size;
+	char * base;
+	size_t size;
+
+	KASSERT(pool != NULL);
+	KASSERT(WITHIN(id, 0, pool->nmbuffers));
+
+	base = (char *) pool->mbuffers;
+	size = pool->mbuffer_size;
 
 	return (struct mbuffer *)(&base[mult(id, size)]);
 }

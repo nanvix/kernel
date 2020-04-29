@@ -30,8 +30,6 @@
 #include <nanvix/hlib.h>
 #include <posix/errno.h>
 
-#include "communicator.h"
-#include "mbuffer.h"
 #include "active.h"
 #include "portal.h"
 
@@ -110,6 +108,12 @@ PRIVATE struct port ports[HW_PORTAL_MAX][KPORTAL_PORT_NR] = {
 	}
 };
 
+PRIVATE short fifos[HW_PORTAL_MAX][KPORTAL_PORT_NR] = {
+	[0 ... (HW_PORTAL_MAX - 1)] = {
+		[0 ... (KPORTAL_PORT_NR - 1)] = -1,
+	}
+};
+
 /**
  * @brief Table of active portals.
  */
@@ -121,9 +125,17 @@ struct active portals[HW_PORTAL_MAX] = {
 		.remote     = -1,
 		.refcount   =  0,
 		.size       = (KPORTAL_MESSAGE_HEADER_SIZE + HAL_PORTAL_MAX_SIZE),
-		.portpool   = {
-			.ports  = NULL,
-			.nports = KPORTAL_PORT_NR,
+		.portpool       = {
+			.ports      = NULL,
+			.nports     = KPORTAL_PORT_NR,
+			.used_ports = 0,
+		},
+		.requests         = {
+			.head         = 0,
+			.tail         = 0,
+			.max_capacity = KPORTAL_PORT_NR,
+			.nelements    = 0,
+			.fifo         = NULL,
 		},
 		.mbufferpool      = &ubufferpool,
 		.do_create        = portal_create,
@@ -160,6 +172,7 @@ void do_portal_table_init(void)
 		spinlock_init(&portals[i].lock);
 
 		portals[i].portpool.ports = ports[i];
+		portals[i].requests.fifo  = fifos[i];
 	}
 }
 

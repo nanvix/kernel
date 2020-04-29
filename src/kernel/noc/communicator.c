@@ -45,6 +45,8 @@ PUBLIC int communicator_alloc(
 {
 	struct communicator * comm;
 
+	KASSERT(pool != NULL);
+
 	/* Search for a free synchronization point. */
 	for (int i = 0; i < pool->ncommunicators; i++)
 	{
@@ -56,6 +58,7 @@ PUBLIC int communicator_alloc(
 			if (!resource_is_used(&comm->resource))
 			{
 				comm->resource = RESOURCE_INITIALIZER;
+				comm->flags    = 0;
 				comm->config   = *config;
 				comm->stats    = (struct pstats){0ULL, 0ULL};
 
@@ -100,6 +103,9 @@ PUBLIC int communicator_free(
 {
     int ret; /* Function return. */
 	struct communicator * comm;
+
+	KASSERT(pool != NULL);
+	KASSERT(WITHIN(id, 0, pool->ncommunicators));
 
 	comm = &pool->communicators[id];
 
@@ -152,6 +158,8 @@ PUBLIC ssize_t communicator_operate(
 )
 {
 	ssize_t ret; /* Return value. */
+
+	KASSERT(comm != NULL);
 
 	spinlock_lock(&comm->lock);
 
@@ -229,6 +237,8 @@ PUBLIC int communicator_wait(
 {
 	int ret; /* Return value. */
 
+	KASSERT(comm != NULL);
+
 	spinlock_lock(&comm->lock);
 
 		/* Bad communicator. */
@@ -291,6 +301,8 @@ PUBLIC int communicator_ioctl(
 )
 {
 	int ret; /* Return value. */
+
+	KASSERT(comm != NULL);
 
 	spinlock_lock(&comm->lock);
 

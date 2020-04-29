@@ -39,13 +39,14 @@
 	#include <posix/stdarg.h>
 
 	#include "mbuffer.h"
+	#include "port.h"
 	#include "communicator.h"
 
 	/**
 	 * @brief Resource flags.
 	 */
 	/**@{*/
-	#define ACTIVE_FLAGS_ALLOWED  ((RESOURCE_FLAGS_MAPPED) << 1) /**< Has it been allowed? */
+	#define ACTIVE_FLAGS_ALLOWED (1 << 0) /**< Has it been allowed? */
 	/**@}*/
 
 	/**
@@ -89,30 +90,20 @@
     /**@}*/
 
 	/**
-	* @brief Struct that represents a port abstraction.
-	*/
-	struct port
+	 * @brief Circular FIFO to hold write requests.
+	 */
+	struct requests_fifo
 	{
-		/*
-		* XXX: Don't Touch! This Must Come First!
-		*/
-		struct resource resource; /**< Generic resource information. */
-
-		/**
-		* @brief Operation Variables
-		*/
-		short mbufferid; /* Kernel mbufferid. */
-	};
-
-	struct port_pool
-	{
-		struct port * ports; /**< Pool of ports.   */
-		const int nports;    /**< Number of ports. */
+		short head;         /**< Index of the first element. */
+		short tail;         /**< Index of the last element.  */
+		short max_capacity; /**< Max number of elements.     */
+		short nelements;    /**< Nr of elements in the fifo. */
+		short * fifo;       /**< Buffer to store elements.   */
 	};
 
 	/**
-	* @brief Table of active mailboxes.
-	*/
+	 * @brief Table of active mailboxes.
+	 */
 	struct active
 	{
 		/*
@@ -120,6 +111,7 @@
 		*/
 		struct resource resource; /**< Generic resource information. */
 
+		int flags;                /**< Auxiliar flags.               */
 		int hwfd;                 /**< Underlying file descriptor.   */
 		int local;                /**< Target node number.           */
 		int remote;               /**< Target node number.           */
@@ -129,6 +121,7 @@
 
 		struct port_pool portpool;
 		struct mbuffer_pool * mbufferpool;
+		struct requests_fifo requests;
 	
 		const hw_create_fn do_create;
 		const hw_open_fn do_open;
@@ -165,7 +158,7 @@
 	 */
 	static inline void active_set_allowed(struct active * active)
 	{
-		active->resource.flags |= ACTIVE_FLAGS_ALLOWED;
+		active->flags |= ACTIVE_FLAGS_ALLOWED;
 	}
 
 	/**
@@ -175,7 +168,7 @@
 	 */
 	static inline void active_set_notallowed(struct active * active)
 	{
-		active->resource.flags &= ~ACTIVE_FLAGS_ALLOWED;
+		active->flags &= ~ACTIVE_FLAGS_ALLOWED;
 	}
 
 	/**
@@ -187,7 +180,7 @@
 	 */
 	static inline int active_is_allowed(const struct active * active)
 	{
-		return (active->resource.flags & ACTIVE_FLAGS_ALLOWED);
+		return (active->flags & ACTIVE_FLAGS_ALLOWED);
 	}
 
 #endif /* NANVIX_NOC_ACTIVE_H_ */

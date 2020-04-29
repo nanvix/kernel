@@ -43,8 +43,8 @@
 	 * @brief Resource flags.
 	 */
 	/**@{*/
-	#define COMMUNICATOR_FLAGS_FINISHED ((RESOURCE_FLAGS_MAPPED) << 1) /**< Has it finished?     */
-	#define COMMUNICATOR_FLAGS_ALLOWED  ((RESOURCE_FLAGS_MAPPED) << 2) /**< Has it been allowed? */
+	#define COMMUNICATOR_FLAGS_FINISHED (1 << 0) /**< Has it finished?     */
+	#define COMMUNICATOR_FLAGS_ALLOWED  (1 << 1) /**< Has it been allowed? */
 	/**@}*/
 
     #define COMM_IOCTL_GET_VOLUME  (MAILBOX_IOCTL_GET_VOLUME)
@@ -88,6 +88,7 @@
          */
         struct resource resource;  /**< Generic resource information.            */
 
+        int flags;                 /**< Auxiliar flags.                          */
         struct comm_config config; /**< Communicaton configuration.              */
         struct pstats stats;       /**< Performance Statistics.                  */
 
@@ -125,7 +126,7 @@
 	 */
 	static inline void communicator_set_finished(struct communicator *comm)
 	{
-		comm->resource.flags |= COMMUNICATOR_FLAGS_FINISHED;
+		comm->flags |= COMMUNICATOR_FLAGS_FINISHED;
 	}
 
 	/**
@@ -135,7 +136,7 @@
 	 */
 	static inline void communicator_set_notfinished(struct communicator *comm)
 	{
-		comm->resource.flags &= ~COMMUNICATOR_FLAGS_FINISHED;
+		comm->flags &= ~COMMUNICATOR_FLAGS_FINISHED;
 	}
 
     /**
@@ -145,7 +146,7 @@
 	 */
 	static inline void communicator_set_allowed(struct communicator *comm)
 	{
-		comm->resource.flags |= COMMUNICATOR_FLAGS_ALLOWED;
+		comm->flags |= COMMUNICATOR_FLAGS_ALLOWED;
 	}
 
 	/**
@@ -155,7 +156,7 @@
 	 */
 	static inline void communicator_set_notallowed(struct communicator *comm)
 	{
-		comm->resource.flags &= ~COMMUNICATOR_FLAGS_ALLOWED;
+		comm->flags &= ~COMMUNICATOR_FLAGS_ALLOWED;
 	}
 
     /**
@@ -167,7 +168,7 @@
 	 */
 	static inline int communicator_is_finished(const struct communicator *comm)
 	{
-		return (comm->resource.flags & COMMUNICATOR_FLAGS_FINISHED);
+		return (comm->flags & COMMUNICATOR_FLAGS_FINISHED);
 	}
 
 	/**
@@ -179,7 +180,7 @@
 	 */
 	static inline int communicator_is_allowed(const struct communicator *comm)
 	{
-		return (comm->resource.flags & COMMUNICATOR_FLAGS_ALLOWED);
+		return (comm->flags & COMMUNICATOR_FLAGS_ALLOWED);
 	}
 
 #endif /* NANVIX_NOC_COMMUNICATOR_H_ */
