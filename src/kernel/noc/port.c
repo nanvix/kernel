@@ -47,7 +47,8 @@
 PUBLIC int portpool_choose_port(const struct port_pool * pool)
 {
 	int ret; /* Return value. */
-
+	
+	KASSERT(pool != NULL);
 	ret = (-EINVAL);
 
 	/* Checks if can exist an available port. */

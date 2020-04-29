@@ -46,7 +46,7 @@
 	 * @brief Resource flags.
 	 */
 	/**@{*/
-	#define ACTIVE_FLAGS_ALLOWED  ((RESOURCE_FLAGS_MAPPED) << 1) /**< Has it been allowed? */
+	#define ACTIVE_FLAGS_ALLOWED (1 << 0) /**< Has it been allowed? */
 	/**@}*/
 
 	/**
@@ -111,6 +111,7 @@
 		*/
 		struct resource resource; /**< Generic resource information. */
 
+		int flags;                /**< Auxiliar flags.               */
 		int hwfd;                 /**< Underlying file descriptor.   */
 		int local;                /**< Target node number.           */
 		int remote;               /**< Target node number.           */
@@ -157,7 +158,7 @@
 	 */
 	static inline void active_set_allowed(struct active * active)
 	{
-		active->resource.flags |= ACTIVE_FLAGS_ALLOWED;
+		active->flags |= ACTIVE_FLAGS_ALLOWED;
 	}
 
 	/**
@@ -167,7 +168,7 @@
 	 */
 	static inline void active_set_notallowed(struct active * active)
 	{
-		active->resource.flags &= ~ACTIVE_FLAGS_ALLOWED;
+		active->flags &= ~ACTIVE_FLAGS_ALLOWED;
 	}
 
 	/**
@@ -179,7 +180,7 @@
 	 */
 	static inline int active_is_allowed(const struct active * active)
 	{
-		return (active->resource.flags & ACTIVE_FLAGS_ALLOWED);
+		return (active->flags & ACTIVE_FLAGS_ALLOWED);
 	}
 
 #endif /* NANVIX_NOC_ACTIVE_H_ */

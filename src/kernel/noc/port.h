@@ -35,7 +35,7 @@
 	 * @brief Resource flags.
 	 */
 	/**@{*/
-	#define PORT_FLAGS_REQUESTED ((RESOURCE_FLAGS_MAPPED) << 1) /**< Has it requested an op? */
+	#define PORT_FLAGS_REQUESTED (1 << 0) /**< Has it requested an op? */
 	/**@}*/
 
    /*============================================================================*
@@ -52,10 +52,8 @@
 		*/
 		struct resource resource; /**< Generic resource information. */
 
-		/**
-		* @brief Operation Variables
-		*/
-		short mbufferid; /* Kernel mbufferid. */
+		short flags;              /* Auxiliar flags.                 */
+		short mbufferid;          /* Mbuffer id.                     */
 	};
 
 	struct port_pool
@@ -74,7 +72,7 @@
 	 */
 	static inline void port_set_requested(struct port * port)
 	{
-		port->resource.flags |= PORT_FLAGS_REQUESTED;
+		port->flags |= PORT_FLAGS_REQUESTED;
 	}
 
 	/**
@@ -84,7 +82,7 @@
 	 */
 	static inline void port_set_notrequested(struct port * port)
 	{
-		port->resource.flags &= ~PORT_FLAGS_REQUESTED;
+		port->flags &= ~PORT_FLAGS_REQUESTED;
 	}
 
 	/**
@@ -96,7 +94,7 @@
 	 */
 	static inline int port_is_requested(const struct port * port)
 	{
-		return (port->resource.flags & PORT_FLAGS_REQUESTED);
+		return (port->flags & PORT_FLAGS_REQUESTED);
 	}
 
 #endif /* NANVIX_NOC_PORT_H_ */

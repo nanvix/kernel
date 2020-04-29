@@ -37,6 +37,26 @@
  *============================================================================*/
 
 /**
+ * @brief Compute @p x % @p y where @p y must be a power-of-2 (1, 2, 4, 8, ...).
+ *
+ * @param n Operator
+ * @param m Module factor.
+ *
+ * @returns @p x % @p y.
+ */
+PRIVATE int modulus_power2(int x, int y)
+{
+	/* y must be a power-of-2. */
+	KASSERT((y & (y - 1)) == 0);
+
+	return (x & (y - 1));
+}
+
+/*============================================================================*
+ * do_register_request()                                                      *
+ *============================================================================*/
+
+/**
  * @brief Request a operation for @p mbxid on the physical mailbox @p fd.
  *
  * @param mbxid Virtual mailbox ID.
@@ -61,7 +81,7 @@ PRIVATE int do_request_operation(struct active * active, int port)
 	requests->fifo[head] = port;
 
 	/* Updates head. */
-	requests->head = (head + 1) % requests->max_capacity;
+	requests->head = modulus_power2((head + 1), requests->max_capacity);
 	requests->nelements++;
 
 	return (0);
@@ -95,7 +115,7 @@ PRIVATE int do_request_complete(struct active * active, int port)
 
 	/* Complete the request. */
 	requests->fifo[tail] = -1;
-	requests->tail = (tail + 1) % requests->max_capacity;
+	requests->tail = modulus_power2((tail + 1), requests->max_capacity);
 	requests->nelements--;
 
 	return (0);
@@ -124,6 +144,42 @@ PRIVATE int do_request_verify(struct active * active, int port)
 /*============================================================================*
  * Physical mailbox functions                                                 *
  *============================================================================*/
+
+/*============================================================================*
+ * active_search()                                                            *
+ *============================================================================*/
+
+/**
+ * @brief Searches for an active HW mailbox.
+ *
+ * Searches for a mailbox in the table of active mailboxes.
+ *
+ * @param nodenum Logic ID of the requesting node.
+ * @param type    Type of the searched resource.
+ *
+ * @returns Upon successful completion, the ID of the mailbox found is
+ * returned. Upon failure, a negative error code is returned instead.
+ */
+PRIVATE int active_valid_call(const struct active_pool * pool, const int fd)
+{
+	int actid;
+	int portid;
+
+	/* Valid pool pointer. */
+	if (pool == NULL)
+		return (0);
+
+	actid = ACTIVE_GET_LADDRESS_FD(pool->actives, fd);
+
+	/* Active ID. */
+	if (!WITHIN(actid, 0, pool->nactives))
+		return (0);
+
+	portid = ACTIVE_GET_LADDRESS_PORT(pool->actives, fd);
+
+	/* Port ID. */
+	return (WITHIN(portid, 0, ACTIVE_GET_NR_PORTS((&pool->actives[actid]))));
+}
 
 /*============================================================================*
  * active_search()                                                            *
@@ -166,6 +222,8 @@ PRIVATE int active_search(
 )
 {
 	struct active * active;
+
+	KASSERT(pool != NULL);
 
 	/* Search for a free synchronization point. */
 	for (int i = 0; i < pool->nactives; i++)
@@ -234,6 +292,7 @@ PUBLIC int active_alloc(
 	struct active * active;
 	struct port_pool * portpool;
 
+	KASSERT(pool != NULL);
 	ret = (-EINVAL);
 
 	/* Search target hardware mailbox. */
@@ -265,9 +324,10 @@ PUBLIC int active_alloc(
 		if (!resource_is_used(&port->resource))
 		{
 			/* Initialize mailbox. */
+			port->flags = 0;
 			resource_set_used(&port->resource);
-			active->refcount++;
 
+			active->refcount++;
 			portpool->used_ports++;
 
 			ret = ACTIVE_LADDRESS_COMPOSE(actid, portid, ACTIVE_GET_NR_PORTS(active));
@@ -296,6 +356,8 @@ PUBLIC int active_release(const struct active_pool * pool, int id)
 	struct port * port;
 	struct active * active;
 	struct port_pool * portpool;
+
+	KASSERT(active_valid_call(pool, id));
 
 	active = &pool->actives[ACTIVE_GET_LADDRESS_FD(pool->actives, id)];
 	portpool = &active->portpool;
@@ -361,6 +423,8 @@ PUBLIC ssize_t active_aread(
 	struct port * port;
 	struct mbuffer * buf;
 	struct active * active;
+
+	KASSERT(active_valid_call(pool, id));
 
 	active = &pool->actives[ACTIVE_GET_LADDRESS_FD(pool->actives, id)];
 	port   = &active->portpool.ports[ACTIVE_GET_LADDRESS_PORT(active, id)];
@@ -474,7 +538,7 @@ PUBLIC ssize_t active_awrite(
 	struct pstats * stats
 )
 {
-	ssize_t ret;       /* Return value.                   */
+	ssize_t ret;    /* Return value.                  */
 	int mbufferid; /* Message buffer used to write.   */
 	uint64_t t1;   /* Clock value before awrite call. */
 	uint64_t t2;   /* Clock value after awrite call.  */
@@ -482,6 +546,8 @@ PUBLIC ssize_t active_awrite(
 	struct port * port;
 	struct mbuffer * buf;
 	struct active * active;
+
+	KASSERT(active_valid_call(pool, id));
 
 	active = &pool->actives[ACTIVE_GET_LADDRESS_FD(pool->actives, id)];
 
@@ -605,6 +671,8 @@ PUBLIC int active_wait(
 	struct port * port;
 	struct mbuffer * buf;
 	struct active * active;
+
+	KASSERT(active_valid_call(pool, id));
 
 	active = &pool->actives[ACTIVE_GET_LADDRESS_FD(pool->actives, id)];
 
@@ -740,6 +808,8 @@ PUBLIC int active_create(const struct active_pool * pool, int local)
 	int actid;    /* Mailbox ID.      */
 	struct active * active;
 
+	KASSERT(pool != NULL);
+
 	/* Search target hardware mailbox. */
 	if ((actid = active_search(pool, local, -1, COMM_TYPE_INPUT)) >= 0)
 		return (-EBUSY);
@@ -756,6 +826,7 @@ PUBLIC int active_create(const struct active_pool * pool, int local)
 	}
 
 	/* Initialize hardware mailbox. */
+	active->flags    = 0;
 	active->hwfd     = hwfd;
 	active->local    = local;
 	active->remote   = -1;
@@ -767,7 +838,7 @@ PUBLIC int active_create(const struct active_pool * pool, int local)
 }
 
 /*============================================================================*
- * active_open()                                                         *
+ * active_open()                                                              *
  *============================================================================*/
 
 /**
@@ -784,6 +855,8 @@ PUBLIC int active_open(const struct active_pool * pool, int local, int remote)
 	int hwfd;   /* Mailbox ID.      */
 	int actid; /* File descriptor. */
 	struct active * active;
+
+	KASSERT(pool != NULL);
 
 	/* Search target hardware mailbox. */
 	if ((actid = active_search(pool, local, remote, COMM_TYPE_OUTPUT)) >= 0)
@@ -808,6 +881,7 @@ PUBLIC int active_open(const struct active_pool * pool, int local, int remote)
 		return (-EINVAL);
 
 	/* Initialize hardware mailbox. */
+	active->flags    = 0;
 	active->hwfd     = hwfd;
 	active->refcount = 0;
 	active->local    = local;
