@@ -62,11 +62,21 @@ PRIVATE union mailbox_mbuffer mbxbuffers[KMAILBOX_MESSAGE_BUFFERS_MAX] = {
 };
 
 /**
- * @brief Mbuffer resource pool.
+ * @brief Principal mbuffer resource pool.
  */
-PRIVATE struct mbuffer_pool mbxbufferpool = {
+PRIVATE struct mbuffer_pool bufferpool = {
 	mbxbuffers,
-	KMAILBOX_MESSAGE_BUFFERS_MAX,
+	(KMAILBOX_MESSAGE_BUFFERS_MAX - KMAILBOX_AUX_BUFFERS_MAX),
+	sizeof(union mailbox_mbuffer),
+	SPINLOCK_UNLOCKED
+};
+
+/**
+ * @brief Auxiliar mbuffer pool.
+ */
+PRIVATE struct mbuffer_pool aux_bufferpool = {
+	mbxbuffers + (KMAILBOX_MESSAGE_BUFFERS_MAX - KMAILBOX_AUX_BUFFERS_MAX),
+	KMAILBOX_AUX_BUFFERS_MAX,
 	sizeof(union mailbox_mbuffer),
 	SPINLOCK_UNLOCKED
 };
@@ -87,8 +97,9 @@ int mailbox_header_check(struct mbuffer *, const struct active_config *);
 PRIVATE struct port ports[HW_MAILBOX_MAX][MAILBOX_PORT_NR] = {
 	[0 ... (HW_MAILBOX_MAX - 1)] = {
 		[0 ... (MAILBOX_PORT_NR - 1)] = {
-			.resource  = {0, },
-			.mbufferid = -1,
+			.resource    = {0, },
+			.mbufferid   = -1,
+			.mbufferpool = NULL,
 		}
 	}
 };
@@ -125,7 +136,8 @@ struct active mailboxes[HW_MAILBOX_MAX] = {
 			.nelements    = 0,
 			.fifo         = NULL,
 		},
-		.mbufferpool      = &mbxbufferpool,
+		.mbufferpool      = &bufferpool,
+		.aux_bufferpool   = &aux_bufferpool,
 		.do_create        = mailbox_create,
 		.do_open          = wrapper_mailbox_open,
 		.do_allow         = wrapper_mailbox_allow,

@@ -54,7 +54,7 @@ PUBLIC int mbuffer_alloc(struct mbuffer_pool * pool)
 	size_t size = pool->mbuffer_size;
 
 	KASSERT(pool != NULL);
-	ret = (-EINVAL);
+	ret = (-EBUSY);
 
 	spinlock_lock(&pool->lock);
 
@@ -125,8 +125,8 @@ PUBLIC int mbuffer_release(struct mbuffer_pool * pool, int id, int keep_msg)
 		/* Frees the mbuffer resource. */
 		else
 		{
-			buf->message = MBUFFER_MESSAGE_INITIALIZER;
-			resource_set_unused(&buf->resource);
+			buf->resource = RESOURCE_INITIALIZER;
+			buf->message  = MBUFFER_MESSAGE_INITIALIZER;
 		}
 
 	/* Unlocks the mbuffers table. */

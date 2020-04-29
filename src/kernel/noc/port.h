@@ -53,6 +53,7 @@
 		struct resource resource; /**< Generic resource information. */
 		short flags;              /**< Auxiliar flags.               */
 		short mbufferid;          /**< Mbuffer ID.                   */
+		void * mbufferpool;       /**< Mbuffer pool.                 */
 	};
 
 	/**

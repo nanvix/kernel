@@ -61,9 +61,19 @@ PRIVATE union portal_mbuffer portalbuffers[KPORTAL_MESSAGE_BUFFERS_MAX] = {
 /**
  * @brief Ubuffer resource pool.
  */
-PRIVATE struct mbuffer_pool ubufferpool = {
+PRIVATE struct mbuffer_pool bufferpool = {
 	portalbuffers,
-	KPORTAL_MESSAGE_BUFFERS_MAX,
+	(KPORTAL_MESSAGE_BUFFERS_MAX - KPORTAL_AUX_BUFFERS_MAX),
+	sizeof(union portal_mbuffer),
+	SPINLOCK_UNLOCKED
+};
+
+/**
+ * @brief Ubuffer resource pool.
+ */
+PRIVATE struct mbuffer_pool aux_bufferpool = {
+	portalbuffers + (KPORTAL_MESSAGE_BUFFERS_MAX - KPORTAL_AUX_BUFFERS_MAX),
+	KPORTAL_AUX_BUFFERS_MAX,
 	sizeof(union portal_mbuffer),
 	SPINLOCK_UNLOCKED
 };
@@ -83,8 +93,9 @@ int portal_header_check(struct mbuffer *, const struct active_config *);
 PRIVATE struct port ports[HW_PORTAL_MAX][KPORTAL_PORT_NR] = {
 	[0 ... (HW_PORTAL_MAX - 1)] = {
 		[0 ... (KPORTAL_PORT_NR - 1)] = {
-			.resource  = {0, },
-			.mbufferid = -1,
+			.resource    = {0, },
+			.mbufferid   = -1,
+			.mbufferpool = NULL,
 		}
 	}
 };
@@ -121,7 +132,8 @@ struct active portals[HW_PORTAL_MAX] = {
 			.nelements    = 0,
 			.fifo         = NULL,
 		},
-		.mbufferpool      = &ubufferpool,
+		.mbufferpool      = &bufferpool,
+		.aux_bufferpool   = &aux_bufferpool,
 		.do_create        = portal_create,
 		.do_open          = portal_open,
 		.do_allow         = wrapper_portal_allow,

@@ -85,6 +85,13 @@
 	#define KPORTAL_MESSAGE_BUFFERS_MAX 32
 
 	/**
+	 * @brief Maximum number of auxiliar message buffer resources.
+	 *
+	 * Maximum number of message buffers used to hold temporary data on kernel space.
+	 */
+	#define KPORTAL_AUX_BUFFERS_MAX 8
+
+	/**
 	 * @brief Creates a virtual portal.
 	 *
 	 * @param local Logic ID of the Local Node.

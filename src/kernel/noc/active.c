@@ -443,20 +443,25 @@ PUBLIC ssize_t active_aread(
 	struct pstats * stats
 )
 {
-	ssize_t ret;            /* Return value.                  */
-	int remote;             /* Remote node ID.                */
-	int mbufferid;          /* Mbuffer ID.                    */
-	uint64_t t1;            /* Clock value before aread call. */
-	uint64_t t2;            /* Clock value after aread call.  */
-	struct port * port;     /* Port pointer.                  */
-	struct mbuffer * buf;   /* Mbuffer pointer.               */
-	struct active * active; /* Active pointer.                */
+	ssize_t ret;                      /* Return value.                  */
+	int remote;                       /* Remote node ID.                */
+	int mbufferid;                    /* Mbuffer ID.                    */
+	int is_local;                     /* Checks value for local comm.   */
+	uint64_t t1;                      /* Clock value before aread call. */
+	uint64_t t2;                      /* Clock value after aread call.  */
+	struct port * port;               /* Port pointer.                  */
+	struct mbuffer * buf;             /* Mbuffer pointer.               */
+	struct active * active;           /* Active pointer.                */
+	struct mbuffer_pool * bufferpool; /* Mbuffer pool pointer.          */
 
 	KASSERT(active_valid_call(pool, id));
 
 	active = &pool->actives[ACTIVE_GET_LADDRESS_FD(pool->actives, id)];
 	port   = &active->portpool.ports[ACTIVE_GET_LADDRESS_PORT(active, id)];
 	remote = ACTIVE_GET_LADDRESS_FD(active, config->remote_addr);
+
+	/* Checks if it is a local receive. */
+	is_local = node_is_local(remote);
 
 	spinlock_lock(&active->lock);
 
@@ -466,10 +471,27 @@ PUBLIC ssize_t active_aread(
 		if (!resource_is_used(&port->resource))
 			goto error;
 
-		/* Is there a pending message for this vactive? */
-		if ((mbufferid = mbuffer_search(active->mbufferpool, config->local_addr, config->remote_addr)) >= 0)
+		if (is_local)
 		{
-			buf = mbuffer_get(active->mbufferpool, mbufferid);
+			mbufferid = mbuffer_search(active->aux_bufferpool, config->local_addr, config->remote_addr);
+			bufferpool = active->aux_bufferpool;
+		}
+		else
+		{
+			if ((mbufferid = mbuffer_search(active->mbufferpool, config->local_addr, config->remote_addr)) < 0)
+			{
+				mbufferid = mbuffer_search(active->aux_bufferpool, config->local_addr, config->remote_addr);
+				bufferpool = active->aux_bufferpool;
+			}
+			else
+				bufferpool = active->mbufferpool;
+		}
+
+		/* Is there a pending message for this vmailbox? */
+		if (mbufferid >= 0)
+		{
+
+			buf = mbuffer_get(bufferpool, mbufferid);
 
 			t1 = clock_read();
 				active->do_copy(buf, config, ACTIVE_COPY_FROM_MBUFFER);
@@ -479,7 +501,7 @@ PUBLIC ssize_t active_aread(
 			stats->latency += (t2 - t1);
 			stats->volume  += (config->size);
 
-			KASSERT(mbuffer_release(active->mbufferpool, mbufferid, MBUFFER_DISCARD_MESSAGE) == 0);
+			KASSERT(mbuffer_release(bufferpool, mbufferid, MBUFFER_DISCARD_MESSAGE) == 0);
 
 			spinlock_unlock(&active->lock);
 
@@ -489,7 +511,7 @@ PUBLIC ssize_t active_aread(
 		ret = (-ENOMSG);
 
 		/* Is it a local communication? */
-		if (active->local == remote)
+		if (is_local)
 			goto error;
 
 		ret = (-EBUSY);
@@ -508,12 +530,20 @@ PUBLIC ssize_t active_aread(
 		/* Allocates a data buffer to receive data. */
 		if ((mbufferid = mbuffer_alloc(active->mbufferpool)) < 0)
 		{
-			ret = mbufferid;
-			goto error;
-		}
+			if ((mbufferid = mbuffer_alloc(active->aux_bufferpool)) < 0)
+			{
+				ret = mbufferid;
+				goto error;
+			}
 
-		port->mbufferid = mbufferid;
-		buf = mbuffer_get(active->mbufferpool, mbufferid);
+			bufferpool = active->aux_bufferpool;
+		}
+		else
+			bufferpool = active->mbufferpool;
+
+		port->mbufferid   = mbufferid;
+		port->mbufferpool = bufferpool;
+		buf = mbuffer_get(bufferpool, mbufferid);
 
 		t1 = clock_read();
 
@@ -537,8 +567,9 @@ PUBLIC ssize_t active_aread(
 	return (ACTIVE_COMM_SUCCESS);
 
 discard_message:
+		KASSERT(mbuffer_release(bufferpool, mbufferid, MBUFFER_DISCARD_MESSAGE) == 0);
 		port->mbufferid = -1;
-		KASSERT(mbuffer_release(active->mbufferpool, mbufferid, MBUFFER_DISCARD_MESSAGE) == 0);
+		port->mbufferpool = NULL;
 
 error:
 	spinlock_unlock(&active->lock);
@@ -568,21 +599,25 @@ PUBLIC ssize_t active_awrite(
 	struct pstats * stats
 )
 {
-	ssize_t ret;            /* Return value.                   */
-	int mbufferid;          /* Message buffer used to write.   */
-	uint64_t t1;            /* Clock value before awrite call. */
-	uint64_t t2;            /* Clock value after awrite call.  */
-	int port_nr;            /* Port ID.                        */
-	struct port * port;     /* Port pointer.                   */
-	struct mbuffer * buf;   /* Mbuffer pointer.                */
-	struct active * active; /* Active pointer.                 */
+	ssize_t ret;                      /* Return value.                   */
+	int forward;                      /* Check value for local comm.     */
+	int port_nr;                      /* Port ID.                        */
+	int mbufferid;                    /* Message buffer used to write.   */
+	uint64_t t1;                      /* Clock value before awrite call. */
+	uint64_t t2;                      /* Clock value after awrite call.  */
+	struct port * port;               /* Port pointer.                   */
+	struct mbuffer * buf;             /* Mbuffer pointer.                */
+	struct active * active;           /* Active pointer.                 */
+	struct mbuffer_pool * bufferpool; /* Mbuffer pool pointer.           */
 
 	KASSERT(active_valid_call(pool, id));
 
-	active = &pool->actives[ACTIVE_GET_LADDRESS_FD(pool->actives, id)];
-
+	active  = &pool->actives[ACTIVE_GET_LADDRESS_FD(pool->actives, id)];
 	port_nr = ACTIVE_GET_LADDRESS_PORT(active, id);
-	port   = &active->portpool.ports[port_nr];
+	port    = &active->portpool.ports[port_nr];
+
+	/* Checks if the write is a forward or a send through NoC. */
+	forward = node_is_local(active->remote);
 
 	spinlock_lock(&active->lock);
 
@@ -596,13 +631,30 @@ PUBLIC ssize_t active_awrite(
 		if ((mbufferid = port->mbufferid) < 0)
 		{
 			/* Allocates a message buffer to send the message. */
-			if ((mbufferid = mbuffer_alloc(active->mbufferpool)) < 0)
+			if (forward)
+			{
+				mbufferid = mbuffer_alloc(active->aux_bufferpool);
+				bufferpool = active->aux_bufferpool;
+			}
+			else
+			{
+				if ((mbufferid = mbuffer_alloc(active->mbufferpool)) < 0)
+				{
+					mbufferid = mbuffer_alloc(active->aux_bufferpool);
+					bufferpool = active->aux_bufferpool;
+				}
+				else
+					bufferpool = active->mbufferpool;
+			}
+
+			/* Successful allocated a message buffer? */
+			if (mbufferid < 0)
 			{
 				ret = (mbufferid);
 				goto error;
 			}
-
-			buf = mbuffer_get(active->mbufferpool, mbufferid);
+			
+			buf = mbuffer_get(bufferpool, mbufferid);
 
 			active->do_header_config(buf, config);
 
@@ -611,10 +663,10 @@ PUBLIC ssize_t active_awrite(
 			t2 = clock_read();
 
 			/* Checks if the destination is the local node. */
-			if (node_is_local(active->remote))
+			if (forward)
 			{
 				/* Forwards the message to the mbuffers table. */
-				mbuffer_release(active->mbufferpool, mbufferid, MBUFFER_KEEP_MESSAGE);
+				mbuffer_release(bufferpool, mbufferid, MBUFFER_KEEP_MESSAGE);
 
 				/* Update performance statistics. */
 				stats->latency += (t2 - t1);
@@ -625,10 +677,13 @@ PUBLIC ssize_t active_awrite(
 				return (ACTIVE_COMM_RECEIVED);
 			}
 			else
-				port->mbufferid = mbufferid;
+			{
+				port->mbufferpool = bufferpool; 
+				port->mbufferid   = mbufferid;
+			}
 		}
 		else
-			buf = mbuffer_get(active->mbufferpool, mbufferid);
+			buf = mbuffer_get(port->mbufferpool, mbufferid);
 
 		ret = (-EBUSY);
 
@@ -753,7 +808,7 @@ PUBLIC int active_wait(
 			/* Read communication has extra operations. */
 			if (resource_is_readable(&active->resource))
 			{
-				buf = mbuffer_get(active->mbufferpool, mbufferid);
+				buf = mbuffer_get(port->mbufferpool, mbufferid);
 
 				dest  = buf->message.header.dest;
 
@@ -788,8 +843,10 @@ PUBLIC int active_wait(
 			stats->latency += (t2 - t1);
 		}
 
-		port->mbufferid = -1;
-		mbuffer_release(active->mbufferpool, mbufferid, keep_rule);
+		/* Releases mbuffer. */
+		mbuffer_release(port->mbufferpool, mbufferid, keep_rule);
+		port->mbufferid   = -1;
+		port->mbufferpool = NULL;
 
 		resource_set_notbusy(&active->resource);
 

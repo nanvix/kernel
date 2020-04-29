@@ -84,6 +84,13 @@
 	#define KMAILBOX_MESSAGE_BUFFERS_MAX 64
 
 	/**
+	 * @brief Maximum number of auxiliar message buffer resources.
+	 *
+	 * Maximum number of message buffers used to hold temporary data on kernel space.
+	 */
+	#define KMAILBOX_AUX_BUFFERS_MAX 16
+
+	/**
 	 * @brief Mailbox message buffer max size.
 	 *
 	 * Maximum size of mailbox message data buffer.
