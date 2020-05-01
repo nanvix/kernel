@@ -410,7 +410,7 @@ PUBLIC int active_release(const struct active_pool * pool, int id)
 				ACTIVE_GET_NR_PORTS(active)
 			);
 
-			/* Check if exist pending messages for this port. */
+			/* Check if exist pending messages for this port in principal mbufferpool. */
 			if (mbuffer_search(active->mbufferpool, dest, ACTIVE_ANY_SRC) >= 0)
 				goto error;
 		}
@@ -423,10 +423,9 @@ PUBLIC int active_release(const struct active_pool * pool, int id)
 			/* Releases active. */
 			resource_set_unused(&port->resource);
 			active->refcount--;
-
 			portpool->used_ports--;
 
-			ret = 0;
+			ret = (0);
 		}
 
 error:
@@ -460,7 +459,7 @@ PUBLIC ssize_t active_aread(
 	ssize_t ret;                      /* Return value.                  */
 	int remote;                       /* Remote node ID.                */
 	int mbufferid;                    /* Mbuffer ID.                    */
-	int is_local;                     /* Checks value for local comm.   */
+	int comm_is_local;                /* Checks value for local comm.   */
 	uint64_t t1;                      /* Clock value before aread call. */
 	uint64_t t2;                      /* Clock value after aread call.  */
 	struct port * port;               /* Port pointer.                  */
@@ -475,7 +474,7 @@ PUBLIC ssize_t active_aread(
 	remote = ACTIVE_GET_LADDRESS_FD(active, config->remote_addr);
 
 	/* Checks if it is a local receive. */
-	is_local = node_is_local(remote);
+	comm_is_local = node_is_local(remote);
 
 	spinlock_lock(&active->lock);
 
@@ -485,26 +484,23 @@ PUBLIC ssize_t active_aread(
 		if (!resource_is_used(&port->resource))
 			goto error;
 
-		if (is_local)
+		/* Is the communication local? */
+		if (comm_is_local)
 		{
-			mbufferid = mbuffer_search(active->aux_bufferpool, config->local_addr, config->remote_addr);
-			bufferpool = active->aux_bufferpool;
+			/* Search only in a subset of the mbufferpool. */
+			mbufferid = mbuffer_search(active->mbufferpool_aux, config->local_addr, config->remote_addr);
+			bufferpool = active->mbufferpool_aux;
 		}
 		else
 		{
-			if ((mbufferid = mbuffer_search(active->mbufferpool, config->local_addr, config->remote_addr)) < 0)
-			{
-				mbufferid = mbuffer_search(active->aux_bufferpool, config->local_addr, config->remote_addr);
-				bufferpool = active->aux_bufferpool;
-			}
-			else
-				bufferpool = active->mbufferpool;
+			/* Search in the whole mbufferpool. */
+			mbufferid = mbuffer_search(active->mbufferpool, config->local_addr, config->remote_addr);
+			bufferpool = active->mbufferpool;
 		}
 
-		/* Is there a pending message for this vmailbox? */
+		/* Is there a pending message for this active? */
 		if (mbufferid >= 0)
 		{
-
 			buf = mbuffer_get(bufferpool, mbufferid);
 
 			t1 = clock_read();
@@ -524,8 +520,8 @@ PUBLIC ssize_t active_aread(
 
 		ret = (-ENOMSG);
 
-		/* Is it a local communication? */
-		if (is_local)
+		/* Is it a local communication? Then retry read for search on local mbufferpool. */
+		if (comm_is_local)
 			goto error;
 
 		ret = (-EBUSY);
@@ -544,20 +540,13 @@ PUBLIC ssize_t active_aread(
 		/* Allocates a data buffer to receive data. */
 		if ((mbufferid = mbuffer_alloc(active->mbufferpool)) < 0)
 		{
-			if ((mbufferid = mbuffer_alloc(active->aux_bufferpool)) < 0)
-			{
-				ret = mbufferid;
-				goto error;
-			}
-
-			bufferpool = active->aux_bufferpool;
+			ret = (mbufferid);
+			goto error;
 		}
-		else
-			bufferpool = active->mbufferpool;
 
 		port->mbufferid   = mbufferid;
-		port->mbufferpool = bufferpool;
-		buf = mbuffer_get(bufferpool, mbufferid);
+		port->mbufferpool = active->mbufferpool;
+		buf = mbuffer_get(port->mbufferpool, mbufferid);
 
 		t1 = clock_read();
 
@@ -581,8 +570,8 @@ PUBLIC ssize_t active_aread(
 	return (ACTIVE_COMM_SUCCESS);
 
 discard_message:
-		KASSERT(mbuffer_release(bufferpool, mbufferid, MBUFFER_DISCARD_MESSAGE) == 0);
-		port->mbufferid = -1;
+		KASSERT(mbuffer_release(port->mbufferpool, mbufferid, MBUFFER_DISCARD_MESSAGE) == 0);
+		port->mbufferid   = -1;
 		port->mbufferpool = NULL;
 
 error:
@@ -645,18 +634,13 @@ PUBLIC ssize_t active_awrite(
 			/* Allocates a message buffer to send the message. */
 			if (forward)
 			{
-				mbufferid = mbuffer_alloc(active->aux_bufferpool);
-				bufferpool = active->aux_bufferpool;
+				mbufferid  = mbuffer_alloc(active->mbufferpool_aux);
+				bufferpool = active->mbufferpool_aux;
 			}
 			else
 			{
-				if ((mbufferid = mbuffer_alloc(active->mbufferpool)) < 0)
-				{
-					mbufferid = mbuffer_alloc(active->aux_bufferpool);
-					bufferpool = active->aux_bufferpool;
-				}
-				else
-					bufferpool = active->mbufferpool;
+				mbufferid  = mbuffer_alloc(active->mbufferpool);
+				bufferpool = active->mbufferpool;
 			}
 
 			/* Successful allocated a message buffer? */

@@ -49,18 +49,36 @@
  *============================================================================*/
 
 /**
- * @brief Table of virtual mailboxes.
+ * @name Virtual mailbox resource.
  */
-PRIVATE struct communicator ALIGN(sizeof(dword_t)) virtual_mailboxes[KMAILBOX_MAX] = {
-	[0 ... (KMAILBOX_MAX - 1)] = COMMUNICATOR_INITIALIZER(do_mailbox_release, NULL, do_mailbox_wait)
-};
+/**@{*/
+PRIVATE struct communicator ALIGN(sizeof(dword_t)) vmailboxes[KMAILBOX_MAX]; /**< Virtual mailbox talbe. */
+PRIVATE struct communicator_pool vmbxpool;                                   /**< Virtual mailbox pool.  */
+/**@}*/
+
+/*============================================================================*
+ * do_kmailbox_init()                                                        *
+ *============================================================================*/
 
 /**
- * @brief Virtual communicator pool.
+ * @brief Initializes the mbuffers table lock.
  */
-PRIVATE const struct communicator_pool vmbxpool = {
-	virtual_mailboxes, KMAILBOX_MAX
-};
+PRIVATE void do_kmailbox_init(void)
+{
+	for (int i = 0; i < KMAILBOX_MAX; ++i)
+	{
+		spinlock_init(&vmailboxes[i].lock);
+		vmailboxes[i].resource   = RESOURCE_INITIALIZER;
+		vmailboxes[i].config     = ACTIVE_CONFIG_INITIALIZER;
+		vmailboxes[i].stats      = PSTATS_INITIALIZER;
+		vmailboxes[i].do_release = do_mailbox_release;
+		vmailboxes[i].do_comm    = do_mailbox_aread;
+		vmailboxes[i].do_wait    = do_mailbox_wait;
+	}
+
+	vmbxpool.communicators  = vmailboxes;
+	vmbxpool.ncommunicators = KMAILBOX_MAX;
+}
 
 /*============================================================================*
  * do_vmailbox_alloc()                                                        *
@@ -75,7 +93,7 @@ PRIVATE const struct communicator_pool vmbxpool = {
  * @param type   Communication type (INPUT or OUTPUT).
  *
  * @returns Upon successful completion, the index of the virtual
- * mailbox in virtual_mailboxes tab is returned. Upon failure,
+ * mailbox in vmailboxes tab is returned. Upon failure,
  * a negative number is returned instead.
  */
 PRIVATE int do_vmailbox_alloc(int local, int remote, int port, int type)
@@ -210,16 +228,16 @@ PUBLIC int do_vmailbox_close(int mbxid)
  */
 PUBLIC int do_vmailbox_aread(int mbxid, void * buffer, size_t size)
 {
-	virtual_mailboxes[mbxid].config.buffer = buffer;
-	virtual_mailboxes[mbxid].config.size   = size;
-	virtual_mailboxes[mbxid].do_comm       = do_mailbox_aread;
+	vmailboxes[mbxid].config.buffer = buffer;
+	vmailboxes[mbxid].config.size   = size;
+	vmailboxes[mbxid].do_comm       = do_mailbox_aread;
 
 	/* Dummy allow for mailbox. */
-	spinlock_lock(&virtual_mailboxes[mbxid].lock);
-		communicator_set_allowed(&virtual_mailboxes[mbxid]);
-	spinlock_unlock(&virtual_mailboxes[mbxid].lock);
+	spinlock_lock(&vmailboxes[mbxid].lock);
+		communicator_set_allowed(&vmailboxes[mbxid]);
+	spinlock_unlock(&vmailboxes[mbxid].lock);
 
-	return (communicator_operate(&virtual_mailboxes[mbxid], ACTIVE_TYPE_INPUT));
+	return (communicator_operate(&vmailboxes[mbxid], ACTIVE_TYPE_INPUT));
 }
 
 /*============================================================================*
@@ -238,11 +256,11 @@ PUBLIC int do_vmailbox_aread(int mbxid, void * buffer, size_t size)
  */
 PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
 {
-	virtual_mailboxes[mbxid].config.buffer = buffer;
-	virtual_mailboxes[mbxid].config.size   = size;
-	virtual_mailboxes[mbxid].do_comm       = do_mailbox_awrite;
+	vmailboxes[mbxid].config.buffer = buffer;
+	vmailboxes[mbxid].config.size   = size;
+	vmailboxes[mbxid].do_comm       = do_mailbox_awrite;
 
-	return (communicator_operate(&virtual_mailboxes[mbxid], ACTIVE_TYPE_OUTPUT));
+	return (communicator_operate(&vmailboxes[mbxid], ACTIVE_TYPE_OUTPUT));
 }
 
 /*============================================================================*
@@ -260,10 +278,10 @@ PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
 PUBLIC int do_vmailbox_wait(int mbxid)
 {
 	/* This is only a test. Remove it.*/
-	if (resource_is_readable(&virtual_mailboxes[mbxid].resource))
-		KASSERT(virtual_mailboxes[mbxid].config.remote_addr == -1);
+	if (resource_is_readable(&vmailboxes[mbxid].resource))
+		KASSERT(vmailboxes[mbxid].config.remote_addr == -1);
 
-	return (communicator_wait(&virtual_mailboxes[mbxid]));
+	return (communicator_wait(&vmailboxes[mbxid]));
 }
 
 /*============================================================================*
@@ -282,7 +300,7 @@ PUBLIC int do_vmailbox_wait(int mbxid)
  */
 int do_vmailbox_ioctl(int mbxid, unsigned request, va_list args)
 {
-	return (communicator_ioctl(&virtual_mailboxes[mbxid], request, args));
+	return (communicator_ioctl(&vmailboxes[mbxid], request, args));
 }
 
 /*============================================================================*
@@ -304,29 +322,16 @@ int do_vmailbox_get_port(int mbxid)
 	if (!WITHIN(mbxid, 0, KMAILBOX_MAX))
 		return (-EINVAL);
 
-	spinlock_lock(&virtual_mailboxes[mbxid].lock);
+	spinlock_lock(&vmailboxes[mbxid].lock);
 
-		if (!resource_is_used(&virtual_mailboxes[mbxid].resource))
+		if (!resource_is_used(&vmailboxes[mbxid].resource))
 			ret = (-EBADF);
 		else
-			ret = (GET_LADDRESS_PORT(virtual_mailboxes[mbxid].config.fd));
+			ret = (GET_LADDRESS_PORT(vmailboxes[mbxid].config.fd));
 
-	spinlock_unlock(&virtual_mailboxes[mbxid].lock);
+	spinlock_unlock(&vmailboxes[mbxid].lock);
 
 	return (ret);
-}
-
-/*============================================================================*
- * do_virtual_mailboxes_locks_init()                                          *
- *============================================================================*/
-
-/**
- * @brief Initializes the mbuffers table lock.
- */
-PRIVATE void do_virtual_mailboxes_locks_init(void)
-{
-	for (int i = 0; i < KMAILBOX_MAX; ++i)
-		spinlock_init(&virtual_mailboxes[i].lock);
 }
 
 /*============================================================================*
@@ -340,10 +345,11 @@ PUBLIC void kmailbox_init(void)
 {
 	kprintf("[kernel][noc] initializing the kmailbox facility");
 
+	/* Initializes the hardware mailboxes structures. */
 	do_mailbox_init();
 
-	/* Initializes the virtual mailboxes locks. */
-	do_virtual_mailboxes_locks_init();
+	/* Initializes the virtual mailboxes structures. */
+	do_kmailbox_init();
 }
 
 #endif /* __TARGET_HAS_MAILBOX */

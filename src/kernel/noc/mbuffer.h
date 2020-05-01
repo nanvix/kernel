@@ -66,6 +66,7 @@
 	#define MBUFFER_INITIALIZER {                   \
 		.abstract = {                               \
 			.resource = RESOURCE_INITIALIZER,       \
+			.age      = ~(0ULL),                    \
 			.message  = MBUFFER_MESSAGE_INITIALIZER \
 		}                                           \
 	}
@@ -124,6 +125,7 @@
 		 * XXX: Don't Touch! This Must Come First!
 		 */
 		struct resource resource;       /**< Generic resource information.   */
+		uint64_t age;                   /**< Number that guarantees order.   */
 		struct mbuffer_message message; /**< Structure that holds a message. */
 	};
 
@@ -138,7 +140,8 @@
 			/*
 			* XXX: Don't Touch! This Must Come First!
 			*/
-			struct resource resource;       /**< Generic resource information. */
+			struct resource resource;       /**< Generic resource information.   */
+			uint64_t age;                   /**< Number that guarantees order.   */
 			struct mailbox_message message; /**< Structure that holds a message. */
 		};
 	};
@@ -154,7 +157,8 @@
 			/*
 			* XXX: Don't Touch! This Must Come First!
 			*/
-			struct resource resource;       /**< Generic resource information. */
+			struct resource resource;      /**< Generic resource information.   */
+			uint64_t age;                  /**< Number that guarantees order.   */
 			struct portal_message message; /**< Structure that holds a message. */
 		};
 	};
@@ -167,7 +171,8 @@
 		void * mbuffers;     /**< Pool of mbuffers.        */
 		int nmbuffers;		 /**< Number of mbuffers.      */
 		size_t mbuffer_size; /**< mbuffer size (in bytes). */
-		spinlock_t lock;
+		uint64_t * curr_age; /**< Next mbuffer age.        */
+		spinlock_t * lock;   /**< Protection.              */
 	};
 
 	/*============================================================================*

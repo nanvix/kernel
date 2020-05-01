@@ -56,7 +56,7 @@ PUBLIC int mbuffer_alloc(struct mbuffer_pool * pool)
 	KASSERT(pool != NULL);
 	ret = (-EBUSY);
 
-	spinlock_lock(&pool->lock);
+	spinlock_lock(pool->lock);
 
 		/* Search for a free synchronization point. */
 		for (int i = 0; i < n; i++)
@@ -69,8 +69,8 @@ PUBLIC int mbuffer_alloc(struct mbuffer_pool * pool)
 			if (!resource_is_used(&buf->resource))
 			{
 				buf->resource = RESOURCE_INITIALIZER;
+				buf->age      = ~(0ULL);
 				buf->message  = MBUFFER_MESSAGE_INITIALIZER;
-
 				resource_set_used(&buf->resource);
 
 				ret = (i);
@@ -78,7 +78,7 @@ PUBLIC int mbuffer_alloc(struct mbuffer_pool * pool)
 			}
 		}
 
-	spinlock_unlock(&pool->lock);
+	spinlock_unlock(pool->lock);
 
 	return (ret);
 }
@@ -110,27 +110,31 @@ PUBLIC int mbuffer_release(struct mbuffer_pool * pool, int id, int keep_msg)
 	size = pool->mbuffer_size;
 	buf  = (struct mbuffer *)(&base[mult(id, size)]);
 
-	spinlock_lock(&pool->lock);
+	spinlock_lock(pool->lock);
 
 		if (!resource_is_used(&buf->resource))
 		{
-			spinlock_unlock(&pool->lock);
+			spinlock_unlock(pool->lock);
 			return (-EINVAL);
 		}
 
 		/* Sets the mbuffer as not used keeping its message. */
 		if (keep_msg == MBUFFER_KEEP_MESSAGE)
+		{
+			buf->age = (*pool->curr_age)++;
 			resource_set_busy(&buf->resource);
+		}
 
 		/* Frees the mbuffer resource. */
 		else
 		{
 			buf->resource = RESOURCE_INITIALIZER;
+			buf->age      = ~(0ULL);
 			buf->message  = MBUFFER_MESSAGE_INITIALIZER;
 		}
 
 	/* Unlocks the mbuffers table. */
-	spinlock_unlock(&pool->lock);
+	spinlock_unlock(pool->lock);
 
 	return (0);
 }
@@ -151,10 +155,11 @@ PUBLIC int mbuffer_release(struct mbuffer_pool * pool, int id, int keep_msg)
  */
 PUBLIC int mbuffer_search(struct mbuffer_pool * pool, int dest, int src)
 {
-	int ret;
-	char * base;
-	int n;
-	size_t size;
+	int ret;                     /* Return value.                            */
+	int n;                       /* Number of mbuffers.                      */
+	char * base;                 /* Pointer to the first mbuffer.            */
+	size_t size;                 /* Size of a mbuffer.                       */
+	uint64_t curr_age = ~(0ULL); /* The age of the current mbuffer selected. */
 
 	KASSERT(pool != NULL);
 
@@ -164,7 +169,7 @@ PUBLIC int mbuffer_search(struct mbuffer_pool * pool, int dest, int src)
 	ret  = (-EINVAL);
 
 	/* Locks the mbuffers table. */
-	spinlock_lock(&pool->lock);
+	spinlock_lock(pool->lock);
 
 		for (int i = 0; i < n; i++)
 		{
@@ -188,12 +193,16 @@ PUBLIC int mbuffer_search(struct mbuffer_pool * pool, int dest, int src)
 			if (src != -1 && buf->message.header.src != src)
 				continue;
 
-			ret = i;
-			break;
+			/* Is the buffer the older? */
+			if (buf->age > curr_age)
+				continue;
+
+			ret      = i;
+			curr_age = buf->age;
 		}
 
 	/* Unlocks the mbuffers table. */
-	spinlock_unlock(&pool->lock);
+	spinlock_unlock(pool->lock);
 
 	return (ret);
 }

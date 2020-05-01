@@ -48,18 +48,36 @@
  *============================================================================*/
 
 /**
- * @brief Table of virtual portals.
+ * @name Virtual portal resources.
  */
-PRIVATE struct communicator ALIGN(sizeof(dword_t)) virtual_portals[KPORTAL_MAX] = {
-	[0 ... (KPORTAL_MAX - 1)] = COMMUNICATOR_INITIALIZER(do_portal_release, NULL, do_portal_wait)
-};
+/**@{*/
+PRIVATE struct communicator ALIGN(sizeof(dword_t)) vportals[KPORTAL_MAX]; /**< Table of virtual portals.  */
+PRIVATE struct communicator_pool vportalpool;                             /**< Virtual portal pool.       */
+/**@}*/
+
+/*============================================================================*
+ * do_kportal_init()                                                          *
+ *============================================================================*/
 
 /**
- * @brief Virtual communicator pool.
+ * @brief Initializes the mbuffers table lock.
  */
-PRIVATE const struct communicator_pool vportalpool = {
-	virtual_portals, KPORTAL_MAX
-};
+PRIVATE void do_kportal_init(void)
+{
+	for (int i = 0; i < KPORTAL_MAX; ++i)
+	{
+		spinlock_init(&vportals[i].lock);
+		vportals[i].resource   = RESOURCE_INITIALIZER;
+		vportals[i].config     = ACTIVE_CONFIG_INITIALIZER;
+		vportals[i].stats      = PSTATS_INITIALIZER;
+		vportals[i].do_release = do_portal_release;
+		vportals[i].do_comm    = do_portal_aread;
+		vportals[i].do_wait    = do_portal_wait;
+	}
+
+	vportalpool.communicators  = vportals;
+	vportalpool.ncommunicators = KPORTAL_MAX;
+}
 
 /*============================================================================*
  * do_vportal_alloc()                                                         *
@@ -74,7 +92,7 @@ PRIVATE const struct communicator_pool vportalpool = {
  * @param type   Communication type (INPUT or OUTPUT).
  *
  * @returns Upon successful completion, the index of the virtual
- * portal in virtual_portals tab is returned. Upon failure, a
+ * portal in vportals tab is returned. Upon failure, a
  * negative number is returned instead.
  */
 PRIVATE int do_vportal_alloc(int local, int remote, int port, int type)
@@ -228,33 +246,33 @@ PUBLIC int do_vportal_allow(int portalid, int remote, int remote_port)
 	int ret; /* Function return. */
 
 	/* Locks the virtual portal to operate over it. */
-	spinlock_lock(&virtual_portals[portalid].lock);
+	spinlock_lock(&vportals[portalid].lock);
 
 		ret = -EBADF;
 
 		/* Bad virtual portal. */
-		if (!resource_is_used(&virtual_portals[portalid].resource))
+		if (!resource_is_used(&vportals[portalid].resource))
 			goto unlock;
 
 		/* Bad virtual portal. */
-		if (!resource_is_readable(&virtual_portals[portalid].resource))
+		if (!resource_is_readable(&vportals[portalid].resource))
 			goto unlock;
 
 		ret = -EBUSY;
 
 		/* Vportal already allowed a write. */
-		if (communicator_is_allowed(&virtual_portals[portalid]))
+		if (communicator_is_allowed(&vportals[portalid]))
 			goto unlock;
 
 		/* Allows the virtual portal to read. */
-		communicator_set_allowed(&virtual_portals[portalid]);
-		virtual_portals[portalid].config.remote_addr =
+		communicator_set_allowed(&vportals[portalid]);
+		vportals[portalid].config.remote_addr =
 			ACTIVE_LADDRESS_COMPOSE(remote, remote_port, KPORTAL_PORT_NR);
 
 		ret = 0;
 
 unlock:
-	spinlock_unlock(&virtual_portals[portalid].lock);
+	spinlock_unlock(&vportals[portalid].lock);
 
 	return (ret);
 }
@@ -275,11 +293,11 @@ unlock:
  */
 PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 {
-	virtual_portals[portalid].config.buffer = buffer;
-	virtual_portals[portalid].config.size   = size;
-	virtual_portals[portalid].do_comm       = do_portal_aread;
+	vportals[portalid].config.buffer = buffer;
+	vportals[portalid].config.size   = size;
+	vportals[portalid].do_comm       = do_portal_aread;
 
-	return (communicator_operate(&virtual_portals[portalid], ACTIVE_TYPE_INPUT));
+	return (communicator_operate(&vportals[portalid], ACTIVE_TYPE_INPUT));
 }
 
 /*============================================================================*
@@ -298,11 +316,11 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
  */
 PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 {
-	virtual_portals[portalid].config.buffer = buffer;
-	virtual_portals[portalid].config.size   = size;
-	virtual_portals[portalid].do_comm       = do_portal_awrite;
+	vportals[portalid].config.buffer = buffer;
+	vportals[portalid].config.size   = size;
+	vportals[portalid].do_comm       = do_portal_awrite;
 
-	return (communicator_operate(&virtual_portals[portalid], ACTIVE_TYPE_OUTPUT));
+	return (communicator_operate(&vportals[portalid], ACTIVE_TYPE_OUTPUT));
 }
 
 /*============================================================================*
@@ -319,7 +337,7 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
  */
 PUBLIC int do_vportal_wait(int portalid)
 {
-	return (communicator_wait(&virtual_portals[portalid]));
+	return (communicator_wait(&vportals[portalid]));
 }
 
 /*============================================================================*
@@ -338,7 +356,7 @@ PUBLIC int do_vportal_wait(int portalid)
  */
 int do_vportal_ioctl(int portalid, unsigned request, va_list args)
 {
-	return (communicator_ioctl(&virtual_portals[portalid], request, args));
+	return (communicator_ioctl(&vportals[portalid], request, args));
 }
 
 /*============================================================================*
@@ -360,29 +378,16 @@ int do_vportal_get_port(int portalid)
 	if (!WITHIN(portalid, 0, KPORTAL_MAX))
 		return (-EINVAL);
 
-	spinlock_lock(&virtual_portals[portalid].lock);
+	spinlock_lock(&vportals[portalid].lock);
 
-		if (!resource_is_used(&virtual_portals[portalid].resource))
+		if (!resource_is_used(&vportals[portalid].resource))
 			ret = (-EBADF);
 		else
-			ret = (GET_LADDRESS_PORT(virtual_portals[portalid].config.fd));
+			ret = (GET_LADDRESS_PORT(vportals[portalid].config.fd));
 
-	spinlock_unlock(&virtual_portals[portalid].lock);
+	spinlock_unlock(&vportals[portalid].lock);
 
 	return (ret);
-}
-
-/*============================================================================*
- * do_virtual_portals_locks_init()                                            *
- *============================================================================*/
-
-/**
- * @brief Initializes the virtual_portals locks.
- */
-PRIVATE void do_virtual_portals_locks_init(void)
-{
-	for (int i = 0; i < KPORTAL_MAX; ++i)
-		spinlock_init(&virtual_portals[i].lock);
 }
 
 /*============================================================================*
@@ -396,10 +401,11 @@ PUBLIC void kportal_init(void)
 {
 	kprintf("[kernel][noc] initializing the kportal facility");
 
+	/* Initializes the active portals structures. */
 	do_portal_init();
 
-	/* Initializes the virtual portals locks. */
-	do_virtual_portals_locks_init();
+	/* Initializes the virtual portals structures. */
+	do_kportal_init();
 }
 
 #endif /* __TARGET_HAS_PORTAL */

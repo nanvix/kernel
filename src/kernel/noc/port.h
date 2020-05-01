@@ -62,7 +62,7 @@
 	struct port_pool
 	{
 		struct port * ports; /**< Pool of ports.      */
-		const int nports;    /**< Number of ports.    */
+		int nports;          /**< Number of ports.    */
 		int used_ports;      /**< Nr of ports in use. */
 	};
 
