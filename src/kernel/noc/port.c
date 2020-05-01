@@ -37,9 +37,9 @@
  *============================================================================*/
 
 /**
- * @brief Searches for a free port on @p fd.
+ * @brief Searches for a free port on @p pool.
  *
- * @param fd ID of the target HW mailbox.
+ * @param pool Port pool.
  *
  * @returns Upon successful completion, the index of the available port is
  * returned. A negative number is returned instead.
@@ -47,7 +47,7 @@
 PUBLIC int portpool_choose_port(const struct port_pool * pool)
 {
 	int ret; /* Return value. */
-	
+
 	KASSERT(pool != NULL);
 	ret = (-EINVAL);
 

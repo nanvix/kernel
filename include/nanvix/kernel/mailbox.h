@@ -74,7 +74,7 @@
 	 *
 	 * Size of mailbox message header.
 	 */
-	#define KMAILBOX_MESSAGE_HEADER_SIZE (1 * sizeof(int))
+	#define KMAILBOX_MESSAGE_HEADER_SIZE (3 * sizeof(int))
 
 	/**
 	 * @brief Maximum number of message buffer resources.

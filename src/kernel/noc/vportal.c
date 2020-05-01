@@ -31,7 +31,6 @@
 #include <posix/errno.h>
 
 #include "communicator.h"
-#include "active.h"
 #include "portal.h"
 
 #if __TARGET_HAS_PORTAL
@@ -52,7 +51,7 @@
  * @brief Table of virtual portals.
  */
 PRIVATE struct communicator ALIGN(sizeof(dword_t)) virtual_portals[KPORTAL_MAX] = {
-	[0 ... (KPORTAL_MAX - 1)] = COMMUNICATOR_INITIALIZER
+	[0 ... (KPORTAL_MAX - 1)] = COMMUNICATOR_INITIALIZER(do_portal_release, NULL, do_portal_wait)
 };
 
 /**
@@ -69,10 +68,10 @@ PRIVATE const struct communicator_pool vportalpool = {
 /**
  * @brief Searches for a free virtual portal.
  *
- * @param local  Local nodenum.
- * @param remote Remote nodenum.
- * @param port   Target port.
- * @param type   COMM_TYPE_INPUT ? COMM_TYPE_OUTPUT.
+ * @param local  Local node ID.
+ * @param remote Remote node ID (It can be -1).
+ * @param port   Port ID.
+ * @param type   Communication type (INPUT or OUTPUT).
  *
  * @returns Upon successful completion, the index of the virtual
  * portal in virtual_portals tab is returned. Upon failure, a
@@ -82,18 +81,17 @@ PRIVATE int do_vportal_alloc(int local, int remote, int port, int type)
 {
 	int fd;       /* Active portal ID.  */
 	int portalid; /* Virtual portal ID. */
-	struct comm_config config;
-
-	if (type == COMM_TYPE_OUTPUT)
-		config.remote = (ACTIVE_LADDRESS_COMPOSE(remote, port, KPORTAL_PORT_NR));
-	else
-		config.remote = (-1);
+	struct active_config config;
 
 	/* Allocates a physical portal port. */
 	if ((fd = do_portal_alloc(local, remote, port, type)) < 0)
 		return (fd);
 
-	config.fd = fd;
+	config.fd          = fd;
+	config.local_addr  = ACTIVE_LADDRESS_COMPOSE(local, GET_LADDRESS_PORT(fd), KPORTAL_PORT_NR);
+	config.remote_addr = (type == ACTIVE_TYPE_OUTPUT) ?
+		(ACTIVE_LADDRESS_COMPOSE(remote, port, KPORTAL_PORT_NR)) :
+		(-1);
 
 	/* Allocates a communicator. */
 	if ((portalid = communicator_alloc(&vportalpool, &config, type)) < 0)
@@ -130,7 +128,7 @@ PUBLIC int do_vportal_create(int local, int port)
 			local,
 			-1,
 			port,
-			COMM_TYPE_INPUT
+			ACTIVE_TYPE_INPUT
 		)
 	);
 }
@@ -160,7 +158,7 @@ PUBLIC int do_vportal_open(int local, int remote, int remote_port)
 			local,
 			remote,
 			remote_port,
-			COMM_TYPE_OUTPUT
+			ACTIVE_TYPE_OUTPUT
 		)
 	);
 }
@@ -183,8 +181,7 @@ PUBLIC int do_vportal_unlink(int portalid)
 		communicator_free(
 			&vportalpool,
 			portalid,
-			COMM_TYPE_INPUT,
-			do_portal_release
+			ACTIVE_TYPE_INPUT
 		)
 	);
 }
@@ -207,8 +204,7 @@ PUBLIC int do_vportal_close(int portalid)
 		communicator_free(
 			&vportalpool,
 			portalid,
-			COMM_TYPE_OUTPUT,
-			do_portal_release
+			ACTIVE_TYPE_OUTPUT
 		)
 	);
 }
@@ -252,7 +248,8 @@ PUBLIC int do_vportal_allow(int portalid, int remote, int remote_port)
 
 		/* Allows the virtual portal to read. */
 		communicator_set_allowed(&virtual_portals[portalid]);
-		virtual_portals[portalid].config.remote = DO_LADDRESS_COMPOSE(remote, remote_port);
+		virtual_portals[portalid].config.remote_addr =
+			ACTIVE_LADDRESS_COMPOSE(remote, remote_port, KPORTAL_PORT_NR);
 
 		ret = 0;
 
@@ -267,22 +264,22 @@ unlock:
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @brief Async reads from an virtual portal.
  *
- * @todo See what happens when a message comes to a closed port.
+ * @param mbxid  Virtual portal ID.
+ * @param buffer User buffer.
+ * @param size   Size of the buffer.
+ *
+ * @returns Upon successful completion, positive number is returned. Upon
+ * failure, a negative error code is returned instead.
  */
 PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 {
 	virtual_portals[portalid].config.buffer = buffer;
 	virtual_portals[portalid].config.size   = size;
+	virtual_portals[portalid].do_comm       = do_portal_aread;
 
-	return (
-		communicator_operate(
-			&virtual_portals[portalid],
-			COMM_TYPE_INPUT,
-			do_portal_aread
-		)
-	);
+	return (communicator_operate(&virtual_portals[portalid], ACTIVE_TYPE_INPUT));
 }
 
 /*============================================================================*
@@ -290,20 +287,22 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @brief Async write from an virtual mailbox.
+ *
+ * @param mbxid  Virtual mailbox ID.
+ * @param buffer User buffer.
+ * @param size   Size of the buffer.
+ *
+ * @returns Upon successful completion, positive number is returned. Upon
+ * failure, a negative error code is returned instead.
  */
 PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 {
 	virtual_portals[portalid].config.buffer = buffer;
 	virtual_portals[portalid].config.size   = size;
+	virtual_portals[portalid].do_comm       = do_portal_awrite;
 
-	return (
-		communicator_operate(
-			&virtual_portals[portalid],
-			COMM_TYPE_OUTPUT,
-			do_portal_awrite
-		)
-	);
+	return (communicator_operate(&virtual_portals[portalid], ACTIVE_TYPE_OUTPUT));
 }
 
 /*============================================================================*
@@ -320,12 +319,7 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
  */
 PUBLIC int do_vportal_wait(int portalid)
 {
-	return (
-		communicator_wait(
-			&virtual_portals[portalid],
-			do_portal_wait
-		)
-	);
+	return (communicator_wait(&virtual_portals[portalid]));
 }
 
 /*============================================================================*
@@ -333,17 +327,18 @@ PUBLIC int do_vportal_wait(int portalid)
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @brief Request an I/O operation on a virtual portal.
+ *
+ * @param mbxid   Virtual portal ID.
+ * @param request Type of request.
+ * @param args    Arguments of the request.
+ *
+ * @returns Upon successful completion, zero is returned.
+ * Upon failure, a negative error code is returned instead.
  */
 int do_vportal_ioctl(int portalid, unsigned request, va_list args)
 {
-	return (
-		communicator_ioctl(
-			&virtual_portals[portalid],
-			request,
-			args
-		)
-	);
+	return (communicator_ioctl(&virtual_portals[portalid], request, args));
 }
 
 /*============================================================================*
@@ -351,7 +346,12 @@ int do_vportal_ioctl(int portalid, unsigned request, va_list args)
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @brief Gets a releated port id to a virtual portal.
+ *
+ * @param mbxid Logic ID of the target virtual portal.
+ *
+ * @returns Upon successful completion, a positive number is returned.
+ * Upon failure, a negative error code is returned instead.
  */
 int do_vportal_get_port(int portalid)
 {

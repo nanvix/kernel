@@ -57,33 +57,17 @@
 /**
  * @brief Mailbox message buffer.
  */
-PRIVATE union ubuffer
-{
-	struct mbuffer abstract;
-	struct
-	{
-		/*
-		* XXX: Don't Touch! This Must Come First!
-		*/
-		struct resource resource;
-		struct mailbox_message message;
-	};
-} ubuffers[KMAILBOX_MESSAGE_BUFFERS_MAX] = {
-	[0 ... (KMAILBOX_MESSAGE_BUFFERS_MAX - 1)] = {
-		.message = {
-			.dest = -1,
-			.data = {'\0'},
-		},
-	},
+PRIVATE union mailbox_mbuffer mbxbuffers[KMAILBOX_MESSAGE_BUFFERS_MAX] = {
+	[0 ... (KMAILBOX_MESSAGE_BUFFERS_MAX - 1)] = MBUFFER_INITIALIZER
 };
 
 /**
  * @brief Mbuffer resource pool.
  */
-PRIVATE struct mbuffer_pool ubufferpool = {
-	ubuffers,
+PRIVATE struct mbuffer_pool mbxbufferpool = {
+	mbxbuffers,
 	KMAILBOX_MESSAGE_BUFFERS_MAX,
-	sizeof(union ubuffer),
+	sizeof(union mailbox_mbuffer),
 	SPINLOCK_UNLOCKED
 };
 
@@ -93,10 +77,13 @@ PRIVATE struct mbuffer_pool ubufferpool = {
 
 int wrapper_mailbox_open(int, int);
 int wrapper_mailbox_allow(struct active *, int);
-int wrapper_mailbox_copy(struct mbuffer *, const struct comm_config *, int);
-int mailbox_header_config(struct mbuffer *, const struct comm_config *);
-int mailbox_header_check(struct mbuffer *, const struct comm_config *);
+int wrapper_mailbox_copy(struct mbuffer *, const struct active_config *, int);
+int mailbox_header_config(struct mbuffer *, const struct active_config *);
+int mailbox_header_check(struct mbuffer *, const struct active_config *);
 
+/**
+ * @brief Mailbox ports.
+ */
 PRIVATE struct port ports[HW_MAILBOX_MAX][MAILBOX_PORT_NR] = {
 	[0 ... (HW_MAILBOX_MAX - 1)] = {
 		[0 ... (MAILBOX_PORT_NR - 1)] = {
@@ -106,12 +93,18 @@ PRIVATE struct port ports[HW_MAILBOX_MAX][MAILBOX_PORT_NR] = {
 	}
 };
 
+/**
+ * @brief Mailbox FIFOs.
+ */
 PRIVATE short fifos[HW_MAILBOX_MAX][MAILBOX_PORT_NR] = {
 	[0 ... (HW_MAILBOX_MAX - 1)] = {
 		[0 ... (MAILBOX_PORT_NR - 1)] = -1,
 	}
 };
 
+/**
+ * @brief Mailboxes.
+ */
 struct active mailboxes[HW_MAILBOX_MAX] = {
 	[0 ... (HW_MAILBOX_MAX - 1)] {
 		.resource   = {0, },
@@ -132,7 +125,7 @@ struct active mailboxes[HW_MAILBOX_MAX] = {
 			.nelements    = 0,
 			.fifo         = NULL,
 		},
-		.mbufferpool      = &ubufferpool,
+		.mbufferpool      = &mbxbufferpool,
 		.do_create        = mailbox_create,
 		.do_open          = wrapper_mailbox_open,
 		.do_allow         = wrapper_mailbox_allow,
@@ -145,6 +138,9 @@ struct active mailboxes[HW_MAILBOX_MAX] = {
 	},
 };
 
+/**
+ * @brief Mailbox pool.
+ */
 struct active_pool mbxpool = {
 	mailboxes, HW_MAILBOX_MAX
 };
@@ -152,7 +148,6 @@ struct active_pool mbxpool = {
 /*============================================================================*
  * do_mailbox_table_init()                                                    *
  *============================================================================*/
-
 
 /**
  * @brief Initializes the mbuffers table lock.
@@ -168,6 +163,19 @@ void do_mailbox_table_init(void)
 	}
 }
 
+/*============================================================================*
+ * wrapper_mailbox_open()                                                     *
+ *============================================================================*/
+
+/**
+ * @brief Open a physical mailbox.
+ *
+ * @param local  Local node ID.
+ * @param remote Remote node ID.
+ *
+ * @returns Upon successful completion, zero is returned. Upon failure, a
+ * negative error code is returned instead.
+ */
 int wrapper_mailbox_open(int local, int remote)
 {
 	UNUSED(local);
@@ -175,6 +183,18 @@ int wrapper_mailbox_open(int local, int remote)
 	return (mailbox_open(remote));
 }
 
+/*============================================================================*
+ * wrapper_mailbox_allow()                                                     *
+ *============================================================================*/
+
+/**
+ * @brief Allow a physical mailbox communication.
+ *
+ * @param act    Active resource.
+ * @param remote Remote node ID.
+ *
+ * @returns Zero is returned.
+ */
 int wrapper_mailbox_allow(struct active * act, int remote)
 {
 	UNUSED(act);
@@ -183,23 +203,36 @@ int wrapper_mailbox_allow(struct active * act, int remote)
 	return (0);
 }
 
-int wrapper_mailbox_copy(struct mbuffer * buf, const struct comm_config * config, int type)
+/*============================================================================*
+ * wrapper_mailbox_copy()                                                     *
+ *============================================================================*/
+
+/**
+ * @brief Copy a message.
+ *
+ * @param buf    Mbuffer resource.
+ * @param config Communication's configuration.
+ * @param type   Direction of the copy.
+ *
+ * @returns Zero is returned.
+ */
+int wrapper_mailbox_copy(struct mbuffer * buf, const struct active_config * config, int type)
 {
 	void * to;
 	void * from;
-	union ubuffer * ubuf;
+	union mailbox_mbuffer * mbuf;
 
-	ubuf = (union ubuffer *) buf;
+	mbuf = (union mailbox_mbuffer *) buf;
 
 	if (type == ACTIVE_COPY_TO_MBUFFER)
 	{
-		to   = (void *) ubuf->message.data;
+		to   = (void *) mbuf->message.data;
 		from = (void *) config->buffer;
 	}
 	else
 	{
 		to   = (void *) config->buffer;
-		from = (void *) ubuf->message.data;
+		from = (void *) mbuf->message.data;
 	}
 
 	kmemcpy(to, from, config->size);
@@ -207,18 +240,40 @@ int wrapper_mailbox_copy(struct mbuffer * buf, const struct comm_config * config
 	return (0);
 }
 
-int mailbox_header_config(struct mbuffer * mbuf, const struct comm_config * config)
+/*============================================================================*
+ * mailbox_header_config()                                                    *
+ *============================================================================*/
+
+/**
+ * @brief Configurate a message header.
+ *
+ * @param buf    Mbuffer resource.
+ * @param config Communication's configuration.
+ *
+ * @returns Zero is returned.
+ */
+int mailbox_header_config(struct mbuffer * mbuf, const struct active_config * config)
 {
-	mbuf->message.dest = config->remote;
+	mbuf->message.header.dest = config->remote_addr;
 
 	return (0);
 }
 
-int mailbox_header_check(struct mbuffer * mbuf, const struct comm_config * config)
-{
-	int local_addr = ACTIVE_LADDRESS_COMPOSE(processor_node_get_num(), GET_LADDRESS_PORT(config->fd), MAILBOX_PORT_NR);
+/*============================================================================*
+ * mailbox_header_check()                                                     *
+ *============================================================================*/
 
-	return (mbuf->message.dest == local_addr);
+/**
+ * @brief Checks if a message is to current configuration.
+ *
+ * @param buf    Mbuffer resource.
+ * @param config Communication's configuration.
+ *
+ * @returns Non-zero if the mbuffer is destinate to current configuration.
+ */
+int mailbox_header_check(struct mbuffer * mbuf, const struct active_config * config)
+{
+	return (mbuf->message.header.dest == config->local_addr);
 }
 
 /*============================================================================*
@@ -226,10 +281,12 @@ int mailbox_header_check(struct mbuffer * mbuf, const struct comm_config * confi
  *============================================================================*/
 
 /**
- * @brief Creates a physical mailbox.
+ * @brief Allocate a physical mailbox.
  *
- * @param nodenum Logic node ID.
- * @param port  Target port in @p nodenum node.
+ * @param local  Local node ID.
+ * @param remote Remote node ID (It can be -1).
+ * @param port   Port ID.
+ * @param type   Communication type (INPUT or OUTPUT).
  *
  * @returns Upon successful completion, the ID of the active mailbox is
  * returned. Upon failure, a negative error code is returned instead.
@@ -239,10 +296,14 @@ PUBLIC int do_mailbox_alloc(int local, int remote, int port, int type)
 	return (active_alloc(&mbxpool, local, remote, port, type));
 }
 
+/*============================================================================*
+ * do_mailbox_release()                                                       *
+ *============================================================================*/
+
 /**
- * @brief Unlink a physical mailbox.
+ * @brief Releases a physical mailbox.
  *
- * @param fd Physical mailbox ID.
+ * @param mbxid Active mailbox ID.
  *
  * @returns Upon successful completion, zero is returned. Upon
  * failure, a negative error code is returned instead.
@@ -257,9 +318,16 @@ PUBLIC int do_mailbox_release(int mbxid)
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @brief Async reads from an active.
+ *
+ * @param mbxid  Active mailbox ID.
+ * @param config Communication's configuration.
+ * @param stats  Structure to store statstics.
+ *
+ * @returns Upon successful completion, positive number is returned. Upon
+ * failure, a negative error code is returned instead.
  */
-PUBLIC ssize_t do_mailbox_aread(int mbxid, const struct comm_config * config, struct pstats * stats)
+PUBLIC ssize_t do_mailbox_aread(int mbxid, const struct active_config * config, struct pstats * stats)
 {
 	return (active_aread(&mbxpool, mbxid, config, stats));
 }
@@ -269,9 +337,16 @@ PUBLIC ssize_t do_mailbox_aread(int mbxid, const struct comm_config * config, st
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @brief Async writes from an active.
+ *
+ * @param mbxid  Active mailbox ID.
+ * @param config Communication's configuration.
+ * @param stats  Structure to store statstics.
+ *
+ * @returns Upon successful completion, positive number is returned. Upon
+ * failure, a negative error code is returned instead.
  */
-PUBLIC ssize_t do_mailbox_awrite(int mbxid, const struct comm_config * config, struct pstats * stats)
+PUBLIC ssize_t do_mailbox_awrite(int mbxid, const struct active_config * config, struct pstats * stats)
 {
 	return (active_awrite(&mbxpool, mbxid, config, stats));
 }
@@ -283,22 +358,24 @@ PUBLIC ssize_t do_mailbox_awrite(int mbxid, const struct comm_config * config, s
 /**
  * @brief Waits on a mailbox to finish an assynchronous operation.
  *
- * @param fd Logic ID of the target mailbox.
+ * @param mbxid  Active mailbox ID.
+ * @param config Communication's configuration.
+ * @param stats  Structure to store statstics.
  *
- * @returns Upon successful completion, a positive number is returned.
+ * @returns Upon successful completion, zero is returned.
  * Upon failure, a negative error code is returned instead.
  */
-PUBLIC int do_mailbox_wait(int mbxid, const struct comm_config * config, struct pstats * stats)
+PUBLIC int do_mailbox_wait(int mbxid, const struct active_config * config, struct pstats * stats)
 {
 	return (active_wait(&mbxpool, mbxid, config, stats));
 }
 
 /*============================================================================*
- * Initialization functions                                                   *
+ * do_mailbox_init()                                                          *
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @todo Initializtion of the active mailboxes and structures.
  */
 PUBLIC void do_mailbox_init(void)
 {
@@ -307,11 +384,11 @@ PUBLIC void do_mailbox_init(void)
 	local = processor_node_get_num();
 
 	/* Create the input mailbox. */
-	KASSERT(active_create(&mbxpool, local) >= 0);
+	KASSERT(_active_create(&mbxpool, local) >= 0);
 
 	/* Opens all mailbox interfaces. */
 	for (int i = 0; i < PROCESSOR_NOC_NODES_NUM; ++i)
-		KASSERT(active_open(&mbxpool, local, i) >= 0);
+		KASSERT(_active_open(&mbxpool, local, i) >= 0);
 
 	/* Initializes the active mailboxes locks. */
 	do_mailbox_table_init();

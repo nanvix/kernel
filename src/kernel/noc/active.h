@@ -23,10 +23,10 @@
  */
 
 /**
- * @defgroup kernel-mailbox Mailbox Facility
+ * @defgroup kernel-noc Noc Facility
  * @ingroup kernel
  *
- * @brief Mailbox Facility
+ * @brief Noc Facility
  */
 
 #ifndef NANVIX_NOC_ACTIVE_H_
@@ -40,54 +40,85 @@
 
 	#include "mbuffer.h"
 	#include "port.h"
-	#include "communicator.h"
 
 	/**
 	 * @brief Resource flags.
 	 */
 	/**@{*/
-	#define ACTIVE_FLAGS_ALLOWED (1 << 0) /**< Has it been allowed? */
+	#define ACTIVE_FLAGS_ALLOWED (1 << 0) /**< Has it been allowed. */
 	/**@}*/
 
 	/**
-     * @brief Composes the logic address based on @p fd @p port.
-     */
-    #define ACTIVE_LADDRESS_COMPOSE(_fd, _port, _nports) (_fd * _nports + _port)
+	 * @brief Composes the logic address based on logid id, logic portid and number of ports.
+	 */
+	#define ACTIVE_LADDRESS_COMPOSE(_fd, _port, _nports) (_fd * _nports + _port)
 
 	/**
-	 * @brief Extracts fd and port from id.
+	 * @name Communication types.
 	 */
 	/**@{*/
-	#define ACTIVE_GET_LADDRESS_FD(_act, _id)   ((_id >= 0) ? (_id / ACTIVE_GET_NR_PORTS(_act)) : (_id))
-	#define ACTIVE_GET_LADDRESS_PORT(_act, _id) ((_id >= 0) ? (_id % ACTIVE_GET_NR_PORTS(_act)) : (_id))
+	#define ACTIVE_TYPE_INPUT  (0) /**< Input communication.  */
+	#define ACTIVE_TYPE_OUTPUT (1) /**< Output communication. */
 	/**@}*/
 
-	#define ACTIVE_GET_NR_PORTS(_act) (_act->portpool.nports)
+	/**
+	 * @name Communication status.
+	 */
+	/**@{*/
+	#define ACTIVE_COMM_SUCCESS  (0)
+	#define ACTIVE_COMM_AGAIN    (1)
+	#define ACTIVE_COMM_RECEIVED (2)
+	/**@}*/
 
-	#define ACTIVE_ANY_SRC           (-1)
-	#define ACTIVE_COPY_TO_MBUFFER    (0)
-	#define ACTIVE_COPY_FROM_MBUFFER  (1)
+	/**
+	 * @name Mbuffer copy modes.
+	 */
+	/**@{*/
+	#define ACTIVE_COPY_TO_MBUFFER   (0)
+	#define ACTIVE_COPY_FROM_MBUFFER (1)
+	/**@}*/
+
+	/**
+	 * @name Communication mode.
+	 */
+	/**@{*/
+	#define ACTIVE_COMM_ONE_PHASE_MODE (0)
+	#define ACTIVE_COMM_TWO_PHASE_MODE (1)
+	/**@}*/
+
+	/**
+	 * @name Structures initializers.
+	 */
+	/**@{*/
+	#define ACTIVE_CONFIG_INITIALIZER (struct active_config){-1, -1, -1, NULL, 0ULL}
+	#define PSTATS_INITIALIZER        (struct pstats){0ULL, 0ULL}
+	#define REQUESTS_FIFO_INITIALIZER (struct requests_fifo){0, 0, 0, 0, NULL}
+	/**@}*/
 
 	/*============================================================================*
-	* Control Structures.                                                        *
-	*============================================================================*/
+	 * Auxiliar Structures.                                                       *
+	 *============================================================================*/
 
-	struct active;
+	/**
+	 * @brief Configuration helper.
+	 */
+	struct active_config
+	{
+		int fd;              /**< Active id.          */
+		int local_addr;      /**< Remote address.     */
+		int remote_addr;     /**< Remote address.     */
+		const void * buffer; /**< User level buffer.  */
+		size_t size;         /**< Data transfer size. */
+	};
 
-    /**
-    * @brief Resource allocation interface.
-    */
-    /**@{*/
-	typedef int (* hw_create_fn)(int);
-	typedef int (* hw_open_fn)(int, int);
-	typedef int (* hw_allow_fn)(struct active *, int);
-    typedef ssize_t (* hw_aread_fn)(int mbxid, void *buffer, size_t size);
-	typedef ssize_t (* hw_awrite_fn)(int mbxid, const void *buffer, size_t size);
-    typedef int (* hw_wait_fn)(int);
-	typedef int (* hw_copy_fn)(struct mbuffer *, const struct comm_config *, int);
-	typedef int (* hw_config_fn)(struct mbuffer *, const struct comm_config *);
-	typedef int (* hw_check_fn)(struct mbuffer *, const struct comm_config *);
-    /**@}*/
+	/**
+	 * @brief Measure performance statistics helper.
+	 */
+	struct pstats
+	{
+		size_t volume;    /**< Amount of data transferred. */
+		uint64_t latency; /**< Transfer latency.           */
+	};
 
 	/**
 	 * @brief Circular FIFO to hold write requests.
@@ -101,6 +132,36 @@
 		short * fifo;       /**< Buffer to store elements.   */
 	};
 
+	struct active;
+
+	/**
+	 * @name Hardware interface abstractions.
+	 */
+	/**@{*/
+	typedef int (* hw_create_fn)(int);
+	typedef int (* hw_open_fn)(int, int);
+	typedef int (* hw_allow_fn)(struct active *, int);
+	typedef ssize_t (* hw_aread_fn)(int mbxid, void *buffer, size_t size);
+	typedef ssize_t (* hw_awrite_fn)(int mbxid, const void *buffer, size_t size);
+	typedef int (* hw_wait_fn)(int);
+	typedef int (* hw_copy_fn)(struct mbuffer *, const struct active_config *, int);
+	typedef int (* hw_config_fn)(struct mbuffer *, const struct active_config *);
+	typedef int (* hw_check_fn)(struct mbuffer *, const struct active_config *);
+	/**@}*/
+
+	/**
+	 * @name Active interface abstractions.
+	 */
+	/**@{*/
+	typedef int (* active_release_fn)(int);
+	typedef ssize_t (* active_comm_fn)(int, const struct active_config *, struct pstats *);
+	typedef int (* active_wait_fn)(int, const struct active_config *, struct pstats *);
+	/**@}*/
+
+	/*============================================================================*
+	 * Active structure definition.                                               *
+	 *============================================================================*/
+
 	/**
 	 * @brief Table of active mailboxes.
 	 */
@@ -109,49 +170,74 @@
 		/*
 		* XXX: Don't Touch! This Must Come First!
 		*/
-		struct resource resource; /**< Generic resource information. */
+		struct resource resource;            /**< Generic resource information.   */
 
-		int flags;                /**< Auxiliar flags.               */
-		int hwfd;                 /**< Underlying file descriptor.   */
-		int local;                /**< Target node number.           */
-		int remote;               /**< Target node number.           */
-		int refcount;             /**< Target node number.           */
+		/**
+		 * @name Identification variables.
+		 */
+		/**@{*/
+		int flags;                           /**< Auxiliar flags.                 */
+		int hwfd;                            /**< Underlying file descriptor.     */
+		int local;                           /**< Local node number.              */
+		int remote;                          /**< Target node number.             */
+		int refcount;                        /**< References counter.             */
+		size_t size;                         /**< Data transfer size.             */
+		/**@}*/
 
-		size_t size;
+		/**
+		 * @name Auxiliar resources pools.
+		 */
+		/**@{*/
+		struct port_pool portpool;           /**< Port's pool.                    */
+		struct mbuffer_pool * mbufferpool;   /**< Mbuffer's pool.                 */
+		/**@}*/
 
-		struct port_pool portpool;
-		struct mbuffer_pool * mbufferpool;
-		struct requests_fifo requests;
-	
-		const hw_create_fn do_create;
-		const hw_open_fn do_open;
-		const hw_allow_fn do_allow;
-		const hw_aread_fn do_aread;
-		const hw_awrite_fn do_awrite;
-		const hw_wait_fn do_wait;
-		const hw_copy_fn do_copy;
-		const hw_config_fn do_header_config;
-		const hw_check_fn do_header_check;
+		/**
+		 * @name Control variables.
+		 */
+		/**@{*/
+		struct requests_fifo requests;       /**< Ring buffer of awrite requests. */
+		spinlock_t lock;                     /**< Protection.                     */
+		/**@}*/
 
-		spinlock_t lock;          /**< Protection.                   */
+		/**
+		 * @name Auxiliar functions.
+		 */
+		/**@{*/
+		const hw_create_fn do_create;        /**< Hardware create function.       */
+		const hw_open_fn do_open;            /**< Hardware open function.         */
+		const hw_allow_fn do_allow;          /**< Hardware allow function.        */
+		const hw_aread_fn do_aread;          /**< Hardware aread function.        */
+		const hw_awrite_fn do_awrite;        /**< Hardware awrite function.       */
+		const hw_wait_fn do_wait;            /**< Hardware wait function.         */
+		const hw_copy_fn do_copy;            /**< Mbuffer copy function.          */
+		const hw_config_fn do_header_config; /**< Header config function.         */
+		const hw_check_fn do_header_check;   /**< Header checker function.        */
+		/**@}*/
 	};
 
+	/**
+	 * @brief Active pool.
+	 */
 	struct active_pool
 	{
-		struct active * actives;  /**< Pool of actives.   */
-		const int nactives;       /**< Number of actives. */
+		struct active * actives; /**< Pool of actives.   */
+		const int nactives;      /**< Number of actives. */
 	};
+
+	/*============================================================================*
+	 * Active interface.                                                          *
+	 *============================================================================*/
 
 	EXTERN int active_alloc(const struct active_pool *, int, int, int, int);
 	EXTERN int active_release(const struct active_pool *, int);
-	EXTERN ssize_t active_aread(const struct active_pool *, int, const struct comm_config *, struct pstats *);
-	EXTERN ssize_t active_awrite(const struct active_pool *, int, const struct comm_config *, struct pstats *);
-	EXTERN int active_wait(const struct active_pool *, int, const struct comm_config *, struct pstats *);
+	EXTERN ssize_t active_aread(const struct active_pool *, int, const struct active_config *, struct pstats *);
+	EXTERN ssize_t active_awrite(const struct active_pool *, int, const struct active_config *, struct pstats *);
+	EXTERN int active_wait(const struct active_pool *, int, const struct active_config *, struct pstats *);
+	EXTERN int _active_create(const struct active_pool *, int);
+	EXTERN int _active_open(const struct active_pool *, int, int);
 
-	PUBLIC int active_create(const struct active_pool *, int);
-	PUBLIC int active_open(const struct active_pool *, int, int);
-
-    /**
+	/**
 	 * @brief Sets a active as allowed.
 	 *
 	 * @param active Target active.

@@ -54,35 +54,17 @@
 /**
  * @brief Portal message buffer.
  */
-PRIVATE union ubuffer
-{
-	struct mbuffer abstract;
-	struct
-	{
-		/*
-		* XXX: Don't Touch! This Must Come First!
-		*/
-		struct resource resource;
-		struct portal_message message;
-	};
-} ubuffers[KPORTAL_MESSAGE_BUFFERS_MAX] = {
-	[0 ... (KPORTAL_MESSAGE_BUFFERS_MAX - 1)] = {
-		.message = {
-			.src  = -1,
-			.dest = -1,
-			.size =  0,
-			.data = {'\0'},
-		},
-	},
+PRIVATE union portal_mbuffer portalbuffers[KPORTAL_MESSAGE_BUFFERS_MAX] = {
+	[0 ... (KPORTAL_MESSAGE_BUFFERS_MAX - 1)] = MBUFFER_INITIALIZER
 };
 
 /**
  * @brief Ubuffer resource pool.
  */
 PRIVATE struct mbuffer_pool ubufferpool = {
-	ubuffers,
+	portalbuffers,
 	KPORTAL_MESSAGE_BUFFERS_MAX,
-	sizeof(union ubuffer),
+	sizeof(union portal_mbuffer),
 	SPINLOCK_UNLOCKED
 };
 
@@ -90,14 +72,13 @@ PRIVATE struct mbuffer_pool ubufferpool = {
  * Physical Portals.                                                          *
  *----------------------------------------------------------------------------*/
 
-int wrapper_portal_open(int, int);
 int wrapper_portal_allow(struct active *, int);
-int wrapper_portal_copy(struct mbuffer *, const struct comm_config *, int);
-int portal_header_config(struct mbuffer *, const struct comm_config *);
-int portal_header_check(struct mbuffer *, const struct comm_config *);
+int wrapper_portal_copy(struct mbuffer *, const struct active_config *, int);
+int portal_header_config(struct mbuffer *, const struct active_config *);
+int portal_header_check(struct mbuffer *, const struct active_config *);
 
 /**
- * @brief Table of ports.
+ * @brief Portal ports.
  */
 PRIVATE struct port ports[HW_PORTAL_MAX][KPORTAL_PORT_NR] = {
 	[0 ... (HW_PORTAL_MAX - 1)] = {
@@ -108,6 +89,9 @@ PRIVATE struct port ports[HW_PORTAL_MAX][KPORTAL_PORT_NR] = {
 	}
 };
 
+/**
+ * @brief Portal FIFOs.
+ */
 PRIVATE short fifos[HW_PORTAL_MAX][KPORTAL_PORT_NR] = {
 	[0 ... (HW_PORTAL_MAX - 1)] = {
 		[0 ... (KPORTAL_PORT_NR - 1)] = -1,
@@ -115,7 +99,7 @@ PRIVATE short fifos[HW_PORTAL_MAX][KPORTAL_PORT_NR] = {
 };
 
 /**
- * @brief Table of active portals.
+ * @brief Portales.
  */
 struct active portals[HW_PORTAL_MAX] = {
 	[0 ... (HW_PORTAL_MAX - 1)] {
@@ -139,7 +123,7 @@ struct active portals[HW_PORTAL_MAX] = {
 		},
 		.mbufferpool      = &ubufferpool,
 		.do_create        = portal_create,
-		.do_open          = wrapper_portal_open,
+		.do_open          = portal_open,
 		.do_allow         = wrapper_portal_allow,
 		.do_aread         = portal_aread,
 		.do_awrite        = portal_awrite,
@@ -151,16 +135,15 @@ struct active portals[HW_PORTAL_MAX] = {
 };
 
 /**
- * @brief Resource pool.
+ * @brief Portal pool.
  */
 struct active_pool portalpool = {
 	portals, HW_PORTAL_MAX
 };
 
 /*============================================================================*
- * do_portal_table_init()                                                    *
+ * do_portal_table_init()                                                     *
  *============================================================================*/
-
 
 /**
  * @brief Initializes the mbuffers table lock.
@@ -176,11 +159,18 @@ void do_portal_table_init(void)
 	}
 }
 
-int wrapper_portal_open(int local, int remote)
-{
-	return (portal_open(local, remote));
-}
+/*============================================================================*
+ * wrapper_portal_allow()                                                     *
+ *============================================================================*/
 
+/**
+ * @brief Allow a physical portal communication.
+ *
+ * @param act    Active resource.
+ * @param remote Remote node ID.
+ *
+ * @returns Value return by portal_allow function.
+ */
 int wrapper_portal_allow(struct active * act, int remote)
 {
 	if (active_is_allowed(act))
@@ -194,23 +184,36 @@ int wrapper_portal_allow(struct active * act, int remote)
 	return (portal_allow(act->hwfd, remote));
 }
 
-int wrapper_portal_copy(struct mbuffer * buf, const struct comm_config * config, int type)
+/*============================================================================*
+ * wrapper_portal_copy()                                                      *
+ *============================================================================*/
+
+/**
+ * @brief Copy a message.
+ *
+ * @param buf    Mbuffer resource.
+ * @param config Communication's configuration.
+ * @param type   Direction of the copy.
+ *
+ * @returns Zero is returned.
+ */
+int wrapper_portal_copy(struct mbuffer * buf, const struct active_config * config, int type)
 {
 	void * to;
 	void * from;
-	union ubuffer * ubuf;
+	union portal_mbuffer * pbuf;
 
-	ubuf = (union ubuffer *) buf;
+	pbuf = (union portal_mbuffer *) buf;
 
 	if (type == ACTIVE_COPY_TO_MBUFFER)
 	{
-		to   = (void *) ubuf->message.data;
+		to   = (void *) pbuf->message.data;
 		from = (void *) config->buffer;
 	}
 	else
 	{
 		to   = (void *) config->buffer;
-		from = (void *) ubuf->message.data;
+		from = (void *) pbuf->message.data;
 	}
 
 	kmemcpy(to, from, config->size);
@@ -218,20 +221,42 @@ int wrapper_portal_copy(struct mbuffer * buf, const struct comm_config * config,
 	return (0);
 }
 
-int portal_header_config(struct mbuffer * mbuf, const struct comm_config * config)
+/*============================================================================*
+ * portal_header_config()                                                     *
+ *============================================================================*/
+
+/**
+ * @brief Configurate a message header.
+ *
+ * @param buf    Mbuffer resource.
+ * @param config Communication's configuration.
+ *
+ * @returns Zero is returned.
+ */
+int portal_header_config(struct mbuffer * mbuf, const struct active_config * config)
 {
-	mbuf->message.src  = ACTIVE_LADDRESS_COMPOSE(processor_node_get_num(), GET_LADDRESS_PORT(config->fd), KPORTAL_PORT_NR);
-	mbuf->message.dest = config->remote;
-	mbuf->message.size = config->size;
+	mbuf->message.header.src  = config->local_addr;
+	mbuf->message.header.dest = config->remote_addr;
+	mbuf->message.header.size = config->size;
 
 	return (0);
 }
 
-int portal_header_check(struct mbuffer * mbuf, const struct comm_config * config)
-{
-	int local_addr = ACTIVE_LADDRESS_COMPOSE(processor_node_get_num(), GET_LADDRESS_PORT(config->fd), KPORTAL_PORT_NR);
+/*============================================================================*
+ * portal_header_check()                                                      *
+ *============================================================================*/
 
-	return ((mbuf->message.dest == local_addr) && (mbuf->message.src == config->remote));
+/**
+ * @brief Checks if a message is to current configuration.
+ *
+ * @param buf    Mbuffer resource.
+ * @param config Communication's configuration.
+ *
+ * @returns Non-zero if the mbuffer is destinate to current configuration.
+ */
+int portal_header_check(struct mbuffer * mbuf, const struct active_config * config)
+{
+	return ((mbuf->message.header.dest == config->local_addr) && (mbuf->message.header.src == config->remote_addr));
 }
 
 /*============================================================================*
@@ -239,11 +264,12 @@ int portal_header_check(struct mbuffer * mbuf, const struct comm_config * config
  *============================================================================*/
 
 /**
- * @brief Creates a physical portal.
+ * @brief Allocate a physical portal.
  *
  * @param local  Local node ID.
- * @param remote Remote node ID.
- * @param port   Target port in target nodenum node.
+ * @param remote Remote node ID (It can be -1).
+ * @param port   Port ID.
+ * @param type   Communication type (INPUT or OUTPUT).
  *
  * @returns Upon successful completion, the ID of the active portal is
  * returned. Upon failure, a negative error code is returned instead.
@@ -260,7 +286,7 @@ PUBLIC int do_portal_alloc(int local, int remote, int port, int type)
 /**
  * @brief Releases a physical portal.
  *
- * @param portalid Physical portal ID.
+ * @param mbxid Active portal ID.
  *
  * @returns Upon successful completion, zero is returned. Upon
  * failure, a negative error code is returned instead.
@@ -275,9 +301,16 @@ PUBLIC int do_portal_release(int portalid)
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @brief Async reads from an active.
+ *
+ * @param mbxid  Active portal ID.
+ * @param config Communication's configuration.
+ * @param stats  Structure to store statstics.
+ *
+ * @returns Upon successful completion, positive number is returned. Upon
+ * failure, a negative error code is returned instead.
  */
-PUBLIC ssize_t do_portal_aread(int portalid, const struct comm_config * config, struct pstats * stats)
+PUBLIC ssize_t do_portal_aread(int portalid, const struct active_config * config, struct pstats * stats)
 {
 	return (active_aread(&portalpool, portalid, config, stats));
 }
@@ -287,9 +320,16 @@ PUBLIC ssize_t do_portal_aread(int portalid, const struct comm_config * config, 
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @brief Async writes from an active.
+ *
+ * @param mbxid  Active portal ID.
+ * @param config Communication's configuration.
+ * @param stats  Structure to store statstics.
+ *
+ * @returns Upon successful completion, positive number is returned. Upon
+ * failure, a negative error code is returned instead.
  */
-PUBLIC ssize_t do_portal_awrite(int portalid, const struct comm_config * config, struct pstats * stats)
+PUBLIC ssize_t do_portal_awrite(int portalid, const struct active_config * config, struct pstats * stats)
 {
 	return (active_awrite(&portalpool, portalid, config, stats));
 }
@@ -299,28 +339,26 @@ PUBLIC ssize_t do_portal_awrite(int portalid, const struct comm_config * config,
  *============================================================================*/
 
 /**
- * @brief Waits on a virtual portal to finish an assynchronous operation.
+ * @brief Waits on a portal to finish an assynchronous operation.
  *
- * @param portalid Logic ID of the target virtual portal.
+ * @param mbxid  Active portal ID.
+ * @param config Communication's configuration.
+ * @param stats  Structure to store statstics.
  *
- * @returns Upon successful completion, a positive number is returned.
+ * @returns Upon successful completion, zero is returned.
  * Upon failure, a negative error code is returned instead.
  */
-PUBLIC int do_portal_wait(int portalid, const struct comm_config * config, struct pstats * stats)
+PUBLIC int do_portal_wait(int portalid, const struct active_config * config, struct pstats * stats)
 {
 	return (active_wait(&portalpool, portalid, config, stats));
 }
-
-/*============================================================================*
- * Initialization functions                                                   *
- *============================================================================*/
 
 /*============================================================================*
  * do_portal_init()                                                           *
  *============================================================================*/
 
 /**
- * @todo TODO: Provide a detailed description for this function.
+ * @todo Initializtion of the active portales and structures.
  */
 PUBLIC void do_portal_init(void)
 {
@@ -329,11 +367,11 @@ PUBLIC void do_portal_init(void)
 	local = processor_node_get_num();
 
 	/* Create the input portal. */
-	KASSERT(active_create(&portalpool, local) >= 0);
+	KASSERT(_active_create(&portalpool, local) >= 0);
 
 	/* Opens all portal interfaces. */
 	for (int i = 0; i < PROCESSOR_NOC_NODES_NUM; ++i)
-		KASSERT(active_open(&portalpool, local, i) >= 0);
+		KASSERT(_active_open(&portalpool, local, i) >= 0);
 
 	/* Initializes the active portals locks. */
 	do_portal_table_init();
