@@ -68,6 +68,11 @@
 	 */
 	#define KPORTAL_MAX (HW_PORTAL_MAX * KPORTAL_PORT_NR)
 
+	/**
+	 * @brief Maximum size of transfer data.
+	 */
+	#define KPORTAL_MAX_SIZE (1 * MB)
+
 #ifdef __NANVIX_MICROKERNEL
 
 	/**
@@ -75,21 +80,22 @@
 	 *
 	 * Size of portal message header.
 	 */
-	#define KPORTAL_MESSAGE_HEADER_SIZE 3*sizeof(int)
+	#define KPORTAL_MESSAGE_HEADER_SIZE (3 * sizeof(int))
 
 	/**
 	 * @brief Maximum number of message buffer resources.
 	 *
 	 * Maximum number of message buffers used to hold temporary data on kernel space.
 	 */
-	#define KPORTAL_MESSAGE_BUFFERS_MAX 32
+	#define KPORTAL_MESSAGE_BUFFERS_MAX (40)
 
 	/**
 	 * @brief Maximum number of auxiliar message buffer resources.
 	 *
 	 * Maximum number of message buffers used to hold temporary data on kernel space.
+	 * WARNING: That constant uses a subset of mbuffers set by @c KPORTAL_MESSAGE_BUFFERS_MAX
 	 */
-	#define KPORTAL_AUX_BUFFERS_MAX 8
+	#define KPORTAL_AUX_BUFFERS_MAX (8)
 
 	/**
 	 * @brief Creates a virtual portal.
