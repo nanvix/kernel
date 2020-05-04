@@ -36,9 +36,10 @@
  * @name Auxiliar macros
  */
 /**@{*/
-#define ACTIVE_GET_NR_PORTS(_act) (_act->portpool.nports)                                            /**< Extracts #ports. */
+#define ACTIVE_GET_NR_PORTS(_act)           (_act->portpool.nports)                                  /**< Extracts #ports. */
 #define ACTIVE_GET_LADDRESS_FD(_act, _id)   ((_id >= 0) ? (_id / ACTIVE_GET_NR_PORTS(_act)) : (_id)) /**< Extracts actid.  */
 #define ACTIVE_GET_LADDRESS_PORT(_act, _id) ((_id >= 0) ? (_id % ACTIVE_GET_NR_PORTS(_act)) : (_id)) /**< Extracts portid. */
+#define ACTIVE_GET_PORTID(_act, _port)      (port - active->portpool.ports)                          /**< Extracts portid. */
 /**@}*/
 
 /**
@@ -79,10 +80,14 @@ PRIVATE int modulus_power2(int x, int y)
  * @returns Upon successful register, zero is returned. Upon failure,
  * a negative error code is returned instead.
  */
-PRIVATE int do_request_operation(struct active * active, int port)
+PRIVATE int do_request_operation(struct active * active, struct port * port)
 {
 	int head;                        /* FIFO head. */
 	struct requests_fifo * requests; /* FIFO.      */
+
+	/* Sanity checks. */
+	KASSERT((active != NULL) && (port != NULL));
+	KASSERT(WITHIN(port, active->portpool.ports, (active->portpool.ports + active->portpool.nports + 1)));
 
 	requests = &active->requests;
 
@@ -91,8 +96,9 @@ PRIVATE int do_request_operation(struct active * active, int port)
 		return (-EBUSY);
 
 	/* Register request. */
+	port_set_requested(port);
 	head = requests->head;
-	requests->fifo[head] = port;
+	requests->fifo[head] = ACTIVE_GET_PORTID(active, port);
 
 	/* Updates head. */
 	requests->head = modulus_power2((head + 1), requests->max_capacity);
@@ -114,23 +120,27 @@ PRIVATE int do_request_operation(struct active * active, int port)
  * @returns Upon successful register, zero is returned. Upon failure,
  * a negative error code is returned instead.
  */
-PRIVATE int do_request_complete(struct active * active, int port)
+PRIVATE int do_request_complete(struct active * active, struct port * port)
 {
 	int tail;                        /* FIFO tail. */
 	struct requests_fifo * requests; /* FIFO.      */
 
-	requests = &active->requests;
+	/* Sanity checks. */
+	KASSERT((active != NULL) && (port != NULL));
+	KASSERT(WITHIN(port, active->portpool.ports, (active->portpool.ports + active->portpool.nports + 1)));
 
-	tail = requests->tail;
+	requests = &active->requests;
+	tail     = requests->tail;
 
 	/* Isn't it his turn? */
-	if (requests->fifo[tail] != port)
+	if (requests->fifo[tail] != ACTIVE_GET_PORTID(active, port))
 		return (-EINVAL);
 
 	/* Complete the request. */
 	requests->fifo[tail] = -1;
 	requests->tail = modulus_power2((tail + 1), requests->max_capacity);
 	requests->nelements--;
+	port_set_notrequested(port);
 
 	return (0);
 }
@@ -147,12 +157,16 @@ PRIVATE int do_request_complete(struct active * active, int port)
  *
  * @returns Non-zero if is its turns, zero otherwise.
  */
-PRIVATE int do_request_verify(struct active * active, int port)
+PRIVATE int do_request_verify(struct active * active, struct port * port)
 {
+	/* Sanity checks. */
+	KASSERT((active != NULL) && (port != NULL));
+	KASSERT(WITHIN(port, active->portpool.ports, (active->portpool.ports + active->portpool.nports)));
+
 	if (!active->requests.nelements)
 		return (0);
 
-	return (active->requests.fifo[active->requests.tail] == port);
+	return (active->requests.fifo[active->requests.tail] == ACTIVE_GET_PORTID(active, port));
 }
 
 /*============================================================================*
@@ -396,7 +410,7 @@ PUBLIC int active_release(const struct active_pool * pool, int id)
 				ACTIVE_GET_NR_PORTS(active)
 			);
 
-			/* Check if exist pending messages for this port. */
+			/* Check if exist pending messages for this port in principal mbufferpool. */
 			if (mbuffer_search(active->mbufferpool, dest, ACTIVE_ANY_SRC) >= 0)
 				goto error;
 		}
@@ -409,10 +423,9 @@ PUBLIC int active_release(const struct active_pool * pool, int id)
 			/* Releases active. */
 			resource_set_unused(&port->resource);
 			active->refcount--;
-
 			portpool->used_ports--;
 
-			ret = 0;
+			ret = (0);
 		}
 
 error:
@@ -443,20 +456,25 @@ PUBLIC ssize_t active_aread(
 	struct pstats * stats
 )
 {
-	ssize_t ret;            /* Return value.                  */
-	int remote;             /* Remote node ID.                */
-	int mbufferid;          /* Mbuffer ID.                    */
-	uint64_t t1;            /* Clock value before aread call. */
-	uint64_t t2;            /* Clock value after aread call.  */
-	struct port * port;     /* Port pointer.                  */
-	struct mbuffer * buf;   /* Mbuffer pointer.               */
-	struct active * active; /* Active pointer.                */
+	ssize_t ret;                      /* Return value.                  */
+	int remote;                       /* Remote node ID.                */
+	int mbufferid;                    /* Mbuffer ID.                    */
+	int comm_is_local;                /* Checks value for local comm.   */
+	uint64_t t1;                      /* Clock value before aread call. */
+	uint64_t t2;                      /* Clock value after aread call.  */
+	struct port * port;               /* Port pointer.                  */
+	struct mbuffer * buf;             /* Mbuffer pointer.               */
+	struct active * active;           /* Active pointer.                */
+	struct mbuffer_pool * bufferpool; /* Mbuffer pool pointer.          */
 
 	KASSERT(active_valid_call(pool, id));
 
 	active = &pool->actives[ACTIVE_GET_LADDRESS_FD(pool->actives, id)];
 	port   = &active->portpool.ports[ACTIVE_GET_LADDRESS_PORT(active, id)];
 	remote = ACTIVE_GET_LADDRESS_FD(active, config->remote_addr);
+
+	/* Checks if it is a local receive. */
+	comm_is_local = node_is_local(remote);
 
 	spinlock_lock(&active->lock);
 
@@ -466,10 +484,24 @@ PUBLIC ssize_t active_aread(
 		if (!resource_is_used(&port->resource))
 			goto error;
 
-		/* Is there a pending message for this vactive? */
-		if ((mbufferid = mbuffer_search(active->mbufferpool, config->local_addr, config->remote_addr)) >= 0)
+		/* Is the communication local? */
+		if (comm_is_local)
 		{
-			buf = mbuffer_get(active->mbufferpool, mbufferid);
+			/* Search only in a subset of the mbufferpool. */
+			mbufferid = mbuffer_search(active->mbufferpool_aux, config->local_addr, config->remote_addr);
+			bufferpool = active->mbufferpool_aux;
+		}
+		else
+		{
+			/* Search in the whole mbufferpool. */
+			mbufferid = mbuffer_search(active->mbufferpool, config->local_addr, config->remote_addr);
+			bufferpool = active->mbufferpool;
+		}
+
+		/* Is there a pending message for this active? */
+		if (mbufferid >= 0)
+		{
+			buf = mbuffer_get(bufferpool, mbufferid);
 
 			t1 = clock_read();
 				active->do_copy(buf, config, ACTIVE_COPY_FROM_MBUFFER);
@@ -479,7 +511,7 @@ PUBLIC ssize_t active_aread(
 			stats->latency += (t2 - t1);
 			stats->volume  += (config->size);
 
-			KASSERT(mbuffer_release(active->mbufferpool, mbufferid, MBUFFER_DISCARD_MESSAGE) == 0);
+			KASSERT(mbuffer_release(bufferpool, mbufferid, MBUFFER_DISCARD_MESSAGE) == 0);
 
 			spinlock_unlock(&active->lock);
 
@@ -488,8 +520,8 @@ PUBLIC ssize_t active_aread(
 
 		ret = (-ENOMSG);
 
-		/* Is it a local communication? */
-		if (active->local == remote)
+		/* Is it a local communication? Then retry read for search on local mbufferpool. */
+		if (comm_is_local)
 			goto error;
 
 		ret = (-EBUSY);
@@ -508,12 +540,13 @@ PUBLIC ssize_t active_aread(
 		/* Allocates a data buffer to receive data. */
 		if ((mbufferid = mbuffer_alloc(active->mbufferpool)) < 0)
 		{
-			ret = mbufferid;
+			ret = (mbufferid);
 			goto error;
 		}
 
-		port->mbufferid = mbufferid;
-		buf = mbuffer_get(active->mbufferpool, mbufferid);
+		port->mbufferid   = mbufferid;
+		port->mbufferpool = active->mbufferpool;
+		buf = mbuffer_get(port->mbufferpool, mbufferid);
 
 		t1 = clock_read();
 
@@ -537,8 +570,9 @@ PUBLIC ssize_t active_aread(
 	return (ACTIVE_COMM_SUCCESS);
 
 discard_message:
-		port->mbufferid = -1;
-		KASSERT(mbuffer_release(active->mbufferpool, mbufferid, MBUFFER_DISCARD_MESSAGE) == 0);
+		KASSERT(mbuffer_release(port->mbufferpool, mbufferid, MBUFFER_DISCARD_MESSAGE) == 0);
+		port->mbufferid   = -1;
+		port->mbufferpool = NULL;
 
 error:
 	spinlock_unlock(&active->lock);
@@ -568,21 +602,23 @@ PUBLIC ssize_t active_awrite(
 	struct pstats * stats
 )
 {
-	ssize_t ret;            /* Return value.                   */
-	int mbufferid;          /* Message buffer used to write.   */
-	uint64_t t1;            /* Clock value before awrite call. */
-	uint64_t t2;            /* Clock value after awrite call.  */
-	int port_nr;            /* Port ID.                        */
-	struct port * port;     /* Port pointer.                   */
-	struct mbuffer * buf;   /* Mbuffer pointer.                */
-	struct active * active; /* Active pointer.                 */
+	ssize_t ret;                      /* Return value.                   */
+	int forward;                      /* Check value for local comm.     */
+	int mbufferid;                    /* Message buffer used to write.   */
+	uint64_t t1;                      /* Clock value before awrite call. */
+	uint64_t t2;                      /* Clock value after awrite call.  */
+	struct port * port;               /* Port pointer.                   */
+	struct mbuffer * buf;             /* Mbuffer pointer.                */
+	struct active * active;           /* Active pointer.                 */
+	struct mbuffer_pool * bufferpool; /* Mbuffer pool pointer.           */
 
 	KASSERT(active_valid_call(pool, id));
 
 	active = &pool->actives[ACTIVE_GET_LADDRESS_FD(pool->actives, id)];
+	port   = &active->portpool.ports[ACTIVE_GET_LADDRESS_PORT(active, id)];
 
-	port_nr = ACTIVE_GET_LADDRESS_PORT(active, id);
-	port   = &active->portpool.ports[port_nr];
+	/* Checks if the write is a forward or a send through NoC. */
+	forward = node_is_local(active->remote);
 
 	spinlock_lock(&active->lock);
 
@@ -596,13 +632,25 @@ PUBLIC ssize_t active_awrite(
 		if ((mbufferid = port->mbufferid) < 0)
 		{
 			/* Allocates a message buffer to send the message. */
-			if ((mbufferid = mbuffer_alloc(active->mbufferpool)) < 0)
+			if (forward)
+			{
+				mbufferid  = mbuffer_alloc(active->mbufferpool_aux);
+				bufferpool = active->mbufferpool_aux;
+			}
+			else
+			{
+				mbufferid  = mbuffer_alloc(active->mbufferpool);
+				bufferpool = active->mbufferpool;
+			}
+
+			/* Successful allocated a message buffer? */
+			if (mbufferid < 0)
 			{
 				ret = (mbufferid);
 				goto error;
 			}
 
-			buf = mbuffer_get(active->mbufferpool, mbufferid);
+			buf = mbuffer_get(bufferpool, mbufferid);
 
 			active->do_header_config(buf, config);
 
@@ -611,10 +659,10 @@ PUBLIC ssize_t active_awrite(
 			t2 = clock_read();
 
 			/* Checks if the destination is the local node. */
-			if (node_is_local(active->remote))
+			if (forward)
 			{
 				/* Forwards the message to the mbuffers table. */
-				mbuffer_release(active->mbufferpool, mbufferid, MBUFFER_KEEP_MESSAGE);
+				mbuffer_release(bufferpool, mbufferid, MBUFFER_KEEP_MESSAGE);
 
 				/* Update performance statistics. */
 				stats->latency += (t2 - t1);
@@ -625,10 +673,13 @@ PUBLIC ssize_t active_awrite(
 				return (ACTIVE_COMM_RECEIVED);
 			}
 			else
-				port->mbufferid = mbufferid;
+			{
+				port->mbufferpool = bufferpool;
+				port->mbufferid   = mbufferid;
+			}
 		}
 		else
-			buf = mbuffer_get(active->mbufferpool, mbufferid);
+			buf = mbuffer_get(port->mbufferpool, mbufferid);
 
 		ret = (-EBUSY);
 
@@ -636,14 +687,12 @@ PUBLIC ssize_t active_awrite(
 		if (!port_is_requested(port))
 		{
 			/* Request an operation. */
-			if (do_request_operation(active, port_nr) < 0)
+			if (do_request_operation(active, port) < 0)
 				goto error;
-
-			port_set_requested(port);
 		}
 
 		/* Check if it is the current comm's turn. */
-		if (!do_request_verify(active, port_nr))
+		if (!do_request_verify(active, port))
 			goto error;
 
 		/* Bad active. */
@@ -700,7 +749,6 @@ PUBLIC int active_wait(
 	int keep_rule;          /* Discard rule.                   */
 	uint64_t t1;            /* Clock value before awrite call. */
 	uint64_t t2;            /* Clock value after awrite call.  */
-	int port_nr;            /* Port ID.                        */
 	struct port * port;     /* Port pointer.                   */
 	struct mbuffer * buf;   /* Mbuffer pointer.                */
 	struct active * active; /* Active pointer.                 */
@@ -708,9 +756,7 @@ PUBLIC int active_wait(
 	KASSERT(active_valid_call(pool, id));
 
 	active = &pool->actives[ACTIVE_GET_LADDRESS_FD(pool->actives, id)];
-
-	port_nr = ACTIVE_GET_LADDRESS_PORT(active, id);
-	port   = &active->portpool.ports[port_nr];
+	port   = &active->portpool.ports[ACTIVE_GET_LADDRESS_PORT(active, id)];
 
 	spinlock_lock(&active->lock);
 
@@ -729,7 +775,7 @@ PUBLIC int active_wait(
 			goto error;
 
 		/* Not requested write. */
-		if ((resource_is_writable(&active->resource)) && !(do_request_verify(active, port_nr)))
+		if ((resource_is_writable(&active->resource)) && !(do_request_verify(active, port)))
 			goto error;
 
 	spinlock_unlock(&active->lock);
@@ -753,7 +799,7 @@ PUBLIC int active_wait(
 			/* Read communication has extra operations. */
 			if (resource_is_readable(&active->resource))
 			{
-				buf = mbuffer_get(active->mbufferpool, mbufferid);
+				buf = mbuffer_get(port->mbufferpool, mbufferid);
 
 				dest  = buf->message.header.dest;
 
@@ -775,11 +821,7 @@ PUBLIC int active_wait(
 				}
 			}
 			else if (resource_is_writable(&active->resource))
-			{
-				KASSERT(do_request_complete(active, port_nr) == 0);
-
-				port_set_notrequested(port);
-			}
+				KASSERT(do_request_complete(active, port) == 0);
 
 			if (ret == ACTIVE_COMM_SUCCESS)
 				stats->volume += (config->size);
@@ -788,8 +830,10 @@ PUBLIC int active_wait(
 			stats->latency += (t2 - t1);
 		}
 
-		port->mbufferid = -1;
-		mbuffer_release(active->mbufferpool, mbufferid, keep_rule);
+		/* Releases mbuffer. */
+		mbuffer_release(port->mbufferpool, mbufferid, keep_rule);
+		port->mbufferid   = -1;
+		port->mbufferpool = NULL;
 
 		resource_set_notbusy(&active->resource);
 

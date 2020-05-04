@@ -36,110 +36,47 @@
 #if __TARGET_HAS_PORTAL
 
 /**
- * @brief Extracts fd and port from portalid.
+ * @name Auxiliary macros.
  */
 /**@{*/
-#define GET_LADDRESS_FD(portalid)   (portalid / KPORTAL_PORT_NR)
-#define GET_LADDRESS_PORT(portalid) (portalid % KPORTAL_PORT_NR)
+#define GET_LADDRESS_FD(portalid)   (portalid / KPORTAL_PORT_NR) /**< Extracts fd from portalid.   */
+#define GET_LADDRESS_PORT(portalid) (portalid % KPORTAL_PORT_NR) /**< Extracts port from portalid. */
 /**@}*/
 
 /*============================================================================*
  * Control Structures.                                                        *
  *============================================================================*/
 
-/*----------------------------------------------------------------------------*
- * Portal Message Buffer.                                                     *
- *----------------------------------------------------------------------------*/
+/**
+ * @name Pool variables.
+ */
+/**@{*/
+PRIVATE union portal_mbuffer pbuffers[KPORTAL_MESSAGE_BUFFERS_MAX]; /**< Portal message buffer.                        */
+PRIVATE uint64_t pbuffers_age;                                      /**< Counter used to set mbuffer age.              */
+PRIVATE spinlock_t pbuffers_lock;                                   /**< Protection of the mbuffer pools.              */
+PRIVATE struct mbuffer_pool pbufferpool;                            /**< Pool with all of mbuffer available.           */
+PRIVATE struct mbuffer_pool pbufferpool_aux;                        /**< Pool with a subset of mbuffer in mbufferpool. */
+/**@}*/
 
 /**
- * @brief Portal message buffer.
+ * @name Physical Portal variables.
  */
-PRIVATE union portal_mbuffer portalbuffers[KPORTAL_MESSAGE_BUFFERS_MAX] = {
-	[0 ... (KPORTAL_MESSAGE_BUFFERS_MAX - 1)] = MBUFFER_INITIALIZER
-};
+/**@{*/
+PRIVATE struct port portalports[HW_PORTAL_MAX][KPORTAL_PORT_NR]; /**< Portal ports. */
+PRIVATE short fifos[HW_PORTAL_MAX][KPORTAL_PORT_NR];             /**< Portal FIFOs. */
+PRIVATE struct active portals[HW_PORTAL_MAX];                    /**< Portals.      */
+PRIVATE struct active_pool portalpool;                           /**< Portal pool.  */
+/**@}*/
 
 /**
- * @brief Ubuffer resource pool.
+ * @name Prototype functions.
  */
-PRIVATE struct mbuffer_pool ubufferpool = {
-	portalbuffers,
-	KPORTAL_MESSAGE_BUFFERS_MAX,
-	sizeof(union portal_mbuffer),
-	SPINLOCK_UNLOCKED
-};
-
-/*----------------------------------------------------------------------------*
- * Physical Portals.                                                          *
- *----------------------------------------------------------------------------*/
-
+/**@{*/
 int wrapper_portal_allow(struct active *, int);
 int wrapper_portal_copy(struct mbuffer *, const struct active_config *, int);
 int portal_header_config(struct mbuffer *, const struct active_config *);
 int portal_header_check(struct mbuffer *, const struct active_config *);
-
-/**
- * @brief Portal ports.
- */
-PRIVATE struct port ports[HW_PORTAL_MAX][KPORTAL_PORT_NR] = {
-	[0 ... (HW_PORTAL_MAX - 1)] = {
-		[0 ... (KPORTAL_PORT_NR - 1)] = {
-			.resource  = {0, },
-			.mbufferid = -1,
-		}
-	}
-};
-
-/**
- * @brief Portal FIFOs.
- */
-PRIVATE short fifos[HW_PORTAL_MAX][KPORTAL_PORT_NR] = {
-	[0 ... (HW_PORTAL_MAX - 1)] = {
-		[0 ... (KPORTAL_PORT_NR - 1)] = -1,
-	}
-};
-
-/**
- * @brief Portales.
- */
-struct active portals[HW_PORTAL_MAX] = {
-	[0 ... (HW_PORTAL_MAX - 1)] {
-		.resource   = {0, },
-		.hwfd       = -1,
-		.local      = -1,
-		.remote     = -1,
-		.refcount   =  0,
-		.size       = (KPORTAL_MESSAGE_HEADER_SIZE + HAL_PORTAL_MAX_SIZE),
-		.portpool       = {
-			.ports      = NULL,
-			.nports     = KPORTAL_PORT_NR,
-			.used_ports = 0,
-		},
-		.requests         = {
-			.head         = 0,
-			.tail         = 0,
-			.max_capacity = KPORTAL_PORT_NR,
-			.nelements    = 0,
-			.fifo         = NULL,
-		},
-		.mbufferpool      = &ubufferpool,
-		.do_create        = portal_create,
-		.do_open          = portal_open,
-		.do_allow         = wrapper_portal_allow,
-		.do_aread         = portal_aread,
-		.do_awrite        = portal_awrite,
-		.do_wait          = portal_wait,
-		.do_copy          = wrapper_portal_copy,
-		.do_header_config = portal_header_config,
-		.do_header_check  = portal_header_check,
-	},
-};
-
-/**
- * @brief Portal pool.
- */
-struct active_pool portalpool = {
-	portals, HW_PORTAL_MAX
-};
+/**@}*/
 
 /*============================================================================*
  * do_portal_table_init()                                                     *
@@ -150,13 +87,83 @@ struct active_pool portalpool = {
  */
 void do_portal_table_init(void)
 {
+	/* Initializes the mbuffers. */
+	for (int i = 0; i < KPORTAL_MESSAGE_BUFFERS_MAX; ++i)
+	{
+		pbuffers[i].abstract.resource = RESOURCE_INITIALIZER;
+		pbuffers[i].abstract.age      = ~(0ULL);
+		pbuffers[i].abstract.message  = MBUFFER_MESSAGE_INITIALIZER;
+	}
+
+	/* Initializes shared pool variables. */
+	pbuffers_age = 0ULL;
+	spinlock_init(&pbuffers_lock);
+
+	/* Initializes principal mbuffers pool. */
+	pbufferpool.mbuffers     = pbuffers;
+	pbufferpool.nmbuffers    = KPORTAL_MESSAGE_BUFFERS_MAX;
+	pbufferpool.mbuffer_size = sizeof(union portal_mbuffer);
+	pbufferpool.curr_age     = &pbuffers_age;
+	pbufferpool.lock         = &pbuffers_lock;
+
+	/* Initializes auxiliary mbuffers pool. */
+	pbufferpool_aux.mbuffers     = pbuffers + (KPORTAL_MESSAGE_BUFFERS_MAX - KPORTAL_AUX_BUFFERS_MAX);
+	pbufferpool_aux.nmbuffers    = KPORTAL_AUX_BUFFERS_MAX;
+	pbufferpool_aux.mbuffer_size = sizeof(union portal_mbuffer);
+	pbufferpool_aux.curr_age     = &pbuffers_age;
+	pbufferpool_aux.lock         = &pbuffers_lock;
+
+	/* Initializes the portals. */
 	for (int i = 0; i < HW_PORTAL_MAX; ++i)
 	{
+		/* Initializes main variables. */
 		spinlock_init(&portals[i].lock);
+		portals[i].hwfd           = -1;
+		portals[i].local          = -1;
+		portals[i].remote         = -1;
+		portals[i].refcount       =  0;
+		portals[i].size           = (KPORTAL_MESSAGE_HEADER_SIZE + HAL_PORTAL_MAX_SIZE);
 
-		portals[i].portpool.ports = ports[i];
-		portals[i].requests.fifo  = fifos[i];
+		/* Initializes port pool. */
+		portals[i].portpool.ports      = NULL;
+		portals[i].portpool.nports     = KPORTAL_PORT_NR;
+		portals[i].portpool.used_ports = 0;
+		portals[i].portpool.ports      = portalports[i];
+
+		/* Initializes request fifo. */
+		portals[i].requests.head         = 0;
+		portals[i].requests.tail         = 0;
+		portals[i].requests.max_capacity = KPORTAL_PORT_NR;
+		portals[i].requests.nelements    = 0;
+		portals[i].requests.fifo         = fifos[i];
+
+		/* Initializes the portals ports and FIFOs. */
+		for (int j = 0; j < KPORTAL_PORT_NR; ++j)
+		{
+			portalports[i][j].resource    = RESOURCE_INITIALIZER;
+			portalports[i][j].mbufferid   = -1;
+			portalports[i][j].mbufferpool = NULL;
+
+			fifos[i][j] = -1;
+		}
+
+		/* Initializes auxiliary functions. */
+		portals[i].mbufferpool      = &pbufferpool;
+		portals[i].mbufferpool_aux  = &pbufferpool_aux;
+		portals[i].do_create        = portal_create;
+		portals[i].do_open          = portal_open;
+		portals[i].do_allow         = wrapper_portal_allow;
+		portals[i].do_aread         = portal_aread;
+		portals[i].do_awrite        = portal_awrite;
+		portals[i].do_wait          = portal_wait;
+		portals[i].do_copy          = wrapper_portal_copy;
+		portals[i].do_header_config = portal_header_config;
+		portals[i].do_header_check  = portal_header_check;
 	}
+
+	/* Initializes portal pool. */
+	portalpool.actives  = portals;
+	portalpool.nactives = HW_PORTAL_MAX;
 }
 
 /*============================================================================*
@@ -286,7 +293,7 @@ PUBLIC int do_portal_alloc(int local, int remote, int port, int type)
 /**
  * @brief Releases a physical portal.
  *
- * @param mbxid Active portal ID.
+ * @param portalid Active portal ID.
  *
  * @returns Upon successful completion, zero is returned. Upon
  * failure, a negative error code is returned instead.
@@ -303,7 +310,7 @@ PUBLIC int do_portal_release(int portalid)
 /**
  * @brief Async reads from an active.
  *
- * @param mbxid  Active portal ID.
+ * @param portalid  Active portal ID.
  * @param config Communication's configuration.
  * @param stats  Structure to store statstics.
  *
@@ -322,7 +329,7 @@ PUBLIC ssize_t do_portal_aread(int portalid, const struct active_config * config
 /**
  * @brief Async writes from an active.
  *
- * @param mbxid  Active portal ID.
+ * @param portalid  Active portal ID.
  * @param config Communication's configuration.
  * @param stats  Structure to store statstics.
  *
@@ -341,7 +348,7 @@ PUBLIC ssize_t do_portal_awrite(int portalid, const struct active_config * confi
 /**
  * @brief Waits on a portal to finish an assynchronous operation.
  *
- * @param mbxid  Active portal ID.
+ * @param portalid  Active portal ID.
  * @param config Communication's configuration.
  * @param stats  Structure to store statstics.
  *
@@ -366,15 +373,15 @@ PUBLIC void do_portal_init(void)
 
 	local = processor_node_get_num();
 
+	/* Initializes the portals structures. */
+	do_portal_table_init();
+
 	/* Create the input portal. */
 	KASSERT(_active_create(&portalpool, local) >= 0);
 
 	/* Opens all portal interfaces. */
 	for (int i = 0; i < PROCESSOR_NOC_NODES_NUM; ++i)
 		KASSERT(_active_open(&portalpool, local, i) >= 0);
-
-	/* Initializes the active portals locks. */
-	do_portal_table_init();
 }
 
 #endif /* __TARGET_HAS_PORTAL */

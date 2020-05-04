@@ -37,113 +37,48 @@
 #if __TARGET_HAS_MAILBOX
 
 /**
- * @brief Extracts fd and port from mbxid.
+ * @name Auxiliary macros.
  */
 /**@{*/
-#define GET_LADDRESS_FD(mbxid)   (mbxid / MAILBOX_PORT_NR)
-#define GET_LADDRESS_PORT(mbxid) (mbxid % MAILBOX_PORT_NR)
+#define GET_LADDRESS_FD(mbxid)   (mbxid / MAILBOX_PORT_NR) /**< Extracts fd from mbxid.   */
+#define GET_LADDRESS_PORT(mbxid) (mbxid % MAILBOX_PORT_NR) /**< Extracts port from mbxid. */
 /**@}*/
-
-#define MAILBOX_MBUFFER_SRC (-1)
 
 /*============================================================================*
  * Control Structures.                                                        *
  *============================================================================*/
 
-/*----------------------------------------------------------------------------*
- * Mailbox Message Buffer.                                                    *
- *----------------------------------------------------------------------------*/
+/**
+ * @name Pool variables.
+ */
+/**@{*/
+PRIVATE union mailbox_mbuffer mbuffers[KMAILBOX_MESSAGE_BUFFERS_MAX]; /**< Mailbox message buffer.                       */
+PRIVATE uint64_t mbuffers_age;                                        /**< Counter used to set mbuffer age.              */
+PRIVATE spinlock_t mbuffers_lock;                                     /**< Protection of the mbuffer pools.              */
+PRIVATE struct mbuffer_pool mbufferpool;                              /**< Pool with all of mbuffer available.           */
+PRIVATE struct mbuffer_pool mbufferpool_aux;                          /**< Pool with a subset of mbuffer in mbufferpool. */
+/**@}*/
 
 /**
- * @brief Mailbox message buffer.
+ * @name Physical Mailbox variables.
  */
-PRIVATE union mailbox_mbuffer mbxbuffers[KMAILBOX_MESSAGE_BUFFERS_MAX] = {
-	[0 ... (KMAILBOX_MESSAGE_BUFFERS_MAX - 1)] = MBUFFER_INITIALIZER
-};
+/**@{*/
+PRIVATE struct port mbxports[HW_MAILBOX_MAX][MAILBOX_PORT_NR]; /**< Mailbox ports. */
+PRIVATE short fifos[HW_MAILBOX_MAX][MAILBOX_PORT_NR];          /**< Mailbox FIFOs. */
+PRIVATE struct active mailboxes[HW_MAILBOX_MAX];               /**< Mailboxes.    */
+PRIVATE struct active_pool mbxpool;                            /**< Mailbox pool. */
+/**@}*/
 
 /**
- * @brief Mbuffer resource pool.
+ * @name Prototype functions.
  */
-PRIVATE struct mbuffer_pool mbxbufferpool = {
-	mbxbuffers,
-	KMAILBOX_MESSAGE_BUFFERS_MAX,
-	sizeof(union mailbox_mbuffer),
-	SPINLOCK_UNLOCKED
-};
-
-/*----------------------------------------------------------------------------*
- * Physical Mailboxes.                                                        *
- *----------------------------------------------------------------------------*/
-
+/**@{*/
 int wrapper_mailbox_open(int, int);
 int wrapper_mailbox_allow(struct active *, int);
 int wrapper_mailbox_copy(struct mbuffer *, const struct active_config *, int);
 int mailbox_header_config(struct mbuffer *, const struct active_config *);
 int mailbox_header_check(struct mbuffer *, const struct active_config *);
-
-/**
- * @brief Mailbox ports.
- */
-PRIVATE struct port ports[HW_MAILBOX_MAX][MAILBOX_PORT_NR] = {
-	[0 ... (HW_MAILBOX_MAX - 1)] = {
-		[0 ... (MAILBOX_PORT_NR - 1)] = {
-			.resource  = {0, },
-			.mbufferid = -1,
-		}
-	}
-};
-
-/**
- * @brief Mailbox FIFOs.
- */
-PRIVATE short fifos[HW_MAILBOX_MAX][MAILBOX_PORT_NR] = {
-	[0 ... (HW_MAILBOX_MAX - 1)] = {
-		[0 ... (MAILBOX_PORT_NR - 1)] = -1,
-	}
-};
-
-/**
- * @brief Mailboxes.
- */
-struct active mailboxes[HW_MAILBOX_MAX] = {
-	[0 ... (HW_MAILBOX_MAX - 1)] {
-		.resource   = {0, },
-		.hwfd       = -1,
-		.local      = -1,
-		.remote     = -1,
-		.refcount   =  0,
-		.size       = HAL_MAILBOX_MSG_SIZE,
-		.portpool       = {
-			.ports      = NULL,
-			.nports     = MAILBOX_PORT_NR,
-			.used_ports = 0,
-		},
-		.requests         = {
-			.head         = 0,
-			.tail         = 0,
-			.max_capacity = MAILBOX_PORT_NR,
-			.nelements    = 0,
-			.fifo         = NULL,
-		},
-		.mbufferpool      = &mbxbufferpool,
-		.do_create        = mailbox_create,
-		.do_open          = wrapper_mailbox_open,
-		.do_allow         = wrapper_mailbox_allow,
-		.do_aread         = mailbox_aread,
-		.do_awrite        = mailbox_awrite,
-		.do_wait          = mailbox_wait,
-		.do_copy          = wrapper_mailbox_copy,
-		.do_header_config = mailbox_header_config,
-		.do_header_check  = mailbox_header_check,
-	},
-};
-
-/**
- * @brief Mailbox pool.
- */
-struct active_pool mbxpool = {
-	mailboxes, HW_MAILBOX_MAX
-};
+/**@}*/
 
 /*============================================================================*
  * do_mailbox_table_init()                                                    *
@@ -154,13 +89,83 @@ struct active_pool mbxpool = {
  */
 void do_mailbox_table_init(void)
 {
+	/* Initializes the mbuffers. */
+	for (int i = 0; i < KMAILBOX_MESSAGE_BUFFERS_MAX; ++i)
+	{
+		mbuffers[i].abstract.resource = RESOURCE_INITIALIZER;
+		mbuffers[i].abstract.age      = ~(0ULL);
+		mbuffers[i].abstract.message  = MBUFFER_MESSAGE_INITIALIZER;
+	}
+
+	/* Initializes shared pool variables. */
+	mbuffers_age = 0ULL;
+	spinlock_init(&mbuffers_lock);
+
+	/* Initializes principal mbuffers pool. */
+	mbufferpool.mbuffers     = mbuffers;
+	mbufferpool.nmbuffers    = KMAILBOX_MESSAGE_BUFFERS_MAX;
+	mbufferpool.mbuffer_size = sizeof(union mailbox_mbuffer);
+	mbufferpool.curr_age     = &mbuffers_age;
+	mbufferpool.lock         = &mbuffers_lock;
+
+	/* Initializes auxiliary mbuffers pool. */
+	mbufferpool_aux.mbuffers     = mbuffers + (KMAILBOX_MESSAGE_BUFFERS_MAX - KMAILBOX_AUX_BUFFERS_MAX);
+	mbufferpool_aux.nmbuffers    = KMAILBOX_AUX_BUFFERS_MAX;
+	mbufferpool_aux.mbuffer_size = sizeof(union mailbox_mbuffer);
+	mbufferpool_aux.curr_age     = &mbuffers_age;
+	mbufferpool_aux.lock         = &mbuffers_lock;
+
+	/* Initializes the mailboxes. */
 	for (int i = 0; i < HW_MAILBOX_MAX; ++i)
 	{
+		/* Initializes main variables. */
 		spinlock_init(&mailboxes[i].lock);
+		mailboxes[i].hwfd           = -1;
+		mailboxes[i].local          = -1;
+		mailboxes[i].remote         = -1;
+		mailboxes[i].refcount       =  0;
+		mailboxes[i].size           = HAL_MAILBOX_MSG_SIZE;
 
-		mailboxes[i].portpool.ports = ports[i];
-		mailboxes[i].requests.fifo  = fifos[i];
+		/* Initializes port pool. */
+		mailboxes[i].portpool.ports      = NULL;
+		mailboxes[i].portpool.nports     = MAILBOX_PORT_NR;
+		mailboxes[i].portpool.used_ports = 0;
+		mailboxes[i].portpool.ports      = mbxports[i];
+
+		/* Initializes request fifo. */
+		mailboxes[i].requests.head         = 0;
+		mailboxes[i].requests.tail         = 0;
+		mailboxes[i].requests.max_capacity = MAILBOX_PORT_NR;
+		mailboxes[i].requests.nelements    = 0;
+		mailboxes[i].requests.fifo         = fifos[i];
+
+		/* Initializes the mailboxes ports and FIFOs. */
+		for (int j = 0; j < MAILBOX_PORT_NR; ++j)
+		{
+			mbxports[i][j].resource    = RESOURCE_INITIALIZER;
+			mbxports[i][j].mbufferid   = -1;
+			mbxports[i][j].mbufferpool = NULL;
+
+			fifos[i][j] = -1;
+		}
+
+		/* Initializes auxiliary functions. */
+		mailboxes[i].mbufferpool      = &mbufferpool;
+		mailboxes[i].mbufferpool_aux  = &mbufferpool_aux;
+		mailboxes[i].do_create        = mailbox_create;
+		mailboxes[i].do_open          = wrapper_mailbox_open;
+		mailboxes[i].do_allow         = wrapper_mailbox_allow;
+		mailboxes[i].do_aread         = mailbox_aread;
+		mailboxes[i].do_awrite        = mailbox_awrite;
+		mailboxes[i].do_wait          = mailbox_wait;
+		mailboxes[i].do_copy          = wrapper_mailbox_copy;
+		mailboxes[i].do_header_config = mailbox_header_config;
+		mailboxes[i].do_header_check  = mailbox_header_check;
 	}
+
+	/* Initializes mailbox pool. */
+	mbxpool.actives  = mailboxes;
+	mbxpool.nactives = HW_MAILBOX_MAX;
 }
 
 /*============================================================================*
@@ -383,6 +388,9 @@ PUBLIC void do_mailbox_init(void)
 
 	local = processor_node_get_num();
 
+	/* Initializes the mailboxes structures. */
+	do_mailbox_table_init();
+
 	/* Create the input mailbox. */
 	KASSERT(_active_create(&mbxpool, local) >= 0);
 
@@ -390,8 +398,6 @@ PUBLIC void do_mailbox_init(void)
 	for (int i = 0; i < PROCESSOR_NOC_NODES_NUM; ++i)
 		KASSERT(_active_open(&mbxpool, local, i) >= 0);
 
-	/* Initializes the active mailboxes locks. */
-	do_mailbox_table_init();
 }
 
 #endif /* __TARGET_HAS_MAILBOX */
