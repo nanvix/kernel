@@ -36,6 +36,7 @@
 #include <nanvix/hlib.h>
 #include <nanvix/const.h>
 #include <nanvix/kernel/mailbox.h>
+#include <nanvix/kernel/portal.h>
 #include <posix/errno.h>
 #include <posix/stdarg.h>
 
@@ -50,7 +51,7 @@
 	/**
 	 * @brief Size of the mbuffer message header.
 	 */
-	#define MBUFFER_HEADER_SIZE sizeof(struct mbuffer_header)
+	#define MBUFFER_HEADER_SIZE (3 * 4) /**< sizeof(struct mbuffer_header) */
 
 	/**
 	 * @brief Mbuffer message initializer.
@@ -86,6 +87,24 @@
 	};
 
 	/**
+	 * @name Sanity checks of mbuffer header.
+	 */
+	/**@{*/
+	#if (MBUFFER_HEADER_SIZE > KPORTAL_MESSAGE_HEADER_SIZE)
+	#error Mbuffer header does not fit in the portal header.
+	#endif
+	#if (MBUFFER_HEADER_SIZE < KPORTAL_MESSAGE_HEADER_SIZE)
+	#warning Mbuffer header is smaller then portal header.
+	#endif
+	#if (MBUFFER_HEADER_SIZE > KMAILBOX_MESSAGE_HEADER_SIZE)
+	#error Mbuffer header does not fit in the mailbox header.
+	#endif
+	#if (MBUFFER_HEADER_SIZE < KMAILBOX_MESSAGE_HEADER_SIZE)
+	#warning Mbuffer header is smaller then mailbox header.
+	#endif
+	/**@}*/
+
+	/**
 	 * @brief Abstract mbuffer message.
 	 */
 	struct mbuffer_message
@@ -103,8 +122,11 @@
 	 */
 	struct mailbox_message
 	{
-		struct mbuffer_header header;                          /* Header. */
-		char data[HAL_MAILBOX_MSG_SIZE - MBUFFER_HEADER_SIZE]; /* Data.   */
+		struct mbuffer_header header;                                    /* Header. */
+		char data[KMAILBOX_MESSAGE_DATA_SIZE];                           /* Data.   */
+#if (MBUFFER_HEADER_SIZE < KMAILBOX_MESSAGE_HEADER_SIZE)
+		char unused[KMAILBOX_MESSAGE_HEADER_SIZE - MBUFFER_HEADER_SIZE]; /* Unused. */
+#endif
 	};
 
 	/**
@@ -112,8 +134,11 @@
 	 */
 	struct portal_message
 	{
-		struct mbuffer_header header;   /* Header. */
-		char data[HAL_PORTAL_MAX_SIZE]; /* Data.   */
+		struct mbuffer_header header;                                   /* Header. */
+		char data[KPORTAL_MESSAGE_DATA_SIZE];                           /* Data.   */
+#if (MBUFFER_HEADER_SIZE < KPORTAL_MESSAGE_HEADER_SIZE)
+		char unused[KPORTAL_MESSAGE_HEADER_SIZE - MBUFFER_HEADER_SIZE]; /* Unused. */
+#endif
 	};
 
 	/**
