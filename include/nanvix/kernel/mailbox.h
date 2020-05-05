@@ -72,9 +72,13 @@
 	/**
 	 * @brief Mailbox message header size.
 	 *
-	 * Size of mailbox message header.
 	 */
-	#define KMAILBOX_MESSAGE_HEADER_SIZE (3 * sizeof(int))
+	#define KMAILBOX_MESSAGE_HEADER_SIZE (HAL_MAILBOX_RESERVED_SIZE)
+
+	/**
+	 * @brief Mailbox message size.
+	 */
+	#define KMAILBOX_MESSAGE_DATA_SIZE (HAL_MAILBOX_DATA_SIZE)
 
 	/**
 	 * @brief Maximum number of message buffer resources.

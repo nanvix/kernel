@@ -98,7 +98,7 @@ void do_mailbox_table_init(void)
 	}
 
 	/* Initializes shared pool variables. */
-	mbuffers_age = 0ULL;
+	mbuffers_age = (0ULL);
 	spinlock_init(&mbuffers_lock);
 
 	/* Initializes principal mbuffers pool. */
@@ -120,11 +120,11 @@ void do_mailbox_table_init(void)
 	{
 		/* Initializes main variables. */
 		spinlock_init(&mailboxes[i].lock);
-		mailboxes[i].hwfd           = -1;
-		mailboxes[i].local          = -1;
-		mailboxes[i].remote         = -1;
-		mailboxes[i].refcount       =  0;
-		mailboxes[i].size           = HAL_MAILBOX_MSG_SIZE;
+		mailboxes[i].hwfd     = -1;
+		mailboxes[i].local    = -1;
+		mailboxes[i].remote   = -1;
+		mailboxes[i].refcount =  0;
+		mailboxes[i].size     = (KMAILBOX_MESSAGE_HEADER_SIZE + KMAILBOX_MESSAGE_DATA_SIZE);
 
 		/* Initializes port pool. */
 		mailboxes[i].portpool.ports      = NULL;
