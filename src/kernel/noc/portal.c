@@ -96,7 +96,7 @@ void do_portal_table_init(void)
 	}
 
 	/* Initializes shared pool variables. */
-	pbuffers_age = 0ULL;
+	pbuffers_age = (0ULL);
 	spinlock_init(&pbuffers_lock);
 
 	/* Initializes principal mbuffers pool. */
@@ -118,11 +118,11 @@ void do_portal_table_init(void)
 	{
 		/* Initializes main variables. */
 		spinlock_init(&portals[i].lock);
-		portals[i].hwfd           = -1;
-		portals[i].local          = -1;
-		portals[i].remote         = -1;
-		portals[i].refcount       =  0;
-		portals[i].size           = (KPORTAL_MESSAGE_HEADER_SIZE + HAL_PORTAL_MAX_SIZE);
+		portals[i].hwfd     = -1;
+		portals[i].local    = -1;
+		portals[i].remote   = -1;
+		portals[i].refcount =  0;
+		portals[i].size     = (KPORTAL_MESSAGE_HEADER_SIZE + KPORTAL_MESSAGE_DATA_SIZE);
 
 		/* Initializes port pool. */
 		portals[i].portpool.ports      = NULL;
