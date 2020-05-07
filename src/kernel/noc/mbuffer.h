@@ -170,7 +170,7 @@
 			struct resource resource;       /**< Generic resource information.   */
 			uint64_t age;                   /**< Number that guarantees order.   */
 			struct mailbox_message message; /**< Structure that holds a message. */
-		};
+		} concrete;
 	};
 
 	/**
@@ -187,7 +187,7 @@
 			struct resource resource;      /**< Generic resource information.   */
 			uint64_t age;                  /**< Number that guarantees order.   */
 			struct portal_message message; /**< Structure that holds a message. */
-		};
+		} concrete;
 	};
 
 	/**

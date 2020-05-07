@@ -75,7 +75,6 @@ PRIVATE struct active_pool mbxpool;                            /**< Mailbox pool
 /**@{*/
 int wrapper_mailbox_open(int, int);
 int wrapper_mailbox_allow(struct active *, int);
-int wrapper_mailbox_copy(struct mbuffer *, const struct active_config *, int);
 int mailbox_header_config(struct mbuffer *, const struct active_config *);
 int mailbox_header_check(struct mbuffer *, const struct active_config *);
 /**@}*/
@@ -158,7 +157,6 @@ void do_mailbox_table_init(void)
 		mailboxes[i].do_aread         = mailbox_aread;
 		mailboxes[i].do_awrite        = mailbox_awrite;
 		mailboxes[i].do_wait          = mailbox_wait;
-		mailboxes[i].do_copy          = wrapper_mailbox_copy;
 		mailboxes[i].do_header_config = mailbox_header_config;
 		mailboxes[i].do_header_check  = mailbox_header_check;
 	}
@@ -209,43 +207,6 @@ int wrapper_mailbox_allow(struct active * act, int remote)
 }
 
 /*============================================================================*
- * wrapper_mailbox_copy()                                                     *
- *============================================================================*/
-
-/**
- * @brief Copy a message.
- *
- * @param buf    Mbuffer resource.
- * @param config Communication's configuration.
- * @param type   Direction of the copy.
- *
- * @returns Zero is returned.
- */
-int wrapper_mailbox_copy(struct mbuffer * buf, const struct active_config * config, int type)
-{
-	void * to;
-	void * from;
-	union mailbox_mbuffer * mbuf;
-
-	mbuf = (union mailbox_mbuffer *) buf;
-
-	if (type == ACTIVE_COPY_TO_MBUFFER)
-	{
-		to   = (void *) mbuf->message.data;
-		from = (void *) config->buffer;
-	}
-	else
-	{
-		to   = (void *) config->buffer;
-		from = (void *) mbuf->message.data;
-	}
-
-	kmemcpy(to, from, config->size);
-
-	return (0);
-}
-
-/*============================================================================*
  * mailbox_header_config()                                                    *
  *============================================================================*/
 
@@ -257,9 +218,9 @@ int wrapper_mailbox_copy(struct mbuffer * buf, const struct active_config * conf
  *
  * @returns Zero is returned.
  */
-int mailbox_header_config(struct mbuffer * mbuf, const struct active_config * config)
+int mailbox_header_config(struct mbuffer * buf, const struct active_config * config)
 {
-	mbuf->message.header.dest = config->remote_addr;
+	buf->message.header.dest = config->remote_addr;
 
 	return (0);
 }
@@ -276,9 +237,9 @@ int mailbox_header_config(struct mbuffer * mbuf, const struct active_config * co
  *
  * @returns Non-zero if the mbuffer is destinate to current configuration.
  */
-int mailbox_header_check(struct mbuffer * mbuf, const struct active_config * config)
+int mailbox_header_check(struct mbuffer * buf, const struct active_config * config)
 {
-	return (mbuf->message.header.dest == config->local_addr);
+	return (buf->message.header.dest == config->local_addr);
 }
 
 /*============================================================================*

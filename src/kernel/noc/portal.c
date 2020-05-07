@@ -73,7 +73,6 @@ PRIVATE struct active_pool portalpool;                           /**< Portal poo
  */
 /**@{*/
 int wrapper_portal_allow(struct active *, int);
-int wrapper_portal_copy(struct mbuffer *, const struct active_config *, int);
 int portal_header_config(struct mbuffer *, const struct active_config *);
 int portal_header_check(struct mbuffer *, const struct active_config *);
 /**@}*/
@@ -156,7 +155,6 @@ void do_portal_table_init(void)
 		portals[i].do_aread         = portal_aread;
 		portals[i].do_awrite        = portal_awrite;
 		portals[i].do_wait          = portal_wait;
-		portals[i].do_copy          = wrapper_portal_copy;
 		portals[i].do_header_config = portal_header_config;
 		portals[i].do_header_check  = portal_header_check;
 	}
@@ -192,43 +190,6 @@ int wrapper_portal_allow(struct active * act, int remote)
 }
 
 /*============================================================================*
- * wrapper_portal_copy()                                                      *
- *============================================================================*/
-
-/**
- * @brief Copy a message.
- *
- * @param buf    Mbuffer resource.
- * @param config Communication's configuration.
- * @param type   Direction of the copy.
- *
- * @returns Zero is returned.
- */
-int wrapper_portal_copy(struct mbuffer * buf, const struct active_config * config, int type)
-{
-	void * to;
-	void * from;
-	union portal_mbuffer * pbuf;
-
-	pbuf = (union portal_mbuffer *) buf;
-
-	if (type == ACTIVE_COPY_TO_MBUFFER)
-	{
-		to   = (void *) pbuf->message.data;
-		from = (void *) config->buffer;
-	}
-	else
-	{
-		to   = (void *) config->buffer;
-		from = (void *) pbuf->message.data;
-	}
-
-	kmemcpy(to, from, config->size);
-
-	return (0);
-}
-
-/*============================================================================*
  * portal_header_config()                                                     *
  *============================================================================*/
 
@@ -240,11 +201,11 @@ int wrapper_portal_copy(struct mbuffer * buf, const struct active_config * confi
  *
  * @returns Zero is returned.
  */
-int portal_header_config(struct mbuffer * mbuf, const struct active_config * config)
+int portal_header_config(struct mbuffer * buf, const struct active_config * config)
 {
-	mbuf->message.header.src  = config->local_addr;
-	mbuf->message.header.dest = config->remote_addr;
-	mbuf->message.header.size = config->size;
+	buf->message.header.src  = config->local_addr;
+	buf->message.header.dest = config->remote_addr;
+	buf->message.header.size = config->size;
 
 	return (0);
 }
@@ -261,9 +222,9 @@ int portal_header_config(struct mbuffer * mbuf, const struct active_config * con
  *
  * @returns Non-zero if the mbuffer is destinate to current configuration.
  */
-int portal_header_check(struct mbuffer * mbuf, const struct active_config * config)
+int portal_header_check(struct mbuffer * buf, const struct active_config * config)
 {
-	return ((mbuf->message.header.dest == config->local_addr) && (mbuf->message.header.src == config->remote_addr));
+	return ((buf->message.header.dest == config->local_addr) && (buf->message.header.src == config->remote_addr));
 }
 
 /*============================================================================*

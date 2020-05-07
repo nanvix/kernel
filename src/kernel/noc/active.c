@@ -506,7 +506,7 @@ PUBLIC ssize_t active_aread(
 			buf = mbuffer_get(bufferpool, mbufferid);
 
 			t1 = clock_read();
-				active->do_copy(buf, config, ACTIVE_COPY_FROM_MBUFFER);
+				kmemcpy((void *) config->buffer, (void *) &buf->message.data, config->size);
 			t2 = clock_read();
 
 			/* Update performance statistics. */
@@ -657,7 +657,7 @@ PUBLIC ssize_t active_awrite(
 			active->do_header_config(buf, config);
 
 			t1 = clock_read();
-				active->do_copy(buf, config, ACTIVE_COPY_TO_MBUFFER);
+				kmemcpy((void *) &buf->message.data, (void *) config->buffer, config->size);
 			t2 = clock_read();
 
 			/* Checks if the destination is the local node. */
@@ -808,7 +808,7 @@ PUBLIC int active_wait(
 				/* Checks if the message is addressed for the requesting port. */
 				/* Consumes the message. */
 				if (active->do_header_check(buf, config))
-					active->do_copy(buf, config, ACTIVE_COPY_FROM_MBUFFER);
+					kmemcpy((void *) config->buffer, (void *) &buf->message.data, config->size);
 
 				/* Ignore the message. */
 				else
