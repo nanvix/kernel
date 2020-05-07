@@ -41,6 +41,8 @@
 	#include "mbuffer.h"
 	#include "port.h"
 
+#if (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL)
+
 	/**
 	 * @brief Resource flags.
 	 */
@@ -68,14 +70,6 @@
 	#define ACTIVE_COMM_SUCCESS  (0)
 	#define ACTIVE_COMM_AGAIN    (1)
 	#define ACTIVE_COMM_RECEIVED (2)
-	/**@}*/
-
-	/**
-	 * @name Mbuffer copy modes.
-	 */
-	/**@{*/
-	#define ACTIVE_COPY_TO_MBUFFER   (0)
-	#define ACTIVE_COPY_FROM_MBUFFER (1)
 	/**@}*/
 
 	/**
@@ -144,7 +138,6 @@
 	typedef ssize_t (* hw_aread_fn)(int mbxid, void *buffer, size_t size);
 	typedef ssize_t (* hw_awrite_fn)(int mbxid, const void *buffer, size_t size);
 	typedef int (* hw_wait_fn)(int);
-	typedef int (* hw_copy_fn)(struct mbuffer *, const struct active_config *, int);
 	typedef int (* hw_config_fn)(struct mbuffer *, const struct active_config *);
 	typedef int (* hw_check_fn)(struct mbuffer *, const struct active_config *);
 	/**@}*/
@@ -211,7 +204,6 @@
 		hw_aread_fn do_aread;                  /**< Hardware aread function.                    */
 		hw_awrite_fn do_awrite;                /**< Hardware awrite function.                   */
 		hw_wait_fn do_wait;                    /**< Hardware wait function.                     */
-		hw_copy_fn do_copy;                    /**< Mbuffer copy function.                      */
 		hw_config_fn do_header_config;         /**< Header config function.                     */
 		hw_check_fn do_header_check;           /**< Header checker function.                    */
 		/**@}*/
@@ -269,6 +261,8 @@
 	{
 		return (active->flags & ACTIVE_FLAGS_ALLOWED);
 	}
+
+#endif /* (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL) */
 
 #endif /* NANVIX_NOC_ACTIVE_H_ */
 

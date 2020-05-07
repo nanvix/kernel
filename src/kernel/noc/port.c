@@ -32,8 +32,10 @@
 
 #include "port.h"
 
+#if (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL)
+
 /*============================================================================*
- * portpool_choose_port()                                                       *
+ * portpool_choose_port()                                                     *
  *============================================================================*/
 
 /**
@@ -67,3 +69,5 @@ PUBLIC int portpool_choose_port(const struct port_pool * pool)
 
 	return (ret);
 }
+
+#endif /* (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL) */

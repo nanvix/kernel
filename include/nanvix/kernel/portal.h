@@ -69,18 +69,22 @@
 	#define KPORTAL_MAX (HW_PORTAL_MAX * KPORTAL_PORT_NR)
 
 	/**
+	 * @brief Portal message header size.
+	 *
+	 */
+	#define KPORTAL_MESSAGE_HEADER_SIZE (HAL_PORTAL_RESERVED_SIZE)
+
+	/**
+	 * @brief Portal single data size.
+	 */
+	#define KPORTAL_MESSAGE_DATA_SIZE (HAL_PORTAL_DATA_SIZE)
+
+	/**
 	 * @brief Maximum size of transfer data.
 	 */
 	#define KPORTAL_MAX_SIZE (1 * MB)
 
 #ifdef __NANVIX_MICROKERNEL
-
-	/**
-	 * @brief Portal message header size.
-	 *
-	 * Size of portal message header.
-	 */
-	#define KPORTAL_MESSAGE_HEADER_SIZE (3 * sizeof(int))
 
 	/**
 	 * @brief Maximum number of message buffer resources.

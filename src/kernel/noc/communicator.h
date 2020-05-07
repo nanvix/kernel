@@ -40,6 +40,8 @@
 
 	#include "active.h"
 
+#if (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL)
+
 	/**
 	 * @name Resource flags.
 	 */
@@ -180,6 +182,8 @@
 	{
 		return (comm->flags & COMMUNICATOR_FLAGS_ALLOWED);
 	}
+
+#endif /* (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL) */
 
 #endif /* NANVIX_NOC_COMMUNICATOR_H_ */
 

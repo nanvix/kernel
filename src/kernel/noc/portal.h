@@ -22,11 +22,12 @@
  * SOFTWARE.
  */
 
+
 /**
- * @defgroup kernel-mailbox Mailbox Facility
+ * @defgroup kernel-portal Portal Facility
  * @ingroup kernel
  *
- * @brief Mailbox Facility
+ * @brief Portal Facility
  */
 
 #ifndef NANVIX_KPORTAL_H_
@@ -38,6 +39,8 @@
 	#include <posix/stdarg.h>
 	#include <posix/errno.h>
 
+#if __TARGET_HAS_PORTAL
+
 	EXTERN int do_portal_alloc(int, int, int, int);
 	EXTERN int do_portal_release(int);
 	EXTERN ssize_t do_portal_aread(int, const struct active_config *, struct pstats *);
@@ -46,6 +49,8 @@
 
 	EXTERN void do_portal_init(void);
 
-#endif /* NANVIX_KMAILBOX_H_ */
+#endif /* __TARGET_HAS_PORTAL */
+
+#endif /* NANVIX_KPORTAL_H_ */
 
 /**@}*/

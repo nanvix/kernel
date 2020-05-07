@@ -98,5 +98,10 @@ PUBLIC int kernel_comm_get_port(int id, int type)
 		return (do_vportal_get_port(id));
 #endif /* TARGET_HAS_PORTAL */
 
+#if (!__TARGET_HAS_PORTAL && !__TARGET_HAS_MAILBOX)
+	UNUSED(id);
+	UNUSED(type);
+#endif /* (!__TARGET_HAS_PORTAL && !__TARGET_HAS_MAILBOX) */
+
 	return (-ENOSYS);
 }
