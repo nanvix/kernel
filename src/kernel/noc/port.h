@@ -31,6 +31,8 @@
 	#include <posix/errno.h>
 	#include <posix/stdarg.h>
 
+#if (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL)
+
 	/**
 	 * @brief Resource flags.
 	 */
@@ -103,6 +105,8 @@
 	{
 		return (port->flags & PORT_FLAGS_REQUESTED);
 	}
+
+#endif /* (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL) */
 
 #endif /* NANVIX_NOC_PORT_H_ */
 

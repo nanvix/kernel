@@ -41,6 +41,8 @@
 	#include "mbuffer.h"
 	#include "port.h"
 
+#if (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL)
+
 	/**
 	 * @brief Resource flags.
 	 */
@@ -269,6 +271,8 @@
 	{
 		return (active->flags & ACTIVE_FLAGS_ALLOWED);
 	}
+
+#endif /* (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL) */
 
 #endif /* NANVIX_NOC_ACTIVE_H_ */
 

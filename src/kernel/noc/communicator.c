@@ -33,6 +33,8 @@
 
 #include "communicator.h"
 
+#if (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL)
+
 /*============================================================================*
  * communicator_alloc()                                                       *
  *============================================================================*/
@@ -361,3 +363,5 @@ error:
 
 	return (ret);
 }
+
+#endif /* (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL) */

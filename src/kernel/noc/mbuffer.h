@@ -40,6 +40,8 @@
 #include <posix/errno.h>
 #include <posix/stdarg.h>
 
+#if (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL)
+
 	/**
 	 * @name Release modes of mbuffers.
 	 */
@@ -208,6 +210,8 @@
 	EXTERN int mbuffer_release(struct mbuffer_pool *, int, int);
 	EXTERN int mbuffer_search(struct mbuffer_pool *, int, int);
 	EXTERN struct mbuffer * mbuffer_get(struct mbuffer_pool *, int);
+
+#endif /* (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL) */
 
 #endif /* NANVIX_NOC_MBUFFER_H_ */
 

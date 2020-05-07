@@ -32,6 +32,8 @@
 
 #include "active.h"
 
+#if (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL)
+
 /**
  * @name Auxiliar macros
  */
@@ -997,3 +999,5 @@ PUBLIC int _active_open(const struct active_pool * pool, int local, int remote)
 
 	return (active - pool->actives);
 }
+
+#endif /* (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL) */

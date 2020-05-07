@@ -38,6 +38,8 @@
 	#include <posix/stdarg.h>
 	#include <posix/errno.h>
 
+#if __TARGET_HAS_MAILBOX
+
 	EXTERN int do_mailbox_alloc(int, int, int, int);
 	EXTERN int do_mailbox_release(int);
 	EXTERN ssize_t do_mailbox_aread(int, const struct active_config *, struct pstats *);
@@ -45,6 +47,8 @@
 	EXTERN int do_mailbox_wait(int, const struct active_config *, struct pstats *);
 
 	EXTERN void do_mailbox_init(void);
+
+#endif /* __TARGET_HAS_MAILBOX */
 
 #endif /* NANVIX_KMAILBOX_H_ */
 

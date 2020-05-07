@@ -32,7 +32,7 @@
 
 #include "mbuffer.h"
 
-#if __TARGET_HAS_MAILBOX && __TARGET_HAS_PORTAL
+#if (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL)
 
 /*============================================================================*
  * mbuffer_alloc()                                                            *
@@ -233,4 +233,4 @@ PUBLIC struct mbuffer * mbuffer_get(struct mbuffer_pool * pool, int id)
 	return (struct mbuffer *)(&base[mult(id, size)]);
 }
 
-#endif /* __TARGET_HAS_MAILBOX && __TARGET_HAS_PORTAL */
+#endif /* (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL) */
