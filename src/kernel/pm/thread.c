@@ -64,13 +64,6 @@ EXTENSION PRIVATE struct condvar joincond[KTHREAD_MAX] = {
 };
 
 /**
- * @brief Thread exit conditions.
- */
-EXTENSION PRIVATE struct condvar exitcond[KTHREAD_MAX] = {
-	[0 ... (KTHREAD_MAX - 1)] = COND_INITIALIZER
-};
-
-/**
  * @brief Number of running threads.
  */
 PRIVATE int nthreads = 1;
@@ -203,22 +196,19 @@ PUBLIC NORETURN void thread_exit(void *retval)
 
 	UNUSED(retval);
 
-	curr_thread = thread_get_curr();
-	mycoreid = thread_get_coreid(curr_thread);
+	/* Indicates that the underlying core will be reset. */
+	KASSERT(core_release() == 0);
 
-	spinlock_lock(&lock_tm);
+		curr_thread = thread_get_curr();
+		mycoreid = thread_get_coreid(curr_thread);
 
-		curr_thread->state = THREAD_TERMINATED;
-
-		cond_broadcast(&joincond[mycoreid]);
-		cond_wait(&exitcond[mycoreid], &lock_tm);
-
-		thread_free(curr_thread);
-
-	spinlock_unlock(&lock_tm);
+		spinlock_lock(&lock_tm);
+			thread_free(curr_thread);
+			cond_broadcast(&joincond[mycoreid]);
+		spinlock_unlock(&lock_tm);
 
 	/* No rollback after this point. */
-
+	/* Resets the underlying core. */
 	core_reset();
 
 	/* Never gets here. */
@@ -307,7 +297,7 @@ PRIVATE NORETURN void thread_start(void)
  */
 PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
 {
-	int ret = 0;               /* Return value.             */
+	int ret;                   /* Return value.             */
 	int _tid;                  /* Unique thread identifier. */
 	struct thread *new_thread; /* New thread.               */
 	int ntrials = 0;           /* Trials realized.          */
@@ -330,11 +320,11 @@ PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
 		_tid = next_tid++;
 
 		/* Initialize thread structure. */
-		new_thread->tid = _tid;
+		new_thread->tid   = _tid;
 		new_thread->state = THREAD_RUNNING;
-		new_thread->arg = arg;
+		new_thread->arg   = arg;
 		new_thread->start = start;
-		new_thread->next = NULL;
+		new_thread->next  = NULL;
 
 	spinlock_unlock(&lock_tm);
 
@@ -390,8 +380,8 @@ PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
  */
 PUBLIC int thread_join(int tid, void **retval)
 {
+	int ret;
 	struct thread *t;
-	int ret = -EINVAL;
 
 	/* Sanity check. */
 	KASSERT(tid > KTHREAD_NULL_TID);
@@ -407,7 +397,6 @@ PUBLIC int thread_join(int tid, void **retval)
 		{
 			int coreid;
 
-			ret = 0;
 			coreid = thread_get_coreid(t);
 
 			/*
@@ -416,14 +405,19 @@ PUBLIC int thread_join(int tid, void **retval)
 			 */
 			if (t->state == THREAD_RUNNING)
 				cond_wait(&joincond[coreid], &lock_tm);
-
-			KASSERT(t->state == THREAD_TERMINATED);
-
-			cond_broadcast(&exitcond[coreid]);
 		}
+
+		/*
+		 * Thread IDs are incremented by next_id. So, if we want to know
+		 * if the @p tid is valid and has already left, just check if it
+		 * is less than the next_tid.
+		 */
+		ret = (tid < next_tid) ? 0 : (-EINVAL);
 
 	spinlock_unlock(&lock_tm);
 
 	return (ret);
 }
-#endif
+
+#endif /* CLUSTER_IS_MULTICORE */
+
