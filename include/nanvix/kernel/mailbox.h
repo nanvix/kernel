@@ -49,7 +49,12 @@
 	 *
 	 * Maximum number of virtual mailboxes that can be vinculated to each HW mailbox.
 	 */
-	#define MAILBOX_PORT_NR 16
+	#define MAILBOX_PORT_NR 32
+
+	/**
+	 * @brief Number of ports per Kernel mailbox.
+	 */
+	#define KMAILBOX_PORT_NR 16
 
 	/**
 	 * @brief Maximum number of HW mailboxes.
