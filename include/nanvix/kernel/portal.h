@@ -217,7 +217,7 @@
 	/**
 	 * @brief Initializes the portal facility.
 	 */
-	EXTERN void kportal_init(void);
+	EXTERN void vportal_init(void);
 
 #endif /* __NANVIX_MICROKERNEL */
 

@@ -88,10 +88,12 @@
 	#define KMAILBOX_MESSAGE_BUFFERS_MAX 64
 
 	/**
-	 * @brief Maximum number of auxiliar message buffer resources.
+	 * @brief Maximum number of auxiliary message buffer resources.
 	 *
 	 * Maximum number of message buffers used to hold temporary data on kernel space.
 	 * WARNING: That constant uses a subset of mbuffers set by @c KMAILBOX_MESSAGE_BUFFERS_MAX
+	 *
+	 * @todo TODO: introduce a check for this.
 	 */
 	#define KMAILBOX_AUX_BUFFERS_MAX 16
 
@@ -205,7 +207,7 @@
 	/**
 	 * @brief Initializes the mailbox facility.
 	 */
-	EXTERN void kmailbox_init(void);
+	EXTERN void vmailbox_init(void);
 
 #endif /* NANVIX_MAILBOX_H_ */
 

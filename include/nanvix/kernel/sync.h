@@ -115,7 +115,7 @@
 	/**
 	 * @brief Initializes the synchronization facility.
 	 */
-	EXTERN void ksync_init(void);
+	EXTERN void vsync_init(void);
 
 #endif /* NANVIX_SYNC_H_ */
 
