@@ -56,13 +56,13 @@ PRIVATE struct communicator_pool vportalpool;                             /**< V
 /**@}*/
 
 /*============================================================================*
- * do_kportal_init()                                                          *
+ * do_vportal_init()                                                          *
  *============================================================================*/
 
 /**
  * @brief Initializes the mbuffers table lock.
  */
-PRIVATE void do_kportal_init(void)
+PRIVATE void do_vportal_init(void)
 {
 	for (int i = 0; i < KPORTAL_MAX; ++i)
 	{
@@ -391,13 +391,13 @@ int do_vportal_get_port(int portalid)
 }
 
 /*============================================================================*
- * kportal_init()                                                             *
+ * vportal_init()                                                             *
  *============================================================================*/
 
 /**
  * @todo TODO: Provide a detailed description for this function.
  */
-PUBLIC void kportal_init(void)
+PUBLIC void vportal_init(void)
 {
 	kprintf("[kernel][noc] initializing the kportal facility");
 
@@ -405,7 +405,7 @@ PUBLIC void kportal_init(void)
 	do_portal_init();
 
 	/* Initializes the virtual portals structures. */
-	do_kportal_init();
+	do_vportal_init();
 }
 
 #endif /* __TARGET_HAS_PORTAL */

@@ -57,13 +57,13 @@ PRIVATE struct communicator_pool vmbxpool;                                   /**
 /**@}*/
 
 /*============================================================================*
- * do_kmailbox_init()                                                        *
+ * do_vmailbox_init()                                                        *
  *============================================================================*/
 
 /**
  * @brief Initializes the mbuffers table lock.
  */
-PRIVATE void do_kmailbox_init(void)
+PRIVATE void do_vmailbox_init(void)
 {
 	for (int i = 0; i < KMAILBOX_MAX; ++i)
 	{
@@ -335,13 +335,13 @@ int do_vmailbox_get_port(int mbxid)
 }
 
 /*============================================================================*
- * kmailbox_init()                                                            *
+ * vmailbox_init()                                                            *
  *============================================================================*/
 
 /**
  * @brief Initializes the mailbox service.
  */
-PUBLIC void kmailbox_init(void)
+PUBLIC void vmailbox_init(void)
 {
 	kprintf("[kernel][noc] initializing the kmailbox facility");
 
@@ -349,7 +349,7 @@ PUBLIC void kmailbox_init(void)
 	do_mailbox_init();
 
 	/* Initializes the virtual mailboxes structures. */
-	do_kmailbox_init();
+	do_vmailbox_init();
 }
 
 #endif /* __TARGET_HAS_MAILBOX */

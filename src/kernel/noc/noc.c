@@ -29,8 +29,8 @@
  * The noc_init() function initializes the Network-on-Chip (NoC)
  * system. It initializes and setups the IKC structures: (i) Sync.
  *
- * @see ksync_init().
- * @see kmailbox_init().
+ * @see vsync_init().
+ * @see vmailbox_init().
  *
  * @author Joao Fellipe Uller
  */
@@ -39,14 +39,14 @@ PUBLIC void noc_init(void)
 	kprintf("[kernel][noc] initializing the noc system");
 
 	#if __TARGET_HAS_SYNC
-		ksync_init();
+		vsync_init();
 	#endif
 
 	#if __TARGET_HAS_MAILBOX
-		kmailbox_init();
+		vmailbox_init();
 	#endif
 
 	#if __TARGET_HAS_PORTAL
-		kportal_init();
+		vportal_init();
 	#endif
 }

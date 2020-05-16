@@ -42,6 +42,8 @@
 	 */
 	#define KSYNC_MAX 1024
 
+#ifdef __NANVIX_MICROKERNEL
+
 	/**
 	 * @brief Creates a virtual synchronization point.
 	 *
@@ -115,7 +117,9 @@
 	/**
 	 * @brief Initializes the synchronization facility.
 	 */
-	EXTERN void ksync_init(void);
+	EXTERN void vsync_init(void);
+
+#endif /* __NANVIX_MICROKERNEL */
 
 #endif /* NANVIX_SYNC_H_ */
 

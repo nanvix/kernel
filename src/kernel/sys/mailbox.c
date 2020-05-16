@@ -115,7 +115,7 @@ PUBLIC int kernel_mailbox_awrite(int mbxid, const void *buffer, size_t size)
 		return (-EINVAL);
 
 	/* Invalid write size. */
-	if (size != KMAILBOX_MESSAGE_SIZE)
+	if ((size == 0) || (size > KMAILBOX_MESSAGE_SIZE))
 		return (-EINVAL);
 
 	/* Invalid buffer. */
@@ -143,7 +143,7 @@ PUBLIC int kernel_mailbox_aread(int mbxid, void *buffer, size_t size)
 		return (-EINVAL);
 
 	/* Invalid read size. */
-	if (size != KMAILBOX_MESSAGE_SIZE)
+	if ((size == 0) || (size > KMAILBOX_MESSAGE_SIZE))
 		return (-EINVAL);
 
 	/* Invalid buffer. */

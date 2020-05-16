@@ -453,13 +453,13 @@ PUBLIC int do_vsync_signal(int syncid)
 }
 
 /*============================================================================*
- * ksync_init()                                                               *
+ * vsync_init()                                                               *
  *============================================================================*/
 
 /**
  * @todo TODO: Provide a detailed description for this function.
  */
-PUBLIC void ksync_init(void)
+PUBLIC void vsync_init(void)
 {
 	kprintf("[kernel][noc] initializing the ksync facility");
 }
