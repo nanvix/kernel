@@ -104,6 +104,8 @@
 	 */
 	#define KMAILBOX_MESSAGE_SIZE (HAL_MAILBOX_MSG_SIZE - KMAILBOX_MESSAGE_HEADER_SIZE)
 
+#ifdef __NANVIX_MICROKERNEL
+
 	/**
 	 * @brief Creates a virtual mailbox.
 	 *
@@ -208,6 +210,8 @@
 	 * @brief Initializes the mailbox facility.
 	 */
 	EXTERN void vmailbox_init(void);
+
+#endif /* __NANVIX_MICROKERNEL */
 
 #endif /* NANVIX_MAILBOX_H_ */
 
