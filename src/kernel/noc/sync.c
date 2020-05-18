@@ -34,14 +34,21 @@
 #if __TARGET_HAS_SYNC
 
 /**
- * @brief Search types for do_sync_search().
+ * @name Search types for do_sync_search().
  */
+/**@{*/
 #define VSYNC_TYPE_INPUT  (0)
 #define VSYNC_TYPE_OUTPUT (1)
+/**@}*/
 
+/**
+ * @name Fynctions wrappers.
+ */
+/**@{*/
 typedef int (* hw_alloc_fn)(const int *, int, int);
 typedef int (* hw_operation_fn)(int);
 typedef int (* hw_release_fn)(int);
+/**@}*/
 
 /*============================================================================*
  * Control Structures.                                                        *
@@ -57,11 +64,22 @@ PRIVATE struct sync
 	 */
 	struct resource resource; /**< Generic resource information. */
 
-	int refcount;             /**< Reference counter.            */
+	/**
+	 * @name Control and Operate variables.
+	 */
+	/**@{*/
 	int hwfd;                 /**< Underlying file descriptor.   */
+	int refcount;             /**< Reference counter.            */
+	/**@}*/
+
+	/**
+	 * @name Identification variables.
+	 */
+	/**@{*/
 	int mode;                 /**< Mode of the operation.        */
 	int master;               /**< Node number of the ONE.       */
 	uint64_t nodeslist;       /**< Nodeslist.                    */
+	/**@}*/
 } ALIGN(sizeof(dword_t)) synctab[(SYNC_CREATE_MAX + SYNC_OPEN_MAX)];
 
 /**
@@ -462,6 +480,16 @@ PUBLIC int do_vsync_signal(int syncid)
 PUBLIC void vsync_init(void)
 {
 	kprintf("[kernel][noc] initializing the ksync facility");
+
+	for (unsigned i = 0; i < (SYNC_CREATE_MAX + SYNC_OPEN_MAX); ++i)
+	{
+		synctab[i].resource  = RESOURCE_INITIALIZER;
+		synctab[i].hwfd      = -1;
+		synctab[i].refcount  =  0;
+		synctab[i].mode      = -1;
+		synctab[i].master    = -1;
+		synctab[i].nodeslist = 0ULL;
+	}
 }
 
 #endif /* __TARGET_SYNC */
