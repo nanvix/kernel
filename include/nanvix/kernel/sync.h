@@ -36,6 +36,19 @@
 	#include <nanvix/const.h>
 
 	/**
+	 * @name Sync I/O Control types.
+	 */
+	/**@{*/
+	#define KSYNC_IOCTL_GET_LATENCY      (2) /**< Gets communication latency.        */
+	#define KSYNC_IOCTL_GET_NCREATES     (3) /**< Gets number of creates.            */
+	#define KSYNC_IOCTL_GET_NUNLINKS     (4) /**< Gets number of unlinks.            */
+	#define KSYNC_IOCTL_GET_NOPENS       (5) /**< Gets number of opens.              */
+	#define KSYNC_IOCTL_GET_NCLOSES      (6) /**< Gets number of closes.             */
+	#define KSYNC_IOCTL_GET_NWAITS       (9) /**< Gets number of waits.              */
+	#define KSYNC_IOCTL_GET_NSIGNALS    (10) /**< Gets number of signals.            */
+	/**@}*/
+
+	/**
 	 * @brief Maximum number of virtual syncs.
 	 *
 	 * Maximum number of virtual syncs that may be created/opened.
@@ -113,6 +126,18 @@
 	 * failure, a negative error code is returned instead.
 	 */
 	EXTERN int do_vsync_signal(int syncid);
+
+	/**
+	 * @brief Request an I/O operation on a synchronization point.
+	 *
+	 * @param syncid  Sync resource.
+	 * @param request Type of request.
+	 * @param args    Arguments of the request.
+	 *
+	 * @returns Upon successful completion, zero is returned.
+	 * Upon failure, a negative error code is returned instead.
+	 */
+	EXTERN int do_vsync_ioctl(int syncid, unsigned request, va_list args);
 
 	/**
 	 * @brief Initializes the synchronization facility.
