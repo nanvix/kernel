@@ -52,8 +52,9 @@
  * @name Virtual mailbox resource.
  */
 /**@{*/
-PRIVATE struct communicator ALIGN(sizeof(dword_t)) vmailboxes[KMAILBOX_MAX]; /**< Virtual mailbox talbe. */
-PRIVATE struct communicator_pool vmbxpool;                                   /**< Virtual mailbox pool.  */
+PRIVATE struct communicator_counters vmailbox_counters;                      /**< Virtual mailbox counters. */
+PRIVATE struct communicator ALIGN(sizeof(dword_t)) vmailboxes[KMAILBOX_MAX]; /**< Virtual mailbox talbe.    */
+PRIVATE struct communicator_pool vmbxpool;                                   /**< Virtual mailbox pool.     */
 /**@}*/
 
 /*============================================================================*
@@ -65,6 +66,14 @@ PRIVATE struct communicator_pool vmbxpool;                                   /**
  */
 PRIVATE void do_vmailbox_init(void)
 {
+	spinlock_init(&vmailbox_counters.lock);
+	vmailbox_counters.ncreates = 0ULL;
+	vmailbox_counters.nunlinks = 0ULL;
+	vmailbox_counters.nopens   = 0ULL;
+	vmailbox_counters.ncloses  = 0ULL;
+	vmailbox_counters.nreads   = 0ULL;
+	vmailbox_counters.nwrites  = 0ULL;
+
 	for (int i = 0; i < KMAILBOX_MAX; ++i)
 	{
 		spinlock_init(&vmailboxes[i].lock);
@@ -74,6 +83,7 @@ PRIVATE void do_vmailbox_init(void)
 		vmailboxes[i].do_release = do_mailbox_release;
 		vmailboxes[i].do_comm    = do_mailbox_aread;
 		vmailboxes[i].do_wait    = do_mailbox_wait;
+		vmailboxes[i].counters   = &vmailbox_counters;
 	}
 
 	vmbxpool.communicators  = vmailboxes;
@@ -117,6 +127,15 @@ PRIVATE int do_vmailbox_alloc(int local, int remote, int port, int type)
 	{
 		if (do_mailbox_release(fd) < 0)
 			kpanic("[mailbox] Failed on release a mailbox port!");
+	}
+	else
+	{
+		spinlock_lock(&vmailbox_counters.lock);
+			if (type == ACTIVE_TYPE_INPUT)
+				vmailbox_counters.ncreates++;
+			else
+				vmailbox_counters.nopens++;
+		spinlock_unlock(&vmailbox_counters.lock);
 	}
 
 	return (mbxid);

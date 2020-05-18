@@ -37,11 +37,17 @@
 	#include <posix/stdarg.h>
 
 	/**
-	 * @name Requests for do_vmailbox_ioctl()
+	 * @name Mailbox I/O Control types.
 	 */
 	/**@{*/
-	#define MAILBOX_IOCTL_GET_VOLUME  1 /**< Get the amount of data transferred so far. */
-	#define MAILBOX_IOCTL_GET_LATENCY 2 /**< Get the cumulative transfer latency.       */
+	#define KMAILBOX_IOCTL_GET_VOLUME   (1) /**< Gets communication volume.  */
+	#define KMAILBOX_IOCTL_GET_LATENCY  (2) /**< Gets communication latency. */
+	#define KMAILBOX_IOCTL_GET_NCREATES (3) /**< Gets number of creates.     */
+	#define KMAILBOX_IOCTL_GET_NUNLINKS (4) /**< Gets number of unlinks.     */
+	#define KMAILBOX_IOCTL_GET_NOPENS   (5) /**< Gets number of opens.       */
+	#define KMAILBOX_IOCTL_GET_NCLOSES  (6) /**< Gets number of closes.      */
+	#define KMAILBOX_IOCTL_GET_NREADS   (7) /**< Gets number of reads.       */
+	#define KMAILBOX_IOCTL_GET_NWRITES  (8) /**< Gets number of writes.      */
 	/**@}*/
 
 	/**
