@@ -51,6 +51,7 @@
  * @name Virtual portal resources.
  */
 /**@{*/
+PRIVATE struct communicator_counters vportal_counters;                    /**< Virtual mailbox counters. */
 PRIVATE struct communicator ALIGN(sizeof(dword_t)) vportals[KPORTAL_MAX]; /**< Table of virtual portals.  */
 PRIVATE struct communicator_pool vportalpool;                             /**< Virtual portal pool.       */
 /**@}*/
@@ -64,6 +65,14 @@ PRIVATE struct communicator_pool vportalpool;                             /**< V
  */
 PRIVATE void do_vportal_init(void)
 {
+	spinlock_init(&vportal_counters.lock);
+	vportal_counters.ncreates = 0ULL;
+	vportal_counters.nunlinks = 0ULL;
+	vportal_counters.nopens   = 0ULL;
+	vportal_counters.ncloses  = 0ULL;
+	vportal_counters.nreads   = 0ULL;
+	vportal_counters.nwrites  = 0ULL;
+
 	for (int i = 0; i < KPORTAL_MAX; ++i)
 	{
 		spinlock_init(&vportals[i].lock);
@@ -73,6 +82,7 @@ PRIVATE void do_vportal_init(void)
 		vportals[i].do_release = do_portal_release;
 		vportals[i].do_comm    = do_portal_aread;
 		vportals[i].do_wait    = do_portal_wait;
+		vportals[i].counters   = &vportal_counters;
 	}
 
 	vportalpool.communicators  = vportals;
@@ -117,6 +127,16 @@ PRIVATE int do_vportal_alloc(int local, int remote, int port, int type)
 		if (do_portal_release(fd) < 0)
 			kpanic("[portal] Failed on release a portal port!");
 	}
+	else
+	{
+		spinlock_lock(&vportal_counters.lock);
+			if (type == ACTIVE_TYPE_INPUT)
+				vportal_counters.ncreates++;
+			else
+				vportal_counters.nopens++;
+		spinlock_unlock(&vportal_counters.lock);
+	}
+
 
 	return (portalid);
 }

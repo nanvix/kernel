@@ -212,4 +212,31 @@ PUBLIC int kernel_sync_unlink(int syncid)
 	return (do_vsync_unlink(syncid));
 }
 
+/*============================================================================*
+ * kernel_sync_wait()                                                         *
+ *============================================================================*/
+
+/**
+ * @see do_vsync_ioctl().
+ */
+PUBLIC int kernel_sync_ioctl(int syncid, unsigned request, va_list *args)
+{
+	int ret;
+
+	/* Invalid sync ID. */
+	if (!WITHIN(syncid, 0, KSYNC_MAX))
+		return (-EINVAL);
+
+	/* Bad args. */
+	if (args == NULL)
+		return (-EINVAL);
+
+	dcache_invalidate();
+		ret = do_vsync_ioctl(syncid, request, *args);
+	dcache_invalidate();
+
+	return (ret);
+}
+
+
 #endif /* __TARGET_SYNC */

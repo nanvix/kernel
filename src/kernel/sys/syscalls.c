@@ -172,6 +172,14 @@ PUBLIC void do_kcall2(void)
 					(int) sysboard[coreid].arg0
 				);
 				break;
+
+			case NR_sync_ioctl:
+				ret = kernel_sync_ioctl(
+					(int) sysboard[coreid].arg0,
+					(unsigned) sysboard[coreid].arg1,
+					(va_list *) sysboard[coreid].arg2
+				);
+				break;
 #endif /* __TARGET_HAS_SYNC */
 
 #if __TARGET_HAS_MAILBOX

@@ -30,6 +30,7 @@
 #include <nanvix/const.h>
 #include <posix/errno.h>
 #include <posix/stdarg.h>
+#include <nanvix/kernel/mm.h>
 
 #include "communicator.h"
 
@@ -143,8 +144,16 @@ PUBLIC int communicator_free(const struct communicator_pool * pool, int id, int 
 
 		/* Releases communicator. */
 		if ((ret = comm->do_release(comm->config.fd)) == 0)
+		{
 			resource_set_unused(&comm->resource);
 
+			spinlock_lock(&comm->counters->lock);
+				if (type == ACTIVE_TYPE_INPUT)
+					comm->counters->nunlinks++;
+				else
+					comm->counters->ncloses++;
+			spinlock_unlock(&comm->counters->lock);
+		}
 error:
 	spinlock_unlock(&comm->lock);
 
@@ -282,7 +291,16 @@ PUBLIC int communicator_wait(struct communicator * comm)
 
 		/* Revoke communicator allow. */
 		if (ret == ACTIVE_COMM_SUCCESS)
+		{
 			communicator_set_notallowed(comm);
+			
+			spinlock_lock(&comm->counters->lock);
+				if (!resource_is_readable(&comm->resource))
+					comm->counters->nreads++;
+				else
+					comm->counters->nwrites++;
+			spinlock_unlock(&comm->counters->lock);
+		}
 
 release:
 		comm->config.buffer = NULL;
@@ -296,6 +314,11 @@ release:
 /*============================================================================*
  * communicator_ioctl()                                                       *
  *============================================================================*/
+
+PRIVATE int communicator_ioctl_valid(void * ptr, size_t size)
+{
+	return ((ptr != NULL) && mm_check_area(VADDR(ptr), size, UMEM_AREA));
+}
 
 /**
  * @brief Request an I/O operation on a communicator.
@@ -318,6 +341,7 @@ PUBLIC int communicator_ioctl(
 	KASSERT(comm != NULL);
 
 	spinlock_lock(&comm->lock);
+	spinlock_lock(&comm->counters->lock);
 
 		ret = (-EBADF);
 
@@ -331,7 +355,7 @@ PUBLIC int communicator_ioctl(
 		if (resource_is_busy(&comm->resource))
 			goto error;
 
-		ret = 0;
+		ret = (-EFAULT);
 
 		/* Parse request. */
 		switch (request)
@@ -339,17 +363,68 @@ PUBLIC int communicator_ioctl(
 			/* Get the amount of data transferred so far. */
 			case COMM_IOCTL_GET_VOLUME:
 			{
-				size_t *volume;
-				volume = va_arg(args, size_t *);
+				size_t * volume = va_arg(args, size_t *);
+
+				/* Bad buffer. */
+				if (!communicator_ioctl_valid(volume, sizeof(size_t)))
+					goto error;
+
 				*volume = comm->stats.volume;
+				ret = 0;
 			} break;
 
-			/* Get the cumulative transfer latency. */
+			/* Get uint64_t parameter. */
 			case COMM_IOCTL_GET_LATENCY:
+			case COMM_IOCTL_GET_NCREATES:
+			case COMM_IOCTL_GET_NUNLINKS:
+			case COMM_IOCTL_GET_NOPENS:
+			case COMM_IOCTL_GET_NCLOSES:
+			case COMM_IOCTL_GET_NREADS:
+			case COMM_IOCTL_GET_NWRITES:
 			{
-				uint64_t *latency;
-				latency = va_arg(args, uint64_t *);
-				*latency = comm->stats.latency;
+				uint64_t * var = va_arg(args, uint64_t *);
+
+				/* Bad buffer. */
+				if (!communicator_ioctl_valid(var, sizeof(uint64_t)))
+					goto error;
+
+				ret = 0;
+
+				switch(request)
+				{
+					case COMM_IOCTL_GET_LATENCY:
+						*var = comm->stats.latency;
+						break;
+
+					case COMM_IOCTL_GET_NCREATES:
+						*var = comm->counters->ncreates;
+						break;
+
+					case COMM_IOCTL_GET_NUNLINKS:
+						*var = comm->counters->nunlinks;
+						break;
+
+					case COMM_IOCTL_GET_NOPENS:
+						*var = comm->counters->nopens;
+						break;
+
+					case COMM_IOCTL_GET_NCLOSES:
+						*var = comm->counters->ncloses;
+						break;
+
+					case COMM_IOCTL_GET_NREADS:
+						*var = comm->counters->nreads;
+						break;
+
+					case COMM_IOCTL_GET_NWRITES:
+						*var = comm->counters->nwrites;
+						break;
+
+					/* Operation not supported. */
+					default:
+						ret = (-ENOTSUP);
+						break;
+				}
 			} break;
 
 			/* Operation not supported. */
@@ -359,6 +434,7 @@ PUBLIC int communicator_ioctl(
 		}
 
 error:
+	spinlock_unlock(&comm->counters->lock);
 	spinlock_unlock(&comm->lock);
 
 	return (ret);

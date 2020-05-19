@@ -28,20 +28,45 @@
 #include <nanvix/hal.h>
 #include <nanvix/kernel/sync.h>
 #include <nanvix/kernel/syscall.h>
+#include <nanvix/kernel/mm.h>
 #include <nanvix/hlib.h>
 #include <posix/errno.h>
 
 #if __TARGET_HAS_SYNC
 
 /**
- * @brief Search types for do_sync_search().
+ * @name Search types for do_sync_search().
  */
+/**@{*/
 #define VSYNC_TYPE_INPUT  (0)
 #define VSYNC_TYPE_OUTPUT (1)
+/**@}*/
 
+/**
+ * @name Fynctions wrappers.
+ */
+/**@{*/
 typedef int (* hw_alloc_fn)(const int *, int, int);
 typedef int (* hw_operation_fn)(int);
 typedef int (* hw_release_fn)(int);
+/**@}*/
+
+/*============================================================================*
+ * Counters structure.                                                        *
+ *============================================================================*/
+
+/**
+ * @brief Communicator counters.
+ */
+PRIVATE struct
+{
+	uint64_t ncreates; /**< Number of creates. */
+	uint64_t nunlinks; /**< Number of unlinks. */
+	uint64_t nopens;   /**< Number of opens.   */
+	uint64_t ncloses;  /**< Number of closes.  */
+	uint64_t nwaits;   /**< Number of watis.   */
+	uint64_t nsignals; /**< Number of signals. */
+} vsync_counters;
 
 /*============================================================================*
  * Control Structures.                                                        *
@@ -57,24 +82,42 @@ PRIVATE struct sync
 	 */
 	struct resource resource; /**< Generic resource information. */
 
-	int refcount;             /**< Reference counter.            */
+	/**
+	 * @name Control and Operate variables.
+	 */
+	/**@{*/
 	int hwfd;                 /**< Underlying file descriptor.   */
+	int refcount;             /**< Reference counter.            */
+	/**@}*/
+
+	/**
+	 * @name Identification variables.
+	 */
+	/**@{*/
 	int mode;                 /**< Mode of the operation.        */
 	int master;               /**< Node number of the ONE.       */
 	uint64_t nodeslist;       /**< Nodeslist.                    */
-} ALIGN(sizeof(dword_t)) synctab[(SYNC_CREATE_MAX + SYNC_OPEN_MAX)];
+	/**@}*/
+
+	/**
+	 * @name Statistics variables.
+	 */
+	/**@{*/
+	uint64_t latency;         /**< Latency counter.              */
+	/**@}*/
+} ALIGN(sizeof(dword_t)) vsynctab[(SYNC_CREATE_MAX + SYNC_OPEN_MAX)];
 
 /**
  * @brief Resource pool.
  */
-PRIVATE const struct resource_pool syncpool = {
-	synctab, (SYNC_CREATE_MAX + SYNC_OPEN_MAX), sizeof(struct sync)
+PRIVATE const struct resource_pool vsyncpool = {
+	vsynctab, (SYNC_CREATE_MAX + SYNC_OPEN_MAX), sizeof(struct sync)
 };
 
 /**
  * @brief Global lock.
  */
-PRIVATE spinlock_t sync_lock = SPINLOCK_UNLOCKED;
+PRIVATE spinlock_t vsync_lock = SPINLOCK_UNLOCKED;
 
 /*============================================================================*
  * do_sync_search()                                                           *
@@ -95,29 +138,29 @@ PRIVATE int do_sync_search(int master, uint64_t nodeslist, int mode, int type)
 {
 	for (int i = 0; i < (SYNC_CREATE_MAX + SYNC_OPEN_MAX); ++i)
 	{
-		if (!resource_is_used(&synctab[i].resource))
+		if (!resource_is_used(&vsynctab[i].resource))
 			continue;
 
 		if (type == VSYNC_TYPE_INPUT)
 		{
-			if (!resource_is_readable(&synctab[i].resource))
+			if (!resource_is_readable(&vsynctab[i].resource))
 				continue;
-		} 
+		}
 
 		/* type == VSYNC_TYPE_OUTPUT */
-		else if (!resource_is_writable(&synctab[i].resource))
+		else if (!resource_is_writable(&vsynctab[i].resource))
 			continue;
 
 		/* Not the same mode? */
-		if (synctab[i].mode != mode)
+		if (vsynctab[i].mode != mode)
 			continue;
 
 		/* Not the same master? */
-		if (synctab[i].master != master)
+		if (vsynctab[i].master != master)
 			continue;
 
 		/* Not the same node list? */
-		if (synctab[i].nodeslist != nodeslist)
+		if (vsynctab[i].nodeslist != nodeslist)
 			continue;
 
 		return (i);
@@ -179,14 +222,14 @@ PRIVATE int _do_sync_alloc(
 
 	nodeslist = sync_build_nodeslist(nodes, nnodes);
 
-	spinlock_lock(&sync_lock);
+	spinlock_lock(&vsync_lock);
 
 		ret = (-EBUSY);
 
 		/* Allocate a synchronization point. */
 		if ((syncid = do_sync_search(nodes[0], nodeslist, mode, type)) >= 0)
 		{
-			synctab[syncid].refcount++;
+			vsynctab[syncid].refcount++;
 			ret = (syncid);
 			goto error;
 		}
@@ -194,32 +237,39 @@ PRIVATE int _do_sync_alloc(
 		ret = (-EAGAIN);
 
 		/* Allocate a synchronization point. */
-		if ((syncid = resource_alloc(&syncpool)) < 0)
+		if ((syncid = resource_alloc(&vsyncpool)) < 0)
 			goto error;
 
 		if ((hwfd = do_alloc(nodes, nnodes, mode)) < 0)
 		{
-			resource_free(&syncpool, syncid);
+			resource_free(&vsyncpool, syncid);
 			ret = (hwfd);
 
 			goto error;
 		}
 
 		/* Initialize synchronization point. */
-		synctab[syncid].refcount  = 1;
-		synctab[syncid].hwfd      = hwfd;
-		synctab[syncid].mode      = mode;
-		synctab[syncid].master    = nodes[0];
-		synctab[syncid].nodeslist = nodeslist;
+		vsynctab[syncid].refcount  = 1;
+		vsynctab[syncid].hwfd      = hwfd;
+		vsynctab[syncid].mode      = mode;
+		vsynctab[syncid].master    = nodes[0];
+		vsynctab[syncid].nodeslist = nodeslist;
+		vsynctab[syncid].latency   = 0ULL;
 
 		if (type == VSYNC_TYPE_INPUT)
-			resource_set_rdonly(&synctab[syncid].resource);
+		{
+			resource_set_rdonly(&vsynctab[syncid].resource);
+			vsync_counters.ncreates++;
+		}
 		else
-			resource_set_wronly(&synctab[syncid].resource);
+		{
+			resource_set_wronly(&vsynctab[syncid].resource);
+			vsync_counters.nopens++;
+		}
 
 		ret = (syncid);
 error:
-	spinlock_unlock(&sync_lock);
+	spinlock_unlock(&vsync_lock);
 
 	return (ret);
 }
@@ -298,49 +348,54 @@ PRIVATE int _do_sync_release(int syncid, int type, hw_release_fn do_release)
 {
 	int ret; /* Return value. */
 
-	spinlock_lock(&sync_lock);
+	spinlock_lock(&vsync_lock);
 
 		ret = (-EBADF);
 
 		/* Bad sync. */
-		if (!resource_is_used(&synctab[syncid].resource))
+		if (!resource_is_used(&vsynctab[syncid].resource))
 			goto error;
 
 
 		/* Bad sync. */
 		if (type == VSYNC_TYPE_INPUT)
 		{
-			if (!resource_is_readable(&synctab[syncid].resource))
+			if (!resource_is_readable(&vsynctab[syncid].resource))
 				goto error;
-		} 
+		}
 
 		/* type == VSYNC_TYPE_OUTPUT */
-		else if (!resource_is_writable(&synctab[syncid].resource))
+		else if (!resource_is_writable(&vsynctab[syncid].resource))
 			goto error;
 
 		ret = (-EBUSY);
 
 		/* Sync not set as busy. */
-		if (resource_is_busy(&synctab[syncid].resource))
+		if (resource_is_busy(&vsynctab[syncid].resource))
 			goto error;
 
 		/* Releases the virtual sync. */
-		if ((--synctab[syncid].refcount) == 0)
+		if ((--vsynctab[syncid].refcount) == 0)
 		{
 			/* Releases the hardware sync. */
-			if ((ret = do_release(synctab[syncid].hwfd)) < 0)
+			if ((ret = do_release(vsynctab[syncid].hwfd)) < 0)
 				goto error;
 
-			synctab[syncid].hwfd      = -1;
-			synctab[syncid].master    = -1;
-			synctab[syncid].nodeslist = 0ULL; 
+			vsynctab[syncid].hwfd      = -1;
+			vsynctab[syncid].master    = -1;
+			vsynctab[syncid].nodeslist = 0ULL;
 
-			resource_free(&syncpool, syncid);
+			if (type == VSYNC_TYPE_INPUT)
+				vsync_counters.nunlinks++;
+			else
+				vsync_counters.ncloses++;
+
+			resource_free(&vsyncpool, syncid);
 		}
 
 		ret = (0);
 error:
-	spinlock_unlock(&sync_lock);
+	spinlock_unlock(&vsync_lock);
 
 	return (ret);
 }
@@ -388,43 +443,56 @@ PUBLIC int do_vsync_close(int syncid)
  */
 PUBLIC int _do_sync_operate(int syncid, int type, hw_operation_fn do_operation)
 {
-	int ret; /* Return value. */
+	int ret;     /* Return value.                 */
+	uint64_t t1; /* Clock value before operation. */
+	uint64_t t2; /* Clock value after operation.  */
 
-	spinlock_lock(&sync_lock);
+	spinlock_lock(&vsync_lock);
 
 		ret = (-EBADF);
 
 		/* Bad sync. */
-		if (!resource_is_used(&synctab[syncid].resource))
+		if (!resource_is_used(&vsynctab[syncid].resource))
 			goto error;
 
 		/* Bad sync. */
 		if (type == VSYNC_TYPE_INPUT)
 		{
-			if (!resource_is_readable(&synctab[syncid].resource))
+			if (!resource_is_readable(&vsynctab[syncid].resource))
 				goto error;
-		} 
+		}
 
 		/* type == VSYNC_TYPE_OUTPUT */
-		else if (!resource_is_writable(&synctab[syncid].resource))
+		else if (!resource_is_writable(&vsynctab[syncid].resource))
 			goto error;
 
 		ret = (-EBUSY);
 
 		/* Sync not set as busy. */
-		if (resource_is_busy(&synctab[syncid].resource))
+		if (resource_is_busy(&vsynctab[syncid].resource))
 			goto error;
 
-		resource_set_busy(&synctab[syncid].resource);
+		resource_set_busy(&vsynctab[syncid].resource);
 
-	spinlock_unlock(&sync_lock);
+	spinlock_unlock(&vsync_lock);
 
-	ret = do_operation(synctab[syncid].hwfd);
+	t1 = clock_read();
+		ret = do_operation(vsynctab[syncid].hwfd);
+	t2 = clock_read();
 
-	spinlock_lock(&sync_lock);
-		resource_set_notbusy(&synctab[syncid].resource);
+	spinlock_lock(&vsync_lock);
+		if (ret >= 0)
+		{
+			vsynctab[syncid].latency += (t2 - t1);
+
+			if (type == VSYNC_TYPE_INPUT)
+				vsync_counters.nwaits++;
+			else
+				vsync_counters.nsignals++;
+		}
+		resource_set_notbusy(&vsynctab[syncid].resource);
 error:
-	spinlock_unlock(&sync_lock);
+	spinlock_unlock(&vsync_lock);
 
 	return (ret);
 }
@@ -453,6 +521,96 @@ PUBLIC int do_vsync_signal(int syncid)
 }
 
 /*============================================================================*
+ * do_vsync_ioctl()                                                           *
+ *============================================================================*/
+
+PRIVATE int vsync_ioctl_valid(void * ptr, size_t size)
+{
+	return ((ptr != NULL) && mm_check_area(VADDR(ptr), size, UMEM_AREA));
+}
+
+/**
+ * @brief Request an I/O operation on a synchronization point.
+ *
+ * @param syncid  Sync resource.
+ * @param request Type of request.
+ * @param args    Arguments of the request.
+ *
+ * @returns Upon successful completion, zero is returned.
+ * Upon failure, a negative error code is returned instead.
+ */
+PUBLIC int do_vsync_ioctl(int syncid, unsigned request, va_list args)
+{
+	int ret;        /* Return value.              */
+	uint64_t * var; /* Auxiliar variable pointer. */
+
+	spinlock_lock(&vsync_lock);
+
+		ret = (-EBADF);
+
+		/* Bad sync. */
+		if (!resource_is_used(&vsynctab[syncid].resource))
+			goto error;
+
+		ret = (-EBUSY);
+
+		/* Busy sync. */
+		if (resource_is_busy(&vsynctab[syncid].resource))
+			goto error;
+
+		ret = (-EFAULT);
+		var = va_arg(args, uint64_t *);
+
+		/* Bad buffer. */
+		if (!vsync_ioctl_valid(var, sizeof(uint64_t)))
+			goto error;
+
+		ret = 0;
+
+		/* Parse request. */
+		switch (request)
+		{
+			case KSYNC_IOCTL_GET_LATENCY:
+				*var = vsynctab[syncid].latency;
+				break;
+
+			case KSYNC_IOCTL_GET_NCREATES:
+				*var = vsync_counters.ncreates;
+				break;
+
+			case KSYNC_IOCTL_GET_NUNLINKS:
+				*var = vsync_counters.nunlinks;
+				break;
+
+			case KSYNC_IOCTL_GET_NOPENS:
+				*var = vsync_counters.nopens;
+				break;
+
+			case KSYNC_IOCTL_GET_NCLOSES:
+				*var = vsync_counters.ncloses;
+				break;
+
+			case KSYNC_IOCTL_GET_NWAITS:
+				*var = vsync_counters.nwaits;
+				break;
+
+			case KSYNC_IOCTL_GET_NSIGNALS:
+				*var = vsync_counters.nsignals;
+				break;
+
+			/* Operation not supported. */
+			default:
+				ret = (-ENOTSUP);
+				break;
+		}
+
+error:
+	spinlock_unlock(&vsync_lock);
+
+	return (ret);
+}
+
+/*============================================================================*
  * vsync_init()                                                               *
  *============================================================================*/
 
@@ -462,6 +620,24 @@ PUBLIC int do_vsync_signal(int syncid)
 PUBLIC void vsync_init(void)
 {
 	kprintf("[kernel][noc] initializing the ksync facility");
+
+	vsync_counters.ncreates = 0ULL;
+	vsync_counters.nunlinks = 0ULL;
+	vsync_counters.nopens   = 0ULL;
+	vsync_counters.ncloses  = 0ULL;
+	vsync_counters.nwaits   = 0ULL;
+	vsync_counters.nsignals = 0ULL;
+
+	for (unsigned i = 0; i < (SYNC_CREATE_MAX + SYNC_OPEN_MAX); ++i)
+	{
+		vsynctab[i].resource  = RESOURCE_INITIALIZER;
+		vsynctab[i].hwfd      = -1;
+		vsynctab[i].refcount  =  0;
+		vsynctab[i].mode      = -1;
+		vsynctab[i].master    = -1;
+		vsynctab[i].nodeslist = 0ULL;
+		vsynctab[i].latency   = 0ULL;
+	}
 }
 
 #endif /* __TARGET_SYNC */

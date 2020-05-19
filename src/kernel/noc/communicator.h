@@ -54,8 +54,14 @@
 	 * @name I/O Control types.
 	 */
 	/**@{*/
-	#define COMM_IOCTL_GET_VOLUME  (1) /**< Gets communication volume.  */
-	#define COMM_IOCTL_GET_LATENCY (2) /**< Gets communication latency. */
+	#define COMM_IOCTL_GET_VOLUME   (1) /**< Gets communication volume.  */
+	#define COMM_IOCTL_GET_LATENCY  (2) /**< Gets communication latency. */
+	#define COMM_IOCTL_GET_NCREATES (3) /**< Gets number of creates.     */
+	#define COMM_IOCTL_GET_NUNLINKS (4) /**< Gets number of unlinks.     */
+	#define COMM_IOCTL_GET_NOPENS   (5) /**< Gets number of opens.       */
+	#define COMM_IOCTL_GET_NCLOSES  (6) /**< Gets number of closes.      */
+	#define COMM_IOCTL_GET_NREADS   (7) /**< Gets number of reads.       */
+	#define COMM_IOCTL_GET_NWRITES  (8) /**< Gets number of writes.      */
 	/**@}*/
 
 	/**
@@ -72,31 +78,50 @@
 	}
 
 	/*============================================================================*
+	 * Counters structure.                                                        *
+	 *============================================================================*/
+
+	/**
+	 * @brief Communicator counters.
+	 */
+	struct communicator_counters
+	{
+		spinlock_t lock;   /**< Protection.        */
+		uint64_t ncreates; /**< Number of creates. */
+		uint64_t nunlinks; /**< Number of unlinks. */
+		uint64_t nopens;   /**< Number of opens.   */
+		uint64_t ncloses;  /**< Number of closes.  */
+		uint64_t nreads;   /**< Number of reads.   */
+		uint64_t nwrites;  /**< Number of writes.  */
+	};
+
+	/*============================================================================*
 	 * Communicator structure definition.                                         *
 	 *============================================================================*/
 
 	/**
-	* @brief Communicator structure.
-	*/
+	 * @brief Communicator structure.
+	 */
 	struct communicator
 	{
 		/*
 		 * XXX: Don't Touch! This Must Come First!
 		 */
-		struct resource resource;     /**< Generic resource information. */
+		struct resource resource;                 /**< Generic resource information. */
 
-		int flags;                    /**< Auxiliar flags.               */
-		struct active_config config;  /**< Communicaton configuration.   */
-		struct pstats stats;          /**< Performance Statistics.       */
-		spinlock_t lock;              /**< Protection.                   */
+		int flags;                                /**< Auxiliar flags.               */
+		struct active_config config;              /**< Communicaton configuration.   */
+		struct pstats stats;                      /**< Performance Statistics.       */
+		struct communicator_counters * counters; /**< Global counters.              */
+		spinlock_t lock;                          /**< Protection.                   */
 
 		/**
 		 * @name Auxiliar functions.
 		 */
 		/**@{*/
-		active_release_fn do_release; /**< Active release function.      */
-		active_comm_fn do_comm;       /**< Active comm function.         */
-		active_wait_fn do_wait;       /**< Active wait function.         */
+		active_release_fn do_release;             /**< Active release function.      */
+		active_comm_fn do_comm;                   /**< Active comm function.         */
+		active_wait_fn do_wait;                   /**< Active wait function.         */
 		/**@}*/
 	};
 
@@ -105,8 +130,8 @@
 	*/
 	struct communicator_pool
 	{
-		struct communicator * communicators; /**< Pool of communicators.   */
-		int ncommunicators;		             /**< Number of communicators. */
+		struct communicator * communicators;      /**< Pool of communicators.   */
+		int ncommunicators;		                  /**< Number of communicators. */
 	};
 
 	/*============================================================================*
