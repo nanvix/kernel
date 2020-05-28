@@ -38,36 +38,16 @@
  * @name Auxiliar macros
  */
 /**@{*/
-#define ACTIVE_GET_NR_PORTS(_act)           (_act->portpool.nports)                                  /**< Extracts #ports. */
-#define ACTIVE_GET_LADDRESS_FD(_act, _id)   ((_id >= 0) ? (_id / ACTIVE_GET_NR_PORTS(_act)) : (_id)) /**< Extracts actid.  */
-#define ACTIVE_GET_LADDRESS_PORT(_act, _id) ((_id >= 0) ? (_id % ACTIVE_GET_NR_PORTS(_act)) : (_id)) /**< Extracts portid. */
-#define ACTIVE_GET_PORTID(_act, _port)      (port - active->portpool.ports)                          /**< Extracts portid. */
+#define ACTIVE_GET_NR_PORTS(_act)           (_act->portpool.nports)                                          /**< Extracts #ports. */
+#define ACTIVE_GET_LADDRESS_FD(_act, _id)   ((_id >= 0) ? __div_pw2(_id, ACTIVE_GET_NR_PORTS(_act)) : (_id)) /**< Extracts actid.  */
+#define ACTIVE_GET_LADDRESS_PORT(_act, _id) ((_id >= 0) ? __mod_pw2(_id, ACTIVE_GET_NR_PORTS(_act)) : (_id)) /**< Extracts portid. */
+#define ACTIVE_GET_PORTID(_act, _port)      (port - active->portpool.ports)                                  /**< Extracts portid. */
 /**@}*/
 
 /**
  * @brief Any source identification
  */
 #define ACTIVE_ANY_SRC (-1)
-
-/*============================================================================*
- * do_register_request()                                                      *
- *============================================================================*/
-
-/**
- * @brief Compute @p x % @p y where @p y must be a power-of-2 (1, 2, 4, 8, ...).
- *
- * @param n Operator
- * @param m Module factor.
- *
- * @returns @p x % @p y.
- */
-PRIVATE int modulus_power2(int x, int y)
-{
-	/* y must be a power-of-2. */
-	KASSERT((y & (y - 1)) == 0);
-
-	return (x & (y - 1));
-}
 
 /*============================================================================*
  * do_register_request()                                                      *
@@ -89,7 +69,7 @@ PRIVATE int do_request_operation(struct active * active, struct port * port)
 
 	/* Sanity checks. */
 	KASSERT((active != NULL) && (port != NULL));
-	KASSERT(WITHIN(port, active->portpool.ports, (active->portpool.ports + active->portpool.nports + 1)));
+	KASSERT(WITHIN(port, active->portpool.ports, (active->portpool.ports + active->portpool.nports)));
 
 	requests = &active->requests;
 
@@ -103,7 +83,7 @@ PRIVATE int do_request_operation(struct active * active, struct port * port)
 	requests->fifo[head] = ACTIVE_GET_PORTID(active, port);
 
 	/* Updates head. */
-	requests->head = modulus_power2((head + 1), requests->max_capacity);
+	requests->head = __mod_pw2((head + 1), requests->max_capacity);
 	requests->nelements++;
 
 	return (0);
@@ -129,7 +109,7 @@ PRIVATE int do_request_complete(struct active * active, struct port * port)
 
 	/* Sanity checks. */
 	KASSERT((active != NULL) && (port != NULL));
-	KASSERT(WITHIN(port, active->portpool.ports, (active->portpool.ports + active->portpool.nports + 1)));
+	KASSERT(WITHIN(port, active->portpool.ports, (active->portpool.ports + active->portpool.nports)));
 
 	requests = &active->requests;
 	tail     = requests->tail;
@@ -396,11 +376,17 @@ PUBLIC int active_release(const struct active_pool * pool, int id)
 
 	KASSERT(active_valid_call(pool, id));
 
-	active = &pool->actives[ACTIVE_GET_LADDRESS_FD(pool->actives, id)];
+	active   = &pool->actives[ACTIVE_GET_LADDRESS_FD(pool->actives, id)];
 	portpool = &active->portpool;
-	port   = &portpool->ports[ACTIVE_GET_LADDRESS_PORT(active, id)];
+	port     = &portpool->ports[ACTIVE_GET_LADDRESS_PORT(active, id)];
 
 	spinlock_lock(&active->lock);
+
+		ret = (-EBADF);
+
+		/* Is the port used? */
+		if (!resource_is_used(&active->resource))
+			goto error;
 
 		ret = (-EBUSY);
 

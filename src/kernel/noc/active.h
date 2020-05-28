@@ -135,8 +135,8 @@
 	typedef int (* hw_create_fn)(int);
 	typedef int (* hw_open_fn)(int, int);
 	typedef int (* hw_allow_fn)(struct active *, int);
-	typedef ssize_t (* hw_aread_fn)(int mbxid, void *buffer, size_t size);
-	typedef ssize_t (* hw_awrite_fn)(int mbxid, const void *buffer, size_t size);
+	typedef ssize_t (* hw_aread_fn)(int mbxid, void *buffer, uint64_t size);
+	typedef ssize_t (* hw_awrite_fn)(int mbxid, const void *buffer, uint64_t size);
 	typedef int (* hw_wait_fn)(int);
 	typedef int (* hw_config_fn)(struct mbuffer *, const struct active_config *);
 	typedef int (* hw_check_fn)(struct mbuffer *, const struct active_config *);
@@ -214,8 +214,8 @@
 	 */
 	struct active_pool
 	{
-		struct active * actives; /**< Pool of actives.   */
-		int nactives;            /**< Number of actives. */
+		struct active * actives; /**< Pool of actives.    */
+		int nactives;            /**< Number of actives.  */
 	};
 
 	/*============================================================================*
