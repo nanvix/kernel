@@ -176,7 +176,7 @@ ifeq ($(RELEASE), true)
 	export CFLAGS += -fisolate-erroneous-paths-attribute
 	export CFLAGS += -fivopts
 	export CFLAGS += -flifetime-dse
-	export CFLAGS += -flive-range-shrinkage
+	# export CFLAGS += -flive-range-shrinkage                        # === FREEZE EXECUTION       ===
 	# export CFLAGS += -floop-nest-optimize
 	export CFLAGS += -fmath-errno
 	export CFLAGS += -fmerge-all-constants
