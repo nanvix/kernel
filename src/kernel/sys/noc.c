@@ -93,7 +93,7 @@ PUBLIC int kernel_comm_get_port(int id, int type)
 		return (do_vmailbox_get_port(id));
 #endif /* TARGET_HAS_MAILBOX */
 
-#if (__TARGET_HAS_PORTAL)
+#if (__TARGET_HAS_PORTAL && !__NANVIX_IKC_USES_ONLY_MAILBOX)
 	if (type == COMM_TYPE_PORTAL)
 		return (do_vportal_get_port(id));
 #endif /* TARGET_HAS_PORTAL */

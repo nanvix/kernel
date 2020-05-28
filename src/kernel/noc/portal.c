@@ -33,7 +33,7 @@
 #include "active.h"
 #include "portal.h"
 
-#if __TARGET_HAS_PORTAL
+#if __TARGET_HAS_PORTAL && !__NANVIX_IKC_USES_ONLY_MAILBOX
 
 /**
  * @name Auxiliary macros.
@@ -345,4 +345,4 @@ PUBLIC void do_portal_init(void)
 		KASSERT(_active_open(&portalpool, local, i) >= 0);
 }
 
-#endif /* __TARGET_HAS_PORTAL */
+#endif /* __TARGET_HAS_PORTAL && !__NANVIX_IKC_USES_ONLY_MAILBOX */

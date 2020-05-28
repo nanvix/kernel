@@ -107,6 +107,8 @@
 	 */
 	#define KPORTAL_AUX_BUFFERS_MAX (8)
 
+#if !__NANVIX_IKC_USES_ONLY_MAILBOX
+
 	/**
 	 * @brief Creates a virtual portal.
 	 *
@@ -224,6 +226,8 @@
 	 * @brief Initializes the portal facility.
 	 */
 	EXTERN void vportal_init(void);
+
+#endif /* !__NANVIX_IKC_USES_ONLY_MAILBOX */
 
 #endif /* __NANVIX_MICROKERNEL */
 

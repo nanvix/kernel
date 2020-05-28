@@ -29,6 +29,8 @@
 
 #if __TARGET_HAS_SYNC
 
+#if !__NANVIX_IKC_USES_ONLY_MAILBOX
+
 /*============================================================================*
  * sync_nodelist_is_valid()                                                   *
  *============================================================================*/
@@ -76,6 +78,8 @@ PRIVATE int sync_nodelist_is_valid(const int * nodes, int nnodes, int is_the_one
 	return (checks & (1ULL << local));
 }
 
+#endif
+
 /*============================================================================*
  * kernel_sync_create()                                                       *
  *============================================================================*/
@@ -89,6 +93,8 @@ PRIVATE int sync_nodelist_is_valid(const int * nodes, int nnodes, int is_the_one
  */
 PUBLIC int kernel_sync_create(const int * nodes, int nnodes, int type)
 {
+#if !__NANVIX_IKC_USES_ONLY_MAILBOX
+
 	/* Invalid nodes list. */
 	if (nodes == NULL)
 		return (-EINVAL);
@@ -110,6 +116,14 @@ PUBLIC int kernel_sync_create(const int * nodes, int nnodes, int type)
 		return (-EINVAL);
 
 	return (do_vsync_create(nodes, nnodes, type));
+
+#else
+	UNUSED(nodes);
+	UNUSED(nnodes);
+	UNUSED(type);
+
+	return (-ENOSYS);
+#endif
 }
 
 /*============================================================================*
@@ -125,6 +139,8 @@ PUBLIC int kernel_sync_create(const int * nodes, int nnodes, int type)
  */
 PUBLIC int kernel_sync_open(const int *nodes, int nnodes, int type)
 {
+#if !__NANVIX_IKC_USES_ONLY_MAILBOX
+
 	/* Invalid nodes list. */
 	if (nodes == NULL)
 		return (-EINVAL);
@@ -146,6 +162,14 @@ PUBLIC int kernel_sync_open(const int *nodes, int nnodes, int type)
 		return (-EINVAL);
 
 	return (do_vsync_open(nodes, nnodes, type));
+
+#else
+	UNUSED(nodes);
+	UNUSED(nnodes);
+	UNUSED(type);
+
+	return (-ENOSYS);
+#endif
 }
 
 /*============================================================================*
@@ -157,11 +181,19 @@ PUBLIC int kernel_sync_open(const int *nodes, int nnodes, int type)
  */
 PUBLIC int kernel_sync_wait(int syncid)
 {
+#if !__NANVIX_IKC_USES_ONLY_MAILBOX
+
 	/* Invalid sync ID. */
 	if (!WITHIN(syncid, 0, KSYNC_MAX))
 		return (-EINVAL);
 
 	return (do_vsync_wait(syncid));
+
+#else
+	UNUSED(syncid);
+
+	return (-ENOSYS);
+#endif
 }
 
 /*============================================================================*
@@ -173,11 +205,19 @@ PUBLIC int kernel_sync_wait(int syncid)
  */
 PUBLIC int kernel_sync_signal(int syncid)
 {
+#if !__NANVIX_IKC_USES_ONLY_MAILBOX
+
 	/* Invalid sync ID. */
 	if (!WITHIN(syncid, 0, KSYNC_MAX))
 		return (-EINVAL);
 
 	return (do_vsync_signal(syncid));
+
+#else
+	UNUSED(syncid);
+
+	return (-ENOSYS);
+#endif
 }
 
 /*============================================================================*
@@ -189,11 +229,19 @@ PUBLIC int kernel_sync_signal(int syncid)
  */
 PUBLIC int kernel_sync_close(int syncid)
 {
+#if !__NANVIX_IKC_USES_ONLY_MAILBOX
+
 	/* Invalid sync ID. */
 	if (!WITHIN(syncid, 0, KSYNC_MAX))
 		return (-EINVAL);
 
 	return (do_vsync_close(syncid));
+
+#else
+	UNUSED(syncid);
+
+	return (-ENOSYS);
+#endif
 }
 
 /*============================================================================*
@@ -205,11 +253,19 @@ PUBLIC int kernel_sync_close(int syncid)
  */
 PUBLIC int kernel_sync_unlink(int syncid)
 {
+#if !__NANVIX_IKC_USES_ONLY_MAILBOX
+
 	/* Invalid sync ID. */
 	if (!WITHIN(syncid, 0, KSYNC_MAX))
 		return (-EINVAL);
 
 	return (do_vsync_unlink(syncid));
+
+#else
+	UNUSED(syncid);
+
+	return (-ENOSYS);
+#endif
 }
 
 /*============================================================================*
@@ -221,6 +277,8 @@ PUBLIC int kernel_sync_unlink(int syncid)
  */
 PUBLIC int kernel_sync_ioctl(int syncid, unsigned request, va_list *args)
 {
+#if !__NANVIX_IKC_USES_ONLY_MAILBOX
+
 	int ret;
 
 	/* Invalid sync ID. */
@@ -236,7 +294,14 @@ PUBLIC int kernel_sync_ioctl(int syncid, unsigned request, va_list *args)
 	dcache_invalidate();
 
 	return (ret);
-}
 
+#else
+	UNUSED(syncid);
+	UNUSED(request);
+	UNUSED(args);
+
+	return (-ENOSYS);
+#endif
+}
 
 #endif /* __TARGET_SYNC */

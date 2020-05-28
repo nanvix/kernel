@@ -33,7 +33,7 @@
 #include "communicator.h"
 #include "portal.h"
 
-#if __TARGET_HAS_PORTAL
+#if __TARGET_HAS_PORTAL && !__NANVIX_IKC_USES_ONLY_MAILBOX
 
 /**
  * @brief Extracts fd and port from portalid.
@@ -428,4 +428,4 @@ PUBLIC void vportal_init(void)
 	do_vportal_init();
 }
 
-#endif /* __TARGET_HAS_PORTAL */
+#endif /* __TARGET_HAS_PORTAL && !__NANVIX_IKC_USES_ONLY_MAILBOX */

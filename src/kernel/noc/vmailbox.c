@@ -372,3 +372,4 @@ PUBLIC void vmailbox_init(void)
 }
 
 #endif /* __TARGET_HAS_MAILBOX */
+

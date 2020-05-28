@@ -39,6 +39,8 @@
  */
 PUBLIC int kernel_portal_create(int local, int port)
 {
+#if !__NANVIX_IKC_USES_ONLY_MAILBOX
+
 	/* Invalid local ID. */
 	if (!WITHIN(local, 0, PROCESSOR_NOC_NODES_NUM))
 		return (-EINVAL);
@@ -48,6 +50,13 @@ PUBLIC int kernel_portal_create(int local, int port)
 		return (-EINVAL);
 
 	return (do_vportal_create(local, port));
+
+#else
+	UNUSED(local);
+	UNUSED(port);
+
+	return (-ENOSYS);
+#endif
 }
 
 /*============================================================================*
@@ -59,6 +68,8 @@ PUBLIC int kernel_portal_create(int local, int port)
  */
 PUBLIC int kernel_portal_allow(int portalid, int remote, int remote_port)
 {
+#if !__NANVIX_IKC_USES_ONLY_MAILBOX
+
 	/* Invalid portal ID. */
 	if (!WITHIN(portalid, 0, KPORTAL_MAX))
 		return (-EINVAL);
@@ -72,6 +83,14 @@ PUBLIC int kernel_portal_allow(int portalid, int remote, int remote_port)
 		return (-EINVAL);
 
 	return (do_vportal_allow(portalid, remote, remote_port));
+
+#else
+	UNUSED(portalid);
+	UNUSED(remote);
+	UNUSED(remote_port);
+
+	return (-ENOSYS);
+#endif
 }
 
 /*============================================================================*
@@ -83,6 +102,8 @@ PUBLIC int kernel_portal_allow(int portalid, int remote, int remote_port)
  */
 PUBLIC int kernel_portal_open(int local, int remote, int remote_port)
 {
+#if !__NANVIX_IKC_USES_ONLY_MAILBOX
+
 	/* Invalid local ID. */
 	if (!WITHIN(local, 0, PROCESSOR_NOC_NODES_NUM))
 		return (-EINVAL);
@@ -96,6 +117,14 @@ PUBLIC int kernel_portal_open(int local, int remote, int remote_port)
 		return (-EINVAL);
 
 	return (do_vportal_open(local, remote, remote_port));
+
+#else
+	UNUSED(local);
+	UNUSED(remote);
+	UNUSED(remote_port);
+
+	return (-ENOSYS);
+#endif
 }
 
 /*============================================================================*
@@ -107,11 +136,19 @@ PUBLIC int kernel_portal_open(int local, int remote, int remote_port)
  */
 PUBLIC int kernel_portal_unlink(int portalid)
 {
+#if !__NANVIX_IKC_USES_ONLY_MAILBOX
+
 	/* Invalid portal ID. */
 	if (!WITHIN(portalid, 0, KPORTAL_MAX))
 		return (-EINVAL);
 
 	return (do_vportal_unlink(portalid));
+
+#else
+	UNUSED(portalid);
+
+	return (-ENOSYS);
+#endif
 }
 
 /*============================================================================*
@@ -123,11 +160,19 @@ PUBLIC int kernel_portal_unlink(int portalid)
  */
 PUBLIC int kernel_portal_close(int portalid)
 {
+#if !__NANVIX_IKC_USES_ONLY_MAILBOX
+
 	/* Invalid portal ID. */
 	if (!WITHIN(portalid, 0, KPORTAL_MAX))
 		return (-EINVAL);
 
 	return (do_vportal_close(portalid));
+
+#else
+	UNUSED(portalid);
+
+	return (-ENOSYS);
+#endif
 }
 
 /*============================================================================*
@@ -139,6 +184,8 @@ PUBLIC int kernel_portal_close(int portalid)
  */
 PUBLIC int kernel_portal_awrite(int portalid, const void * buffer, size_t size)
 {
+#if !__NANVIX_IKC_USES_ONLY_MAILBOX
+
 	/* Invalid portal ID. */
 	if (!WITHIN(portalid, 0, KPORTAL_MAX))
 		return (-EINVAL);
@@ -156,6 +203,14 @@ PUBLIC int kernel_portal_awrite(int portalid, const void * buffer, size_t size)
 		return (-EFAULT);
 
 	return (do_vportal_awrite(portalid, buffer, size));
+
+#else
+	UNUSED(portalid);
+	UNUSED(buffer);
+	UNUSED(size);
+
+	return (-ENOSYS);
+#endif
 }
 
 /*============================================================================*
@@ -167,6 +222,8 @@ PUBLIC int kernel_portal_awrite(int portalid, const void * buffer, size_t size)
  */
 PUBLIC int kernel_portal_aread(int portalid, void * buffer, size_t size)
 {
+#if !__NANVIX_IKC_USES_ONLY_MAILBOX
+
 	/* Invalid portal ID. */
 	if (!WITHIN(portalid, 0, KPORTAL_MAX))
 		return (-EINVAL);
@@ -184,6 +241,14 @@ PUBLIC int kernel_portal_aread(int portalid, void * buffer, size_t size)
 		return (-EFAULT);
 
 	return (do_vportal_aread(portalid, buffer, size));
+
+#else
+	UNUSED(portalid);
+	UNUSED(buffer);
+	UNUSED(size);
+
+	return (-ENOSYS);
+#endif
 }
 
 /*============================================================================*
@@ -195,11 +260,19 @@ PUBLIC int kernel_portal_aread(int portalid, void * buffer, size_t size)
  */
 PUBLIC int kernel_portal_wait(int portalid)
 {
+#if !__NANVIX_IKC_USES_ONLY_MAILBOX
+
 	/* Invalid portal ID. */
 	if (!WITHIN(portalid, 0, KPORTAL_MAX))
 		return (-EINVAL);
 
 	return (do_vportal_wait(portalid));
+
+#else
+	UNUSED(portalid);
+
+	return (-ENOSYS);
+#endif
 }
 
 /*============================================================================*
@@ -211,6 +284,8 @@ PUBLIC int kernel_portal_wait(int portalid)
  */
 PUBLIC int kernel_portal_ioctl(int portalid, unsigned request, va_list *args)
 {
+#if !__NANVIX_IKC_USES_ONLY_MAILBOX
+
 	int ret;
 
 	/* Invalid portal ID. */
@@ -226,6 +301,14 @@ PUBLIC int kernel_portal_ioctl(int portalid, unsigned request, va_list *args)
 	dcache_invalidate();
 
 	return (ret);
+
+#else
+	UNUSED(portalid);
+	UNUSED(request);
+	UNUSED(args);
+
+	return (-ENOSYS);
+#endif
 }
 
 #endif /* __TARGET_HAS_PORTAL */
