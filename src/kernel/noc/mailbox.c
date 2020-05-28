@@ -93,6 +93,8 @@ void do_mailbox_table_init(void)
 	{
 		mbuffers[i].abstract.resource = RESOURCE_INITIALIZER;
 		mbuffers[i].abstract.age      = ~(0ULL);
+		mbuffers[i].abstract.actid    = (-1);
+		mbuffers[i].abstract.portid   = (-1);
 		mbuffers[i].abstract.message  = MBUFFER_MESSAGE_INITIALIZER;
 	}
 
@@ -162,8 +164,8 @@ void do_mailbox_table_init(void)
 	}
 
 	/* Initializes mailbox pool. */
-	mbxpool.actives  = mailboxes;
-	mbxpool.nactives = HW_MAILBOX_MAX;
+	mbxpool.actives    = mailboxes;
+	mbxpool.nactives   = HW_MAILBOX_MAX;
 }
 
 /*============================================================================*
@@ -362,3 +364,4 @@ PUBLIC void do_mailbox_init(void)
 }
 
 #endif /* __TARGET_HAS_MAILBOX */
+

@@ -120,9 +120,67 @@ PRIVATE int do_request_complete(struct active * active, struct port * port)
 
 	/* Complete the request. */
 	requests->fifo[tail] = -1;
-	requests->tail = modulus_power2((tail + 1), requests->max_capacity);
+	requests->tail = __mod_pw2((tail + 1), requests->max_capacity);
 	requests->nelements--;
 	port_set_notrequested(port);
+
+	return (0);
+}
+
+
+/*============================================================================*
+ * do_request_clear()                                                         *
+ *============================================================================*/
+
+/**
+ * @brief Clear a operation on the physical port @p port.
+ *
+ * @param active Active resource.
+ * @param port   Port ID.
+ *
+ * @returns Upon successful register, zero is returned. Upon failure,
+ * a negative error code is returned instead.
+ */
+PRIVATE int do_request_clear(struct active * active, struct port * port)
+{
+	int curr;                        /* Current FIFO position.        */
+	int next;                        /* Next FIFO position.           */
+	int portid;                      /* Port ID.                      */
+	int cleared;                     /* Indicates if port is cleared. */
+	struct requests_fifo * requests; /* FIFO.                         */
+
+	/* Sanity checks. */
+	KASSERT((active != NULL) && (port != NULL));
+	KASSERT(WITHIN(port, active->portpool.ports, (active->portpool.ports + active->portpool.nports)));
+
+	requests = &active->requests;
+
+	if (!requests->nelements)
+		return (0);
+
+	portid   = ACTIVE_GET_PORTID(active, port);
+	curr     = requests->tail;
+	next     = __mod_pw2((curr + 1), requests->max_capacity);
+	cleared  = 0;
+
+	while (curr != requests->head)
+	{
+		cleared |= (portid == requests->fifo[curr]);
+
+		if (cleared)
+			requests->fifo[curr] = requests->fifo[next];
+	
+		curr = next;
+		next = __mod_pw2((curr + 1), requests->max_capacity);
+	}
+
+	/* Clear the request. */
+	if (cleared)
+	{
+		requests->head = __mod_pw2((requests->head - 1), requests->max_capacity);
+		requests->nelements--;
+		port_set_notrequested(port);
+	}
 
 	return (0);
 }
@@ -499,6 +557,15 @@ PUBLIC ssize_t active_aread(
 			stats->latency += (t2 - t1);
 			stats->volume  += (config->size);
 
+			/* Releases sender. */
+			if ((buf->actid >= 0) && (buf->portid >= 0))
+			{
+				struct active * _active = &pool->actives[buf->actid];
+				struct port * _port     = &_active->portpool.ports[buf->portid];
+
+				KASSERT(do_request_clear(_active, _port) == 0);
+			}
+
 			KASSERT(mbuffer_release(bufferpool, mbufferid, MBUFFER_DISCARD_MESSAGE) == 0);
 
 			spinlock_unlock(&active->lock);
@@ -622,6 +689,16 @@ PUBLIC ssize_t active_awrite(
 			/* Allocates a message buffer to send the message. */
 			if (forward)
 			{
+				ret = (-EBUSY);
+
+				/* Checks if the current port already requested an operation. */
+				if (port_is_requested(port))
+					goto error;
+
+				/* Request an operation. */
+				if (do_request_operation(active, port) < 0)
+					goto error;
+
 				mbufferid  = mbuffer_alloc(active->mbufferpool_aux);
 				bufferpool = active->mbufferpool_aux;
 			}
@@ -649,6 +726,9 @@ PUBLIC ssize_t active_awrite(
 			/* Checks if the destination is the local node. */
 			if (forward)
 			{
+				buf->actid  = ACTIVE_GET_LADDRESS_FD(pool->actives, id);
+				buf->portid = ACTIVE_GET_LADDRESS_PORT(active, id);
+
 				/* Forwards the message to the mbuffers table. */
 				mbuffer_release(bufferpool, mbufferid, MBUFFER_KEEP_MESSAGE);
 

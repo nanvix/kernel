@@ -70,6 +70,8 @@ PUBLIC int mbuffer_alloc(struct mbuffer_pool * pool)
 			{
 				buf->resource = RESOURCE_INITIALIZER;
 				buf->age      = ~(0ULL);
+				buf->actid    = (-1);
+				buf->portid   = (-1);
 				buf->message  = MBUFFER_MESSAGE_INITIALIZER;
 				resource_set_used(&buf->resource);
 
@@ -130,6 +132,8 @@ PUBLIC int mbuffer_release(struct mbuffer_pool * pool, int id, int keep_msg)
 		{
 			buf->resource = RESOURCE_INITIALIZER;
 			buf->age      = ~(0ULL);
+			buf->actid    = (-1);
+			buf->portid   = (-1);
 			buf->message  = MBUFFER_MESSAGE_INITIALIZER;
 		}
 

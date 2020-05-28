@@ -66,10 +66,12 @@
 	/**
 	 * @brief Mbuffer initializer.
 	 */
-	#define MBUFFER_INITIALIZER {                   \
+	#define MBUFFER_INITIALIZER (struct mbuffer){   \
 		.abstract = {                               \
 			.resource = RESOURCE_INITIALIZER,       \
 			.age      = ~(0ULL),                    \
+			.actid    = (-1),                       \
+			.portid   = (-1),                       \
 			.message  = MBUFFER_MESSAGE_INITIALIZER \
 		}                                           \
 	}
@@ -151,9 +153,11 @@
 		/*
 		 * XXX: Don't Touch! This Must Come First!
 		 */
-		struct resource resource;       /**< Generic resource information.   */
-		uint64_t age;                   /**< Number that guarantees order.   */
-		struct mbuffer_message message; /**< Structure that holds a message. */
+		struct resource resource;       /**< Generic resource information.     */
+		uint64_t age;                   /**< Number that guarantees order.     */
+		int actid;                      /**< Sender active ID of local sender. */
+		int portid;                     /**< Sender port ID of local sender.   */
+		struct mbuffer_message message; /**< Structure that holds a message.   */
 	};
 
 	/**
@@ -167,10 +171,12 @@
 			/*
 			* XXX: Don't Touch! This Must Come First!
 			*/
-			struct resource resource;       /**< Generic resource information.   */
-			uint64_t age;                   /**< Number that guarantees order.   */
-			struct mailbox_message message; /**< Structure that holds a message. */
-		} concrete;
+			struct resource resource;       /**< Generic resource information.     */
+			uint64_t age;                   /**< Number that guarantees order.     */
+			int actid;                      /**< Sender active ID of local sender. */
+			int portid;                     /**< Sender port ID of local sender.   */
+			struct mailbox_message message; /**< Structure that holds a message.   */
+		};
 	};
 
 	/**
@@ -184,10 +190,12 @@
 			/*
 			* XXX: Don't Touch! This Must Come First!
 			*/
-			struct resource resource;      /**< Generic resource information.   */
-			uint64_t age;                  /**< Number that guarantees order.   */
-			struct portal_message message; /**< Structure that holds a message. */
-		} concrete;
+			struct resource resource;      /**< Generic resource information.      */
+			uint64_t age;                  /**< Number that guarantees order.      */
+			int actid;                      /**< Sender active ID of local sender. */
+			int portid;                     /**< Sender port ID of local sender.   */
+			struct portal_message message; /**< Structure that holds a message.    */
+		};
 	};
 
 	/**

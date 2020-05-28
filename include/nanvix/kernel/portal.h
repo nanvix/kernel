@@ -97,7 +97,7 @@
 	 *
 	 * Maximum number of message buffers used to hold temporary data on kernel space.
 	 */
-	#define KPORTAL_MESSAGE_BUFFERS_MAX (40)
+	#define KPORTAL_MESSAGE_BUFFERS_MAX (32)
 
 	/**
 	 * @brief Maximum number of auxiliar message buffer resources.
@@ -105,7 +105,7 @@
 	 * Maximum number of message buffers used to hold temporary data on kernel space.
 	 * WARNING: That constant uses a subset of mbuffers set by @c KPORTAL_MESSAGE_BUFFERS_MAX
 	 */
-	#define KPORTAL_AUX_BUFFERS_MAX (8)
+	#define KPORTAL_AUX_BUFFERS_MAX (16)
 
 #if !__NANVIX_IKC_USES_ONLY_MAILBOX
 
