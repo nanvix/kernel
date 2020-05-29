@@ -53,6 +53,7 @@
 /**@{*/
 PRIVATE struct communicator_counters vmailbox_counters;                      /**< Virtual mailbox counters. */
 PRIVATE struct communicator ALIGN(sizeof(dword_t)) vmailboxes[KMAILBOX_MAX]; /**< Virtual mailbox talbe.    */
+PRIVATE struct communicator_functions vmailbox_functions;                    /**< Mailbox Functions.        */
 PRIVATE struct communicator_pool vmbxpool;                                   /**< Virtual mailbox pool.     */
 /**@}*/
 
@@ -73,15 +74,18 @@ PRIVATE void do_vmailbox_init(void)
 	vmailbox_counters.nreads   = 0ULL;
 	vmailbox_counters.nwrites  = 0ULL;
 
+	vmailbox_functions.do_release = do_mailbox_release;
+	vmailbox_functions.do_comm    = do_mailbox_aread;
+	vmailbox_functions.do_wait    = do_mailbox_wait;
+
 	for (int i = 0; i < KMAILBOX_MAX; ++i)
 	{
 		spinlock_init(&vmailboxes[i].lock);
 		vmailboxes[i].resource   = RESOURCE_INITIALIZER;
 		vmailboxes[i].config     = ACTIVE_CONFIG_INITIALIZER;
 		vmailboxes[i].stats      = PSTATS_INITIALIZER;
-		vmailboxes[i].do_release = do_mailbox_release;
-		vmailboxes[i].do_comm    = do_mailbox_aread;
-		vmailboxes[i].do_wait    = do_mailbox_wait;
+		vmailboxes[i].fn         = &vmailbox_functions;
+
 		vmailboxes[i].counters   = &vmailbox_counters;
 	}
 
@@ -248,7 +252,7 @@ PUBLIC int do_vmailbox_aread(int mbxid, void * buffer, size_t size)
 {
 	vmailboxes[mbxid].config.buffer = buffer;
 	vmailboxes[mbxid].config.size   = size;
-	vmailboxes[mbxid].do_comm       = do_mailbox_aread;
+	vmailbox_functions.do_comm      = do_mailbox_aread;
 
 	/* Dummy allow for mailbox. */
 	spinlock_lock(&vmailboxes[mbxid].lock);
@@ -276,7 +280,7 @@ PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
 {
 	vmailboxes[mbxid].config.buffer = buffer;
 	vmailboxes[mbxid].config.size   = size;
-	vmailboxes[mbxid].do_comm       = do_mailbox_awrite;
+	vmailbox_functions.do_comm      = do_mailbox_awrite;
 
 	return (communicator_operate(&vmailboxes[mbxid], ACTIVE_TYPE_OUTPUT));
 }

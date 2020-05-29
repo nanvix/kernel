@@ -51,8 +51,9 @@
  */
 /**@{*/
 PRIVATE struct communicator_counters vportal_counters;                    /**< Virtual mailbox counters. */
-PRIVATE struct communicator ALIGN(sizeof(dword_t)) vportals[KPORTAL_MAX]; /**< Table of virtual portals.  */
-PRIVATE struct communicator_pool vportalpool;                             /**< Virtual portal pool.       */
+PRIVATE struct communicator ALIGN(sizeof(dword_t)) vportals[KPORTAL_MAX]; /**< Table of virtual portals. */
+PRIVATE struct communicator_functions vportal_functions;                  /**< Portal functions.         */
+PRIVATE struct communicator_pool vportalpool;                             /**< Virtual portal pool.      */
 /**@}*/
 
 /*============================================================================*
@@ -72,15 +73,17 @@ PRIVATE void do_vportal_init(void)
 	vportal_counters.nreads   = 0ULL;
 	vportal_counters.nwrites  = 0ULL;
 
+	vportal_functions.do_release = do_portal_release;
+	vportal_functions.do_comm    = do_portal_aread;
+	vportal_functions.do_wait    = do_portal_wait;
+
 	for (int i = 0; i < KPORTAL_MAX; ++i)
 	{
 		spinlock_init(&vportals[i].lock);
 		vportals[i].resource   = RESOURCE_INITIALIZER;
 		vportals[i].config     = ACTIVE_CONFIG_INITIALIZER;
 		vportals[i].stats      = PSTATS_INITIALIZER;
-		vportals[i].do_release = do_portal_release;
-		vportals[i].do_comm    = do_portal_aread;
-		vportals[i].do_wait    = do_portal_wait;
+		vportals[i].fn         = &vportal_functions;
 		vportals[i].counters   = &vportal_counters;
 	}
 
@@ -314,7 +317,7 @@ PUBLIC int do_vportal_aread(int portalid, void * buffer, size_t size)
 {
 	vportals[portalid].config.buffer = buffer;
 	vportals[portalid].config.size   = size;
-	vportals[portalid].do_comm       = do_portal_aread;
+	vportal_functions.do_comm        = do_portal_aread;
 
 	return (communicator_operate(&vportals[portalid], ACTIVE_TYPE_INPUT));
 }
@@ -337,7 +340,7 @@ PUBLIC int do_vportal_awrite(int portalid, const void * buffer, size_t size)
 {
 	vportals[portalid].config.buffer = buffer;
 	vportals[portalid].config.size   = size;
-	vportals[portalid].do_comm       = do_portal_awrite;
+	vportal_functions.do_comm        = do_portal_awrite;
 
 	return (communicator_operate(&vportals[portalid], ACTIVE_TYPE_OUTPUT));
 }

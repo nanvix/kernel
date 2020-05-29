@@ -100,6 +100,16 @@
 	 *============================================================================*/
 
 	/**
+	 * @brief Auxiliar functions.
+	 */
+	struct communicator_functions
+	{
+		active_release_fn do_release; /**< Active release function.      */
+		active_comm_fn do_comm;       /**< Active comm function.         */
+		active_wait_fn do_wait;       /**< Active wait function.         */
+	};
+
+	/**
 	 * @brief Communicator structure.
 	 */
 	struct communicator
@@ -107,21 +117,19 @@
 		/*
 		 * XXX: Don't Touch! This Must Come First!
 		 */
-		struct resource resource;                 /**< Generic resource information. */
+		struct resource resource;                /**< Generic resource information. */
 
-		int flags;                                /**< Auxiliar flags.               */
-		struct active_config config;              /**< Communicaton configuration.   */
-		struct pstats stats;                      /**< Performance Statistics.       */
+		int flags;                               /**< Auxiliar flags.               */
+		struct active_config config;             /**< Communicaton configuration.   */
+		struct pstats stats;                     /**< Performance Statistics.       */
 		struct communicator_counters * counters; /**< Global counters.              */
-		spinlock_t lock;                          /**< Protection.                   */
+		spinlock_t lock;                         /**< Protection.                   */
 
 		/**
 		 * @name Auxiliar functions.
 		 */
 		/**@{*/
-		active_release_fn do_release;             /**< Active release function.      */
-		active_comm_fn do_comm;                   /**< Active comm function.         */
-		active_wait_fn do_wait;                   /**< Active wait function.         */
+		struct communicator_functions * fn;      /**< Active release function.      */
 		/**@}*/
 	};
 
