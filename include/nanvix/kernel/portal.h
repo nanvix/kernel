@@ -72,7 +72,7 @@
 	 *
 	 * Maximum number of virtual portals that may be created/opened.
 	 */
-	#define KPORTAL_MAX (HW_PORTAL_MAX * KPORTAL_PORT_NR)
+	#define KPORTAL_MAX (64)
 
 	/**
 	 * @brief Portal message header size.

@@ -40,8 +40,7 @@
  * @brief Extracts fd and port from mbxid.
  */
 /**@{*/
-#define GET_LADDRESS_FD(mbxid)   (mbxid / MAILBOX_PORT_NR)
-#define GET_LADDRESS_PORT(mbxid) (mbxid % MAILBOX_PORT_NR)
+#define VMAILBOX_GET_LADDRESS_PORT(mbxid) (mbxid % MAILBOX_PORT_NR)
 /**@}*/
 
 /*============================================================================*
@@ -117,7 +116,7 @@ PRIVATE int do_vmailbox_alloc(int local, int remote, int port, int type)
 		return (fd);
 
 	config.fd          = fd;
-	config.local_addr  = ACTIVE_LADDRESS_COMPOSE(local, GET_LADDRESS_PORT(fd), MAILBOX_PORT_NR);
+	config.local_addr  = ACTIVE_LADDRESS_COMPOSE(local, VMAILBOX_GET_LADDRESS_PORT(fd), MAILBOX_PORT_NR);
 	config.remote_addr = (type == ACTIVE_TYPE_OUTPUT) ?
 		ACTIVE_LADDRESS_COMPOSE(remote, port, MAILBOX_PORT_NR) :
 		(-1);
@@ -346,7 +345,7 @@ int do_vmailbox_get_port(int mbxid)
 		if (!resource_is_used(&vmailboxes[mbxid].resource))
 			ret = (-EBADF);
 		else
-			ret = (GET_LADDRESS_PORT(vmailboxes[mbxid].config.fd));
+			ret = (VMAILBOX_GET_LADDRESS_PORT(vmailboxes[mbxid].config.fd));
 
 	spinlock_unlock(&vmailboxes[mbxid].lock);
 

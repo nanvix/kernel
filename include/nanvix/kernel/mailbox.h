@@ -85,7 +85,7 @@
 	 *
 	 * Maximum number of virtual mailboxes that may be created/opened.
 	 */
-	#define KMAILBOX_MAX (HW_MAILBOX_MAX * MAILBOX_PORT_NR)
+	#define KMAILBOX_MAX (64)
 
 	/**
 	 * @brief Mailbox message header size.

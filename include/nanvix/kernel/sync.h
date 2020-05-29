@@ -53,7 +53,7 @@
 	 *
 	 * Maximum number of virtual syncs that may be created/opened.
 	 */
-	#define KSYNC_MAX 1024
+	#define KSYNC_MAX 128
 
 #ifdef __NANVIX_MICROKERNEL
 

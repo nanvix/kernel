@@ -39,8 +39,7 @@
  * @brief Extracts fd and port from portalid.
  */
 /**@{*/
-#define GET_LADDRESS_FD(portalid)   (portalid / KPORTAL_PORT_NR)
-#define GET_LADDRESS_PORT(portalid) (portalid % KPORTAL_PORT_NR)
+#define VPORTAL_GET_LADDRESS_PORT(portalid) (portalid % KPORTAL_PORT_NR)
 /**@}*/
 
 /*============================================================================*
@@ -116,7 +115,7 @@ PRIVATE int do_vportal_alloc(int local, int remote, int port, int type)
 		return (fd);
 
 	config.fd          = fd;
-	config.local_addr  = ACTIVE_LADDRESS_COMPOSE(local, GET_LADDRESS_PORT(fd), KPORTAL_PORT_NR);
+	config.local_addr  = ACTIVE_LADDRESS_COMPOSE(local, VPORTAL_GET_LADDRESS_PORT(fd), KPORTAL_PORT_NR);
 	config.remote_addr = (type == ACTIVE_TYPE_OUTPUT) ?
 		(ACTIVE_LADDRESS_COMPOSE(remote, port, KPORTAL_PORT_NR)) :
 		(-1);
@@ -403,7 +402,7 @@ int do_vportal_get_port(int portalid)
 		if (!resource_is_used(&vportals[portalid].resource))
 			ret = (-EBADF);
 		else
-			ret = (GET_LADDRESS_PORT(vportals[portalid].config.fd));
+			ret = (VPORTAL_GET_LADDRESS_PORT(vportals[portalid].config.fd));
 
 	spinlock_unlock(&vportals[portalid].lock);
 
