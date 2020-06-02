@@ -32,7 +32,7 @@
 #include <nanvix/hlib.h>
 #include <posix/errno.h>
 
-#if __TARGET_HAS_SYNC
+#if __TARGET_HAS_SYNC && !__NANVIX_IKC_USES_ONLY_MAILBOX
 
 /**
  * @name Search types for do_sync_search().
@@ -640,4 +640,4 @@ PUBLIC void vsync_init(void)
 	}
 }
 
-#endif /* __TARGET_SYNC */
+#endif /* __TARGET_SYNC && !__NANVIX_IKC_USES_ONLY_MAILBOX */

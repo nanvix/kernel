@@ -72,7 +72,7 @@
 	 *
 	 * Maximum number of virtual portals that may be created/opened.
 	 */
-	#define KPORTAL_MAX (HW_PORTAL_MAX * KPORTAL_PORT_NR)
+	#define KPORTAL_MAX (64)
 
 	/**
 	 * @brief Portal message header size.
@@ -97,7 +97,7 @@
 	 *
 	 * Maximum number of message buffers used to hold temporary data on kernel space.
 	 */
-	#define KPORTAL_MESSAGE_BUFFERS_MAX (40)
+	#define KPORTAL_MESSAGE_BUFFERS_MAX (32)
 
 	/**
 	 * @brief Maximum number of auxiliar message buffer resources.
@@ -105,7 +105,9 @@
 	 * Maximum number of message buffers used to hold temporary data on kernel space.
 	 * WARNING: That constant uses a subset of mbuffers set by @c KPORTAL_MESSAGE_BUFFERS_MAX
 	 */
-	#define KPORTAL_AUX_BUFFERS_MAX (8)
+	#define KPORTAL_AUX_BUFFERS_MAX (16)
+
+#if !__NANVIX_IKC_USES_ONLY_MAILBOX
 
 	/**
 	 * @brief Creates a virtual portal.
@@ -224,6 +226,8 @@
 	 * @brief Initializes the portal facility.
 	 */
 	EXTERN void vportal_init(void);
+
+#endif /* !__NANVIX_IKC_USES_ONLY_MAILBOX */
 
 #endif /* __NANVIX_MICROKERNEL */
 

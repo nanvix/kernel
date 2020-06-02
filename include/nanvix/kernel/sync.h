@@ -53,9 +53,11 @@
 	 *
 	 * Maximum number of virtual syncs that may be created/opened.
 	 */
-	#define KSYNC_MAX 1024
+	#define KSYNC_MAX 128
 
 #ifdef __NANVIX_MICROKERNEL
+
+#if !__NANVIX_IKC_USES_ONLY_MAILBOX
 
 	/**
 	 * @brief Creates a virtual synchronization point.
@@ -143,6 +145,8 @@
 	 * @brief Initializes the synchronization facility.
 	 */
 	EXTERN void vsync_init(void);
+
+#endif /* !__NANVIX_IKC_USES_ONLY_MAILBOX */
 
 #endif /* __NANVIX_MICROKERNEL */
 

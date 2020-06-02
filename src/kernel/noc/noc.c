@@ -38,15 +38,15 @@ PUBLIC void noc_init(void)
 {
 	kprintf("[kernel][noc] initializing the noc system");
 
-	#if __TARGET_HAS_SYNC
-		vsync_init();
-	#endif
-
 	#if __TARGET_HAS_MAILBOX
 		vmailbox_init();
 	#endif
 
-	#if __TARGET_HAS_PORTAL
+	#if __TARGET_HAS_PORTAL && !__NANVIX_IKC_USES_ONLY_MAILBOX
 		vportal_init();
+	#endif
+
+	#if __TARGET_HAS_SYNC && !__NANVIX_IKC_USES_ONLY_MAILBOX
+		vsync_init();
 	#endif
 }

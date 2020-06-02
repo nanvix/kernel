@@ -55,12 +55,20 @@
 	 *
 	 * Maximum number of virtual mailboxes that can be vinculated to each HW mailbox.
 	 */
-	#define MAILBOX_PORT_NR 32
+#if __NANVIX_IKC_USES_ONLY_MAILBOX
+	#define MAILBOX_PORT_NR (64)
+#else
+	#define MAILBOX_PORT_NR (16)
+#endif
 
 	/**
 	 * @brief Number of ports per Kernel mailbox.
 	 */
-	#define KMAILBOX_PORT_NR 16
+#if __NANVIX_IKC_USES_ONLY_MAILBOX
+	#define KMAILBOX_PORT_NR (32)
+#else
+	#define KMAILBOX_PORT_NR (16)
+#endif
 
 	/**
 	 * @brief Maximum number of HW mailboxes.
@@ -78,7 +86,11 @@
 	 *
 	 * Maximum number of virtual mailboxes that may be created/opened.
 	 */
-	#define KMAILBOX_MAX (HW_MAILBOX_MAX * MAILBOX_PORT_NR)
+#if __NANVIX_IKC_USES_ONLY_MAILBOX
+	#define KMAILBOX_MAX (256)
+#else
+	#define KMAILBOX_MAX (64)
+#endif
 
 	/**
 	 * @brief Mailbox message header size.
@@ -96,7 +108,11 @@
 	 *
 	 * Maximum number of message buffers used to hold temporary data on kernel space.
 	 */
-	#define KMAILBOX_MESSAGE_BUFFERS_MAX 64
+#if __NANVIX_IKC_USES_ONLY_MAILBOX
+	#define KMAILBOX_MESSAGE_BUFFERS_MAX (64)
+#else
+	#define KMAILBOX_MESSAGE_BUFFERS_MAX (32)
+#endif
 
 	/**
 	 * @brief Maximum number of auxiliary message buffer resources.
@@ -106,7 +122,7 @@
 	 *
 	 * @todo TODO: introduce a check for this.
 	 */
-	#define KMAILBOX_AUX_BUFFERS_MAX 16
+	#define KMAILBOX_AUX_BUFFERS_MAX (16)
 
 	/**
 	 * @brief Mailbox message buffer max size.

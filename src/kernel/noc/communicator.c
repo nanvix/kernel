@@ -143,7 +143,7 @@ PUBLIC int communicator_free(const struct communicator_pool * pool, int id, int 
 			goto error;
 
 		/* Releases communicator. */
-		if ((ret = comm->do_release(comm->config.fd)) == 0)
+		if ((ret = comm->fn->do_release(comm->config.fd)) == 0)
 		{
 			resource_set_unused(&comm->resource);
 
@@ -209,7 +209,7 @@ PUBLIC ssize_t communicator_operate(struct communicator * comm, int type)
 		if (resource_is_busy(&comm->resource))
 			goto error;
 
-		ret = comm->do_comm(
+		ret = comm->fn->do_comm(
 			comm->config.fd,
 			&comm->config,
 			&comm->stats
@@ -281,7 +281,7 @@ PUBLIC int communicator_wait(struct communicator * comm)
 
 	spinlock_unlock(&comm->lock);
 
-	ret = comm->do_wait(
+	ret = comm->fn->do_wait(
 		comm->config.fd,
 		&comm->config,
 		&comm->stats

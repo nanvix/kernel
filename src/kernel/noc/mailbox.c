@@ -36,14 +36,6 @@
 
 #if __TARGET_HAS_MAILBOX
 
-/**
- * @name Auxiliary macros.
- */
-/**@{*/
-#define GET_LADDRESS_FD(mbxid)   (mbxid / MAILBOX_PORT_NR) /**< Extracts fd from mbxid.   */
-#define GET_LADDRESS_PORT(mbxid) (mbxid % MAILBOX_PORT_NR) /**< Extracts port from mbxid. */
-/**@}*/
-
 /*============================================================================*
  * Control Structures.                                                        *
  *============================================================================*/
@@ -63,10 +55,11 @@ PRIVATE struct mbuffer_pool mbufferpool_aux;                          /**< Pool 
  * @name Physical Mailbox variables.
  */
 /**@{*/
-PRIVATE struct port mbxports[HW_MAILBOX_MAX][MAILBOX_PORT_NR]; /**< Mailbox ports. */
-PRIVATE short fifos[HW_MAILBOX_MAX][MAILBOX_PORT_NR];          /**< Mailbox FIFOs. */
-PRIVATE struct active mailboxes[HW_MAILBOX_MAX];               /**< Mailboxes.    */
-PRIVATE struct active_pool mbxpool;                            /**< Mailbox pool. */
+PRIVATE struct port mbxports[HW_MAILBOX_MAX][MAILBOX_PORT_NR]; /**< Mailbox ports.     */
+PRIVATE short fifos[HW_MAILBOX_MAX][MAILBOX_PORT_NR];          /**< Mailbox FIFOs.     */
+PRIVATE struct active_functions mailbox_functions;             /**< Mailbox functions. */
+PRIVATE struct active mailboxes[HW_MAILBOX_MAX];               /**< Mailboxes.         */
+PRIVATE struct active_pool mbxpool;                            /**< Mailbox pool.      */
 /**@}*/
 
 /**
@@ -77,6 +70,8 @@ int wrapper_mailbox_open(int, int);
 int wrapper_mailbox_allow(struct active *, int);
 int mailbox_header_config(struct mbuffer *, const struct active_config *);
 int mailbox_header_check(struct mbuffer *, const struct active_config *);
+int mailbox_get_actid(int);
+int mailbox_get_portid(int);
 /**@}*/
 
 /*============================================================================*
@@ -93,6 +88,8 @@ void do_mailbox_table_init(void)
 	{
 		mbuffers[i].abstract.resource = RESOURCE_INITIALIZER;
 		mbuffers[i].abstract.age      = ~(0ULL);
+		mbuffers[i].abstract.actid    = (-1);
+		mbuffers[i].abstract.portid   = (-1);
 		mbuffers[i].abstract.message  = MBUFFER_MESSAGE_INITIALIZER;
 	}
 
@@ -113,6 +110,17 @@ void do_mailbox_table_init(void)
 	mbufferpool_aux.mbuffer_size = sizeof(union mailbox_mbuffer);
 	mbufferpool_aux.curr_age     = &mbuffers_age;
 	mbufferpool_aux.lock         = &mbuffers_lock;
+
+	mailbox_functions.do_create        = mailbox_create;
+	mailbox_functions.do_open          = wrapper_mailbox_open;
+	mailbox_functions.do_allow         = wrapper_mailbox_allow;
+	mailbox_functions.do_aread         = mailbox_aread;
+	mailbox_functions.do_awrite        = mailbox_awrite;
+	mailbox_functions.do_wait          = mailbox_wait;
+	mailbox_functions.do_header_config = mailbox_header_config;
+	mailbox_functions.do_header_check  = mailbox_header_check;
+	mailbox_functions.get_actid        = mailbox_get_actid;
+	mailbox_functions.get_portid       = mailbox_get_portid;
 
 	/* Initializes the mailboxes. */
 	for (int i = 0; i < HW_MAILBOX_MAX; ++i)
@@ -151,19 +159,12 @@ void do_mailbox_table_init(void)
 		/* Initializes auxiliary functions. */
 		mailboxes[i].mbufferpool      = &mbufferpool;
 		mailboxes[i].mbufferpool_aux  = &mbufferpool_aux;
-		mailboxes[i].do_create        = mailbox_create;
-		mailboxes[i].do_open          = wrapper_mailbox_open;
-		mailboxes[i].do_allow         = wrapper_mailbox_allow;
-		mailboxes[i].do_aread         = mailbox_aread;
-		mailboxes[i].do_awrite        = mailbox_awrite;
-		mailboxes[i].do_wait          = mailbox_wait;
-		mailboxes[i].do_header_config = mailbox_header_config;
-		mailboxes[i].do_header_check  = mailbox_header_check;
+		mailboxes[i].fn               = &mailbox_functions;
 	}
 
 	/* Initializes mailbox pool. */
-	mbxpool.actives  = mailboxes;
-	mbxpool.nactives = HW_MAILBOX_MAX;
+	mbxpool.actives    = mailboxes;
+	mbxpool.nactives   = HW_MAILBOX_MAX;
 }
 
 /*============================================================================*
@@ -240,6 +241,40 @@ int mailbox_header_config(struct mbuffer * buf, const struct active_config * con
 int mailbox_header_check(struct mbuffer * buf, const struct active_config * config)
 {
 	return (buf->message.header.dest == config->local_addr);
+}
+
+/*============================================================================*
+ * mailbox_get_actid()                                                        *
+ *============================================================================*/
+
+/**
+ * @brief Gets active id.
+ *
+ * @param id Composed ID.
+ *
+ * @returns Upon successful completion, zero is returned. Upon failure, a
+ * negative error code is returned instead.
+ */
+int mailbox_get_actid(int id)
+{
+	return ((id < 0) ? (id) : (id / MAILBOX_PORT_NR));
+}
+
+/*============================================================================*
+ * mailbox_get_portid()                                                       *
+ *============================================================================*/
+
+/**
+ * @brief Gets port id.
+ *
+ * @param id Composed ID.
+ *
+ * @returns Upon successful completion, zero is returned. Upon failure, a
+ * negative error code is returned instead.
+ */
+int mailbox_get_portid(int id)
+{
+	return ((id < 0) ? (id) : (id % MAILBOX_PORT_NR));
 }
 
 /*============================================================================*
@@ -362,3 +397,4 @@ PUBLIC void do_mailbox_init(void)
 }
 
 #endif /* __TARGET_HAS_MAILBOX */
+

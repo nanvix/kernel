@@ -33,15 +33,7 @@
 #include "active.h"
 #include "portal.h"
 
-#if __TARGET_HAS_PORTAL
-
-/**
- * @name Auxiliary macros.
- */
-/**@{*/
-#define GET_LADDRESS_FD(portalid)   (portalid / KPORTAL_PORT_NR) /**< Extracts fd from portalid.   */
-#define GET_LADDRESS_PORT(portalid) (portalid % KPORTAL_PORT_NR) /**< Extracts port from portalid. */
-/**@}*/
+#if __TARGET_HAS_PORTAL && !__NANVIX_IKC_USES_ONLY_MAILBOX
 
 /*============================================================================*
  * Control Structures.                                                        *
@@ -62,10 +54,11 @@ PRIVATE struct mbuffer_pool pbufferpool_aux;                        /**< Pool wi
  * @name Physical Portal variables.
  */
 /**@{*/
-PRIVATE struct port portalports[HW_PORTAL_MAX][KPORTAL_PORT_NR]; /**< Portal ports. */
-PRIVATE short fifos[HW_PORTAL_MAX][KPORTAL_PORT_NR];             /**< Portal FIFOs. */
-PRIVATE struct active portals[HW_PORTAL_MAX];                    /**< Portals.      */
-PRIVATE struct active_pool portalpool;                           /**< Portal pool.  */
+PRIVATE struct port portalports[HW_PORTAL_MAX][KPORTAL_PORT_NR]; /**< Portal ports.     */
+PRIVATE short fifos[HW_PORTAL_MAX][KPORTAL_PORT_NR];             /**< Portal FIFOs.     */
+PRIVATE struct active_functions portal_functions;                /**< Portal functions. */
+PRIVATE struct active portals[HW_PORTAL_MAX];                    /**< Portals.          */
+PRIVATE struct active_pool portalpool;                           /**< Portal pool.      */
 /**@}*/
 
 /**
@@ -75,6 +68,8 @@ PRIVATE struct active_pool portalpool;                           /**< Portal poo
 int wrapper_portal_allow(struct active *, int);
 int portal_header_config(struct mbuffer *, const struct active_config *);
 int portal_header_check(struct mbuffer *, const struct active_config *);
+int portal_get_actid(int);
+int portal_get_portid(int);
 /**@}*/
 
 /*============================================================================*
@@ -91,6 +86,8 @@ void do_portal_table_init(void)
 	{
 		pbuffers[i].abstract.resource = RESOURCE_INITIALIZER;
 		pbuffers[i].abstract.age      = ~(0ULL);
+		pbuffers[i].abstract.actid    = (-1);
+		pbuffers[i].abstract.portid   = (-1);
 		pbuffers[i].abstract.message  = MBUFFER_MESSAGE_INITIALIZER;
 	}
 
@@ -111,6 +108,17 @@ void do_portal_table_init(void)
 	pbufferpool_aux.mbuffer_size = sizeof(union portal_mbuffer);
 	pbufferpool_aux.curr_age     = &pbuffers_age;
 	pbufferpool_aux.lock         = &pbuffers_lock;
+
+	portal_functions.do_create        = portal_create;
+	portal_functions.do_open          = portal_open;
+	portal_functions.do_allow         = wrapper_portal_allow;
+	portal_functions.do_aread         = portal_aread;
+	portal_functions.do_awrite        = portal_awrite;
+	portal_functions.do_wait          = portal_wait;
+	portal_functions.do_header_config = portal_header_config;
+	portal_functions.do_header_check  = portal_header_check;
+	portal_functions.get_actid        = portal_get_actid;
+	portal_functions.get_portid       = portal_get_portid;
 
 	/* Initializes the portals. */
 	for (int i = 0; i < HW_PORTAL_MAX; ++i)
@@ -149,19 +157,12 @@ void do_portal_table_init(void)
 		/* Initializes auxiliary functions. */
 		portals[i].mbufferpool      = &pbufferpool;
 		portals[i].mbufferpool_aux  = &pbufferpool_aux;
-		portals[i].do_create        = portal_create;
-		portals[i].do_open          = portal_open;
-		portals[i].do_allow         = wrapper_portal_allow;
-		portals[i].do_aread         = portal_aread;
-		portals[i].do_awrite        = portal_awrite;
-		portals[i].do_wait          = portal_wait;
-		portals[i].do_header_config = portal_header_config;
-		portals[i].do_header_check  = portal_header_check;
+		portals[i].fn               = &portal_functions;
 	}
 
 	/* Initializes portal pool. */
-	portalpool.actives  = portals;
-	portalpool.nactives = HW_PORTAL_MAX;
+	portalpool.actives    = portals;
+	portalpool.nactives   = HW_PORTAL_MAX;
 }
 
 /*============================================================================*
@@ -225,6 +226,40 @@ int portal_header_config(struct mbuffer * buf, const struct active_config * conf
 int portal_header_check(struct mbuffer * buf, const struct active_config * config)
 {
 	return ((buf->message.header.dest == config->local_addr) && (buf->message.header.src == config->remote_addr));
+}
+
+/*============================================================================*
+ * portal_get_actid()                                                         *
+ *============================================================================*/
+
+/**
+ * @brief Gets active id.
+ *
+ * @param id Composed ID.
+ *
+ * @returns Upon successful completion, zero is returned. Upon failure, a
+ * negative error code is returned instead.
+ */
+int portal_get_actid(int id)
+{
+	return ((id < 0) ? (id) : (id / KPORTAL_PORT_NR));
+}
+
+/*============================================================================*
+ * portal_get_portid()                                                        *
+ *============================================================================*/
+
+/**
+ * @brief Gets port id.
+ *
+ * @param id Composed ID.
+ *
+ * @returns Upon successful completion, zero is returned. Upon failure, a
+ * negative error code is returned instead.
+ */
+int portal_get_portid(int id)
+{
+	return ((id < 0) ? (id) : (id % KPORTAL_PORT_NR));
 }
 
 /*============================================================================*
@@ -345,4 +380,4 @@ PUBLIC void do_portal_init(void)
 		KASSERT(_active_open(&portalpool, local, i) >= 0);
 }
 
-#endif /* __TARGET_HAS_PORTAL */
+#endif /* __TARGET_HAS_PORTAL && !__NANVIX_IKC_USES_ONLY_MAILBOX */

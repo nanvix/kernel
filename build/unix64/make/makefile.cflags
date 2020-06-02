@@ -181,7 +181,7 @@ ifeq ($(RELEASE), true)
 	export CFLAGS += -fmath-errno
 	export CFLAGS += -fmerge-all-constants
 	export CFLAGS += -fmodulo-sched
-	export CFLAGS += -fpack-struct
+	# export CFLAGS += -fpack-struct                                 # === BREAKS EXECUTION   ===
 	export CFLAGS += -fsched-rank-heuristic
 	export CFLAGS += -fsched-spec
 	export CFLAGS += -fsched-spec-insn-heuristic

@@ -176,7 +176,7 @@ ifeq ($(RELEASE), true)
 	export CFLAGS += -fisolate-erroneous-paths-attribute
 	export CFLAGS += -fivopts
 	export CFLAGS += -flifetime-dse
-	export CFLAGS += -flive-range-shrinkage
+	# export CFLAGS += -flive-range-shrinkage                        # === FREEZE EXECUTION       ===
 	# export CFLAGS += -floop-nest-optimize
 	export CFLAGS += -fmath-errno
 	export CFLAGS += -fmerge-all-constants
@@ -201,7 +201,7 @@ ifeq ($(RELEASE), true)
 	export CFLAGS += -fsigned-zeros
 	export CFLAGS += -fsingle-precision-constant
 	export CFLAGS += -fsplit-ivs-in-unroller
-	export CFLAGS += -ftoplevel-reorder
+	# export CFLAGS += -ftoplevel-reorder                            # === FREEZE EXECUTION       ===
 	export CFLAGS += -ftrapping-math
 	export CFLAGS += -ftrapv
 	export CFLAGS += -ftree-coalesce-inlined-vars
