@@ -4,3 +4,6 @@
 [submodule "utils"]
 	path = utils
 	url = https://github.com/nanvix/utils.git
+[submodule "build"]
+	path = build
+	url = https://github.com/nanvix/build.git

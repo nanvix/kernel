@@ -80,7 +80,7 @@ export EXEC := test-driver.$(TARGET)
 #===============================================================================
 
 ifeq ($(DOCKER),no)
-include $(MAKEDIR)/makefile
+include $(MAKEDIR)/makefile.microkernel
 endif
 
 #===============================================================================
@@ -155,7 +155,7 @@ endif
 # Contrib Install and Uninstall Rules
 #===============================================================================
 
-include $(BUILDDIR)/makefile.contrib
+include $(BUILDDIR)/makefile.microkernel
 
 #===============================================================================
 # Install and Uninstall Rules
