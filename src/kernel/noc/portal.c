@@ -86,6 +86,7 @@ void do_portal_table_init(void)
 	{
 		pbuffers[i].abstract.resource = RESOURCE_INITIALIZER;
 		pbuffers[i].abstract.age      = ~(0ULL);
+		pbuffers[i].abstract.latency  = (0ULL);
 		pbuffers[i].abstract.actid    = (-1);
 		pbuffers[i].abstract.portid   = (-1);
 		pbuffers[i].abstract.message  = MBUFFER_MESSAGE_INITIALIZER;

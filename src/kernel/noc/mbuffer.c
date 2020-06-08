@@ -70,6 +70,7 @@ PUBLIC int mbuffer_alloc(struct mbuffer_pool * pool)
 			{
 				buf->resource = RESOURCE_INITIALIZER;
 				buf->age      = ~(0ULL);
+				buf->latency  = (0ULL);
 				buf->actid    = (-1);
 				buf->portid   = (-1);
 				buf->message  = MBUFFER_MESSAGE_INITIALIZER;
@@ -132,6 +133,7 @@ PUBLIC int mbuffer_release(struct mbuffer_pool * pool, int id, int keep_msg)
 		{
 			buf->resource = RESOURCE_INITIALIZER;
 			buf->age      = ~(0ULL);
+			buf->latency  = (0ULL);
 			buf->actid    = (-1);
 			buf->portid   = (-1);
 			buf->message  = MBUFFER_MESSAGE_INITIALIZER;
@@ -159,18 +161,19 @@ PUBLIC int mbuffer_release(struct mbuffer_pool * pool, int id, int keep_msg)
  */
 PUBLIC int mbuffer_search(struct mbuffer_pool * pool, int dest, int src)
 {
-	int ret;                     /* Return value.                            */
-	int n;                       /* Number of mbuffers.                      */
-	char * base;                 /* Pointer to the first mbuffer.            */
-	size_t size;                 /* Size of a mbuffer.                       */
-	uint64_t curr_age = ~(0ULL); /* The age of the current mbuffer selected. */
+	int ret;           /* Return value.                            */
+	int n;             /* Number of mbuffers.                      */
+	char * base;       /* Pointer to the first mbuffer.            */
+	size_t size;       /* Size of a mbuffer.                       */
+	uint64_t curr_age; /* The age of the current mbuffer selected. */
 
 	KASSERT(pool != NULL);
 
-	base = (char *) pool->mbuffers;
-	n    = pool->nmbuffers;
-	size = pool->mbuffer_size;
-	ret  = (-EINVAL);
+	base     = (char *) pool->mbuffers;
+	n        = pool->nmbuffers;
+	size     = pool->mbuffer_size;
+	ret      = (-EINVAL);
+	curr_age = ~(0ULL);
 
 	/* Locks the mbuffers table. */
 	spinlock_lock(pool->lock);
@@ -238,3 +241,4 @@ PUBLIC struct mbuffer * mbuffer_get(struct mbuffer_pool * pool, int id)
 }
 
 #endif /* (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL) */
+
