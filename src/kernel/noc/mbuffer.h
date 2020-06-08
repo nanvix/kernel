@@ -70,6 +70,7 @@
 		.abstract = {                               \
 			.resource = RESOURCE_INITIALIZER,       \
 			.age      = ~(0ULL),                    \
+			.latency  = (0ULL),                     \
 			.actid    = (-1),                       \
 			.portid   = (-1),                       \
 			.message  = MBUFFER_MESSAGE_INITIALIZER \
@@ -155,6 +156,7 @@
 		 */
 		struct resource resource;       /**< Generic resource information.     */
 		uint64_t age;                   /**< Number that guarantees order.     */
+		uint64_t latency;               /**< Latency of receiving data.        */
 		int actid;                      /**< Sender active ID of local sender. */
 		int portid;                     /**< Sender port ID of local sender.   */
 		struct mbuffer_message message; /**< Structure that holds a message.   */
@@ -173,6 +175,7 @@
 			*/
 			struct resource resource;       /**< Generic resource information.     */
 			uint64_t age;                   /**< Number that guarantees order.     */
+			uint64_t latency;               /**< Latency of receiving data.        */
 			int actid;                      /**< Sender active ID of local sender. */
 			int portid;                     /**< Sender port ID of local sender.   */
 			struct mailbox_message message; /**< Structure that holds a message.   */
@@ -192,15 +195,16 @@
 			*/
 			struct resource resource;      /**< Generic resource information.      */
 			uint64_t age;                  /**< Number that guarantees order.      */
-			int actid;                      /**< Sender active ID of local sender. */
-			int portid;                     /**< Sender port ID of local sender.   */
+			uint64_t latency;              /**< Latency of receiving data.         */
+			int actid;                     /**< Sender active ID of local sender.  */
+			int portid;                    /**< Sender port ID of local sender.    */
 			struct portal_message message; /**< Structure that holds a message.    */
 		};
 	};
 
 	/**
-	* @brief Resource pool.
-	*/
+	 * @brief Resource pool.
+	 */
 	struct mbuffer_pool
 	{
 		void * mbuffers;     /**< Pool of mbuffers.        */

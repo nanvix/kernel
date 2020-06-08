@@ -552,7 +552,7 @@ PUBLIC ssize_t active_aread(
 			t2 = clock_read();
 
 			/* Update performance statistics. */
-			stats->latency += (t2 - t1);
+			stats->latency += (buf->latency > 0ULL) ? (buf->latency) : (t2 - t1);
 			stats->volume  += (config->size);
 
 			/* Releases sender. */
@@ -613,7 +613,7 @@ PUBLIC ssize_t active_aread(
 		active_set_notallowed(active);
 
 		/* Update performance statistics. */
-		stats->latency += (t2 - t1);
+		buf->latency = (t2 - t1);
 
 		/* Sets the active as busy. */
 		resource_set_busy(&active->resource);
@@ -774,7 +774,7 @@ PUBLIC ssize_t active_awrite(
 		t2 = clock_read();
 
 		/* Update performance statistics. */
-		stats->latency += (t2 - t1);
+		buf->latency = (t2 - t1);
 
 		/* Sets the active as busy. */
 		resource_set_busy(&active->resource);
@@ -861,12 +861,13 @@ PUBLIC int active_wait(
 		if (ret == 0)
 		{
 			ret = (ACTIVE_COMM_SUCCESS);
+			buf = mbuffer_get(port->mbufferpool, mbufferid);
+
+			buf->latency += (t2 - t1);
 
 			/* Read communication has extra operations. */
 			if (resource_is_readable(&active->resource))
 			{
-				buf = mbuffer_get(port->mbufferpool, mbufferid);
-
 				dest  = buf->message.header.dest;
 
 				/* Checks if the message is addressed for the requesting port. */
@@ -889,11 +890,12 @@ PUBLIC int active_wait(
 			else if (resource_is_writable(&active->resource))
 				KASSERT(do_request_complete(active, port) == 0);
 
-			if (ret == ACTIVE_COMM_SUCCESS)
-				stats->volume += (config->size);
-
 			/* Update performance statistics. */
-			stats->latency += (t2 - t1);
+			if (ret == ACTIVE_COMM_SUCCESS)
+			{
+				stats->volume  += (config->size);
+				stats->latency += buf->latency;
+			}
 		}
 
 		/* Releases mbuffer. */
