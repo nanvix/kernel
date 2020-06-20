@@ -449,6 +449,11 @@ PUBLIC void do_mailbox_init(void)
 
 	local = processor_node_get_num();
 
+	KASSERT((((unsigned long) &mbuffers[0].message) & 0x7) == 0);
+	KASSERT((((unsigned long) &mbuffers[1].message) & 0x7) == 0);
+	KASSERT((sizeof(mbuffers[0].message) % 8) == 0);
+	KASSERT((sizeof(mbuffers[1].message) % 8) == 0);
+
 	/* Initializes the mailboxes structures. */
 	do_mailbox_table_init();
 
