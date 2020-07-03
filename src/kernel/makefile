@@ -36,74 +36,37 @@ CFLAGS += -D__ENABLE_STRESS_TESTS
 endif
 
 #===============================================================================
-# Sources
+# Binaries Soucers and Objects
 #===============================================================================
+
+# Binary
+ARCHIVE = $(LIBKERNEL)
 
 # C Source Files
-SRC = $(wildcard dev/*.c)     \
+SRC = $(wildcard dev/*.c)       \
       $(wildcard dev/net/net.c) \
-      $(wildcard init/*.c)    \
-      $(wildcard mm/*.c)      \
-      $(wildcard noc/*.c)     \
-      $(wildcard pm/*.c)      \
-      $(wildcard sys/*.c)     \
+      $(wildcard init/*.c)      \
+      $(wildcard mm/*.c)        \
+      $(wildcard noc/*.c)       \
+      $(wildcard pm/*.c)        \
+      $(wildcard sys/*.c)       \
       $(wildcard test/*.c)
 
-#===============================================================================
 # Sources (Target Specific)
-#===============================================================================
-
 ifeq ($(TARGET),qemu-x86)
-SRC += $(wildcard dev/net/rtl8139.c)
-SRC += $(wildcard dev/bus/pci.c)
-SRC += $(wildcard test/network.c)
+SRC += $(wildcard dev/net/rtl8139.c) \
+       $(wildcard dev/bus/pci.c)     \
+       $(wildcard test/network.c)
 endif
 
 ifeq ($(TARGET),qemu-openrisc)
-SRC += $(wildcard dev/net/ethoc.c)
-SRC += $(wildcard test/network.c)
+SRC += $(wildcard dev/net/ethoc.c) \
+       $(wildcard test/network.c)
 endif
 
-#===============================================================================
 # Object Files
-#===============================================================================
-
 OBJ = $(SRC:.c=.$(OBJ_SUFFIX).o)
 
 #===============================================================================
 
-# Builds all object files.
-all: $(OBJ)
-ifeq ($(VERBOSE), no)
-	@echo [AR] $(LIBKERNEL)
-	@$(AR) $(ARFLAGS) $(LIBDIR)/$(LIBKERNEL) $(OBJ)
-else
-	$(AR) $(ARFLAGS) $(LIBDIR)/$(LIBKERNEL) $(OBJ)
-endif
-
-# Cleans all object files.
-clean:
-ifeq ($(VERBOSE), no)
-	@echo [CLEAN] $(OBJ)
-	@rm -rf $(OBJ)
-else
-	rm -rf $(OBJ)
-endif
-
-# Cleans everything.
-distclean: clean
-ifeq ($(VERBOSE), no)
-	@echo [CLEAN] $(LIBKERNEL)
-	@rm -rf $(LIBDIR)/$(LIBKERNEL)
-else
-	rm -rf $(LIBDIR)/$(LIBKERNEL)
-endif
-
-# Builds a C source file.
-%.$(OBJ_SUFFIX).o: %.c
-ifeq ($(VERBOSE), no)
-	@echo [CC] $@
-	@$(CC) $(CFLAGS) $< -c -o $@
-else
-	$(CC) $(CFLAGS) $< -c -o $@
-endif
+include $(BUILDDIR)/makefile.archive
