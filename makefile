@@ -72,9 +72,6 @@ export BARELIB   := barelib-$(TARGET).a
 export LIBHAL    := libhal-$(TARGET).a
 export LIBKERNEL := libkernel-$(TARGET).a
 
-# Binaries
-export EXEC := test-driver.$(TARGET)
-
 #===============================================================================
 # Target-Specific Make Rules
 #===============================================================================

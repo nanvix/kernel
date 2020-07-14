@@ -23,14 +23,16 @@
 #
 
 #===============================================================================
-# Sources and Objects
+# Binaries Soucers and Objects
 #===============================================================================
 
+# Binary
+ARCHIVE = $(LIBLWIP)
+
+# LWIP folder
 LWIPDIR = src
 
-# Verbose Build?
-VERBOSE ?= no
-
+# Local includes 
 CFLAGS += -I $(CURDIR)/src/include
 CFLAGS += -I $(INCDIR)/posix
 
@@ -38,48 +40,14 @@ include src/Filelists.mk
 
 # C Source Files
 SRC = $(COREFILES) $(CORE4FILES) \
-	  src/arch/nic_driver_if.c \
-	  src/arch/sys_arch.c \
-	  src/netif/ethernet.c \
-	  $(wildcard src/string/*.c)
+      src/arch/nic_driver_if.c   \
+      src/arch/sys_arch.c        \
+      src/netif/ethernet.c       \
+      $(wildcard src/string/*.c)
 
 # Object Files
 OBJ = $(SRC:.c=.$(OBJ_SUFFIX).o)
 
 #===============================================================================
 
-# Builds All Object Files
-all: $(OBJ)
-ifeq ($(VERBOSE), no)
-	@echo [AR] $(LIBLWIP)
-	@$(AR) $(ARFLAGS) $(LIBDIR)/$(LIBLWIP) $(OBJ)
-else
-	$(AR) $(ARFLAGS) $(LIBDIR)/$(LIBLWIP) $(OBJ)
-endif
-
-# Cleans All Object Files
-clean:
-ifeq ($(VERBOSE), no)
-	@echo [CLEAN] $(OBJ)
-	@rm -rf $(OBJ)
-else
-	rm -rf $(OBJ)
-endif
-
-# Cleans Everything
-distclean: clean
-ifeq ($(VERBOSE), no)
-	@echo [CLEAN] $(LIBLWIP)
-	@rm -rf $(LIBDIR)/$(LIBLWIP)
-else
-	rm -rf $(LIBDIR)/$(LIBLWIP)
-endif
-
-# Builds a C Source file
-%.$(OBJ_SUFFIX).o: %.c
-ifeq ($(VERBOSE), no)
-	@echo [CC] $@
-	@$(CC) $(CFLAGS) $< -c -o $@
-else
-	$(CC) $(CFLAGS) $< -c -o $@
-endif
+include $(BUILDDIR)/makefile.archive
