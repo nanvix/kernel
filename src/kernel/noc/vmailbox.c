@@ -40,7 +40,7 @@
  * @brief Extracts fd and port from mbxid.
  */
 /**@{*/
-#define VMAILBOX_GET_LADDRESS_PORT(mbxid) (mbxid % MAILBOX_PORT_NR)
+#define VMAILBOX_GET_LADDRESS_PORT(mbxid) (mbxid % (MAILBOX_PORT_NR + 1))
 /**@}*/
 
 /*============================================================================*

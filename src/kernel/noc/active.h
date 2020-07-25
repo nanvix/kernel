@@ -53,7 +53,7 @@
 	/**
 	 * @brief Composes the logic address based on logid id, logic portid and number of ports.
 	 */
-	#define ACTIVE_LADDRESS_COMPOSE(_fd, _port, _nports) (_fd * _nports + _port)
+	#define ACTIVE_LADDRESS_COMPOSE(_fd, _port, _nports) (_fd * (_nports + 1) + _port)
 
 	/**
 	 * @name Communication types.
@@ -99,7 +99,7 @@
 	struct active_config
 	{
 		int fd;              /**< Active id.          */
-		int local_addr;      /**< Remote address.     */
+		int local_addr;      /**< Local address.      */
 		int remote_addr;     /**< Remote address.     */
 		const void * buffer; /**< User level buffer.  */
 		size_t size;         /**< Data transfer size. */

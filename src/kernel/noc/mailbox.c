@@ -36,6 +36,12 @@
 
 #if __TARGET_HAS_MAILBOX
 
+/**
+ * @brief Auxiliary defines to help src check.
+ */
+#define ANY_SOURCE PROCESSOR_NOC_NODES_NUM
+#define ANY_PORT   MAILBOX_PORT_NR
+
 /*============================================================================*
  * Control Structures.                                                        *
  *============================================================================*/
@@ -70,6 +76,7 @@ int wrapper_mailbox_open(int, int);
 int wrapper_mailbox_allow(struct active *, int);
 int mailbox_header_config(struct mbuffer *, const struct active_config *);
 int mailbox_header_check(struct mbuffer *, const struct active_config *);
+int mailbox_source_check(struct mbuffer *, int);
 int mailbox_get_actid(int);
 int mailbox_get_portid(int);
 /**@}*/
@@ -104,6 +111,7 @@ void do_mailbox_table_init(void)
 	mbufferpool.mbuffer_size = sizeof(union mailbox_mbuffer);
 	mbufferpool.curr_age     = &mbuffers_age;
 	mbufferpool.lock         = &mbuffers_lock;
+	mbufferpool.source_check = mailbox_source_check;
 
 	/* Initializes auxiliary mbuffers pool. */
 	mbufferpool_aux.mbuffers     = mbuffers + (KMAILBOX_MESSAGE_BUFFERS_MAX - KMAILBOX_AUX_BUFFERS_MAX);
@@ -111,6 +119,7 @@ void do_mailbox_table_init(void)
 	mbufferpool_aux.mbuffer_size = sizeof(union mailbox_mbuffer);
 	mbufferpool_aux.curr_age     = &mbuffers_age;
 	mbufferpool_aux.lock         = &mbuffers_lock;
+	mbufferpool_aux.source_check = mailbox_source_check;
 
 	mailbox_functions.do_create        = mailbox_create;
 	mailbox_functions.do_open          = wrapper_mailbox_open;
@@ -245,6 +254,40 @@ int mailbox_header_check(struct mbuffer * buf, const struct active_config * conf
 }
 
 /*============================================================================*
+ * mailbox_source_check()                                                     *
+ *============================================================================*/
+
+/**
+ * @brief Checks if the message source matches the expected mask.
+ *
+ * @param buf      Message buffer to be evaluated.
+ * @param src_mask Expected source config.
+ *
+ * @returns Non-zero if the mbuffer src matches the current configuration, and
+ * zero otherwise.
+ */
+int mailbox_source_check(struct mbuffer * buf, int src_mask)
+{
+	int msg_source;
+	int mask_node;
+	int mask_port;
+
+	mask_node = mailbox_get_actid(src_mask);
+	mask_port = mailbox_get_portid(src_mask);
+	msg_source = buf->message.header.src;
+
+	/* Check nodenum. */
+	if ((mask_node != ANY_SOURCE) && (mask_node != mailbox_get_actid(msg_source)))
+		return (0);
+
+	/* Check port number. */
+	if ((mask_port != ANY_PORT) && (mask_port != mailbox_get_portid(msg_source)))
+		return (0);
+
+	return (1);
+}
+
+/*============================================================================*
  * mailbox_get_actid()                                                        *
  *============================================================================*/
 
@@ -258,7 +301,7 @@ int mailbox_header_check(struct mbuffer * buf, const struct active_config * conf
  */
 int mailbox_get_actid(int id)
 {
-	return ((id < 0) ? (id) : (id / MAILBOX_PORT_NR));
+	return ((id < 0) ? (id) : (id / (MAILBOX_PORT_NR + 1)));
 }
 
 /*============================================================================*
@@ -275,7 +318,7 @@ int mailbox_get_actid(int id)
  */
 int mailbox_get_portid(int id)
 {
-	return ((id < 0) ? (id) : (id % MAILBOX_PORT_NR));
+	return ((id < 0) ? (id) : (id % (MAILBOX_PORT_NR + 1)));
 }
 
 /*============================================================================*

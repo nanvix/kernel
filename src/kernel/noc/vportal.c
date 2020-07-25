@@ -39,7 +39,7 @@
  * @brief Extracts fd and port from portalid.
  */
 /**@{*/
-#define VPORTAL_GET_LADDRESS_PORT(portalid) (portalid % KPORTAL_PORT_NR)
+#define VPORTAL_GET_LADDRESS_PORT(portalid) (portalid % (KPORTAL_PORT_NR + 1))
 /**@}*/
 
 /*============================================================================*
