@@ -35,12 +35,6 @@
 
 #if __TARGET_HAS_PORTAL && !__NANVIX_IKC_USES_ONLY_MAILBOX
 
-/**
- * @brief Auxiliary defines to help src check.
- */
-#define ANY_SOURCE PROCESSOR_NOC_NODES_NUM
-#define ANY_PORT   KPORTAL_PORT_NR
-
 /*============================================================================*
  * Control Structures.                                                        *
  *============================================================================*/
@@ -235,7 +229,9 @@ int portal_header_config(struct mbuffer * buf, const struct active_config * conf
  */
 int portal_header_check(struct mbuffer * buf, const struct active_config * config)
 {
-	return ((buf->message.header.dest == config->local_addr) && (buf->message.header.src == config->remote_addr));
+	return ((buf->message.header.dest == config->local_addr) &&
+	        (portal_source_check(buf, config->remote_addr))
+	       );
 }
 
 /*============================================================================*
@@ -257,19 +253,43 @@ int portal_source_check(struct mbuffer * buf, int src_mask)
 	int mask_node;
 	int mask_port;
 
+	/* Return immediately. */
+	if (src_mask == -1)
+		return (1);
+
 	mask_node = portal_get_actid(src_mask);
 	mask_port = portal_get_portid(src_mask);
 	msg_source = buf->message.header.src;
 
 	/* Check nodenum. */
-	if ((mask_node != ANY_SOURCE) && (mask_node != portal_get_actid(msg_source)))
+	if ((mask_node != PORTAL_ANY_SOURCE) && (mask_node != portal_get_actid(msg_source)))
 		return (0);
 
 	/* Check port number. */
-	if ((mask_port != ANY_PORT) && (mask_port != portal_get_portid(msg_source)))
+	if ((mask_port != PORTAL_ANY_PORT) && (mask_port != portal_get_portid(msg_source)))
 		return (0);
 
 	return (1);
+}
+
+/*============================================================================*
+ * portal_laddress_calc()                                                     *
+ *============================================================================*/
+
+/**
+ * @brief Calculates the laddress of a communicator.
+ *
+ * @param fd   Node fd.
+ * @param port Port number.
+ *
+ * @returns Returns the composed laddress.
+ *
+ * @note The correctness of parameters is responsibility of the caller. This
+ * function only applies the parameters to the calculation formula.
+ */
+int portal_laddress_calc(int fd, int port)
+{
+	return (ACTIVE_LADDRESS_COMPOSE(fd, port, KPORTAL_PORT_NR));
 }
 
 /*============================================================================*

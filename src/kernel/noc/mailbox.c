@@ -36,12 +36,6 @@
 
 #if __TARGET_HAS_MAILBOX
 
-/**
- * @brief Auxiliary defines to help src check.
- */
-#define ANY_SOURCE PROCESSOR_NOC_NODES_NUM
-#define ANY_PORT   MAILBOX_PORT_NR
-
 /*============================================================================*
  * Control Structures.                                                        *
  *============================================================================*/
@@ -231,6 +225,7 @@ int wrapper_mailbox_allow(struct active * act, int remote)
  */
 int mailbox_header_config(struct mbuffer * buf, const struct active_config * config)
 {
+	buf->message.header.src  = config->local_addr;
 	buf->message.header.dest = config->remote_addr;
 
 	return (0);
@@ -250,7 +245,9 @@ int mailbox_header_config(struct mbuffer * buf, const struct active_config * con
  */
 int mailbox_header_check(struct mbuffer * buf, const struct active_config * config)
 {
-	return (buf->message.header.dest == config->local_addr);
+	return ((buf->message.header.dest == config->local_addr) &&
+	        (mailbox_source_check(buf, config->remote_addr))
+	       );
 }
 
 /*============================================================================*
@@ -272,19 +269,43 @@ int mailbox_source_check(struct mbuffer * buf, int src_mask)
 	int mask_node;
 	int mask_port;
 
+	/* Return immediately. */
+	if (src_mask == -1)
+		return (1);
+
 	mask_node = mailbox_get_actid(src_mask);
 	mask_port = mailbox_get_portid(src_mask);
 	msg_source = buf->message.header.src;
 
 	/* Check nodenum. */
-	if ((mask_node != ANY_SOURCE) && (mask_node != mailbox_get_actid(msg_source)))
+	if ((mask_node != MAILBOX_ANY_SOURCE) && (mask_node != mailbox_get_actid(msg_source)))
 		return (0);
 
 	/* Check port number. */
-	if ((mask_port != ANY_PORT) && (mask_port != mailbox_get_portid(msg_source)))
+	if ((mask_port != MAILBOX_ANY_PORT) && (mask_port != mailbox_get_portid(msg_source)))
 		return (0);
 
 	return (1);
+}
+
+/*============================================================================*
+ * mailbox_laddress_calc()                                                    *
+ *============================================================================*/
+
+/**
+ * @brief Calculates the laddress of a communicator.
+ *
+ * @param fd   Node fd.
+ * @param port Port number.
+ *
+ * @returns Returns the composed laddress.
+ *
+ * @note The correctness of parameters is responsibility of the caller. This
+ * function only applies the parameters to the calculation formula.
+ */
+int mailbox_laddress_calc(int fd, int port)
+{
+	return (ACTIVE_LADDRESS_COMPOSE(fd, port, MAILBOX_PORT_NR));
 }
 
 /*============================================================================*

@@ -46,6 +46,7 @@
 	EXTERN ssize_t do_portal_aread(int, const struct active_config *, struct pstats *);
 	EXTERN ssize_t do_portal_awrite(int, const struct active_config *, struct pstats *);
 	EXTERN int do_portal_wait(int, const struct active_config *, struct pstats *);
+	EXTERN int portal_laddress_calc(int, int);
 
 	EXTERN void do_portal_init(void);
 
