@@ -293,7 +293,11 @@ PUBLIC int communicator_wait(struct communicator * comm)
 		if (ret == ACTIVE_COMM_SUCCESS)
 		{
 			communicator_set_notallowed(comm);
-			
+
+			/* Resets remote_addr for input communicators. */
+			if (resource_is_readable(&comm->resource))
+				comm->config.remote_addr = -1;
+
 			spinlock_lock(&comm->counters->lock);
 				if (!resource_is_readable(&comm->resource))
 					comm->counters->nreads++;
@@ -370,6 +374,17 @@ PUBLIC int communicator_ioctl(
 					goto error;
 
 				*volume = comm->stats.volume;
+				ret = 0;
+			} break;
+
+			/* Sets the remote address for a single read. */
+			case COMM_IOCTL_SET_REMOTE:
+			{
+				int nodenum = va_arg(args, int);
+				int port_nr = va_arg(args, int);
+
+				comm->config.remote_addr = comm->fn->laddress_calc(nodenum, port_nr);
+
 				ret = 0;
 			} break;
 

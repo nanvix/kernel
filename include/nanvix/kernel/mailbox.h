@@ -40,14 +40,15 @@
 	 * @name Mailbox I/O Control types.
 	 */
 	/**@{*/
-	#define KMAILBOX_IOCTL_GET_VOLUME   (1) /**< Gets communication volume.  */
-	#define KMAILBOX_IOCTL_GET_LATENCY  (2) /**< Gets communication latency. */
-	#define KMAILBOX_IOCTL_GET_NCREATES (3) /**< Gets number of creates.     */
-	#define KMAILBOX_IOCTL_GET_NUNLINKS (4) /**< Gets number of unlinks.     */
-	#define KMAILBOX_IOCTL_GET_NOPENS   (5) /**< Gets number of opens.       */
-	#define KMAILBOX_IOCTL_GET_NCLOSES  (6) /**< Gets number of closes.      */
-	#define KMAILBOX_IOCTL_GET_NREADS   (7) /**< Gets number of reads.       */
-	#define KMAILBOX_IOCTL_GET_NWRITES  (8) /**< Gets number of writes.      */
+	#define KMAILBOX_IOCTL_GET_VOLUME   (1) /**< Gets communication volume.            */
+	#define KMAILBOX_IOCTL_GET_LATENCY  (2) /**< Gets communication latency.           */
+	#define KMAILBOX_IOCTL_GET_NCREATES (3) /**< Gets number of creates.               */
+	#define KMAILBOX_IOCTL_GET_NUNLINKS (4) /**< Gets number of unlinks.               */
+	#define KMAILBOX_IOCTL_GET_NOPENS   (5) /**< Gets number of opens.                 */
+	#define KMAILBOX_IOCTL_GET_NCLOSES  (6) /**< Gets number of closes.                */
+	#define KMAILBOX_IOCTL_GET_NREADS   (7) /**< Gets number of reads.                 */
+	#define KMAILBOX_IOCTL_GET_NWRITES  (8) /**< Gets number of writes.                */
+	#define KMAILBOX_IOCTL_SET_REMOTE   (9) /**< Sets the remote_addr until next read. */
 	/**@}*/
 
 	/**
@@ -69,6 +70,12 @@
 #else
 	#define KMAILBOX_PORT_NR (16)
 #endif
+
+	/**
+	 * @brief Auxiliary definitions for src header check.
+	 */
+	#define MAILBOX_ANY_SOURCE PROCESSOR_NOC_NODES_NUM
+	#define MAILBOX_ANY_PORT   MAILBOX_PORT_NR
 
 	/**
 	 * @brief Maximum number of HW mailboxes.
