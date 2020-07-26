@@ -299,7 +299,7 @@ PUBLIC int communicator_wait(struct communicator * comm)
 				comm->config.remote_addr = -1;
 
 			spinlock_lock(&comm->counters->lock);
-				if (!resource_is_readable(&comm->resource))
+				if (resource_is_readable(&comm->resource))
 					comm->counters->nreads++;
 				else
 					comm->counters->nwrites++;
