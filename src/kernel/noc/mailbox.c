@@ -70,6 +70,7 @@ int wrapper_mailbox_open(int, int);
 int wrapper_mailbox_allow(struct active *, int);
 int mailbox_header_config(struct mbuffer *, const struct active_config *);
 int mailbox_header_check(struct mbuffer *, const struct active_config *);
+int mailbox_source_check(struct mbuffer *, int);
 int mailbox_get_actid(int);
 int mailbox_get_portid(int);
 /**@}*/
@@ -104,6 +105,7 @@ void do_mailbox_table_init(void)
 	mbufferpool.mbuffer_size = sizeof(union mailbox_mbuffer);
 	mbufferpool.curr_age     = &mbuffers_age;
 	mbufferpool.lock         = &mbuffers_lock;
+	mbufferpool.source_check = mailbox_source_check;
 
 	/* Initializes auxiliary mbuffers pool. */
 	mbufferpool_aux.mbuffers     = mbuffers + (KMAILBOX_MESSAGE_BUFFERS_MAX - KMAILBOX_AUX_BUFFERS_MAX);
@@ -111,6 +113,7 @@ void do_mailbox_table_init(void)
 	mbufferpool_aux.mbuffer_size = sizeof(union mailbox_mbuffer);
 	mbufferpool_aux.curr_age     = &mbuffers_age;
 	mbufferpool_aux.lock         = &mbuffers_lock;
+	mbufferpool_aux.source_check = mailbox_source_check;
 
 	mailbox_functions.do_create        = mailbox_create;
 	mailbox_functions.do_open          = wrapper_mailbox_open;
@@ -222,6 +225,7 @@ int wrapper_mailbox_allow(struct active * act, int remote)
  */
 int mailbox_header_config(struct mbuffer * buf, const struct active_config * config)
 {
+	buf->message.header.src  = config->local_addr;
 	buf->message.header.dest = config->remote_addr;
 
 	return (0);
@@ -241,7 +245,67 @@ int mailbox_header_config(struct mbuffer * buf, const struct active_config * con
  */
 int mailbox_header_check(struct mbuffer * buf, const struct active_config * config)
 {
-	return (buf->message.header.dest == config->local_addr);
+	return ((buf->message.header.dest == config->local_addr) &&
+	        (mailbox_source_check(buf, config->remote_addr))
+	       );
+}
+
+/*============================================================================*
+ * mailbox_source_check()                                                     *
+ *============================================================================*/
+
+/**
+ * @brief Checks if the message source matches the expected mask.
+ *
+ * @param buf      Message buffer to be evaluated.
+ * @param src_mask Expected source config.
+ *
+ * @returns Non-zero if the mbuffer src matches the current configuration, and
+ * zero otherwise.
+ */
+int mailbox_source_check(struct mbuffer * buf, int src_mask)
+{
+	int msg_source;
+	int mask_node;
+	int mask_port;
+
+	/* Return immediately. */
+	if (src_mask == -1)
+		return (1);
+
+	mask_node = mailbox_get_actid(src_mask);
+	mask_port = mailbox_get_portid(src_mask);
+	msg_source = buf->message.header.src;
+
+	/* Check nodenum. */
+	if ((mask_node != MAILBOX_ANY_SOURCE) && (mask_node != mailbox_get_actid(msg_source)))
+		return (0);
+
+	/* Check port number. */
+	if ((mask_port != MAILBOX_ANY_PORT) && (mask_port != mailbox_get_portid(msg_source)))
+		return (0);
+
+	return (1);
+}
+
+/*============================================================================*
+ * mailbox_laddress_calc()                                                    *
+ *============================================================================*/
+
+/**
+ * @brief Calculates the laddress of a communicator.
+ *
+ * @param fd   Node fd.
+ * @param port Port number.
+ *
+ * @returns Returns the composed laddress.
+ *
+ * @note The correctness of parameters is responsibility of the caller. This
+ * function only applies the parameters to the calculation formula.
+ */
+int mailbox_laddress_calc(int fd, int port)
+{
+	return (ACTIVE_LADDRESS_COMPOSE(fd, port, MAILBOX_PORT_NR));
 }
 
 /*============================================================================*
@@ -258,7 +322,7 @@ int mailbox_header_check(struct mbuffer * buf, const struct active_config * conf
  */
 int mailbox_get_actid(int id)
 {
-	return ((id < 0) ? (id) : (id / MAILBOX_PORT_NR));
+	return ((id < 0) ? (id) : (id / (MAILBOX_PORT_NR + 1)));
 }
 
 /*============================================================================*
@@ -275,7 +339,7 @@ int mailbox_get_actid(int id)
  */
 int mailbox_get_portid(int id)
 {
-	return ((id < 0) ? (id) : (id % MAILBOX_PORT_NR));
+	return ((id < 0) ? (id) : (id % (MAILBOX_PORT_NR + 1)));
 }
 
 /*============================================================================*

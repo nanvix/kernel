@@ -196,8 +196,8 @@ PUBLIC int mbuffer_search(struct mbuffer_pool * pool, int dest, int src)
 			if (buf->message.header.dest != dest)
 				continue;
 
-			/* Is the message sender the expected? */
-			if (src != -1 && buf->message.header.src != src)
+			/* Checks the message source if it was the expected. */
+			if (!pool->source_check(buf, src))
 				continue;
 
 			/* Is the buffer the older? */

@@ -40,7 +40,7 @@
  * @brief Extracts fd and port from mbxid.
  */
 /**@{*/
-#define VMAILBOX_GET_LADDRESS_PORT(mbxid) (mbxid % MAILBOX_PORT_NR)
+#define VMAILBOX_GET_LADDRESS_PORT(mbxid) (mbxid % (MAILBOX_PORT_NR + 1))
 /**@}*/
 
 /*============================================================================*
@@ -74,9 +74,10 @@ PRIVATE void do_vmailbox_init(void)
 	vmailbox_counters.nreads   = 0ULL;
 	vmailbox_counters.nwrites  = 0ULL;
 
-	vmailbox_functions.do_release = do_mailbox_release;
-	vmailbox_functions.do_comm    = do_mailbox_aread;
-	vmailbox_functions.do_wait    = do_mailbox_wait;
+	vmailbox_functions.do_release    = do_mailbox_release;
+	vmailbox_functions.do_comm       = do_mailbox_aread;
+	vmailbox_functions.do_wait       = do_mailbox_wait;
+	vmailbox_functions.laddress_calc = mailbox_laddress_calc;
 
 	for (int i = 0; i < KMAILBOX_MAX; ++i)
 	{
@@ -85,7 +86,6 @@ PRIVATE void do_vmailbox_init(void)
 		vmailboxes[i].config     = ACTIVE_CONFIG_INITIALIZER;
 		vmailboxes[i].stats      = PSTATS_INITIALIZER;
 		vmailboxes[i].fn         = &vmailbox_functions;
-
 		vmailboxes[i].counters   = &vmailbox_counters;
 	}
 
@@ -299,10 +299,6 @@ PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
  */
 PUBLIC int do_vmailbox_wait(int mbxid)
 {
-	/* This is only a test. Remove it.*/
-	if (resource_is_readable(&vmailboxes[mbxid].resource))
-		KASSERT(vmailboxes[mbxid].config.remote_addr == -1);
-
 	return (communicator_wait(&vmailboxes[mbxid]));
 }
 

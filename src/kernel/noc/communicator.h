@@ -54,14 +54,15 @@
 	 * @name I/O Control types.
 	 */
 	/**@{*/
-	#define COMM_IOCTL_GET_VOLUME   (1) /**< Gets communication volume.  */
-	#define COMM_IOCTL_GET_LATENCY  (2) /**< Gets communication latency. */
-	#define COMM_IOCTL_GET_NCREATES (3) /**< Gets number of creates.     */
-	#define COMM_IOCTL_GET_NUNLINKS (4) /**< Gets number of unlinks.     */
-	#define COMM_IOCTL_GET_NOPENS   (5) /**< Gets number of opens.       */
-	#define COMM_IOCTL_GET_NCLOSES  (6) /**< Gets number of closes.      */
-	#define COMM_IOCTL_GET_NREADS   (7) /**< Gets number of reads.       */
-	#define COMM_IOCTL_GET_NWRITES  (8) /**< Gets number of writes.      */
+	#define COMM_IOCTL_GET_VOLUME   (1) /**< Gets communication volume.            */
+	#define COMM_IOCTL_GET_LATENCY  (2) /**< Gets communication latency.           */
+	#define COMM_IOCTL_GET_NCREATES (3) /**< Gets number of creates.               */
+	#define COMM_IOCTL_GET_NUNLINKS (4) /**< Gets number of unlinks.               */
+	#define COMM_IOCTL_GET_NOPENS   (5) /**< Gets number of opens.                 */
+	#define COMM_IOCTL_GET_NCLOSES  (6) /**< Gets number of closes.                */
+	#define COMM_IOCTL_GET_NREADS   (7) /**< Gets number of reads.                 */
+	#define COMM_IOCTL_GET_NWRITES  (8) /**< Gets number of writes.                */
+	#define COMM_IOCTL_SET_REMOTE   (9) /**< Sets the remote_addr until next read. */
 	/**@}*/
 
 	/**
@@ -104,9 +105,10 @@
 	 */
 	struct communicator_functions
 	{
-		active_release_fn do_release; /**< Active release function.      */
-		active_comm_fn do_comm;       /**< Active comm function.         */
-		active_wait_fn do_wait;       /**< Active wait function.         */
+		active_release_fn do_release;          /**< Active release function. */
+		active_comm_fn do_comm;                /**< Active comm function.    */
+		active_wait_fn do_wait;                /**< Active wait function.    */
+		active_laddress_calc_fn laddress_calc; /**< Active laddress calc.    */
 	};
 
 	/**

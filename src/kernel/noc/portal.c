@@ -68,6 +68,7 @@ PRIVATE struct active_pool portalpool;                           /**< Portal poo
 int wrapper_portal_allow(struct active *, int);
 int portal_header_config(struct mbuffer *, const struct active_config *);
 int portal_header_check(struct mbuffer *, const struct active_config *);
+int portal_source_check(struct mbuffer *, int);
 int portal_get_actid(int);
 int portal_get_portid(int);
 /**@}*/
@@ -102,6 +103,7 @@ void do_portal_table_init(void)
 	pbufferpool.mbuffer_size = sizeof(union portal_mbuffer);
 	pbufferpool.curr_age     = &pbuffers_age;
 	pbufferpool.lock         = &pbuffers_lock;
+	pbufferpool.source_check = portal_source_check;
 
 	/* Initializes auxiliary mbuffers pool. */
 	pbufferpool_aux.mbuffers     = pbuffers + (KPORTAL_MESSAGE_BUFFERS_MAX - KPORTAL_AUX_BUFFERS_MAX);
@@ -109,6 +111,7 @@ void do_portal_table_init(void)
 	pbufferpool_aux.mbuffer_size = sizeof(union portal_mbuffer);
 	pbufferpool_aux.curr_age     = &pbuffers_age;
 	pbufferpool_aux.lock         = &pbuffers_lock;
+	pbufferpool_aux.source_check = portal_source_check;
 
 	portal_functions.do_create        = portal_create;
 	portal_functions.do_open          = portal_open;
@@ -226,7 +229,67 @@ int portal_header_config(struct mbuffer * buf, const struct active_config * conf
  */
 int portal_header_check(struct mbuffer * buf, const struct active_config * config)
 {
-	return ((buf->message.header.dest == config->local_addr) && (buf->message.header.src == config->remote_addr));
+	return ((buf->message.header.dest == config->local_addr) &&
+	        (portal_source_check(buf, config->remote_addr))
+	       );
+}
+
+/*============================================================================*
+ * portal_source_check()                                                      *
+ *============================================================================*/
+
+/**
+ * @brief Checks if the message source matches the expected mask.
+ *
+ * @param buf      Message buffer to be evaluated.
+ * @param src_mask Expected source config.
+ *
+ * @returns Non-zero if the mbuffer src matches the current configuration, and
+ * zero otherwise.
+ */
+int portal_source_check(struct mbuffer * buf, int src_mask)
+{
+	int msg_source;
+	int mask_node;
+	int mask_port;
+
+	/* Return immediately. */
+	if (src_mask == -1)
+		return (1);
+
+	mask_node = portal_get_actid(src_mask);
+	mask_port = portal_get_portid(src_mask);
+	msg_source = buf->message.header.src;
+
+	/* Check nodenum. */
+	if ((mask_node != PORTAL_ANY_SOURCE) && (mask_node != portal_get_actid(msg_source)))
+		return (0);
+
+	/* Check port number. */
+	if ((mask_port != PORTAL_ANY_PORT) && (mask_port != portal_get_portid(msg_source)))
+		return (0);
+
+	return (1);
+}
+
+/*============================================================================*
+ * portal_laddress_calc()                                                     *
+ *============================================================================*/
+
+/**
+ * @brief Calculates the laddress of a communicator.
+ *
+ * @param fd   Node fd.
+ * @param port Port number.
+ *
+ * @returns Returns the composed laddress.
+ *
+ * @note The correctness of parameters is responsibility of the caller. This
+ * function only applies the parameters to the calculation formula.
+ */
+int portal_laddress_calc(int fd, int port)
+{
+	return (ACTIVE_LADDRESS_COMPOSE(fd, port, KPORTAL_PORT_NR));
 }
 
 /*============================================================================*
@@ -243,7 +306,7 @@ int portal_header_check(struct mbuffer * buf, const struct active_config * confi
  */
 int portal_get_actid(int id)
 {
-	return ((id < 0) ? (id) : (id / KPORTAL_PORT_NR));
+	return ((id < 0) ? (id) : (id / (KPORTAL_PORT_NR + 1)));
 }
 
 /*============================================================================*
@@ -260,7 +323,7 @@ int portal_get_actid(int id)
  */
 int portal_get_portid(int id)
 {
-	return ((id < 0) ? (id) : (id % KPORTAL_PORT_NR));
+	return ((id < 0) ? (id) : (id % (KPORTAL_PORT_NR + 1)));
 }
 
 /*============================================================================*

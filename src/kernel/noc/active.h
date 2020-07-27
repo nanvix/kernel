@@ -53,7 +53,7 @@
 	/**
 	 * @brief Composes the logic address based on logid id, logic portid and number of ports.
 	 */
-	#define ACTIVE_LADDRESS_COMPOSE(_fd, _port, _nports) (_fd * _nports + _port)
+	#define ACTIVE_LADDRESS_COMPOSE(_fd, _port, _nports) (_fd * (_nports + 1) + _port)
 
 	/**
 	 * @name Communication types.
@@ -99,7 +99,7 @@
 	struct active_config
 	{
 		int fd;              /**< Active id.          */
-		int local_addr;      /**< Remote address.     */
+		int local_addr;      /**< Local address.      */
 		int remote_addr;     /**< Remote address.     */
 		const void * buffer; /**< User level buffer.  */
 		size_t size;         /**< Data transfer size. */
@@ -150,6 +150,7 @@
 	typedef int (* active_release_fn)(int);
 	typedef ssize_t (* active_comm_fn)(int, const struct active_config *, struct pstats *);
 	typedef int (* active_wait_fn)(int, const struct active_config *, struct pstats *);
+	typedef int (* active_laddress_calc_fn)(int, int);
 	/**@}*/
 
 	/*============================================================================*
@@ -161,16 +162,16 @@
 	 */
 	struct active_functions
 	{
-		hw_create_fn do_create;        /**< Hardware create function.                   */
-		hw_open_fn do_open;            /**< Hardware open function.                     */
-		hw_allow_fn do_allow;          /**< Hardware allow function.                    */
-		hw_aread_fn do_aread;          /**< Hardware aread function.                    */
-		hw_awrite_fn do_awrite;        /**< Hardware awrite function.                   */
-		hw_wait_fn do_wait;            /**< Hardware wait function.                     */
-		hw_config_fn do_header_config; /**< Header config function.                     */
-		hw_check_fn do_header_check;   /**< Header checker function.                    */
-		hw_getter_fn get_actid;        /**< Gets active id from a composed ID.          */
-		hw_getter_fn get_portid;       /**< Gets port id from a composed ID.            */
+		hw_create_fn do_create;        /**< Hardware create function.          */
+		hw_open_fn do_open;            /**< Hardware open function.            */
+		hw_allow_fn do_allow;          /**< Hardware allow function.           */
+		hw_aread_fn do_aread;          /**< Hardware aread function.           */
+		hw_awrite_fn do_awrite;        /**< Hardware awrite function.          */
+		hw_wait_fn do_wait;            /**< Hardware wait function.            */
+		hw_config_fn do_header_config; /**< Header config function.            */
+		hw_check_fn do_header_check;   /**< Header checker function.           */
+		hw_getter_fn get_actid;        /**< Gets active id from a composed ID. */
+		hw_getter_fn get_portid;       /**< Gets port id from a composed ID.   */
 	};
 
 	/**

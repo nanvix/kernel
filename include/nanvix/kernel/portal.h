@@ -90,6 +90,12 @@
 	 */
 	#define KPORTAL_MAX_SIZE (1 * MB)
 
+	/**
+	 * @brief Auxiliary definitions for src header check.
+	 */
+	#define PORTAL_ANY_SOURCE PROCESSOR_NOC_NODES_NUM
+	#define PORTAL_ANY_PORT   KPORTAL_PORT_NR
+
 #ifdef __NANVIX_MICROKERNEL
 
 	/**

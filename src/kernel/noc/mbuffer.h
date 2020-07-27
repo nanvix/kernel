@@ -203,6 +203,11 @@
 	};
 
 	/**
+	 * @brief Prototype function to check source of a message.
+	 */
+	typedef int (* source_check_fn)(struct mbuffer *, int);
+
+	/**
 	 * @brief Resource pool.
 	 */
 	struct mbuffer_pool
@@ -212,6 +217,8 @@
 		size_t mbuffer_size; /**< mbuffer size (in bytes). */
 		uint64_t * curr_age; /**< Next mbuffer age.        */
 		spinlock_t * lock;   /**< Protection.              */
+
+		source_check_fn source_check; /**< Source header check. */
 	};
 
 	/*============================================================================*

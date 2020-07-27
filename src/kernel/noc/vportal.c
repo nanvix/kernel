@@ -39,7 +39,7 @@
  * @brief Extracts fd and port from portalid.
  */
 /**@{*/
-#define VPORTAL_GET_LADDRESS_PORT(portalid) (portalid % KPORTAL_PORT_NR)
+#define VPORTAL_GET_LADDRESS_PORT(portalid) (portalid % (KPORTAL_PORT_NR + 1))
 /**@}*/
 
 /*============================================================================*
@@ -73,9 +73,10 @@ PRIVATE void do_vportal_init(void)
 	vportal_counters.nreads   = 0ULL;
 	vportal_counters.nwrites  = 0ULL;
 
-	vportal_functions.do_release = do_portal_release;
-	vportal_functions.do_comm    = do_portal_aread;
-	vportal_functions.do_wait    = do_portal_wait;
+	vportal_functions.do_release    = do_portal_release;
+	vportal_functions.do_comm       = do_portal_aread;
+	vportal_functions.do_wait       = do_portal_wait;
+	vportal_functions.laddress_calc = portal_laddress_calc;
 
 	for (int i = 0; i < KPORTAL_MAX; ++i)
 	{

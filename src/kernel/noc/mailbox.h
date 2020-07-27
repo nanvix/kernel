@@ -45,6 +45,7 @@
 	EXTERN ssize_t do_mailbox_aread(int, const struct active_config *, struct pstats *);
 	EXTERN ssize_t do_mailbox_awrite(int, const struct active_config *, struct pstats *);
 	EXTERN int do_mailbox_wait(int, const struct active_config *, struct pstats *);
+	EXTERN int mailbox_laddress_calc(int, int);
 
 	EXTERN void do_mailbox_init(void);
 
