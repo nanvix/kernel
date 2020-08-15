@@ -53,13 +53,13 @@
 	/**
 	 * @brief Size of the mbuffer message header.
 	 */
-	#define MBUFFER_HEADER_SIZE (3 * 4) /**< sizeof(struct mbuffer_header) */
+	#define MBUFFER_HEADER_SIZE (4 * 4) /**< sizeof(struct mbuffer_header) */
 
 	/**
 	 * @brief Mbuffer message initializer.
 	 */
 	#define MBUFFER_MESSAGE_INITIALIZER (struct mbuffer_message){ \
-		.header = {-1, -1, 0},                                    \
+		.header = {-1, -1, 0, 0},                                 \
 		.data   = '\0',                                           \
 	}
 
@@ -86,9 +86,10 @@
 	 */
 	struct mbuffer_header
 	{
-		int dest; /* Data sender.       */
-		int src;  /* Data destination.  */
-		int size; /* Message data size. */
+		int dest;   /* Data sender.         */
+		int src;    /* Data destination.    */
+		int size;   /* Message data size.   */
+		int unused; /* Padding to 16 bytes. */
 	};
 
 	/**
@@ -132,7 +133,7 @@
 #if (MBUFFER_HEADER_SIZE < KMAILBOX_MESSAGE_HEADER_SIZE)
 		char unused[KMAILBOX_MESSAGE_HEADER_SIZE - MBUFFER_HEADER_SIZE]; /* Unused. */
 #endif
-	};
+	} ALIGN(sizeof(dword_t));
 
 	/**
 	 * @brief Portal message.
@@ -144,7 +145,7 @@
 #if (MBUFFER_HEADER_SIZE < KPORTAL_MESSAGE_HEADER_SIZE)
 		char unused[KPORTAL_MESSAGE_HEADER_SIZE - MBUFFER_HEADER_SIZE]; /* Unused. */
 #endif
-	};
+	} ALIGN(sizeof(dword_t));
 
 	/**
 	 * @brief Abstract mbuffer.
@@ -180,7 +181,7 @@
 			int portid;                     /**< Sender port ID of local sender.   */
 			struct mailbox_message message; /**< Structure that holds a message.   */
 		};
-	};
+	} ALIGN(sizeof(dword_t));
 
 	/**
 	 * @brief Portal mbuffer.
@@ -200,7 +201,7 @@
 			int portid;                    /**< Sender port ID of local sender.    */
 			struct portal_message message; /**< Structure that holds a message.    */
 		};
-	};
+	} ALIGN(sizeof(dword_t));
 
 	/**
 	 * @brief Prototype function to check source of a message.

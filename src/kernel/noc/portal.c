@@ -433,6 +433,11 @@ PUBLIC void do_portal_init(void)
 
 	local = processor_node_get_num();
 
+	KASSERT((((uintptr_t) &pbuffers[0].message) & 0x7) == 0);
+	KASSERT((((uintptr_t) &pbuffers[1].message) & 0x7) == 0);
+	KASSERT((sizeof(pbuffers[0].message) % 8) == 0);
+	KASSERT((sizeof(pbuffers[1].message) % 8) == 0);
+
 	/* Initializes the portals structures. */
 	do_portal_table_init();
 
@@ -445,3 +450,4 @@ PUBLIC void do_portal_init(void)
 }
 
 #endif /* __TARGET_HAS_PORTAL && !__NANVIX_IKC_USES_ONLY_MAILBOX */
+
