@@ -55,13 +55,11 @@ SRC = $(wildcard dev/*.c)       \
 # Sources (Target Specific)
 ifeq ($(TARGET),qemu-x86)
 SRC += $(wildcard dev/net/rtl8139.c) \
-       $(wildcard dev/bus/pci.c)     \
-       $(wildcard test/network.c)
+       $(wildcard dev/bus/pci.c)
 endif
 
 ifeq ($(TARGET),qemu-openrisc)
-SRC += $(wildcard dev/net/ethoc.c) \
-       $(wildcard test/network.c)
+SRC += $(wildcard dev/net/ethoc.c)
 endif
 
 # Object Files
