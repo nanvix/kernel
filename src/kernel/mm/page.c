@@ -453,9 +453,12 @@ PUBLIC int upage_alloc(struct pde *pgdir, vaddr_t vaddr)
 	int err;       /* Error code. */
 	frame_t frame; /* Page frame. */
 
+	if (pgdir == NULL)
+		return (-EINVAL);
+
 	/*
-	 * We handle argument checking
-	 * to upage_map().
+	 * upage_map() checks the
+	 * other necessary requirements.
 	 */
 
 	/* Allocate user frame. */
