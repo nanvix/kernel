@@ -508,7 +508,7 @@ PUBLIC int upage_free(struct pde *pgdir, vaddr_t vaddr)
 	frame_t frame;
 
 	if (pgdir == NULL)
-		return (-EINVAL);
+		return (-EFAULT);
 
 	/*
 	 * upage_map() checks the
