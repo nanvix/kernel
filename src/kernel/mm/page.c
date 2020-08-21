@@ -507,9 +507,12 @@ PUBLIC int upage_free(struct pde *pgdir, vaddr_t vaddr)
 {
 	frame_t frame;
 
+	if (pgdir == NULL)
+		return (-EINVAL);
+
 	/*
-	 * We forward argument checking
-	 * to upage_unmap().
+	 * upage_map() checks the
+	 * other necessary requirements.
 	 */
 
 	/* Unmap user page. */
