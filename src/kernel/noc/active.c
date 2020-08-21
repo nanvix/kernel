@@ -47,6 +47,16 @@
  */
 #define ACTIVE_ANY_SRC (-1)
 
+/**
+ * @brief Clock error.
+ */
+PRIVATE uint64_t clock_error = 0ULL;
+
+/**
+ * @brief Any source identification
+ */
+#define ACTIVE_COMPUTE_LATENCY(_t1, _t2) ((_t2 - _t1) - clock_error)
+
 /*============================================================================*
  * do_register_request()                                                      *
  *============================================================================*/
@@ -167,7 +177,7 @@ PRIVATE int do_request_clear(struct active * active, struct port * port)
 
 		if (cleared)
 			requests->fifo[curr] = requests->fifo[next];
-	
+
 		curr = next;
 		next = __mod_pw2((curr + 1), requests->max_capacity);
 	}
@@ -552,8 +562,8 @@ PUBLIC ssize_t active_aread(
 			t2 = clock_read();
 
 			/* Update performance statistics. */
-			stats->latency += (buf->latency > 0ULL) ? (buf->latency) : (t2 - t1);
-			stats->volume  += (config->size);
+			stats->latency += buf->latency + ACTIVE_COMPUTE_LATENCY(t1, t2);
+			stats->volume  += config->size;
 
 			/* Releases sender. */
 			if ((buf->actid >= 0) && (buf->portid >= 0))
@@ -613,7 +623,7 @@ PUBLIC ssize_t active_aread(
 		active_set_notallowed(active);
 
 		/* Update performance statistics. */
-		buf->latency = (t2 - t1);
+		buf->latency = ACTIVE_COMPUTE_LATENCY(t1, t2);
 
 		/* Sets the active as busy. */
 		resource_set_busy(&active->resource);
@@ -721,6 +731,8 @@ PUBLIC ssize_t active_awrite(
 				kmemcpy((void *) &buf->message.data, (void *) config->buffer, config->size);
 			t2 = clock_read();
 
+			buf->latency = ACTIVE_COMPUTE_LATENCY(t1, t2);
+
 			/* Checks if the destination is the local node. */
 			if (forward)
 			{
@@ -731,8 +743,8 @@ PUBLIC ssize_t active_awrite(
 				mbuffer_release(bufferpool, mbufferid, MBUFFER_KEEP_MESSAGE);
 
 				/* Update performance statistics. */
-				stats->latency += (t2 - t1);
-				stats->volume  += (config->size);
+				stats->latency += buf->latency;
+				stats->volume  += config->size;
 
 				spinlock_unlock(&active->lock);
 
@@ -774,7 +786,7 @@ PUBLIC ssize_t active_awrite(
 		t2 = clock_read();
 
 		/* Update performance statistics. */
-		buf->latency = (t2 - t1);
+		buf->latency = ACTIVE_COMPUTE_LATENCY(t1, t2);
 
 		/* Sets the active as busy. */
 		resource_set_busy(&active->resource);
@@ -863,7 +875,7 @@ PUBLIC int active_wait(
 			ret = (ACTIVE_COMM_SUCCESS);
 			buf = mbuffer_get(port->mbufferpool, mbufferid);
 
-			buf->latency += (t2 - t1);
+			buf->latency += ACTIVE_COMPUTE_LATENCY(t1, t2);
 
 			/* Read communication has extra operations. */
 			if (resource_is_readable(&active->resource))
@@ -873,7 +885,13 @@ PUBLIC int active_wait(
 				/* Checks if the message is addressed for the requesting port. */
 				/* Consumes the message. */
 				if (active->fn->do_header_check(buf, config))
-					kmemcpy((void *) config->buffer, (void *) &buf->message.data, config->size);
+				{
+					t1 = clock_read();
+						kmemcpy((void *) config->buffer, (void *) &buf->message.data, config->size);
+					t2 = clock_read();
+
+					buf->latency += ACTIVE_COMPUTE_LATENCY(t1, t2);
+				}
 
 				/* Ignore the message. */
 				else
@@ -1028,9 +1046,19 @@ PUBLIC int _active_open(const struct active_pool * pool, int local, int remote)
 {
 	int hwfd;               /* Hardware ID.    */
 	int actid;              /* Active ID.      */
+	uint64_t t1;            /* Clock value.    */
+	uint64_t t2;            /* Clock value.    */
 	struct active * active; /* Active Pointer. */
 
 	KASSERT(pool != NULL);
+
+	if (!clock_error)
+	{
+		t1 = clock_read();
+		t2 = clock_read();
+
+		clock_error = (t2 - t1);
+	}
 
 	/* Search target hardware active. */
 	if ((actid = active_search(pool, local, remote, ACTIVE_TYPE_OUTPUT)) >= 0)
