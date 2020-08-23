@@ -74,7 +74,7 @@
 	 * The mm_is_kaddr() function asserts whether or not the virtual
 	 * address @p vaddr lies in kernel space.
 	 *
-	 * @returns If @p vaddr lies in kernel space, non zerp is
+	 * @returns If @p vaddr lies in kernel space, non zero is
 	 * returned. Otherwise, zero is returned instead.
 	 */
 	static inline int mm_is_kaddr(vaddr_t vaddr)
