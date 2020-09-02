@@ -23,6 +23,7 @@
  */
 
 #include <nanvix/hal.h>
+#include <nanvix/kernel/mm.h>
 #include <nanvix/kernel/thread.h>
 #include <nanvix/const.h>
 #include <posix/errno.h>
@@ -31,6 +32,15 @@
  * @brief Number of thread_create trials.
  */
 #define THREAD_CREATE_NTRIALS 5
+
+/**
+ * @name Number of threads.
+ *
+ * @details Master + Idles == SYS_THREAD_MAX.
+ */
+/**@{*/
+#define IDLE_THREAD_MAX (SYS_THREAD_MAX - 1)
+/**@}*/
 
 /*
  * Import definitions.
@@ -47,6 +57,7 @@ EXTENSION PUBLIC struct thread threads[KTHREAD_MAX] = {
 		.state = THREAD_RUNNING,
 		.arg = NULL,
 		.start = (void *) kmain,
+		.ctx = NULL,
 		.next = NULL
 	},
 #if CLUSTER_IS_MULTICORE
@@ -74,9 +85,70 @@ PRIVATE int nthreads = 1;
 PRIVATE int next_tid = (KTHREAD_MASTER_TID + 1);
 
 /**
+ * @brief Indicates for idle threads to exit.
+ */
+PRIVATE volatile int tm_shutdown = 0;
+
+/**
  * @brief Thread manager lock.
  */
 PRIVATE spinlock_t lock_tm = SPINLOCK_UNLOCKED;
+
+/*============================================================================*
+ * Scheduler variables                                                        *
+ *============================================================================*/
+
+/**
+ * @name Gets idle thread based on coreid.
+ */
+/**@{*/
+#define KERNEL_THREAD_ID(_t) (_t - threads)
+#define IDLE_THREAD_ID(_t)   (_t - idle_threads)
+#define USER_THREAD_ID(_t)   (_t - user_threads)
+/**@}*/
+
+/**
+ * @brief Gets idle thread pointer.
+ *
+ * @warning Not use core 0 because it is not a idle thread.
+ */
+#define IDLE_THREAD(coreid) (&threads[coreid])
+
+/**
+ * @brief Scheduler queue per core/idle thread.
+ *
+ * @details The next pointer of the idle thread is used
+ * to store the schedule queue of each core.
+ * Id 0 is not an idle thread but is the initial thread
+ * because the correspondence of the core ID with that of
+ * the thread.
+ */
+PRIVATE struct thread * idle_threads = (KTHREAD_MASTER + 1);
+PRIVATE struct thread * user_threads = (KTHREAD_MASTER + SYS_THREAD_MAX);
+
+/**
+ * @name stacks.
+ */
+/**@{*/
+PRIVATE struct stack ustacks[THREAD_MAX];
+PRIVATE struct stack kstacks[THREAD_MAX];
+/**@}*/
+
+/**
+ * @brief Schedule queue.
+ */
+PRIVATE struct schedule_queue
+{
+	size_t size;
+	struct thread * head;
+	struct thread * tail;
+	struct semaphore sem;
+} sched_queue = {
+	.size = 0,
+	.head = NULL,
+	.tail = NULL,
+	.sem  = SEMAPHORE_INITIALIZER(0)
+};
 
 /*============================================================================*
  * thread_get_curr()                                                          *
@@ -91,20 +163,62 @@ PRIVATE spinlock_t lock_tm = SPINLOCK_UNLOCKED;
 * @returns A pointer to the thread that is running in the
 * underlying core.
 */
-PUBLIC struct thread *thread_get_curr(void)
+PUBLIC struct thread * thread_get_curr(void)
 {
-	int mycoreid; /* Core ID. */
+	int mycoreid;         /* Core ID.        */
+	struct thread * curr; /* Current Thread. */
 
+	curr     = NULL;
 	mycoreid = core_get_id();
 
 	for (int i = 0; i < KTHREAD_MAX; i++)
 	{
+		if (threads[i].coreid != mycoreid)
+			continue;
+
 		/* Found. */
-		if (threads[i].coreid == mycoreid)
+		if (threads[i].state == THREAD_RUNNING)
+			return (&threads[i]);
+
+		/* Possible. */
+		if (threads[i].state == THREAD_TERMINATED)
+			curr = (&threads[i]);
+	}
+
+	/* NULL pointer should not happen. */
+	return (curr);
+}
+
+/*============================================================================*
+ * thread_get()                                                               *
+ *============================================================================*/
+
+/**
+ * @brief Returns the target thread.
+ *
+ * The thread_get() function performs a linear search in the table of
+ * threads for the thread whose ID equals to @p tid.
+ *
+ * @param tid ID of the target thread.
+ *
+ * @returns Upon successful completion, a pointer to the target thread
+ * is returned. Upon failure, a null pointed is returned instead.
+ *
+ * @note This function is NOT thread safe.
+ */
+PRIVATE struct thread * thread_get(int tid)
+{
+	/* Sanity check. */
+	KASSERT(tid > KTHREAD_NULL_TID);
+
+	/* Search for target thread. */
+	for (int i = 0; i < KTHREAD_MAX; i++)
+	{
+		/* Found. */
+		if (threads[i].tid == tid)
 			return (&threads[i]);
 	}
 
-	/* Should not happen. */
 	return (NULL);
 }
 
@@ -124,22 +238,19 @@ PUBLIC struct thread *thread_get_curr(void)
  *
  * @note This function is NOT thread-safe.
  *
- * @author Pedro Henrique Penna
+ * @author Pedro Henrique Penna and João Vicente Souto
  */
-PRIVATE struct thread *thread_alloc(void)
+PRIVATE struct thread * thread_alloc(void)
 {
 	for (int i = 1; i < KTHREAD_MAX; i++)
 	{
 		/* Found. */
 		if (threads[i].state == THREAD_NOT_STARTED)
 		{
-			struct thread *new_thread;
-			new_thread = &threads[i];
-			new_thread->coreid = i;
-			new_thread->state = THREAD_STARTED;
+			threads[i].state = THREAD_STARTED;
 			nthreads++;
 
-			return (new_thread);
+			return (&threads[i]);
 		}
 	}
 
@@ -162,13 +273,218 @@ PRIVATE struct thread *thread_alloc(void)
  */
 PRIVATE void thread_free(struct thread *t)
 {
-	KASSERT(t >= &threads[0]);
-	KASSERT(t <= &threads[KTHREAD_MAX - 1]);
+	KASSERT(WITHIN(t, &threads[0], &threads[KTHREAD_MAX]));
 
 	t->coreid = -1;
-	t->state = THREAD_NOT_STARTED;
-	t->tid = KTHREAD_NULL_TID;
+	t->state  = THREAD_NOT_STARTED;
+	t->tid    = KTHREAD_NULL_TID;
 	nthreads--;
+}
+
+/*============================================================================*
+ * thread_schedule()                                                          *
+ *============================================================================*/
+
+/**
+* @brief Insert a new thread into a schedule queue.
+*
+* @param new_thread New thread to insert into @idle queue.
+*/
+PRIVATE void thread_schedule(struct thread * new_thread)
+{
+	/* Valid user thread. */
+	KASSERT(WITHIN(new_thread, &user_threads[0], &user_threads[THREAD_MAX]));
+
+	/* Is the queue empty? Uodate the head pointer. */
+	if (sched_queue.size == 0)
+		sched_queue.head = new_thread;
+
+	/* Update next pointer of the tail. */
+	else
+		sched_queue.tail->next = new_thread;
+
+	/* Update tail pointer. */
+	sched_queue.tail   = new_thread;
+	new_thread->next   = NULL;
+	new_thread->coreid = -1;
+
+	/* Counts the new thread. */
+	sched_queue.size++;
+
+	/* Notifies that is a new thread available. */
+	semaphore_up(&sched_queue.sem);
+}
+
+/*============================================================================*
+ * thread_switch_to()                                                         *
+ *============================================================================*/
+
+/**
+ * Switch between contexts.
+ */
+PRIVATE int thread_switch_to(struct context ** previous, struct context ** next)
+{
+	/* Invalid thread. */
+	if (thread_get_id(thread_get_curr()) == KTHREAD_MASTER_TID)
+		return (-EINVAL);
+
+	/* Invalid previous. */
+	if ((previous == NULL) || (!mm_is_kaddr(VADDR(previous))))
+		return (-EINVAL);
+
+	/* Will previous be overwritten? */
+	if (*previous != NULL)
+		return (-EINVAL);
+
+	/* Invalid next. */
+	if ((next == NULL) || (!mm_is_kaddr(VADDR(next))))
+		return (-EINVAL);
+
+	/* Invalid next context. */
+	if ((*next == NULL) || (!mm_is_kaddr(VADDR(*next))))
+		return (-EINVAL);
+
+	return (context_switch_to(previous, next));
+}
+
+/*============================================================================*
+ * thread_yield()                                                             *
+ *============================================================================*/
+
+/**
+* @brief Release the core to another thread.
+*
+* @returns Zero if it is a user thread, Non-zero if it is the master.
+*/
+PUBLIC int thread_yield(void)
+{
+	struct thread * idle; /* Schedule queue. */
+	struct thread * curr; /* Current Thread. */
+	struct thread * next; /* Next Thread.    */
+
+	curr = thread_get_curr();
+
+	/* Kernel thread do not yield. */
+	if (thread_get_id(curr) == KTHREAD_MASTER_TID)
+		return (-EINVAL);
+
+	idle = IDLE_THREAD(thread_get_coreid(curr));
+
+	spinlock_lock(&lock_tm);
+
+	/**
+	 * Gets next thread.
+	 */
+
+		/* Is there any user thread to schedule? */
+		if (sched_queue.size)
+		{
+			/* Gets next thread. */
+			next = sched_queue.head;
+
+			/* Consume user thread. */
+			sched_queue.head = next->next;
+			sched_queue.size--;
+
+			/* Configure the new htread. */
+			next->next   = NULL;
+			next->coreid = core_get_id();
+
+			if (curr->state != THREAD_TERMINATED)
+			{
+				/* Update thread states. */
+				curr->state = THREAD_STOPPED;
+
+				/* Make user thread schedulable. */
+				if (curr != idle)
+					thread_schedule(curr);
+			}
+		}
+
+		/* There are no other threads and I can continue. */
+		else if (curr->state != THREAD_TERMINATED)
+			next = curr;
+
+		/* I finish and the are no other threads. Switch to idle. */
+		else
+			next = idle;
+
+	/**
+	 * Release terminated thread (@see thread_exit).
+	 */
+
+		if (curr->state == THREAD_TERMINATED)
+		{
+			/* Sanity check. */
+			KASSERT(curr != idle && curr != next);
+
+			/* Release current thread. */
+			thread_free(curr);
+		}
+
+	/**
+	 * Set next thread to running state.
+	 */
+
+		next->state = THREAD_RUNNING;
+
+	spinlock_unlock(&lock_tm);
+
+	/* Current context must be NULL before switch to another. */
+	KASSERT(curr->ctx == NULL);
+
+		/* Switch context to the new thread. */
+		if (curr != next)
+			thread_switch_to(&curr->ctx, &next->ctx);
+
+	/* Restore context function must clean ctx variable. */
+	KASSERT(curr->ctx == NULL);
+
+	return (0);
+}
+/*============================================================================*
+ * thread_idle()                                                              *
+ *============================================================================*/
+
+/**
+* @brief Idle thread algorithm.
+*
+* @details This thread is scheduled when there is no user thread available.
+* The idle thread finish when it is wake up but there is no user thread to
+* schedule.
+*/
+PRIVATE NORETURN void thread_idle(void)
+{
+	struct thread * idle; /* Idle Thread.    */
+
+	idle = thread_get_curr();
+
+	KASSERT(WITHIN(idle, &idle_threads[0], &idle_threads[IDLE_THREAD_MAX]));
+
+	/* Lifecycle of idle thread. */
+	while (!tm_shutdown)
+	{
+		/* Waits a thread be available. */
+		semaphore_down(&sched_queue.sem);
+
+		/* Schedule user thread. */
+		KASSERT(thread_yield() == 0);
+	}
+
+	/* Indicates that the underlying core will be reset. */
+	KASSERT(core_release() == 0);
+
+		spinlock_lock(&lock_tm);
+			thread_free(idle);
+			cond_broadcast(&joincond[KERNEL_THREAD_ID(idle)]);
+		spinlock_unlock(&lock_tm);
+
+	/* No rollback after this point. */
+	/* Resets the underlying core. */
+	core_reset();
+
+	/* Never gets here. */
+	UNREACHABLE();
 }
 
 /*============================================================================*
@@ -187,65 +503,40 @@ PRIVATE void thread_free(struct thread *t)
  *
  * @see thread_join().
  *
- * @author Pedro Henrique Penna
+ * @author Pedro Henrique Penna and João Vicente Souto
  */
 PUBLIC NORETURN void thread_exit(void *retval)
 {
-	int mycoreid;
-	struct thread *curr_thread;
+	struct thread * curr;
 
 	UNUSED(retval);
 
-	/* Indicates that the underlying core will be reset. */
-	KASSERT(core_release() == 0);
+	/* Gets current thread information. */
+	curr = thread_get_curr();
 
-		curr_thread = thread_get_curr();
-		mycoreid = thread_get_coreid(curr_thread);
+	/* Valid thread. */
+	/* @TODO Do we need sure that only user thread will call thread_exit? */
+	KASSERT(WITHIN(curr, &user_threads[0], &user_threads[THREAD_MAX]));
 
-		spinlock_lock(&lock_tm);
-			thread_free(curr_thread);
-			cond_broadcast(&joincond[mycoreid]);
-		spinlock_unlock(&lock_tm);
+	/* Notifies thread exit. */
+	spinlock_lock(&lock_tm);
+		/**
+		 * To schedule another user thread without use idle thread has
+		 * intermediate, we need to indicate that the current thread will be
+		 * finished. So, setting the state to THREAD_TERMINATED, we can release
+		 * the thread structure inside the thread_yield where we schedule
+		 * another thread directly.
+		 */
+		curr->state = THREAD_TERMINATED;
 
-	/* No rollback after this point. */
-	/* Resets the underlying core. */
-	core_reset();
+		cond_broadcast(&joincond[KERNEL_THREAD_ID(curr)]);
+	spinlock_unlock(&lock_tm);
+
+	/* Switch to thread. */
+	thread_yield();
 
 	/* Never gets here. */
 	UNREACHABLE();
-}
-
-/*============================================================================*
- * thread_get()                                                               *
- *============================================================================*/
-
-/**
- * @brief Returns the target thread.
- *
- * The thread_get() function performs a linear search in the table of
- * threads for the thread whose ID equals to @p tid.
- *
- * @param tid ID of the target thread.
- *
- * @returns Upon successful completion, a pointer to the target thread
- * is returned. Upon failure, a null pointed is returned instead.
- *
- * @note This function is NOT thread safe.
- */
-PRIVATE struct thread *thread_get(int tid)
-{
-	/* Sanity check. */
-	KASSERT(tid > KTHREAD_NULL_TID);
-
-	/* Search for target thread. */
-	for (int i = 0; i < KTHREAD_MAX; i++)
-	{
-		/* Found. */
-		if (threads[i].tid == tid)
-			return (&threads[i]);
-	}
-
-	return (NULL);
 }
 
 /*============================================================================*
@@ -297,10 +588,11 @@ PRIVATE NORETURN void thread_start(void)
  */
 PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
 {
-	int ret;                   /* Return value.             */
-	int _tid;                  /* Unique thread identifier. */
-	struct thread *new_thread; /* New thread.               */
-	int ntrials = 0;           /* Trials realized.          */
+	int _tid;                   /* Unique thread identifier. */
+	int utid;                   /* Kernel thread ID.         */
+	struct stack * ustack;      /* User stack pointer.       */
+	struct stack * kstack;      /* Kernel stack pointer.     */
+	struct thread *new_thread;  /* New thread.               */
 
 	/* Sanity check. */
 	KASSERT(start != NULL);
@@ -318,13 +610,25 @@ PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
 
 		/* Get thread ID. */
 		_tid = next_tid++;
+		utid = USER_THREAD_ID(new_thread);
 
 		/* Initialize thread structure. */
 		new_thread->tid   = _tid;
-		new_thread->state = THREAD_RUNNING;
 		new_thread->arg   = arg;
 		new_thread->start = start;
 		new_thread->next  = NULL;
+
+		/* Allocate stacks to the thread. */
+		ustack = &ustacks[utid];
+		kstack = &kstacks[utid];
+		kmemset((void *) ustack, 0, sizeof(struct stack));
+		kmemset((void *) kstack, 0, sizeof(struct stack));
+
+		/* Create initial context of the thread. */
+		KASSERT((new_thread->ctx = context_create(thread_start, ustack, kstack)) != NULL);
+
+		/* Puts thread in the schedule queue. */
+		thread_schedule(new_thread);
 
 	spinlock_unlock(&lock_tm);
 
@@ -335,30 +639,7 @@ PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
 		dcache_invalidate();
 	}
 
-	/*
-	 * We should do some busy waitting here. When the kernel is under
-	 * stress, there is a chance that we allocate a core that is in
-	 * RUNNING state. That happens because a previous thread running
-	 * on this core has existed and we have joined it, but the
-	 * terminated thread hasn't had enough time to issue issue a
-	 * core_reset().
-	 */
-	do
-	{
-		ret = core_start(thread_get_coreid(new_thread), thread_start);
-		ntrials++;
-	} while (ret == -EBUSY && ntrials < THREAD_CREATE_NTRIALS);
-
-
-	/* Rollback. */
-	if (ret != 0)
-	{
-		spinlock_lock(&lock_tm);
-			thread_free(new_thread);
-		spinlock_unlock(&lock_tm);
-	}
-
-	return (ret);
+	return (0);
 }
 
 /*============================================================================*
@@ -386,7 +667,8 @@ PUBLIC int thread_join(int tid, void **retval)
 	/* Sanity check. */
 	KASSERT(tid > KTHREAD_NULL_TID);
 	KASSERT(tid != thread_get_id(thread_get_curr()));
-	KASSERT(tid != KTHREAD_MASTER_TID);
+
+	KASSERT(tid != KTHREAD_MASTER_TID); //! @TODO Can idle threads joinable?
 
 	UNUSED(retval);
 
@@ -395,16 +677,12 @@ PUBLIC int thread_join(int tid, void **retval)
 		/* Wait for thread termination. */
 		if ((t = thread_get(tid)) != NULL)
 		{
-			int coreid;
-
-			coreid = thread_get_coreid(t);
-
 			/*
 			 * The target thread is still running,
 			 * so we have to block and wait for it.
 			 */
-			if (t->state == THREAD_RUNNING)
-				cond_wait(&joincond[coreid], &lock_tm);
+			if (t->state != THREAD_NOT_STARTED && t->state != THREAD_TERMINATED)
+				cond_wait(&joincond[KERNEL_THREAD_ID(t)], &lock_tm);
 		}
 
 		/*
@@ -420,4 +698,64 @@ PUBLIC int thread_join(int tid, void **retval)
 }
 
 #endif /* CLUSTER_IS_MULTICORE */
+
+/*============================================================================*
+ * thread_init()                                                              *
+ *============================================================================*/
+
+/**
+ * @brief Initialize thread system.
+ */
+PUBLIC void thread_init(void)
+{
+#if (CLUSTER_IS_MULTICORE)
+
+	int ret;
+	int ntrials;
+	struct thread * idle;
+
+	/* Sanity checks. */
+	KASSERT(IDLE_THREAD_MAX == (SYS_THREAD_MAX - 1));
+	KASSERT(IDLE_THREAD_MAX == (CORES_NUM - 1));
+	KASSERT(THREAD_MAX == THREAD_MAX);
+	KASSERT(nthreads == 1);
+
+	for (int coreid = 1; coreid <= IDLE_THREAD_MAX; coreid++)
+	{
+		KASSERT((idle = thread_alloc()) != NULL);
+
+		/* Get thread ID. */
+		KASSERT((idle->tid = next_tid++) == coreid);
+
+		/* Initialize thread structure. */
+		idle->coreid = coreid;
+		idle->state  = THREAD_RUNNING;
+		idle->arg    = NULL;
+		idle->next   = NULL;
+		idle->start  = (void *(*)(void*)) thread_idle;
+
+		/* Thread id must be the same of coreid. */
+		KASSERT(KERNEL_THREAD_ID(idle) == thread_get_coreid(idle));
+
+		/*
+		 * We should do some busy waitting here. When the kernel is under
+		 * stress, there is a chance that we allocate a core that is in
+		 * RUNNING state. That happens because a previous thread running
+		 * on this core has existed and we have joined it, but the
+		 * terminated thread hasn't had enough time to issue issue a
+		 * core_reset().
+		 */
+		ntrials = 0;
+		do
+		{
+			ret = core_start(coreid, thread_idle);
+			ntrials++;
+		} while (ret == -EBUSY && ntrials < THREAD_CREATE_NTRIALS);
+
+		/* Idle successfuly created. */
+		KASSERT(ret == 0);
+	}
+
+#endif /* CLUSTER_IS_MULTICORE */
+}
 
