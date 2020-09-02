@@ -97,6 +97,8 @@ PUBLIC void kmain(int argc, const char *argv[])
 	network_setup();
 #endif
 
+	thread_init();
+
 #if (CLUSTER_IS_MULTICORE)
 	thread_create(&tid, init, NULL);
 	while (true)
