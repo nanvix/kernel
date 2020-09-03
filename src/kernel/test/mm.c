@@ -125,8 +125,6 @@ PRIVATE void test_stress_frame_translation(void)
 	}
 }
 
-#if defined(__ENABLE_STRESS_TESTS)
-
 /**
  * @brief Stress Test: Page Frame Allocation Overflow
  *
@@ -162,8 +160,6 @@ PRIVATE void test_stress_frame_allocation(void)
 		KASSERT(frame_free(frame_id_to_num(i)) == 0);
 }
 
-#endif
-
 /**
  * @brief Page Frame unit tests.
  *
@@ -184,10 +180,8 @@ PRIVATE struct
 	{ test_fault_frame_bad_free,             "fault",  "bad frame release                " },
 	{ test_fault_frame_double_free,          "fault",  "double frame release             " },
 	{ test_stress_frame_translation,         "stress", "frame address translation        " },
-#if defined(__ENABLE_STRESS_TESTS)
 	{ test_stress_frame_allocation,          "stress", "frame allocation                 " },
 	{ test_stress_frame_allocation_overflow, "stress", "frame allocation overflow        " },
-#endif
 	{ NULL,                                   NULL,     NULL                               },
 };
 
