@@ -338,8 +338,6 @@ PRIVATE void test_stress_kpage_translation(void)
 	}
 }
 
-#if defined(__ENABLE_STRESS_TESTS)
-
 /**
  * @brief Stress Test: Kernel Page Allocation Overflow
  *
@@ -410,8 +408,6 @@ PRIVATE void test_stress_kpage_write(void)
 	}
 }
 
-#endif
-
 /**
  * @brief Kernel Pool unit tests.
  *
@@ -433,11 +429,9 @@ PRIVATE struct
 	{ test_fault_kpage_bad_free,             "fault",  "kernel page bad release        " },
 	{ test_fault_kpage_double_free,          "fault",  "kernel page double release     " },
 	{ test_stress_kpage_translation,         "stress", "kernel page address translation" },
-#if defined(__ENABLE_STRESS_TESTS)
 	{ test_stress_kpage_allocation,          "stress", "kernel page allocation         " },
 	{ test_stress_kpage_allocation_overflow, "stress", "kernel page allocation overflow" },
 	{ test_stress_kpage_write,               "stress", "kernel page write              " },
-#endif
 	{ NULL,                                   NULL,     NULL                             },
 };
 
