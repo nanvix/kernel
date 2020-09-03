@@ -150,6 +150,11 @@ PRIVATE struct schedule_queue
 	.sem  = SEMAPHORE_INITIALIZER(0)
 };
 
+/**
+ * @brief Fence to synchronize the idle thread in the initialization.
+ */
+PRIVATE spinlock_t idle_fence;
+
 /*============================================================================*
  * thread_get_curr()                                                          *
  *============================================================================*/
@@ -461,6 +466,26 @@ PRIVATE NORETURN void thread_idle(void)
 
 	KASSERT(WITHIN(idle, &idle_threads[0], &idle_threads[IDLE_THREAD_MAX]));
 
+	/* Ensure that the first thread will get the fisrt user thread. */
+	if (idle == &idle_threads[0])
+	{
+		/* Waits a thread be available. */
+		semaphore_down(&sched_queue.sem);
+
+		/* Release fence.. */
+		spinlock_unlock(&idle_fence);
+
+		/* Schedule user thread. */
+		KASSERT(thread_yield() == 0);
+	}
+
+	/* Waits first thread. */
+	else
+	{
+		spinlock_lock(&idle_fence);
+		spinlock_unlock(&idle_fence);
+	}
+
 	/* Lifecycle of idle thread. */
 	while (!tm_shutdown)
 	{
@@ -719,6 +744,10 @@ PUBLIC void thread_init(void)
 	KASSERT(IDLE_THREAD_MAX == (CORES_NUM - 1));
 	KASSERT(THREAD_MAX == THREAD_MAX);
 	KASSERT(nthreads == 1);
+
+	/* Initialize the fence for idle threads. */
+	spinlock_init(&idle_fence);
+	spinlock_lock(&idle_fence);
 
 	for (int coreid = 1; coreid <= IDLE_THREAD_MAX; coreid++)
 	{
