@@ -28,19 +28,12 @@
 #include <nanvix/const.h>
 #include <posix/errno.h>
 
+#if CORE_SUPPORTS_MULTITHREADING
+
 /**
  * @brief Number of thread_create trials.
  */
 #define THREAD_CREATE_NTRIALS 5
-
-/**
- * @name Number of threads.
- *
- * @details Master + Idles == SYS_THREAD_MAX.
- */
-/**@{*/
-#define IDLE_THREAD_MAX (SYS_THREAD_MAX - 1)
-/**@}*/
 
 /*
  * Import definitions.
@@ -113,6 +106,13 @@ PRIVATE spinlock_t lock_tm = SPINLOCK_UNLOCKED;
  * @warning Not use core 0 because it is not a idle thread.
  */
 #define IDLE_THREAD(coreid) (&threads[coreid])
+
+/**
+ * @brief Number of idle threads.
+ *
+ * @details Master + Idles == SYS_THREAD_MAX.
+ */
+#define IDLE_THREAD_MAX (SYS_THREAD_MAX - 1)
 
 /**
  * @brief Scheduler queue per core/idle thread.
@@ -787,4 +787,6 @@ PUBLIC void thread_init(void)
 
 #endif /* CLUSTER_IS_MULTICORE */
 }
+
+#endif /* CORE_SUPPORTS_MULTITHREADING */
 
