@@ -27,6 +27,11 @@
 #include <nanvix/hlib.h>
 #include <posix/errno.h>
 
+/**
+ * @brief Defined Number of Pages for Stress Tests
+ */
+#define NUM_UPAGES_TEST 64
+
 /*============================================================================*
  * Frame Allocator Unit Tests                                                 *
  *============================================================================*/
@@ -125,8 +130,6 @@ PRIVATE void test_stress_frame_translation(void)
 	}
 }
 
-#if defined(__ENABLE_STRESS_TESTS)
-
 /**
  * @brief Stress Test: Page Frame Allocation Overflow
  *
@@ -162,8 +165,6 @@ PRIVATE void test_stress_frame_allocation(void)
 		KASSERT(frame_free(frame_id_to_num(i)) == 0);
 }
 
-#endif
-
 /**
  * @brief Page Frame unit tests.
  *
@@ -184,10 +185,8 @@ PRIVATE struct
 	{ test_fault_frame_bad_free,             "fault",  "bad frame release                " },
 	{ test_fault_frame_double_free,          "fault",  "double frame release             " },
 	{ test_stress_frame_translation,         "stress", "frame address translation        " },
-#if defined(__ENABLE_STRESS_TESTS)
 	{ test_stress_frame_allocation,          "stress", "frame allocation                 " },
 	{ test_stress_frame_allocation_overflow, "stress", "frame allocation overflow        " },
-#endif
 	{ NULL,                                   NULL,     NULL                               },
 };
 
@@ -344,8 +343,6 @@ PRIVATE void test_stress_kpage_translation(void)
 	}
 }
 
-#if defined(__ENABLE_STRESS_TESTS)
-
 /**
  * @brief Stress Test: Kernel Page Allocation Overflow
  *
@@ -416,8 +413,6 @@ PRIVATE void test_stress_kpage_write(void)
 	}
 }
 
-#endif
-
 /**
  * @brief Kernel Pool unit tests.
  *
@@ -439,11 +434,9 @@ PRIVATE struct
 	{ test_fault_kpage_bad_free,             "fault",  "kernel page bad release        " },
 	{ test_fault_kpage_double_free,          "fault",  "kernel page double release     " },
 	{ test_stress_kpage_translation,         "stress", "kernel page address translation" },
-#if defined(__ENABLE_STRESS_TESTS)
 	{ test_stress_kpage_allocation,          "stress", "kernel page allocation         " },
 	{ test_stress_kpage_allocation_overflow, "stress", "kernel page allocation overflow" },
 	{ test_stress_kpage_write,               "stress", "kernel page write              " },
-#endif
 	{ NULL,                                   NULL,     NULL                             },
 };
 
@@ -562,41 +555,6 @@ PRIVATE void test_fault_upage_double_free(void)
 	KASSERT(upage_free(root_pgdir, UBASE_VIRT) == -EFAULT);
 }
 
-#if defined(__ENABLE_STRESS_TESTS)
-
-/**
- * @brief Stress Test: User Page Allocation Overflow
- *
- * @author Pedro Henrique Penna
- */
-PRIVATE void test_stress_upage_allocation_overflow(void)
-{
-	int expected;
-	unsigned num_upages;
-
-	if (NUM_KPAGES*(PAGE_SIZE/PTE_SIZE) < NUM_UFRAMES)
-	{
-		num_upages = NUM_KPAGES*(PAGE_SIZE/PTE_SIZE);
-		expected = -EFAULT;
-	}
-	else
-	{
-		num_upages = NUM_UFRAMES;
-		expected = -EAGAIN;
-	}
-
-	/* Allocate pages. */
-	for (unsigned i = 0; i < num_upages; i++)
-		KASSERT(upage_alloc(root_pgdir, UBASE_VIRT + i*PAGE_SIZE) == 0);
-
-	/* Fail to allocate an extra page. */
-	KASSERT(upage_alloc(root_pgdir, UBASE_VIRT + NUM_UPAGES*PAGE_SIZE) == expected);
-
-	/* Release pages. */
-	for (unsigned i = 0; i < num_upages; i++)
-		KASSERT(upage_free(root_pgdir, UBASE_VIRT + i*PAGE_SIZE) == 0);
-}
-
 /**
  * @brief Stress Test: User Page Allocation
  *
@@ -604,17 +562,12 @@ PRIVATE void test_stress_upage_allocation_overflow(void)
  */
 PRIVATE void test_stress_upage_allocation(void)
 {
-	unsigned num_upages;
-
-	num_upages = (NUM_KPAGES*(PAGE_SIZE/PTE_SIZE) < NUM_UFRAMES) ?
-		NUM_KPAGES*(PAGE_SIZE/PTE_SIZE) : NUM_UFRAMES;
-
 	/* Allocate pages. */
-	for (unsigned i = 0; i < num_upages; i++)
+	for (unsigned i = 0; i < NUM_UPAGES_TEST; i++)
 		KASSERT(upage_alloc(root_pgdir, UBASE_VIRT + i*PAGE_SIZE) == 0);
 
 	/* Release pages. */
-	for (unsigned i = 0; i < num_upages; i++)
+	for (unsigned i = 0; i < NUM_UPAGES_TEST; i++)
 		KASSERT(upage_free(root_pgdir, UBASE_VIRT + i*PAGE_SIZE) == 0);
 }
 
@@ -625,18 +578,11 @@ PRIVATE void test_stress_upage_allocation(void)
  */
 PRIVATE void test_stress_upage_write(void)
 {
-	unsigned num_upages;
 	unsigned *upg;
 	const unsigned magic = 0xdeadbeef;
 
-	#if (!CORE_HAS_TLB_HW)
-	num_upages = NUM_UPAGES/TLB_LENGTH;
-	#else
-	num_upages = NUM_UPAGES;
-	#endif
-
 	/* Allocate pages. */
-	for (unsigned i = 0; i < num_upages; i++)
+	for (unsigned i = 0; i < NUM_UPAGES_TEST; i++)
 	{
 		upg = (void *)(UBASE_VIRT + i*PAGE_SIZE);
 
@@ -648,7 +594,7 @@ PRIVATE void test_stress_upage_write(void)
 	}
 
 	/* Release pages. */
-	for (unsigned i = 0; i < num_upages; i++)
+	for (unsigned i = 0; i < NUM_UPAGES_TEST; i++)
 	{
 		upg = (void *)(UBASE_VIRT + i*PAGE_SIZE);
 
@@ -659,8 +605,6 @@ PRIVATE void test_stress_upage_write(void)
 		KASSERT(upage_free(root_pgdir, VADDR(upg)) == 0);
 	}
 }
-
-#endif
 
 /**
  * @brief User Page Pool unit tests.
@@ -682,11 +626,8 @@ PRIVATE struct
 	{ test_fault_upage_invalid_free,         "fault",  "user page invalid free       " },
 	{ test_fault_upage_bad_free,             "fault",  "user page bad free           " },
 	{ test_fault_upage_double_free,          "fault",  "user page double free        " },
-#if defined(__ENABLE_STRESS_TESTS)
 	{ test_stress_upage_allocation,          "stress", "user page allocation         " },
-	{ test_stress_upage_allocation_overflow, "stress", "user page allocation overflow" },
 	{ test_stress_upage_write,               "stress", "user page write              " },
-#endif
 	{ NULL,                                   NULL,     NULL                           },
 };
 
