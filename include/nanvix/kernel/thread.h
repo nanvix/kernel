@@ -41,14 +41,30 @@
  *============================================================================*/
 
 	/**
-	 * @brief Maximum number of kernel threads.
+	 * @brief Maximum number of system threads.
+	 *
+	 * @details One master thread to respond syscall requests plus
+	 * (CORES_NUM - 1) idle threads to occupy the core idle time.
 	 */
-	#define KTHREAD_MAX CORES_NUM
+	#if CORE_SUPPORTS_MULTITHREADING
+		#define SYS_THREAD_MAX CORES_NUM
+	#else
+		#define SYS_THREAD_MAX 1
+	#endif
 
 	/**
 	 * @brief Maximum number of user threads.
 	 */
-	#define THREAD_MAX (KTHREAD_MAX - 1)
+	#if CORE_SUPPORTS_MULTITHREADING
+		#define THREAD_MAX (2 * (SYS_THREAD_MAX - 1))
+	#else
+		#define THREAD_MAX (CORES_NUM - SYS_THREAD_MAX)
+	#endif
+
+	/**
+	 * @brief Maximum number of system threads.
+	 */
+	#define KTHREAD_MAX (SYS_THREAD_MAX + THREAD_MAX)
 
 	/**
 	 * @name Thread States
@@ -58,7 +74,8 @@
 	#define THREAD_STARTED     1 /**< Started     */
 	#define THREAD_RUNNING     2 /**< Running     */
 	#define THREAD_SLEEPING    3 /**< Sleeping    */
-	#define THREAD_TERMINATED  4 /**< Terminated  */
+	#define THREAD_STOPPED     4 /**< Stopped     */
+	#define THREAD_TERMINATED  5 /**< Terminated  */
 	/**@}*/
 
 	/**
@@ -81,6 +98,7 @@
 		int state;             /**< State.                  */
 		void *arg;             /**< Argument.               */
 		void *(*start)(void*); /**< Starting routine.       */
+		struct context *ctx;   /**< Preempted context.      */
 		struct thread *next;   /**< Next thread in a queue. */
 	};
 
@@ -90,24 +108,18 @@
 	EXTERN struct thread threads[KTHREAD_MAX];
 
 	/**
-	 * @brief NULL thread ID.
+	 * @name Thread IDs.
 	 */
-	#define KTHREAD_NULL_TID -1
+	/**@{*/
+	#define KTHREAD_NULL_TID               -1 /**< ID of NULL thread.   */
+	#define KTHREAD_MASTER_TID              0 /**< ID of master thread. */
+	#define KTHREAD_LEADER_TID SYS_THREAD_MAX /**< ID of leader thread. */
+	/**@}*/
 
 	/**
 	 * @brief Master thread.
 	 */
 	#define KTHREAD_MASTER (&threads[0])
-
-	/**
-	 * @brief ID of master thread.
-	 */
-	#define KTHREAD_MASTER_TID 0
-
-	/**
-	 * @brief ID of leader thread.
-	 */
-	#define KTHREAD_LEADER_TID 1
 
 	/**
 	 * @brief Gets the currently running thread.
@@ -202,6 +214,16 @@
 	 * @param t Target thread.
 	 */
 	EXTERN void thread_wakeup(struct thread *t);
+
+	/**
+	 * @brief Release the core to another thread.
+	 */
+	EXTERN int thread_yield(void);
+
+	/**
+	 * @brief Initialize thread system.
+	 */
+	EXTERN void thread_init(void);
 
 /*============================================================================*
  *                        Condition Variables Facility                        *

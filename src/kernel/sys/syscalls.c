@@ -416,6 +416,10 @@ PUBLIC int do_kcall(
 			);
 			break;
 
+		case NR_thread_yield:
+			ret = kernel_thread_yield();
+			break;
+
 		case NR_sleep:
 			ret = kernel_sleep();
 			break;
