@@ -36,7 +36,7 @@
  */
 PUBLIC int kernel_thread_get_id(void)
 {
-	return (thread_get_id(thread_get_curr()));
+	return (thread_get_curr_id());
 }
 
 #if (THREAD_MAX > 1)
@@ -112,7 +112,7 @@ PUBLIC int kernel_thread_join(int tid, void **retval)
 #endif
 
 	/* Cannot join itself. */
-	if (tid == thread_get_id(thread_get_curr()))
+	if (tid == thread_get_curr_id())
 		return (-EINVAL);
 
 	/* Cannot join master thread. */
@@ -134,7 +134,7 @@ PUBLIC int kernel_thread_join(int tid, void **retval)
 PUBLIC int kernel_thread_yield(void)
 {
 	/* Invalid thread. */
-	if (thread_get_id(thread_get_curr()) == KTHREAD_MASTER_TID)
+	if (thread_get_curr_id() == KTHREAD_MASTER_TID)
 		return (-EINVAL);
 
 #if CORE_SUPPORTS_MULTITHREADING

@@ -330,7 +330,7 @@ PRIVATE void thread_schedule(struct thread * new_thread)
 PRIVATE int thread_switch_to(struct context ** previous, struct context ** next)
 {
 	/* Invalid thread. */
-	if (thread_get_id(thread_get_curr()) == KTHREAD_MASTER_TID)
+	if (thread_get_curr_id() == KTHREAD_MASTER_TID)
 		return (-EINVAL);
 
 	/* Invalid previous. */
@@ -691,7 +691,7 @@ PUBLIC int thread_join(int tid, void **retval)
 
 	/* Sanity check. */
 	KASSERT(tid > KTHREAD_NULL_TID);
-	KASSERT(tid != thread_get_id(thread_get_curr()));
+	KASSERT(tid != thread_get_curr_id());
 
 	KASSERT(tid != KTHREAD_MASTER_TID); //! @TODO Can idle threads joinable?
 
@@ -789,4 +789,3 @@ PUBLIC void thread_init(void)
 }
 
 #endif /* CORE_SUPPORTS_MULTITHREADING */
-
