@@ -172,6 +172,14 @@
 	}
 
 	/**
+	 * @brief Gets the current running thread id
+	 */
+	static inline int thread_get_curr_id(void)
+	{
+		return (thread_get_id(thread_get_curr()));
+	}
+	
+	/**
 	 * @brief Creates a thread.
 	 *
 	 * @param tid   Place to store the ID of the thread.
