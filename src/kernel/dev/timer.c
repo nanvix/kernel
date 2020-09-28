@@ -22,59 +22,27 @@
  * SOFTWARE.
  */
 
-#include <nanvix/hal.h>
-#include <nanvix/const.h>
-#include <nanvix/kernel/timer.h>
+ #include <nanvix/kernel/timer.h>
 
 /**
- * @brief Timer frequency.
+ * @brief Global clock error
  */
-#ifdef __optimsoc__
-#define TIMER_FREQ 30
-#else
-#define TIMER_FREQ 32
-#endif
+PRIVATE uint64_t clock_error;
 
 /**
- * @brief Timer interrupts since system initialization.
+ * @brief Returns global clock error
  */
-PRIVATE unsigned ticks = 0;
-
-/**
- * A public tick counter that can be exported and used by other files.
- * Used in src/lwip/src/arch/sys_arch.c
- */
-unsigned lwip_now = 0;
-
-/**
- * @brief Handles a timer interrupt.
- *
- * @param num Number of interrupt (currently unused).
- */
-PRIVATE void do_timer(int num)
+PUBLIC uint64_t get_clock_error(void)
 {
-	UNUSED(num);
-	if (core_get_id() == 0)
-	{
-		ticks++;
-		lwip_now++;
-		dcache_invalidate();
-	}
+	return clock_error;
 }
 
 /**
- * Initializes the device management subsystem.
+ * @brief Initializes global clock error
  */
-PUBLIC void dev_init(void)
+PUBLIC void clock_error_init(void)
 {
-	timer_init(TIMER_FREQ);
-	KASSERT(interrupt_register(INTERRUPT_TIMER, do_timer) == 0);
-	clock_error_init();
+	uint64_t t1 = clock_read();
+	uint64_t t2 = clock_read();
+	clock_error = (t2 - t1);
 }
-
-// 	/* Only initialize the network device here if you are not using lwip.
-// 	If you are using lwip, the network device will be initialized
-// 	the with netif_add function*/
-// #if defined(__qemu_x86__) || defined(__qemu_openrisc__)
-// 	// dev_net_init(NULL);
-// #endif
