@@ -36,7 +36,7 @@
  */
 PUBLIC int kernel_thread_get_id(void)
 {
-	return (thread_get_id(thread_get_curr()));
+	return (thread_get_curr_id());
 }
 
 #if (THREAD_MAX > 1)
@@ -112,14 +112,36 @@ PUBLIC int kernel_thread_join(int tid, void **retval)
 #endif
 
 	/* Cannot join itself. */
-	if (tid == thread_get_id(thread_get_curr()))
+	if (tid == thread_get_curr_id())
 		return (-EINVAL);
 
 	/* Cannot join master thread. */
-	if (tid == KTHREAD_MASTER_TID)
+	if (WITHIN(tid, 0, SYS_THREAD_MAX))
 		return (-EINVAL);
 
 	return (thread_join(tid, retval));
+}
+
+/*============================================================================*
+ * kernel_thread_yield()                                                      *
+ *============================================================================*/
+
+/**
+ * @see thread_yield().
+ *
+ * @retval -EINVAL Failed to release the core.
+ */
+PUBLIC int kernel_thread_yield(void)
+{
+	/* Invalid thread. */
+	if (thread_get_curr_id() == KTHREAD_MASTER_TID)
+		return (-EINVAL);
+
+#if CORE_SUPPORTS_MULTITHREADING
+	return (thread_yield());
+#else
+	return (-ENOSYS);
+#endif
 }
 
 #endif

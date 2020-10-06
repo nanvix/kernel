@@ -27,6 +27,8 @@
 #include <nanvix/const.h>
 #include <posix/errno.h>
 
+#if !CORE_SUPPORTS_MULTITHREADING
+
 /**
  * @brief Number of thread_create trials.
  */
@@ -385,7 +387,7 @@ PUBLIC int thread_join(int tid, void **retval)
 
 	/* Sanity check. */
 	KASSERT(tid > KTHREAD_NULL_TID);
-	KASSERT(tid != thread_get_id(thread_get_curr()));
+	KASSERT(tid != thread_get_curr_id());
 	KASSERT(tid != KTHREAD_MASTER_TID);
 
 	UNUSED(retval);
@@ -421,3 +423,16 @@ PUBLIC int thread_join(int tid, void **retval)
 
 #endif /* CLUSTER_IS_MULTICORE */
 
+/*============================================================================*
+ * thread_init()                                                              *
+ *============================================================================*/
+
+/**
+ * @brief Dummy Initialize thread system.
+ */
+PUBLIC void thread_init(void)
+{
+
+}
+
+#endif /* "CORE_SUPPORTS_MULTITHREADING */
