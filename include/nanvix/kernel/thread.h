@@ -55,7 +55,13 @@
 	/**
 	 * @brief Maximum number of user threads.
 	 */
-	#if CORE_SUPPORTS_MULTITHREADING
+	#if CORE_SUPPORTS_MULTITHREADING && defined(__mppa256__)
+		#ifdef __k1bio__
+			#define THREAD_MAX 8
+		#else
+			#define THREAD_MAX 24
+		#endif
+	#elif CORE_SUPPORTS_MULTITHREADING && !defined(__mppa256__)
 		#define THREAD_MAX (2 * (SYS_THREAD_MAX - 1))
 	#else
 		#define THREAD_MAX (CORES_NUM - SYS_THREAD_MAX)
@@ -76,6 +82,7 @@
 	#define THREAD_SLEEPING    3 /**< Sleeping    */
 	#define THREAD_STOPPED     4 /**< Stopped     */
 	#define THREAD_TERMINATED  5 /**< Terminated  */
+	#define THREAD_ZOMBIE      6 /**< Zombie      */
 	/**@}*/
 
 	/**
@@ -178,7 +185,7 @@
 	{
 		return (thread_get_id(thread_get_curr()));
 	}
-	
+
 	/**
 	 * @brief Creates a thread.
 	 *
