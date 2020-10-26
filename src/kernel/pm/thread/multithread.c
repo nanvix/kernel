@@ -27,6 +27,7 @@
 #include <nanvix/kernel/thread.h>
 #include <nanvix/const.h>
 #include <posix/errno.h>
+#include "common.h"
 
 #if CORE_SUPPORTS_MULTITHREADING
 
@@ -565,8 +566,6 @@ PUBLIC NORETURN void thread_exit(void *retval)
 {
 	struct thread * curr;
 
-	UNUSED(retval);
-
 	/* Gets current thread information. */
 	curr = thread_get_curr();
 
@@ -576,6 +575,10 @@ PUBLIC NORETURN void thread_exit(void *retval)
 
 	/* Notifies thread exit. */
 	spinlock_lock(&lock_tm);
+
+		/* Saves the retval of current thread. */
+		thread_save_retval(retval, curr);
+
 		/**
 		 * To schedule another user thread without use idle thread has
 		 * intermediate, we need to indicate that the current thread will be
@@ -585,7 +588,9 @@ PUBLIC NORETURN void thread_exit(void *retval)
 		 */
 		curr->state = THREAD_TERMINATED;
 
+		/* Notify waiting threads. */
 		cond_broadcast(&joincond[KERNEL_THREAD_ID(curr)]);
+
 	spinlock_unlock(&lock_tm);
 
 	/* Switch to thread. */
@@ -749,8 +754,6 @@ PUBLIC int thread_join(int tid, void **retval)
 
 	KASSERT(tid != KTHREAD_MASTER_TID); //! @TODO Can idle threads joinable?
 
-	UNUSED(retval);
-
 	spinlock_lock(&lock_tm);
 
 		/* Wait for thread termination. */
@@ -766,12 +769,19 @@ PUBLIC int thread_join(int tid, void **retval)
 				cond_wait(&joincond[KERNEL_THREAD_ID(t)], &lock_tm);
 		}
 
-		/*
+		/**
 		 * Thread IDs are incremented by next_id. So, if we want to know
 		 * if the @p tid is valid and has already left, just check if it
 		 * is less than the next_tid.
 		 */
 		ret = (tid < next_tid) ? 0 : (-EINVAL);
+
+		/**
+		 * This prevents the thread from returning an invalid value.
+		 * This if is used guarante that the the @p ret is valid
+		 */
+		if (ret == 0)
+			thread_search_retval(retval, tid);
 
 	spinlock_unlock(&lock_tm);
 
