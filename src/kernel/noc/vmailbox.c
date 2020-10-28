@@ -299,7 +299,17 @@ PUBLIC int do_vmailbox_awrite(int mbxid, const void * buffer, size_t size)
  */
 PUBLIC int do_vmailbox_wait(int mbxid)
 {
-	return (communicator_wait(&vmailboxes[mbxid]));
+	int ret; /* Return value. */
+
+	/* Wait for the operation to complete. */
+	if ((ret = communicator_wait(&vmailboxes[mbxid])) == ACTIVE_COMM_SUCCESS)
+	{
+		/* Reset remote. */
+		if (resource_is_readable(&vmailboxes[mbxid].resource))
+			vmailboxes[mbxid].config.remote_addr = (-1);
+	}
+
+	return (ret);
 }
 
 /*============================================================================*
