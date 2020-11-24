@@ -23,9 +23,11 @@
  */
 
 #include <nanvix/hal.h>
+#include <nanvix/kernel/mm.h>
 #include <nanvix/kernel/thread.h>
 #include <nanvix/const.h>
 #include <posix/errno.h>
+#include "common.h"
 
 #if !CORE_SUPPORTS_MULTITHREADING
 
@@ -196,8 +198,6 @@ PUBLIC NORETURN void thread_exit(void *retval)
 	int mycoreid;
 	struct thread *curr_thread;
 
-	UNUSED(retval);
-
 	/* Indicates that the underlying core will be reset. */
 	KASSERT(core_release() == 0);
 
@@ -205,8 +205,16 @@ PUBLIC NORETURN void thread_exit(void *retval)
 		mycoreid = thread_get_coreid(curr_thread);
 
 		spinlock_lock(&lock_tm);
+
+			/* Saves the retval of current thread. */
+			thread_save_retval(retval, curr_thread);
+
+			/* Release thread structure. */
 			thread_free(curr_thread);
+
+			/* Notify waiting threads. */
 			cond_broadcast(&joincond[mycoreid]);
+
 		spinlock_unlock(&lock_tm);
 
 	/* No rollback after this point. */
@@ -390,8 +398,6 @@ PUBLIC int thread_join(int tid, void **retval)
 	KASSERT(tid != thread_get_curr_id());
 	KASSERT(tid != KTHREAD_MASTER_TID);
 
-	UNUSED(retval);
-
 	spinlock_lock(&lock_tm);
 
 		/* Wait for thread termination. */
@@ -409,12 +415,19 @@ PUBLIC int thread_join(int tid, void **retval)
 				cond_wait(&joincond[coreid], &lock_tm);
 		}
 
-		/*
+		/**
 		 * Thread IDs are incremented by next_id. So, if we want to know
 		 * if the @p tid is valid and has already left, just check if it
 		 * is less than the next_tid.
 		 */
 		ret = (tid < next_tid) ? 0 : (-EINVAL);
+
+		/**
+		 * This prevents the thread from returning an invalid value.
+		 * This if is used guarante that the the @p retval is valid
+		 */
+		if (ret == 0)
+			thread_search_retval(retval, tid);
 
 	spinlock_unlock(&lock_tm);
 

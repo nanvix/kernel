@@ -53,6 +53,11 @@
 	#endif
 
 	/**
+ 	* @brief Size of the buffer with exiting values.
+ 	*/
+	#define KTHREAD_EXIT_VALUE_NUM (3 * KTHREAD_MAX)
+	
+	/**
 	 * @brief Maximum number of user threads.
 	 */
 	#if CORE_SUPPORTS_MULTITHREADING && defined(__mppa256__)
