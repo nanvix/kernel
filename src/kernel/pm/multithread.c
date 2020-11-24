@@ -130,8 +130,8 @@ PRIVATE struct thread * user_threads = (KTHREAD_MASTER + SYS_THREAD_MAX);
  * @name stacks.
  */
 /**@{*/
-PRIVATE struct stack ustacks[THREAD_MAX];
-PRIVATE struct stack kstacks[THREAD_MAX];
+PRIVATE struct stack *ustacks[THREAD_MAX];
+PRIVATE struct stack *kstacks[THREAD_MAX];
 /**@}*/
 
 /**
@@ -228,6 +228,38 @@ PRIVATE struct thread * thread_get(int tid)
 }
 
 /*============================================================================*
+ * thread_free()                                                              *
+ *============================================================================*/
+
+/**
+ * @brief Releases a thread.
+ *
+ * The thread_free() function releases the thread entry pointed to by
+ * @p t in the table of threads.
+ *
+ * @note This function is NOT thread-safe.
+ *
+ * @author Pedro Henrique Penna
+ */
+PRIVATE void thread_free(struct thread *t)
+{
+	int utid;
+	KASSERT(WITHIN(t, &threads[0], &threads[KTHREAD_MAX]));
+	KASSERT(t->state == THREAD_ZOMBIE);
+	utid = USER_THREAD_ID(t);
+
+	kpage_put((void *)ustacks[utid]);
+	kpage_put((void *)kstacks[utid]);
+	ustacks[utid] = NULL;
+	kstacks[utid] = NULL;
+
+	t->coreid = -1;
+	t->state  = THREAD_NOT_STARTED;
+	t->tid    = KTHREAD_NULL_TID;
+	nthreads--;
+}
+
+/*============================================================================*
  * thread_alloc()                                                             *
  *============================================================================*/
 
@@ -249,41 +281,32 @@ PRIVATE struct thread * thread_alloc(void)
 {
 	for (int i = 1; i < KTHREAD_MAX; i++)
 	{
-		/* Found. */
-		if (threads[i].state == THREAD_NOT_STARTED)
+		/* Verify the state of the thread. */
+		switch (threads[i].state)
 		{
-			threads[i].state = THREAD_STARTED;
-			nthreads++;
+			/* Found a free thread. */
+			case THREAD_NOT_STARTED:
+				nthreads++;
+				break;
 
-			return (&threads[i]);
+			/* Found a zombie thread (frees used kpages). */
+			case THREAD_ZOMBIE:
+				thread_free(&threads[i]);
+				break;
+
+			/* Skip busy thread. */
+			default:
+				continue;
 		}
+
+		/* Initializes chosen thread. */
+		threads[i].state = THREAD_STARTED;
+
+		return (&threads[i]);
 	}
 
+	/* All threads are in use. */
 	return (NULL);
-}
-
-/*============================================================================*
- * thread_free()                                                              *
- *============================================================================*/
-
-/**
- * @brief Releases a thread.
- *
- * The thread_free() function releases the thread entry pointed to by
- * @p t in the table of threads.
- *
- * @note This function is NOT thread-safe.
- *
- * @author Pedro Henrique Penna
- */
-PRIVATE void thread_free(struct thread *t)
-{
-	KASSERT(WITHIN(t, &threads[0], &threads[KTHREAD_MAX]));
-
-	t->coreid = -1;
-	t->state  = THREAD_NOT_STARTED;
-	t->tid    = KTHREAD_NULL_TID;
-	nthreads--;
 }
 
 /*============================================================================*
@@ -414,17 +437,14 @@ PUBLIC int thread_yield(void)
 		else
 			next = idle;
 
-	/**
-	 * Release terminated thread (@see thread_exit).
-	 */
-
+		/* Make current a zombie thread */
 		if (curr->state == THREAD_TERMINATED)
 		{
 			/* Sanity check. */
 			KASSERT(curr != idle && curr != next);
 
-			/* Release current thread. */
-			thread_free(curr);
+			curr->state = THREAD_ZOMBIE;
+			next->next = curr;
 		}
 
 	/**
@@ -444,6 +464,17 @@ PUBLIC int thread_yield(void)
 
 	/* Restore context function must clean ctx variable. */
 	KASSERT(curr->ctx == NULL);
+
+	spinlock_lock(&lock_tm);
+
+		/* Verifies if the next thread is zombie */
+		if (curr->next && curr->next->state == THREAD_ZOMBIE)
+		{
+			thread_free(curr->next);
+			curr->next = NULL;
+		}
+
+	spinlock_unlock(&lock_tm);
 
 	return (0);
 }
@@ -500,7 +531,7 @@ PRIVATE NORETURN void thread_idle(void)
 	KASSERT(core_release() == 0);
 
 		spinlock_lock(&lock_tm);
-			thread_free(idle);
+			idle->state = THREAD_ZOMBIE;
 			cond_broadcast(&joincond[KERNEL_THREAD_ID(idle)]);
 		spinlock_unlock(&lock_tm);
 
@@ -586,6 +617,17 @@ PRIVATE NORETURN void thread_start(void)
 
 	curr_thread = thread_get_curr();
 
+	spinlock_lock(&lock_tm);
+
+		/* Verifies if the next thread is zombie */
+		if (curr_thread->next && curr_thread->next->state == THREAD_ZOMBIE)
+		{
+			thread_free(curr_thread->next);
+			curr_thread->next = NULL;
+		}
+
+	spinlock_unlock(&lock_tm);
+
 	retval = curr_thread->start(curr_thread->arg);
 
 	thread_exit(retval);
@@ -633,6 +675,22 @@ PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
 			return (-EAGAIN);
 		}
 
+		/* Allocate stacks to the thread. */
+		if ((kstack = (struct stack *) kpage_get(1)) == NULL)
+		{
+			kprintf("[pm] cannot create kernel stack");
+			spinlock_unlock(&lock_tm);
+			return (-EAGAIN);
+		}
+
+		if ((ustack = (struct stack *) kpage_get(1)) == NULL)
+		{
+			kprintf("[pm] cannot create user stack");
+			kpage_put((void *) kstack);
+			spinlock_unlock(&lock_tm);
+			return (-EAGAIN);
+		}
+
 		/* Get thread ID. */
 		_tid = next_tid++;
 		utid = USER_THREAD_ID(new_thread);
@@ -643,12 +701,8 @@ PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
 		new_thread->start = start;
 		new_thread->next  = NULL;
 
-		/* Allocate stacks to the thread. */
-		ustack = &ustacks[utid];
-		kstack = &kstacks[utid];
-		kmemset((void *) ustack, 0, sizeof(struct stack));
-		kmemset((void *) kstack, 0, sizeof(struct stack));
-
+		ustacks[utid] = ustack;
+		kstacks[utid] = kstack;
 		/* Create initial context of the thread. */
 		KASSERT((new_thread->ctx = context_create(thread_start, ustack, kstack)) != NULL);
 
@@ -706,7 +760,9 @@ PUBLIC int thread_join(int tid, void **retval)
 			 * The target thread is still running,
 			 * so we have to block and wait for it.
 			 */
-			if (t->state != THREAD_NOT_STARTED && t->state != THREAD_TERMINATED)
+			if (t->state != THREAD_NOT_STARTED &&
+				t->state != THREAD_TERMINATED &&
+				t->state != THREAD_ZOMBIE)
 				cond_wait(&joincond[KERNEL_THREAD_ID(t)], &lock_tm);
 		}
 
@@ -744,6 +800,13 @@ PUBLIC void thread_init(void)
 	KASSERT(IDLE_THREAD_MAX == (CORES_NUM - 1));
 	KASSERT(THREAD_MAX == THREAD_MAX);
 	KASSERT(nthreads == 1);
+
+	/* initialize user and kernel stack pointers */
+	for (int i = 0; i < THREAD_MAX; i++)
+	{
+		ustacks[i] = NULL;
+		kstacks[i] = NULL;
+	}
 
 	/* Initialize the fence for idle threads. */
 	spinlock_init(&idle_fence);
