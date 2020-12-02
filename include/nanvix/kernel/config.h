@@ -39,9 +39,11 @@
 	#if defined(__unix64__)
 		#define __NANVIX_MUTEX_SLEEP     0 /**< Blocking Mutexes?    */
 		#define __NANVIX_SEMAPHORE_SLEEP 0 /**< Blocking Semaphores? */
+		#define __NANVIX_CONDVAR_SLEEP   0 /**< Blocking Condition Variables? */
 	#else
 		#define __NANVIX_MUTEX_SLEEP     1 /**< Blocking Mutexes?    */
 		#define __NANVIX_SEMAPHORE_SLEEP 1 /**< Blocking Semaphores? */
+		#define __NANVIX_CONDVAR_SLEEP   1 /**< Blocking Condition Variables? */
 	#endif
 	/**@}*/
 
