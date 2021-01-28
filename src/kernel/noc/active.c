@@ -326,7 +326,7 @@ PRIVATE int active_search(
 			}
 
 			/* Not the node we are looking for. */
-			if ((active->local != local) || (active->remote != remote))
+			if ((active->local != local) || (remote != -1 && active->remote != remote))
 			{
 				spinlock_unlock(&active->lock);
 				continue;
