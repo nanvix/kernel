@@ -383,6 +383,10 @@ PUBLIC int communicator_ioctl(
 				int nodenum = va_arg(args, int);
 				int port_nr = va_arg(args, int);
 
+				/* Trying to set remote of an output comm? */
+				if (!resource_is_readable(&comm->resource))
+					goto error;
+
 				comm->config.remote_addr = comm->fn->laddress_calc(nodenum, port_nr);
 
 				ret = 0;
