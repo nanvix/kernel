@@ -387,6 +387,10 @@ PUBLIC int communicator_ioctl(
 				if (!resource_is_readable(&comm->resource))
 					goto error;
 
+				/* Remote already set? */
+				if (comm->config.remote_addr != -1)
+					goto error;
+
 				comm->config.remote_addr = comm->fn->laddress_calc(nodenum, port_nr);
 
 				ret = 0;
