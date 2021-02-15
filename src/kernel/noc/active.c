@@ -48,14 +48,9 @@
 #define ACTIVE_ANY_SRC (-1)
 
 /**
- * @brief Clock error.
- */
-PRIVATE uint64_t clock_error = 0ULL;
-
-/**
  * @brief Any source identification
  */
-#define ACTIVE_COMPUTE_LATENCY(_t1, _t2) ((_t2 - _t1) - clock_error)
+#define ACTIVE_COMPUTE_LATENCY(_t1, _t2) ((_t2 - _t1) - clock_get_error())
 
 /*============================================================================*
  * do_register_request()                                                      *
@@ -1046,19 +1041,9 @@ PUBLIC int _active_open(const struct active_pool * pool, int local, int remote)
 {
 	int hwfd;               /* Hardware ID.    */
 	int actid;              /* Active ID.      */
-	uint64_t t1;            /* Clock value.    */
-	uint64_t t2;            /* Clock value.    */
 	struct active * active; /* Active Pointer. */
 
 	KASSERT(pool != NULL);
-
-	if (!clock_error)
-	{
-		t1 = clock_read();
-		t2 = clock_read();
-
-		clock_error = (t2 - t1);
-	}
 
 	/* Search target hardware active. */
 	if ((actid = active_search(pool, local, remote, ACTIVE_TYPE_OUTPUT)) >= 0)
