@@ -223,6 +223,12 @@ PUBLIC int exception_wait(int excpnum, const struct exception *excp)
 	t = thread_get_curr();
 	coreid = thread_get_coreid(t);
 
+	if (UNLIKELY(t == KTHREAD_MASTER))
+	{
+		exception_dump(excp);
+		kpanic("[kernel][excp] The master thread throws an exception within the kernel space!");
+	}
+
 	spinlock_lock(&lock);
 
 		/* Chek if exception is being ignored. */
