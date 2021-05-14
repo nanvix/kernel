@@ -22,14 +22,6 @@
  * SOFTWARE.
  */
 
-/* Must come first. */
-#define __NEED_RESOURCE
-
-#include <nanvix/hal.h>
-#include <nanvix/hlib.h>
-#include <posix/errno.h>
-#include <posix/stdarg.h>
-
 #include "port.h"
 
 #if (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL)
@@ -71,3 +63,4 @@ PUBLIC int portpool_choose_port(const struct port_pool * pool)
 }
 
 #endif /* (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL) */
+

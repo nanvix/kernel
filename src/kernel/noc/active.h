@@ -32,7 +32,13 @@
 #ifndef NANVIX_NOC_ACTIVE_H_
 #define NANVIX_NOC_ACTIVE_H_
 
+	/* Must come first. */
+	#define __NEED_RESOURCE
+
 	#include <nanvix/hal.h>
+
+#if (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL)
+
 	#include <nanvix/hlib.h>
 	#include <nanvix/const.h>
 	#include <posix/errno.h>
@@ -40,8 +46,6 @@
 
 	#include "mbuffer.h"
 	#include "port.h"
-
-#if (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL)
 
 	/**
 	 * @brief Resource flags.
@@ -279,3 +283,4 @@
 #endif /* NANVIX_NOC_ACTIVE_H_ */
 
 /**@}*/
+

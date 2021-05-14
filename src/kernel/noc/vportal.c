@@ -22,18 +22,11 @@
  * SOFTWARE.
  */
 
-/* Must come first. */
-#define __NEED_RESOURCE
-
-#include <nanvix/hal.h>
-#include <nanvix/kernel/portal.h>
-#include <nanvix/hlib.h>
-#include <posix/errno.h>
-
 #include "communicator.h"
-#include "portal.h"
 
 #if __TARGET_HAS_PORTAL && !__NANVIX_IKC_USES_ONLY_MAILBOX
+
+#include "portal.h"
 
 /**
  * @brief Extracts fd and port from portalid.
@@ -377,7 +370,7 @@ PUBLIC int do_vportal_wait(int portalid)
  * @returns Upon successful completion, zero is returned.
  * Upon failure, a negative error code is returned instead.
  */
-int do_vportal_ioctl(int portalid, unsigned request, va_list args)
+PUBLIC int do_vportal_ioctl(int portalid, unsigned request, va_list args)
 {
 	return (communicator_ioctl(&vportals[portalid], request, args));
 }
@@ -394,7 +387,7 @@ int do_vportal_ioctl(int portalid, unsigned request, va_list args)
  * @returns Upon successful completion, a positive number is returned.
  * Upon failure, a negative error code is returned instead.
  */
-int do_vportal_get_port(int portalid)
+PUBLIC int do_vportal_get_port(int portalid)
 {
 	int ret;
 
@@ -432,3 +425,4 @@ PUBLIC void vportal_init(void)
 }
 
 #endif /* __TARGET_HAS_PORTAL && !__NANVIX_IKC_USES_ONLY_MAILBOX */
+

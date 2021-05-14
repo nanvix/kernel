@@ -22,14 +22,6 @@
  * SOFTWARE.
  */
 
-/* Must come first. */
-#define __NEED_RESOURCE
-
-#include <nanvix/hal.h>
-#include <nanvix/hlib.h>
-#include <posix/errno.h>
-#include <posix/stdarg.h>
-
 #include "active.h"
 
 #if (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL)
@@ -1080,3 +1072,4 @@ PUBLIC int _active_open(const struct active_pool * pool, int local, int remote)
 }
 
 #endif /* (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL) */
+
