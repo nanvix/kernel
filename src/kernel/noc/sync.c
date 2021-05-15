@@ -31,6 +31,7 @@
 
 #include <nanvix/kernel/sync.h>
 #include <nanvix/kernel/mm.h>
+#include <nanvix/kernel/thread.h>
 #include <nanvix/hlib.h>
 #include <posix/errno.h>
 
@@ -85,31 +86,39 @@ PRIVATE struct sync
 	/*
 	 * XXX: Don't Touch! This Must Come First!
 	 */
-	struct resource resource; /**< Generic resource information. */
+	struct resource resource; /**< Generic resource information.             */
 
 	/**
 	 * @name Control and Operate variables.
 	 */
 	/**@{*/
-	int hwfd;                 /**< Underlying file descriptor.   */
-	int refcount;             /**< Reference counter.            */
+	int hwfd;                 /**< Underlying file descriptor.               */
+	int refcount;             /**< Reference counter.                        */
 	/**@}*/
 
 	/**
 	 * @name Identification variables.
 	 */
 	/**@{*/
-	int mode;                 /**< Mode of the operation.        */
-	int master;               /**< Node number of the ONE.       */
-	uint64_t nodeslist;       /**< Nodeslist.                    */
+	int mode;                 /**< Mode of the operation.                    */
+	int master;               /**< Node number of the ONE.                   */
+	uint64_t nodeslist;       /**< Nodeslist.                                */
 	/**@}*/
 
 	/**
 	 * @name Statistics variables.
 	 */
 	/**@{*/
-	uint64_t latency;         /**< Latency counter.              */
+	uint64_t latency;         /**< Latency counter.                          */
 	/**@}*/
+
+	/**
+	 * @name Wait/Wakeup controllers.
+	 */
+	/**@{*/
+	struct semaphore waiting; /**< Thread queue waiting for a communication. */
+	/**@}*/
+
 } ALIGN(sizeof(dword_t)) vsynctab[HW_SYNC_MAX];
 
 /**
@@ -123,6 +132,69 @@ PRIVATE const struct resource_pool vsyncpool = {
  * @brief Global lock.
  */
 PRIVATE spinlock_t vsync_lock;
+
+/*============================================================================*
+ * sync_wait_active()                                                         *
+ *============================================================================*/
+
+/**
+ * @brief Waits a communication finishs on a active.
+ *
+ * @param hwfd Hardware file descriptor allocated by the active.
+ */
+PRIVATE void sync_wait_active(int hwfd)
+{
+	/* Search for the virtual sync. */
+	for (int i = 0; i < HW_SYNC_MAX; ++i)
+	{
+		if (!resource_is_used(&vsynctab[i].resource))
+			continue;
+
+		/* Found. */
+		if (vsynctab[i].hwfd == hwfd)
+		{
+			/* It myst be set to busy before the wait operation. */
+			KASSERT(resource_is_busy(&vsynctab[i].resource));
+
+			semaphore_down(&vsynctab[i].waiting);
+
+			return;
+		}
+	}
+
+	/* Should not happens. */
+	kpanic("[kernel][noc][sync] Tried to wait for an invalid active sync.");
+}
+
+/*============================================================================*
+ * sync_wait_active()                                                         *
+ *============================================================================*/
+
+/**
+ * @brief Complete a communication on a active.
+ *
+ * @param hwfd Hardware file descriptor allocated by the active.
+ */
+PRIVATE void sync_wakeup_active(int hwfd)
+{
+	/* Search for the virtual sync. */
+	for (int i = 0; i < HW_SYNC_MAX; ++i)
+	{
+		if (!resource_is_used(&vsynctab[i].resource))
+			continue;
+
+		/* Found. */
+		if (vsynctab[i].hwfd == hwfd)
+		{
+			semaphore_up(&vsynctab[i].waiting);
+
+			return;
+		}
+	}
+
+	/* Should not happens. */
+	kpanic("[kernel][noc][sync] Tried to wake up for an invalid active sync.");
+}
 
 /*============================================================================*
  * do_sync_search()                                                           *
@@ -642,7 +714,19 @@ PUBLIC void vsync_init(void)
 		vsynctab[i].master    = -1;
 		vsynctab[i].nodeslist = 0ULL;
 		vsynctab[i].latency   = 0ULL;
+
+		/* Waiting controllers. */
+		semaphore_init(&vsynctab[i].waiting, 0);
 	}
+
+	/* Configure HAL Portal subsystem to use microkernel lock functions. */
+	KASSERT(
+		sync_ioctl(
+			0, SYNC_IOCTL_SET_ASYNC_BEHAVIOR,
+			sync_wait_active,
+			sync_wakeup_active
+		) == 0
+	);
 
 	spinlock_init(&vsync_lock);
 }

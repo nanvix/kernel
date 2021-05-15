@@ -133,7 +133,6 @@ PRIVATE int do_vportal_alloc(int local, int remote, int port, int type)
 		spinlock_unlock(&vportal_counters.lock);
 	}
 
-
 	return (portalid);
 }
 
@@ -389,16 +388,14 @@ PUBLIC int do_vportal_ioctl(int portalid, unsigned request, va_list args)
  */
 PUBLIC int do_vportal_get_port(int portalid)
 {
-	int ret;
+	int ret = -EBADF;
 
 	if (!WITHIN(portalid, 0, KPORTAL_MAX))
 		return (-EINVAL);
 
 	spinlock_lock(&vportals[portalid].lock);
 
-		if (!resource_is_used(&vportals[portalid].resource))
-			ret = (-EBADF);
-		else
+		if (resource_is_used(&vportals[portalid].resource))
 			ret = (VPORTAL_GET_LADDRESS_PORT(vportals[portalid].config.fd));
 
 	spinlock_unlock(&vportals[portalid].lock);

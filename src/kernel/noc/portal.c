@@ -64,6 +64,14 @@ PRIVATE int portal_get_actid(int);
 PRIVATE int portal_get_portid(int);
 /**@}*/
 
+/**
+ * @name Functions to wait/wakeup for a portal.
+ */
+/**{**/
+PRIVATE void portal_wait_active(int hwfd);
+PRIVATE void portal_wakeup_active(int hwfd);
+/**}**/
+
 /*============================================================================*
  * do_portal_table_init()                                                     *
  *============================================================================*/
@@ -153,11 +161,23 @@ PRIVATE void do_portal_table_init(void)
 		portals[i].mbufferpool      = &pbufferpool;
 		portals[i].mbufferpool_aux  = &pbufferpool_aux;
 		portals[i].fn               = &portal_functions;
+
+		/* Waiting controllers. */
+		semaphore_init(&portals[i].waiting, 0);
 	}
 
 	/* Initializes portal pool. */
 	portalpool.actives    = portals;
 	portalpool.nactives   = HW_PORTAL_MAX;
+
+	/* Configure HAL Portal subsystem to use microkernel lock functions. */
+	KASSERT(
+		portal_ioctl(
+			0, HAL_PORTAL_IOCTL_SET_ASYNC_BEHAVIOR,
+			portal_wait_active,
+			portal_wakeup_active
+		) == 0
+	);
 }
 
 /*============================================================================*
@@ -316,6 +336,34 @@ PRIVATE int portal_get_actid(int id)
 PRIVATE int portal_get_portid(int id)
 {
 	return ((id < 0) ? (id) : (id % (KPORTAL_PORT_NR + 1)));
+}
+
+/*============================================================================*
+ * portal_wait_active()                                                       *
+ *============================================================================*/
+
+/**
+ * @brief Waits a communication finishs on a active.
+ *
+ * @param hwfd Hardware file descriptor allocated by the active.
+ */
+PRIVATE void portal_wait_active(int hwfd)
+{
+	active_handler_wait(&portalpool, hwfd, "portal");
+}
+
+/*============================================================================*
+ * portal_wait_active()                                                       *
+ *============================================================================*/
+
+/**
+ * @brief Complete a communication on a active.
+ *
+ * @param hwfd Hardware file descriptor allocated by the active.
+ */
+PRIVATE void portal_wakeup_active(int hwfd)
+{
+	active_handler_wakeup(&portalpool, hwfd, "portal");
 }
 
 /*============================================================================*

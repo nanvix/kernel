@@ -476,6 +476,73 @@ error:
 }
 
 /*============================================================================*
+ * active_handler_wait()                                                      *
+ *============================================================================*/
+
+/**
+ * @brief Waits a communication finishs on a active.
+ *
+ * @param hwfd Hardware file descriptor allocated by the active.
+ */
+PUBLIC void active_handler_wait(const struct active_pool * pool, int hwfd, char * rule)
+{
+	struct active * actives = pool->actives;
+
+	/* Search for the active portal. */
+	for (int i = 0; i < pool->nactives; ++i)
+	{
+		if (!resource_is_used(&actives[i].resource))
+			continue;
+
+		/* Found. */
+		if (actives[i].hwfd == hwfd)
+		{
+			/* It myst be set to busy before the wait operation. */
+			KASSERT(resource_is_busy(&actives[i].resource));
+
+			semaphore_down(&actives[i].waiting);
+
+			return;
+		}
+	}
+
+	/* Should not happens. */
+	kpanic("[kernel][noc][%s] Tried to wait for an invalid active.", rule);
+}
+
+/*============================================================================*
+ * mailbox_wait_active()                                                      *
+ *============================================================================*/
+
+/**
+ * @brief Complete a communication on a active.
+ *
+ * @param hwfd Hardware file descriptor allocated by the active.
+ */
+PUBLIC void active_handler_wakeup(const struct active_pool * pool, int hwfd, char * rule)
+{
+	struct active * actives = pool->actives;
+
+	/* Search for the active portal. */
+	for (int i = 0; i < pool->nactives; ++i)
+	{
+		if (!resource_is_used(&actives[i].resource))
+			continue;
+
+		/* Found. */
+		if (actives[i].hwfd == hwfd)
+		{
+			semaphore_up(&actives[i].waiting);
+
+			return;
+		}
+	}
+
+	/* Should not happens. */
+	kpanic("[kernel][noc][%s] Tried to wake up for an invalid active.", rule);
+}
+
+/*============================================================================*
  * active_aread()                                                             *
  *============================================================================*/
 

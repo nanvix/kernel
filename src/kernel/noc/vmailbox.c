@@ -337,16 +337,14 @@ PUBLIC int do_vmailbox_ioctl(int mbxid, unsigned request, va_list args)
  */
 PUBLIC int do_vmailbox_get_port(int mbxid)
 {
-	int ret;
+	int ret = -EBADF;
 
 	if (!WITHIN(mbxid, 0, KMAILBOX_MAX))
 		return (-EINVAL);
 
 	spinlock_lock(&vmailboxes[mbxid].lock);
 
-		if (!resource_is_used(&vmailboxes[mbxid].resource))
-			ret = (-EBADF);
-		else
+		if (resource_is_used(&vmailboxes[mbxid].resource))
 			ret = (VMAILBOX_GET_LADDRESS_PORT(vmailboxes[mbxid].config.fd));
 
 	spinlock_unlock(&vmailboxes[mbxid].lock);

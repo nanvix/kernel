@@ -65,6 +65,14 @@ PRIVATE int mailbox_get_actid(int);
 PRIVATE int mailbox_get_portid(int);
 /**@}*/
 
+/**
+ * @name Functions to wait/wakeup for a mailbox.
+ */
+/**{**/
+PRIVATE void mailbox_wait_active(int hwfd);
+PRIVATE void mailbox_wakeup_active(int hwfd);
+/**}**/
+
 /*============================================================================*
  * do_mailbox_table_init()                                                    *
  *============================================================================*/
@@ -154,11 +162,23 @@ PRIVATE void do_mailbox_table_init(void)
 		mailboxes[i].mbufferpool      = &mbufferpool;
 		mailboxes[i].mbufferpool_aux  = &mbufferpool_aux;
 		mailboxes[i].fn               = &mailbox_functions;
+
+		/* Waiting controllers. */
+		semaphore_init(&mailboxes[i].waiting, 0);
 	}
 
 	/* Initializes mailbox pool. */
 	mbxpool.actives    = mailboxes;
 	mbxpool.nactives   = HW_MAILBOX_MAX;
+
+	/* Configure HAL Mailbox subsystem to use microkernel lock functions. */
+	KASSERT(
+		mailbox_ioctl(
+			0, HAL_MAILBOX_IOCTL_SET_ASYNC_BEHAVIOR,
+			mailbox_wait_active,
+			mailbox_wakeup_active
+		) == 0
+	);
 }
 
 /*============================================================================*
@@ -331,6 +351,34 @@ PRIVATE int mailbox_get_actid(int id)
 PRIVATE int mailbox_get_portid(int id)
 {
 	return ((id < 0) ? (id) : (id % (MAILBOX_PORT_NR + 1)));
+}
+
+/*============================================================================*
+ * mailbox_wait_active()                                                      *
+ *============================================================================*/
+
+/**
+ * @brief Waits a communication finishs on a active.
+ *
+ * @param hwfd Hardware file descriptor allocated by the active.
+ */
+PRIVATE void mailbox_wait_active(int hwfd)
+{
+	active_handler_wait(&mbxpool, hwfd, "mailbox");
+}
+
+/*============================================================================*
+ * mailbox_wait_active()                                                      *
+ *============================================================================*/
+
+/**
+ * @brief Complete a communication on a active.
+ *
+ * @param hwfd Hardware file descriptor allocated by the active.
+ */
+PRIVATE void mailbox_wakeup_active(int hwfd)
+{
+	active_handler_wakeup(&mbxpool, hwfd, "mailbox");
 }
 
 /*============================================================================*
