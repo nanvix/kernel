@@ -28,6 +28,7 @@
 #include <nanvix/kernel/mm.h>
 #include <nanvix/kernel/noc.h>
 #include <nanvix/kernel/syscall.h>
+#include <nanvix/kernel/event.h>
 #include <nanvix/kernel/thread.h>
 #include <nanvix/const.h>
 #include <nanvix/hlib.h>
@@ -67,17 +68,33 @@ PRIVATE void *init(void *arg)
 	return (NULL);
 }
 
+#endif /* CLUSTER_IS_MULTICORE */
+
+PUBLIC void _kmain(void)
+{
+#if (CLUSTER_IS_MULTICORE)
+	int tid;
+	thread_create(&tid, init, NULL);
 #endif
+
+	kprintf("[kernel][dev] enabling hardware interrupts");
+	interrupts_enable();
+
+#if (CLUSTER_IS_MULTICORE)
+	while (true)
+		do_kcall2();
+#endif
+}
+
+#if (CORE_SUPPORTS_MULTITHREADING)
+	EXTERN NORETURN void thread_idle(void);
+#endif /* CORE_SUPPORTS_MULTITHREADING */
 
 /**
  * @brief Initializes the kernel.
  */
 PUBLIC void kmain(int argc, const char *argv[])
 {
-#if (CLUSTER_IS_MULTICORE)
-	int tid;
-#endif
-
 	UNUSED(argc);
 	UNUSED(argv);
 
@@ -89,9 +106,7 @@ PUBLIC void kmain(int argc, const char *argv[])
 	mm_init();
 	noc_init();
 	syscall_init();
-
-	kprintf("[kernel][dev] enabling hardware interrupts");
-	interrupts_enable();
+	kevent_init();
 
 #if __NANVIX_HAS_NETWORK
 	network_setup();
@@ -99,15 +114,19 @@ PUBLIC void kmain(int argc, const char *argv[])
 
 	thread_init();
 
-#if (CLUSTER_IS_MULTICORE)
-	thread_create(&tid, init, NULL);
-	while (true)
-		do_kcall2();
+#if (CORE_SUPPORTS_MULTITHREADING)
+
+	/* Schedule master thread. */
+	thread_idle();
+
 #else
+
+	/* Run main behaviour. */
+	_kmain();
+
+#endif
 
 	/* Power down. */
 	kernel_shutdown();
 	UNREACHABLE();
-
-#endif
 }
