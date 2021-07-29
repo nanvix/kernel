@@ -32,8 +32,14 @@
 #ifndef NANVIX_THREAD_H_
 #define NANVIX_THREAD_H_
 
+	/* Must come first. */
+	#define __NEED_RESOURCE
+
 	/* External dependencies. */
 	#include <nanvix/hal.h>
+	#include <nanvix/hal/resource.h>
+	#include <nanvix/kernel/mm.h>
+	#include <nanvix/kernel/config.h>
 	#include <nanvix/const.h>
 
 /*============================================================================*
@@ -41,30 +47,52 @@
  *============================================================================*/
 
 	/**
-	 * @brief Maximum number of system threads.
+	 * @name Execution Parameters.
+	 */
+	/**@{*/
+	#ifndef __NANVIX_MICROKERNEL_STATIC_SCHED
+	#define __NANVIX_MICROKERNEL_STATIC_SCHED 0
+	#endif
+	#ifndef __NANVIX_MICROKERNEL_THREAD_STATS
+	#define __NANVIX_MICROKERNEL_THREAD_STATS 0
+	#endif
+	/**@}*/
+
+	/**
+	 * @brief Kernel thread dedicated to kernel services.
+	 */
+	#define KTHREAD_SERVICE_MAX (1) /**< Master thread.              */
+
+	/**
+	 * @brief Idle thread dedicated to occupy the idle core.
 	 *
 	 * @details One master thread to respond syscall requests plus
 	 * (CORES_NUM - 1) idle threads to occupy the core idle time.
 	 */
 	#if CORE_SUPPORTS_MULTITHREADING
-		#define SYS_THREAD_MAX CORES_NUM
+		#define KTHREAD_IDLE_MAX (CORES_NUM) /**< CORES_NUM - Master thread. */
 	#else
-		#define SYS_THREAD_MAX 1
+		#define KTHREAD_IDLE_MAX (0)         /**< There is not idle thread.  */
 	#endif
+
+	/**
+	 * @brief Maximum number of system threads.
+	 */
+	#define SYS_THREAD_MAX (KTHREAD_SERVICE_MAX + KTHREAD_IDLE_MAX)
 
 	/**
  	* @brief Size of the buffer with exiting values.
  	*/
-	#define KTHREAD_EXIT_VALUE_NUM (3 * KTHREAD_MAX)
-	
+	#define KTHREAD_EXIT_VALUE_NUM (32)
+
 	/**
 	 * @brief Maximum number of user threads.
 	 */
 	#if CORE_SUPPORTS_MULTITHREADING && defined(__mppa256__)
 		#ifdef __k1bio__
-			#define THREAD_MAX 8
+			#define THREAD_MAX (8 - KTHREAD_SERVICE_MAX)  /**< Reserved 8 kernel pages. */
 		#else
-			#define THREAD_MAX 24
+			#define THREAD_MAX ((NUM_KPAGES / 2) - KTHREAD_SERVICE_MAX) /**< Reserved 24 kernel pages.*/
 		#endif
 	#elif CORE_SUPPORTS_MULTITHREADING && !defined(__mppa256__)
 		#define THREAD_MAX (2 * (SYS_THREAD_MAX - 1))
@@ -78,16 +106,33 @@
 	#define KTHREAD_MAX (SYS_THREAD_MAX + THREAD_MAX)
 
 	/**
+	 * @brief Number of clock cycles per thread.
+	 */
+	#define THREAD_QUANTUM (128)
+
+	/**
 	 * @name Thread States
 	 */
 	/**@{*/
 	#define THREAD_NOT_STARTED 0 /**< Not Started */
-	#define THREAD_STARTED     1 /**< Started     */
+	#define THREAD_READY       1 /**< Started     */
 	#define THREAD_RUNNING     2 /**< Running     */
 	#define THREAD_SLEEPING    3 /**< Sleeping    */
 	#define THREAD_STOPPED     4 /**< Stopped     */
 	#define THREAD_TERMINATED  5 /**< Terminated  */
 	#define THREAD_ZOMBIE      6 /**< Zombie      */
+	/**@}*/
+
+	/**
+	 * @name Affinity.
+	 */
+	/**@{*/
+	#define KTHREAD_AFFINITY_SET           ((1 << CORES_NUM) - 1)                            /**< Mask of cores set.             */
+	#define KTHREAD_AFFINITY_MASTER        (1 << COREID_MASTER)                              /**< Master thread affinity.        */
+	#define KTHREAD_AFFINITY_DEFAULT       (KTHREAD_AFFINITY_SET & ~KTHREAD_AFFINITY_MASTER) /**< Default user affinity.         */
+	#define KTHREAD_AFFINITY_IS_VALID(aff) (aff & KTHREAD_AFFINITY_SET)                      /**< Valid affinity checker.        */
+	#define KTHREAD_AFFINITY_FIXED(coreid) (1 << coreid)                                     /**< Affinity related to a coreid.  */
+	#define KTHREAD_AFFINITY_MATCH(a, b)   (a & b)                                           /**< Similarity between affinities. */
 	/**@}*/
 
 	/**
@@ -101,18 +146,82 @@
 	/**@}*/
 
 	/**
+	 * @name Stats options.
+	 */
+	/**@{*/
+	#define KTHREAD_STATS_EXEC_TIME 0
+	/**@}*/
+
+#if __NANVIX_MICROKERNEL_THREAD_STATS
+
+	/**
+	 * @brief Thread statistics.
+	 */
+	struct thread_stats
+	{
+		uint64_t exec_start;
+		uint64_t exec_total;
+	};
+
+#endif
+
+	/**
 	 * @brief Thread.
 	 */
 	struct thread
 	{
-		int tid;               /**< Thread ID.              */
-		int coreid;            /**< Core ID.                */
-		int state;             /**< State.                  */
-		void *arg;             /**< Argument.               */
-		void *(*start)(void*); /**< Starting routine.       */
-		struct context *ctx;   /**< Preempted context.      */
-		struct thread *next;   /**< Next thread in a queue. */
-	};
+		/*
+		 * XXX: Don't Touch! This Must Come First!
+		 */
+		struct resource resource; /**< Generic resource information. */
+
+		/**
+		 * @name Control variables.
+		 */
+		/**@{*/
+		int tid;                   /**< Thread ID.                   */
+		short coreid;              /**< Core ID.                     */
+		short state;               /**< State.                       */
+		int affinity;              /**< Affinity.                    */
+		uint64_t age;              /**< Age.                         */
+		/**@}*/
+
+		/**
+		 * @name Core status.
+		 *
+		 * @see struct core_status
+		 */
+		/**@{*/
+		short core_mode;           /**< Mode.                        */
+		/**@}*/
+
+		/**
+		 * @name Arguments and functions.
+		 */
+		/**@{*/
+		void *arg;                 /**< Argument.                    */
+		void *(*start)(void*);     /**< Starting routine.            */
+		/**@}*/
+
+		/**
+		 * @name Scheduling variables.
+		 *
+		 * @details Resource attribute is used by the scheduler.
+		 */
+		/**@{*/
+		struct context * ctx;      /**< Preempted context.           */
+		/**@}*/
+
+#if __NANVIX_MICROKERNEL_THREAD_STATS
+		/**
+		 * @name Statistics variables.
+		 */
+		/**@{*/
+		struct thread_stats stats; /**< Statistics.                  */
+		/**@}*/
+#endif
+
+	} ALIGN(CACHE_LINE_SIZE);
 
 	/**
 	 * @brief Thread table.
@@ -123,9 +232,9 @@
 	 * @name Thread IDs.
 	 */
 	/**@{*/
-	#define KTHREAD_NULL_TID               -1 /**< ID of NULL thread.   */
-	#define KTHREAD_MASTER_TID              0 /**< ID of master thread. */
-	#define KTHREAD_LEADER_TID SYS_THREAD_MAX /**< ID of leader thread. */
+	#define KTHREAD_NULL_TID                   (-1) /**< ID of NULL thread.       */
+	#define KTHREAD_MASTER_TID                  (0) /**< ID of master thread.     */
+	#define KTHREAD_LEADER_TID     (SYS_THREAD_MAX) /**< ID of leader thread.     */
 	/**@}*/
 
 	/**
@@ -192,6 +301,53 @@
 	}
 
 	/**
+	 * @brief Gets the core set of affinity of a thread.
+	 *
+	 * @param t Target thread.
+	 *
+	 * @returns The core set of affinity.
+	 */
+	static inline int thread_get_affinity(const struct thread *t)
+	{
+		return (t->affinity);
+	}
+
+	/**
+	 * @brief Sets a new affinity to a thread.
+	 *
+	 * @param new_affinity New affinity value.
+	 *
+	 * This function is thread-safe.
+	 *
+	 * @returns Old affinity value.
+	 */
+#if CORE_SUPPORTS_MULTITHREADING
+	EXTERN int thread_set_affinity(struct thread * t, int new_affinity);
+#else
+	static int thread_set_affinity(struct thread * t, int new_affinity)
+	{
+		UNUSED(t);
+		UNUSED(new_affinity);
+
+		return (-ENOSYS);
+	}
+#endif
+
+	/**
+	 * @brief Sets a new affinity to a thread.
+	 *
+	 * @param new_affinity New affinity value.
+	 *
+	 * This function is thread-safe.
+	 *
+	 * @returns Old affinity value.
+	 */
+	static int thread_set_curr_affinity(int new_affinity)
+	{
+		return (thread_set_affinity(thread_get_curr(), new_affinity));
+	}
+
+	/**
 	 * @brief Creates a thread.
 	 *
 	 * @param tid   Place to store the ID of the thread.
@@ -224,9 +380,15 @@
 	/**
 	 * @brief Atomically puts the calling thread to sleep.
 	 *
-	 * @param lock  Spinlock to release and acquire.
+	 * @param queue      Arrangement where the thread will be enqueued.
+	 * @param queue_lock Spinlock to protect the queue.
+	 * @param user_lock  Spinlock of the critical region of the user.
 	 */
-	EXTERN void thread_asleep(spinlock_t *lock);
+	EXTERN void thread_asleep(
+		struct resource_arrangement * queue,
+		spinlock_t * queue_lock,
+		spinlock_t * user_lock
+	);
 
 	/**
 	 * @brief Wakes up a thread.
@@ -239,6 +401,16 @@
 	 * @brief Release the core to another thread.
 	 */
 	EXTERN int thread_yield(void);
+
+	/**
+	 * @brief Manage the thread system.
+	 */
+	EXTERN void thread_manager(void);
+
+	/**
+	 * @brief Perform thread statistics.
+	 */
+	EXTERN int thread_stats(int tid, uint64_t *buffer, int stat);
 
 	/**
 	 * @brief Initialize thread system.
@@ -254,8 +426,8 @@
 	 */
 	struct condvar
 	{
-		spinlock_t lock;      /**< Lock for sleeping queue. */
-		struct thread *queue; /**< Sleeping queue.          */
+		spinlock_t lock;                   /**< Lock for sleeping queue. */
+		struct resource_arrangement queue; /**< Sleeping queue.          */
 	};
 
 	/**
@@ -264,7 +436,23 @@
 	 * The @p COND_INITIALIZER macro statically initiallizes a
 	 * conditional variable.
 	 */
-	#define COND_INITIALIZER { .lock = SPINLOCK_UNLOCKED, .queue = NULL }
+	#define COND_STATIC_INITIALIZER                      \
+	{                                                    \
+		.lock  = SPINLOCK_UNLOCKED,                      \
+		.queue = RESOURCE_ARRANGEMENT_STATIC_INITIALIZER \
+	}
+
+	/**
+	 * @brief initializer for condition variables.
+	 *
+	 * The @p COND_INITIALIZER macro initiallizes a
+	 * conditional variable.
+	 */
+	#define COND_INITIALIZER                      \
+	(struct condvar){                             \
+		.lock  = SPINLOCK_UNLOCKED,               \
+		.queue = RESOURCE_ARRANGEMENT_INITIALIZER \
+	}
 
 	/**
 	 * @brief Initializes a condition variable.
@@ -274,7 +462,7 @@
 	static inline void cond_init(struct condvar *cond)
 	{
 		spinlock_init(&cond->lock);
-		cond->queue = NULL;
+		cond->queue = RESOURCE_ARRANGEMENT_INITIALIZER;
 	}
 
 	/**
@@ -287,6 +475,28 @@
 	 * failure, a negative error code is returned instead.
 	 */
 	EXTERN int cond_wait(struct condvar *cond, spinlock_t *lock);
+
+	/**
+	 * @brief Unlocks a specific thread that is waiting on a condition
+	 * variable.
+	 *
+	 * @param cond Target condition variable.
+	 * @param tid  Target thread ID.
+	 *
+	 * @returns Upon successful completion zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 */
+	EXTERN int cond_unicast(struct condvar *cond, int tid);
+
+	/**
+	 * @brief Unlocks first thread waiting on a condition variable.
+	 *
+	 * @param cond Target condition variable.
+	 *
+	 * @returns Upon successful completion zero is returned. Upon
+	 * failure, a negative error code is returned instead.
+	 */
+	EXTERN int cond_anycast(struct condvar *cond);
 
 	/**
 	 * @brief Unlocks all threads waiting on a condition variable.
@@ -321,11 +531,27 @@
 	 *
 	 * @param x Initial value for semaphore.
 	 */
-	#define SEMAPHORE_INITIALIZER(x) \
-	{                                \
-		.count = (x),                \
-		.lock = SPINLOCK_UNLOCKED,   \
-		.cond = COND_INITIALIZER,    \
+	#define SEMAPHORE_STATIC_INITIALIZER(x) \
+	{                                       \
+		.count = (x),                       \
+		.lock  = SPINLOCK_UNLOCKED,         \
+		.cond  = COND_STATIC_INITIALIZER,   \
+	}
+
+	/**
+	 * @brief Initializer for semaphores.
+	 *
+	 * The @p SEMAPHORE_INIT macro initializes the fields of
+	 * a semaphore. The initial value of the semaphore is set to @p x
+	 * in the initialization.
+	 *
+	 * @param x Initial value for semaphore.
+	 */
+	#define SEMAPHORE_INITIALIZER(x)        \
+	(struct semaphore) {                    \
+		.count = (x),                       \
+		.lock  = SPINLOCK_UNLOCKED,         \
+		.cond  = COND_INITIALIZER,          \
 	}
 
 	/**
@@ -356,11 +582,99 @@
 	EXTERN void semaphore_down(struct semaphore *sem);
 
 	/**
+	 * @brief Tries a down operation in a semaphore.
+	 *
+	 * @param sem Target semaphore.
+	 *
+	 * @return Zero if successfully down the @p sem, non-zero otherwize.
+	 */
+	EXTERN int semaphore_trydown(struct semaphore *sem);
+
+	/**
 	 * @brief Performs an up operation in a semaphore.
 	 *
 	 * @param sem target semaphore.
 	 */
 	EXTERN void semaphore_up(struct semaphore *sem);
+
+/*============================================================================*
+ *                               Mutex Facility                               *
+ *============================================================================*/
+
+	/**
+	 * @brief Mutex
+	 */
+	struct mutex
+	{
+		int curr_ticket;     /**< Current ticket.                 */
+		int next_ticket;     /**< Next ticket available.          */
+		int curr_owner;      /**< Thread ID that holds the mutex. */
+		spinlock_t lock;     /**< Mutex lock.                     */
+		struct condvar cond; /**< Condition variable.             */
+	};
+
+	/**
+	 * @brief Static initializer for mutex.
+	 *
+	 * The @p MUTEX_STATIC_INITIALIZER macro statically initializes
+	 * the fields of a mutex.
+	 */
+	#define MUTEX_STATIC_INITIALIZER            \
+	{                                           \
+		.curr_ticket = 0,                       \
+		.next_ticket = 0,                       \
+		.curr_owner  = KTHREAD_NULL_TID,        \
+		.lock        = SPINLOCK_UNLOCKED,       \
+		.cond        = COND_STATIC_INITIALIZER, \
+	}
+
+	/**
+	 * @brief Initializer for mutex.
+	 *
+	 * The @p MUTEX_INITIALIZER macro initializes the fields of
+	 * a mutex.
+	 */
+	#define MUTEX_INITIALIZER             \
+	(struct mutex){                       \
+		.curr_ticket = 0,                 \
+		.next_ticket = 0,                 \
+		.curr_owner  = KTHREAD_NULL_TID,  \
+		.lock        = SPINLOCK_UNLOCKED, \
+		.cond        = COND_INITIALIZER,  \
+	}
+
+	/**
+	 * @brief Initializes a mutex.
+	 *
+	 * The mutex_init() function dynamically initializes the
+	 * fields of the mutex pointed to by @p m.
+	 *
+	 * @param m Target mutex.
+	 */
+	static inline void mutex_init(struct mutex *m)
+	{
+		KASSERT(m != NULL);
+
+		m->curr_ticket = 0;
+		m->next_ticket = 0;
+		m->curr_owner  = KTHREAD_NULL_TID;
+		spinlock_init(&m->lock);
+		cond_init(&m->cond);
+	}
+
+	/**
+	 * @brief Performs a lock operation in a mutex.
+	 *
+	 * @param m Target mutex.
+	 */
+	EXTERN void mutex_lock(struct mutex *m);
+
+	/**
+	 * @brief Performs an unlock operation in a mutex.
+	 *
+	 * @param m target mutex.
+	 */
+	EXTERN void mutex_unlock(struct mutex *m);
 
 #endif /* NANVIX_THREAD_H_ */
 
