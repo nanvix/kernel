@@ -32,15 +32,19 @@
 #ifndef NANVIX_NOC_MBUFFER_H_
 #define NANVIX_NOC_MBUFFER_H_
 
-#include <nanvix/hal.h>
-#include <nanvix/hlib.h>
-#include <nanvix/const.h>
-#include <nanvix/kernel/mailbox.h>
-#include <nanvix/kernel/portal.h>
-#include <posix/errno.h>
-#include <posix/stdarg.h>
+	/* Must come first. */
+	#define __NEED_RESOURCE
+
+	#include <nanvix/hal.h>
 
 #if (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL)
+
+	#include <nanvix/kernel/mailbox.h>
+	#include <nanvix/kernel/portal.h>
+	#include <nanvix/hlib.h>
+	#include <nanvix/const.h>
+	#include <posix/errno.h>
+	#include <posix/stdarg.h>
 
 	/**
 	 * @name Release modes of mbuffers.
@@ -236,3 +240,4 @@
 #endif /* NANVIX_NOC_MBUFFER_H_ */
 
 /**@}*/
+

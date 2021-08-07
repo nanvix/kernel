@@ -26,13 +26,19 @@
 #define __NEED_RESOURCE
 
 #include <nanvix/hal.h>
+
+#if __TARGET_HAS_SYNC && !__NANVIX_IKC_USES_ONLY_MAILBOX
+
 #include <nanvix/kernel/sync.h>
-#include <nanvix/kernel/syscall.h>
 #include <nanvix/kernel/mm.h>
+#include <nanvix/kernel/thread.h>
 #include <nanvix/hlib.h>
 #include <posix/errno.h>
 
-#if __TARGET_HAS_SYNC && !__NANVIX_IKC_USES_ONLY_MAILBOX
+/**
+ * @brief Number of sync points.
+ */
+#define HW_SYNC_MAX (SYNC_CREATE_MAX + SYNC_OPEN_MAX)
 
 /**
  * @name Search types for do_sync_search().
@@ -80,44 +86,115 @@ PRIVATE struct sync
 	/*
 	 * XXX: Don't Touch! This Must Come First!
 	 */
-	struct resource resource; /**< Generic resource information. */
+	struct resource resource; /**< Generic resource information.             */
 
 	/**
 	 * @name Control and Operate variables.
 	 */
 	/**@{*/
-	int hwfd;                 /**< Underlying file descriptor.   */
-	int refcount;             /**< Reference counter.            */
+	int hwfd;                 /**< Underlying file descriptor.               */
+	int refcount;             /**< Reference counter.                        */
 	/**@}*/
 
 	/**
 	 * @name Identification variables.
 	 */
 	/**@{*/
-	int mode;                 /**< Mode of the operation.        */
-	int master;               /**< Node number of the ONE.       */
-	uint64_t nodeslist;       /**< Nodeslist.                    */
+	int mode;                 /**< Mode of the operation.                    */
+	int master;               /**< Node number of the ONE.                   */
+	uint64_t nodeslist;       /**< Nodeslist.                                */
 	/**@}*/
 
 	/**
 	 * @name Statistics variables.
 	 */
 	/**@{*/
-	uint64_t latency;         /**< Latency counter.              */
+	uint64_t latency;         /**< Latency counter.                          */
 	/**@}*/
-} ALIGN(sizeof(dword_t)) vsynctab[(SYNC_CREATE_MAX + SYNC_OPEN_MAX)];
+
+	/**
+	 * @name Wait/Wakeup controllers.
+	 */
+	/**@{*/
+	struct semaphore waiting; /**< Thread queue waiting for a communication. */
+	/**@}*/
+
+} ALIGN(sizeof(dword_t)) vsynctab[HW_SYNC_MAX];
 
 /**
  * @brief Resource pool.
  */
 PRIVATE const struct resource_pool vsyncpool = {
-	vsynctab, (SYNC_CREATE_MAX + SYNC_OPEN_MAX), sizeof(struct sync)
+	vsynctab, HW_SYNC_MAX, sizeof(struct sync)
 };
 
 /**
  * @brief Global lock.
  */
-PRIVATE spinlock_t vsync_lock = SPINLOCK_UNLOCKED;
+PRIVATE spinlock_t vsync_lock;
+
+/*============================================================================*
+ * sync_wait_active()                                                         *
+ *============================================================================*/
+
+/**
+ * @brief Waits a communication finishs on a active.
+ *
+ * @param hwfd Hardware file descriptor allocated by the active.
+ */
+PRIVATE void sync_wait_active(int hwfd)
+{
+	/* Search for the virtual sync. */
+	for (int i = 0; i < HW_SYNC_MAX; ++i)
+	{
+		if (!resource_is_used(&vsynctab[i].resource))
+			continue;
+
+		/* Found. */
+		if (vsynctab[i].hwfd == hwfd)
+		{
+			/* It myst be set to busy before the wait operation. */
+			KASSERT(resource_is_busy(&vsynctab[i].resource));
+
+			semaphore_down(&vsynctab[i].waiting);
+
+			return;
+		}
+	}
+
+	/* Should not happens. */
+	kpanic("[kernel][noc][sync] Tried to wait for an invalid active sync.");
+}
+
+/*============================================================================*
+ * sync_wait_active()                                                         *
+ *============================================================================*/
+
+/**
+ * @brief Complete a communication on a active.
+ *
+ * @param hwfd Hardware file descriptor allocated by the active.
+ */
+PRIVATE void sync_wakeup_active(int hwfd)
+{
+	/* Search for the virtual sync. */
+	for (int i = 0; i < HW_SYNC_MAX; ++i)
+	{
+		if (!resource_is_used(&vsynctab[i].resource))
+			continue;
+
+		/* Found. */
+		if (vsynctab[i].hwfd == hwfd)
+		{
+			semaphore_up(&vsynctab[i].waiting);
+
+			return;
+		}
+	}
+
+	/* Should not happens. */
+	kpanic("[kernel][noc][sync] Tried to wake up for an invalid active sync.");
+}
 
 /*============================================================================*
  * do_sync_search()                                                           *
@@ -136,7 +213,7 @@ PRIVATE spinlock_t vsync_lock = SPINLOCK_UNLOCKED;
  */
 PRIVATE int do_sync_search(int master, uint64_t nodeslist, int mode, int type)
 {
-	for (int i = 0; i < (SYNC_CREATE_MAX + SYNC_OPEN_MAX); ++i)
+	for (int i = 0; i < HW_SYNC_MAX; ++i)
 	{
 		if (!resource_is_used(&vsynctab[i].resource))
 			continue;
@@ -441,7 +518,7 @@ PUBLIC int do_vsync_close(int syncid)
 /**
  * @todo TODO: Provide a detailed description for this function.
  */
-PUBLIC int _do_sync_operate(int syncid, int type, hw_operation_fn do_operation)
+PRIVATE int _do_sync_operate(int syncid, int type, hw_operation_fn do_operation)
 {
 	int ret;     /* Return value.                 */
 	uint64_t t1; /* Clock value before operation. */
@@ -628,7 +705,7 @@ PUBLIC void vsync_init(void)
 	vsync_counters.nwaits   = 0ULL;
 	vsync_counters.nsignals = 0ULL;
 
-	for (unsigned i = 0; i < (SYNC_CREATE_MAX + SYNC_OPEN_MAX); ++i)
+	for (unsigned i = 0; i < HW_SYNC_MAX; ++i)
 	{
 		vsynctab[i].resource  = RESOURCE_INITIALIZER;
 		vsynctab[i].hwfd      = -1;
@@ -637,7 +714,22 @@ PUBLIC void vsync_init(void)
 		vsynctab[i].master    = -1;
 		vsynctab[i].nodeslist = 0ULL;
 		vsynctab[i].latency   = 0ULL;
+
+		/* Waiting controllers. */
+		semaphore_init(&vsynctab[i].waiting, 0);
 	}
+
+	/* Configure HAL Portal subsystem to use microkernel lock functions. */
+	KASSERT(
+		sync_ioctl(
+			0, SYNC_IOCTL_SET_ASYNC_BEHAVIOR,
+			sync_wait_active,
+			sync_wakeup_active
+		) == 0
+	);
+
+	spinlock_init(&vsync_lock);
 }
 
 #endif /* __TARGET_SYNC && !__NANVIX_IKC_USES_ONLY_MAILBOX */
+

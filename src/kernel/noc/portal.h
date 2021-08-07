@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-
 /**
  * @defgroup kernel-portal Portal Facility
  * @ingroup kernel
@@ -33,13 +32,11 @@
 #ifndef NANVIX_KPORTAL_H_
 #define NANVIX_KPORTAL_H_
 
-	#include <nanvix/hal.h>
-	#include <nanvix/const.h>
-	#include <nanvix/hlib.h>
-	#include <posix/stdarg.h>
-	#include <posix/errno.h>
+	#include "active.h"
 
-#if __TARGET_HAS_PORTAL
+#if __TARGET_HAS_PORTAL && !__NANVIX_IKC_USES_ONLY_MAILBOX
+
+	#include <nanvix/kernel/portal.h>
 
 	EXTERN int do_portal_alloc(int, int, int, int);
 	EXTERN int do_portal_release(int);
@@ -50,8 +47,9 @@
 
 	EXTERN void do_portal_init(void);
 
-#endif /* __TARGET_HAS_PORTAL */
+#endif /* __TARGET_HAS_PORTAL && !__NANVIX_IKC_USES_ONLY_MAILBOX */
 
 #endif /* NANVIX_KPORTAL_H_ */
 
 /**@}*/
+

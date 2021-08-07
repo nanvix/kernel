@@ -32,13 +32,11 @@
 #ifndef NANVIX_KMAILBOX_H_
 #define NANVIX_KMAILBOX_H_
 
-	#include <nanvix/hal.h>
-	#include <nanvix/const.h>
-	#include <nanvix/hlib.h>
-	#include <posix/stdarg.h>
-	#include <posix/errno.h>
+	#include "active.h"
 
 #if __TARGET_HAS_MAILBOX
+
+	#include <nanvix/kernel/mailbox.h>
 
 	EXTERN int do_mailbox_alloc(int, int, int, int);
 	EXTERN int do_mailbox_release(int);
@@ -54,3 +52,4 @@
 #endif /* NANVIX_KMAILBOX_H_ */
 
 /**@}*/
+

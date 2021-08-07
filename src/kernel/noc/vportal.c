@@ -22,18 +22,11 @@
  * SOFTWARE.
  */
 
-/* Must come first. */
-#define __NEED_RESOURCE
-
-#include <nanvix/hal.h>
-#include <nanvix/kernel/portal.h>
-#include <nanvix/hlib.h>
-#include <posix/errno.h>
-
 #include "communicator.h"
-#include "portal.h"
 
 #if __TARGET_HAS_PORTAL && !__NANVIX_IKC_USES_ONLY_MAILBOX
+
+#include "portal.h"
 
 /**
  * @brief Extracts fd and port from portalid.
@@ -139,7 +132,6 @@ PRIVATE int do_vportal_alloc(int local, int remote, int port, int type)
 				vportal_counters.nopens++;
 		spinlock_unlock(&vportal_counters.lock);
 	}
-
 
 	return (portalid);
 }
@@ -377,7 +369,7 @@ PUBLIC int do_vportal_wait(int portalid)
  * @returns Upon successful completion, zero is returned.
  * Upon failure, a negative error code is returned instead.
  */
-int do_vportal_ioctl(int portalid, unsigned request, va_list args)
+PUBLIC int do_vportal_ioctl(int portalid, unsigned request, va_list args)
 {
 	return (communicator_ioctl(&vportals[portalid], request, args));
 }
@@ -394,18 +386,16 @@ int do_vportal_ioctl(int portalid, unsigned request, va_list args)
  * @returns Upon successful completion, a positive number is returned.
  * Upon failure, a negative error code is returned instead.
  */
-int do_vportal_get_port(int portalid)
+PUBLIC int do_vportal_get_port(int portalid)
 {
-	int ret;
+	int ret = -EBADF;
 
 	if (!WITHIN(portalid, 0, KPORTAL_MAX))
 		return (-EINVAL);
 
 	spinlock_lock(&vportals[portalid].lock);
 
-		if (!resource_is_used(&vportals[portalid].resource))
-			ret = (-EBADF);
-		else
+		if (resource_is_used(&vportals[portalid].resource))
 			ret = (VPORTAL_GET_LADDRESS_PORT(vportals[portalid].config.fd));
 
 	spinlock_unlock(&vportals[portalid].lock);
@@ -432,3 +422,4 @@ PUBLIC void vportal_init(void)
 }
 
 #endif /* __TARGET_HAS_PORTAL && !__NANVIX_IKC_USES_ONLY_MAILBOX */
+

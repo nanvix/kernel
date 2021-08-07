@@ -32,12 +32,6 @@
 #ifndef NANVIX_NOC_COMMUNICATOR_H_
 #define NANVIX_NOC_COMMUNICATOR_H_
 
-	#include <nanvix/hal.h>
-	#include <nanvix/hlib.h>
-	#include <nanvix/const.h>
-	#include <posix/errno.h>
-	#include <posix/stdarg.h>
-
 	#include "active.h"
 
 #if (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL)
@@ -223,3 +217,4 @@
 #endif /* NANVIX_NOC_COMMUNICATOR_H_ */
 
 /**@}*/
+

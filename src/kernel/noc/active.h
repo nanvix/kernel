@@ -32,7 +32,14 @@
 #ifndef NANVIX_NOC_ACTIVE_H_
 #define NANVIX_NOC_ACTIVE_H_
 
+	/* Must come first. */
+	#define __NEED_RESOURCE
+
 	#include <nanvix/hal.h>
+
+#if (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL)
+
+	#include <nanvix/kernel/thread.h>
 	#include <nanvix/hlib.h>
 	#include <nanvix/const.h>
 	#include <posix/errno.h>
@@ -40,8 +47,6 @@
 
 	#include "mbuffer.h"
 	#include "port.h"
-
-#if (__TARGET_HAS_MAILBOX || __TARGET_HAS_PORTAL)
 
 	/**
 	 * @brief Resource flags.
@@ -214,6 +219,13 @@
 		/**@}*/
 
 		/**
+		 * @name Wait/Wakeup controllers.
+		 */
+		/**@{*/
+		struct semaphore waiting;              /**< Thread queue waiting for a communication.   */
+		/**@}*/
+
+		/**
 		 * @name Auxiliary functions.
 		 */
 		/**@{*/
@@ -241,6 +253,8 @@
 	EXTERN int active_wait(const struct active_pool *, int, const struct active_config *, struct pstats *);
 	EXTERN int _active_create(const struct active_pool *, int);
 	EXTERN int _active_open(const struct active_pool *, int, int);
+	EXTERN void active_handler_wait(const struct active_pool * pool, int hwfd, char * rule);
+	EXTERN void active_handler_wakeup(const struct active_pool * pool, int hwfd, char * rule);
 
 	/**
 	 * @brief Sets a active as allowed.
@@ -279,3 +293,4 @@
 #endif /* NANVIX_NOC_ACTIVE_H_ */
 
 /**@}*/
+

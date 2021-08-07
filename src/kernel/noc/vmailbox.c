@@ -22,19 +22,11 @@
  * SOFTWARE.
  */
 
-/* Must come first. */
-#define __NEED_RESOURCE
-
-#include <nanvix/hal.h>
-#include <nanvix/hlib.h>
-#include <nanvix/kernel/mailbox.h>
-#include <posix/errno.h>
-#include <posix/stdarg.h>
-
 #include "communicator.h"
-#include "mailbox.h"
 
 #if __TARGET_HAS_MAILBOX
+
+#include "mailbox.h"
 
 /**
  * @brief Extracts fd and port from mbxid.
@@ -326,7 +318,7 @@ PUBLIC int do_vmailbox_wait(int mbxid)
  * @returns Upon successful completion, zero is returned.
  * Upon failure, a negative error code is returned instead.
  */
-int do_vmailbox_ioctl(int mbxid, unsigned request, va_list args)
+PUBLIC int do_vmailbox_ioctl(int mbxid, unsigned request, va_list args)
 {
 	return (communicator_ioctl(&vmailboxes[mbxid], request, args));
 }
@@ -343,18 +335,16 @@ int do_vmailbox_ioctl(int mbxid, unsigned request, va_list args)
  * @returns Upon successful completion, a positive number is returned.
  * Upon failure, a negative error code is returned instead.
  */
-int do_vmailbox_get_port(int mbxid)
+PUBLIC int do_vmailbox_get_port(int mbxid)
 {
-	int ret;
+	int ret = -EBADF;
 
 	if (!WITHIN(mbxid, 0, KMAILBOX_MAX))
 		return (-EINVAL);
 
 	spinlock_lock(&vmailboxes[mbxid].lock);
 
-		if (!resource_is_used(&vmailboxes[mbxid].resource))
-			ret = (-EBADF);
-		else
+		if (resource_is_used(&vmailboxes[mbxid].resource))
 			ret = (VMAILBOX_GET_LADDRESS_PORT(vmailboxes[mbxid].config.fd));
 
 	spinlock_unlock(&vmailboxes[mbxid].lock);
