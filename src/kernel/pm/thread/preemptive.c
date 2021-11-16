@@ -769,10 +769,10 @@ PUBLIC int thread_create(int *tid, void*(*start)(void*), void *arg)
 		KASSERT((new_thread->coreid = (utid % (CORES_NUM - 1)) + 1) > 0);
 
 		/* Sets default affinity. */
-#if __NANVIX_MICROKERNEL_STATIC_SCHED
-		new_thread->affinity = KTHREAD_AFFINITY_FIXED(new_thread->coreid);
-#else
+#if __NANVIX_MICROKERNEL_DYNAMIC_SCHED
 		new_thread->affinity = KTHREAD_AFFINITY_DEFAULT;
+#else
+		new_thread->affinity = KTHREAD_AFFINITY_FIXED(new_thread->coreid);
 #endif
 
 #if __NANVIX_MICROKERNEL_THREAD_STATS
