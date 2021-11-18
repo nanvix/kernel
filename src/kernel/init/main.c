@@ -104,9 +104,12 @@ PUBLIC void kmain(int argc, const char *argv[])
 	exception_init();
 #endif
 	mm_init();
+	kevent_init();
+#if __NANVIX_USE_TASKS
+	task_init();
+#endif
 	noc_init();
 	syscall_init();
-	kevent_init();
 
 #if __NANVIX_HAS_NETWORK
 	network_setup();

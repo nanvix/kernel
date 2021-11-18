@@ -33,6 +33,7 @@
  */
 /**@{*/
 EXTERN void kmain(int argc, const char *argv[]);
+EXTERN void * task_loop(void * args);
 /**@}*/
 
 /**
@@ -50,6 +51,19 @@ EXTENSION PUBLIC struct thread threads[KTHREAD_MAX] = {
 		.start    = (void *) kmain,
 		.ctx      = NULL,
 	},
+#if __NANVIX_USE_TASKS
+	[1] = {
+		.resource = RESOURCE_STATIC_INITIALIZER,
+		.tid      = KTHREAD_DISPATCHER_TID,
+		.coreid   = KTHREAD_DISPATCHER_CORE,
+		.state    = THREAD_READY,
+		.affinity = KTHREAD_AFFINITY_FIXED(KTHREAD_DISPATCHER_CORE),
+		.age      = 0ULL,
+		.arg      = NULL,
+		.start    = (void *) task_loop,
+		.ctx      = NULL,
+	}
+#endif
 };
 
 /**

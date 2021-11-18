@@ -64,6 +64,11 @@ PRIVATE void do_timer(int num)
 		/* Runs thread manager algorithm. */
 		thread_manager();
 #endif
+
+#if __NANVIX_USE_TASKS
+		/* Notify system tick. */
+		task_tick();
+#endif
 	}
 }
 

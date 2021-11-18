@@ -61,7 +61,11 @@
 	/**
 	 * @brief Kernel thread dedicated to kernel services.
 	 */
-	#define KTHREAD_SERVICE_MAX (1) /**< Master thread.              */
+	#if __NANVIX_USE_TASKS
+		#define KTHREAD_SERVICE_MAX (2) /**< Master + Dispatcher thread. */
+	#else
+		#define KTHREAD_SERVICE_MAX (1) /**< Master thread.              */
+	#endif
 
 	/**
 	 * @brief Idle thread dedicated to occupy the idle core.
@@ -234,6 +238,11 @@
 	/**@{*/
 	#define KTHREAD_NULL_TID                   (-1) /**< ID of NULL thread.       */
 	#define KTHREAD_MASTER_TID                  (0) /**< ID of master thread.     */
+#if __NANVIX_USE_TASKS
+	#define KTHREAD_DISPATCHER_TID              (1) /**< ID of dispatcher thread. */
+#else
+	#define KTHREAD_DISPATCHER_TID KTHREAD_NULL_TID /**< ID of dispatcher thread. */
+#endif
 	#define KTHREAD_LEADER_TID     (SYS_THREAD_MAX) /**< ID of leader thread.     */
 	/**@}*/
 
@@ -241,6 +250,20 @@
 	 * @brief Master thread.
 	 */
 	#define KTHREAD_MASTER (&threads[0])
+
+	/**
+	 * @brief Dispatcher thread.
+	 */
+#if __NANVIX_USE_TASKS
+	#define KTHREAD_DISPATCHER (&threads[1])
+#else
+	#define KTHREAD_DISPATCHER (NULL)
+#endif
+
+	/**
+	 * @brief Dispatcher core.
+	 */
+	#define KTHREAD_DISPATCHER_CORE (COREID_MASTER)
 
 	/**
 	 * @brief Gets the currently running thread.
@@ -675,6 +698,606 @@
 	 * @param m target mutex.
 	 */
 	EXTERN void mutex_unlock(struct mutex *m);
+
+/*============================================================================*
+ *                               Tasks Facility                               *
+ *============================================================================*/
+
+#if __NANVIX_USE_TASKS
+
+/*----------------------------------------------------------------------------*
+ *                               Task Constants                               *
+ *----------------------------------------------------------------------------*/
+
+	/**
+	 * @brief Enable communication with tasks.
+	 */
+	#define __NANVIX_USE_COMM_WITH_TASKS 1
+
+	/**
+	 * @brief Invalid Task ID.
+	 */
+	#define TASK_NULL_ID (-1)
+
+	/**
+	 * @brief Number of arguments passed to the task function.
+	 */
+	#define TASK_ARGS_NUM (5)
+
+	/**
+	 * @brief Maximum number of children.
+	 */
+	#define TASK_CHILDREN_MAX (10)
+
+	/**
+	 * @brief Maximum number of parents.
+	 */
+	#define TASK_PARENTS_MAX (sizeof(word_t) * 8)
+
+	/**
+	 * @name States of a task.
+	 */
+	/**@{*/
+	#define TASK_STATE_NOT_STARTED (1 << 0) /**< Not dispatched.   */
+	#define TASK_STATE_READY       (1 << 1) /**< Ready to execute. */
+	#define TASK_STATE_RUNNING     (1 << 2) /**< Running.          */
+	#define TASK_STATE_COMPLETED   (1 << 3) /**< Completed.        */
+	#define TASK_STATE_STOPPED     (1 << 4) /**< Stopped.          */
+	#define TASK_STATE_PERIODIC    (1 << 5) /**< Periodic stopped. */
+	#define TASK_STATE_ERROR       (1 << 6) /**< Error.            */
+	#define TASK_STATE_INVALID     (1 << 7) /**< Invalid.          */
+	/**@}*/
+
+	/**
+	 * @name Reschedule's type.
+	 */
+	/**@{*/
+	#define TASK_SCHEDULE_READY    (TASK_STATE_READY)    /**< Immediately scheduling.     */
+	#define TASK_SCHEDULE_STOPPED  (TASK_STATE_STOPPED)  /**< External signal scheduling. */
+	#define TASK_SCHEDULE_PERIODIC (TASK_STATE_PERIODIC) /**< Programmable scheduling.    */
+	/**@}*/
+
+	/**
+	 * @name Connection's trigger condition.
+	 *
+	 * @details When a connection is notified.
+	 * We use one byte (8 bits : unsigned char) to hold the triggers.
+	 */
+	/**@{*/
+	#define TASK_TRIGGER_USER0       (1 << 0) /**< At success.                                  */
+	#define TASK_TRIGGER_USER1       (1 << 1) /**< At success.                                  */
+	#define TASK_TRIGGER_USER2       (1 << 2) /**< At success.                                  */
+	#define TASK_TRIGGER_AGAIN       (1 << 3) /**< At reschedule.                               */
+	#define TASK_TRIGGER_STOP        (1 << 4) /**< At task stoppage.                            */
+	#define TASK_TRIGGER_PERIODIC    (1 << 5) /**< At periodic reschedule.                      */
+	#define TASK_TRIGGER_ERROR_THROW (1 << 6) /**< At error propagation (cannot dispatch child) */
+	#define TASK_TRIGGER_ERROR_CATCH (1 << 7) /**< At error notification (can dispatch child).  */
+
+	#define TASK_TRIGGER_ALL  ((1 << 8) - 1)  /**< All triggers.                                */
+	#define TASK_TRIGGER_NONE (0)             /**< None trigger.                                */
+	/**@}*/
+
+	/**
+	 * @name Management behaviors on a task.
+	 *
+	 * @details The management value indicates which action the Dispatcher must
+	 * perform over the current task.
+	 */
+	/**@{*/
+	#define TASK_MANAGEMENT_USER0    TASK_TRIGGER_USER0       /**< Release the task on success.                   */
+	#define TASK_MANAGEMENT_USER1    TASK_TRIGGER_USER1       /**< Release the task on finalization.              */
+	#define TASK_MANAGEMENT_USER2    TASK_TRIGGER_USER2       /**< Complete the task without releasing semaphore. */
+	#define TASK_MANAGEMENT_AGAIN    TASK_TRIGGER_AGAIN       /**< Reschedule the task.                           */
+	#define TASK_MANAGEMENT_STOP     TASK_TRIGGER_STOP        /**< Move the task to stopped state.                */
+	#define TASK_MANAGEMENT_PERIODIC TASK_TRIGGER_PERIODIC    /**< Periodic reschedule the task.                  */
+	#define TASK_MANAGEMENT_ERROR \
+		(TASK_TRIGGER_ERROR_THROW | TASK_TRIGGER_ERROR_CATCH) /**< Release the task with error.                   */
+	#define TASK_MANAGEMENT_INVALID  TASK_TRIGGER_NONE        /**< Invalid management.                            */
+	/**@}*/
+
+	/**
+	 * @name Connection's type.
+	 *
+	 * @details Types' description:
+	 * 0: Hard connections are lifetime connections and must be explicitly
+	 *    disconnected.
+	 * 1: Soft connections are (on-demand) temporary connections that cease
+	 *    to exist when the parent completes.
+	 * 2: Invalid connection is used internally to specify an invalid node.
+	 */
+	/**@{*/
+	#define TASK_CONN_IS_FLOW        (0) /**< Flow.                 */
+	#define TASK_CONN_IS_DEPENDENCY  (1) /**< Dependency.           */
+	#define TASK_CONN_IS_PERSISTENT  (0) /**< Lifetime connection.  */
+	#define TASK_CONN_IS_TEMPORARY   (1) /**< Temporary connection. */
+	/**@}*/
+
+	/**
+	 * @name Default merge arguments's functions.
+	 */
+	/**@{*/
+	#define TASK_MERGE_ARGS_FN_REPLACE (task_args_replace) /**< Replace arguments. */
+	/**@}*/
+
+	/**
+	 * @name Default values used on task_exit.
+	 */
+	/**@{*/
+	#define TASK_MERGE_ARGS_FN_DEFAULT TASK_MERGE_ARGS_FN_REPLACE /**< Replace arguments.                                  */
+	#define TASK_MANAGEMENT_DEFAULT    TASK_MANAGEMENT_USER0      /**< Release the task with success.                      */
+	#define TASK_TRIGGER_DEFAULT \
+		(TASK_TRIGGER_USER0 | TASK_TRIGGER_ERROR_THROW)           /**< All conditions except finalization and error catch. */
+	/**@}*/
+
+/*----------------------------------------------------------------------------*
+ *                           Task Types and Structures                        *
+ *----------------------------------------------------------------------------*/
+
+	/**
+	 * @brief Task function type.
+	 *
+	 * @param arg0 Argument value.
+	 * @param arg1 Argument value.
+	 * @param arg2 Argument value.
+	 * @param arg4 Argument value.
+	 * @param arg5 Argument value.
+	 *
+	 * @return The return value in the context of the task.
+	 */
+	typedef int (*task_fn)(
+		word_t arg0,
+		word_t arg1,
+		word_t arg2,
+		word_t arg3,
+		word_t arg4
+	);
+
+	/**
+	 * @brief Function type to merge the argument values passed from a parent
+	 * task to a child task.
+	 *
+	 * @param exit_args  Arguments passed from the task_exit call.
+	 * @param child_args Pointer to the arguments of a child task.
+	 */
+	typedef void (*task_merge_args_fn)(
+		const word_t exit_args[TASK_ARGS_NUM],
+		word_t child_args[TASK_ARGS_NUM]
+	);
+
+	/**
+	 * @brief Task prototype.
+	 */
+	struct task;
+
+	/**
+	 * @brief Node of a task on children list.
+	 *
+	 * @details This node is used to put a task into a dependency list.
+	 */
+	struct task_node
+	{
+		byte_t is_valid      : 1; /**< Connection is valid.        */
+		byte_t is_dependency : 1; /**< Connection is a dependency. */
+		byte_t is_temporary  : 1; /**< Connection is temporary.    */
+		byte_t unused        : 5; /**< Unused                      */
+		byte_t triggers;          /**< Connection triggers.        */
+		struct task * child;      /**< Task struct.                */
+	};
+
+	/**
+	 * @name Invalid value o a task node.
+	 */
+	/**@{*/
+	#define TASK_NODE_INVALID (struct task_node) { 0 }
+	/**@}*/
+
+	/**
+	 * @brief Task.
+	 */
+	struct task
+	{
+		/*
+		 * XXX: Don't Touch! This Must Come First!
+		 */
+		struct resource resource;                     /**< Resource struct.                */
+
+		/**
+		 * @name Period.
+		 */
+		/**@{*/
+		int period;                                   /**< Current period value.           */
+		int rperiod;                                  /**< Reload value of the period.     */
+		/**@}*/
+
+		/**
+		 * @name Task parameters.
+		 */
+		/**@{*/
+		int id;                                       /**< Identification.                 */
+		int color;                                    /**< Color.                          */
+		byte_t state;                                 /**< State.                          */
+		byte_t schedule_type;                         /**< Schedule type.                  */
+		/**@}*/
+
+		/**
+		 * @name Dependency graph.
+		 */
+		/**@{*/
+		char nparents;                                /**< Current number of parents.      */
+		char rparents;                                /**< Reload value of active parents. */
+		word_t parent_types;                          /**< Reload value of active parents. */
+		char nchildren;                               /**< Current number of children.     */
+		struct task_node children[TASK_CHILDREN_MAX]; /**< Children list.                  */
+		/**@}*/
+
+		/**
+		 * @name Task parameters.
+		 */
+		/**@{*/
+		task_fn fn;                                   /**< Function pointer.               */
+		word_t args[TASK_ARGS_NUM];                   /**< Arguments.                      */
+		int retval;                                   /**< Return value.                   */
+		/**@}*/
+
+		/**
+		 * @name Waiting control.
+		 */
+		/**@{*/
+		byte_t releases;                              /**< When the semaphore is released. */
+		struct semaphore sem;                         /**< Semaphore.                      */
+		/**@}*/
+	};
+
+/*----------------------------------------------------------------------------*
+ *                           Task Auxiliary Functions                         *
+ *----------------------------------------------------------------------------*/
+
+	/**
+	 * @brief Gets the return value of a task.
+	 *
+	 * @param task Task pointer.
+	 *
+	 * @return Number ID.
+	 */
+	static inline int task_get_id(const struct task * task)
+	{
+		KASSERT(task != NULL);
+		return (task->id);
+	}
+
+	/**
+	 * @brief Gets the return value of a task.
+	 *
+	 * @param task Task pointer.
+	 *
+	 * @return Return value.
+	 */
+	static inline int task_get_return(const struct task * task)
+	{
+		KASSERT(task != NULL);
+		return (task->retval);
+	}
+
+	/**
+	 * @brief Gets the number of parents of a task.
+	 *
+	 * @param task Task pointer.
+	 *
+	 * @return The number of parents.
+	 */
+	static inline int task_get_number_parents(const struct task * task)
+	{
+		KASSERT(task != NULL);
+		return (task->rparents);
+	}
+
+	/**
+	 * @brief Gets the number of children of a task.
+	 *
+	 * @param task Task pointer.
+	 *
+	 * @return The number of children.
+	 */
+	static inline int task_get_number_children(const struct task * task)
+	{
+		KASSERT(task != NULL);
+		return (task->nchildren);
+	}
+
+	/**
+	 * @brief Gets children of a task.
+	 *
+	 * @param task Task pointer.
+	 *
+	 * @return Pointer to the first children.
+	 */
+	static inline struct task * task_get_child(const struct task * task, int offset)
+	{
+		KASSERT(task != NULL);
+
+		if (UNLIKELY(!WITHIN(offset, 0, task->nchildren)))
+			return (NULL);
+
+		KASSERT(task->children[offset].child != NULL);
+
+		return (task->children[offset].child);
+	}
+
+	/**
+	 * @brief Gets the period of a task.
+	 *
+	 * @param task Task pointer.
+	 *
+	 * @return The period of the task.
+	 */
+	static inline int task_get_period(const struct task * task)
+	{
+		KASSERT(task != NULL);
+		return (task->rperiod);
+	}
+
+	/**
+	 * @brief Sets the period of a task.
+	 *
+	 * @param task   Task pointer.
+	 * @param period Period value.
+	 */
+	static inline void task_set_period(struct task * task, int period)
+	{
+		KASSERT(task != NULL);
+		task->rperiod = period > 0 ? period : 0;
+	}
+
+	/**
+	 * @brief Sets arguments of the task
+	 *
+	 * @param task Task pointer.
+	 * @param arg0 Argument value.
+	 * @param arg1 Argument value.
+	 * @param arg2 Argument value.
+	 */
+	static inline void task_set_arguments(
+		struct task * task,
+		word_t arg0,
+		word_t arg1,
+		word_t arg2,
+		word_t arg3,
+		word_t arg4
+	)
+	{
+		KASSERT(task != NULL);
+		task->args[0] = arg0;
+		task->args[1] = arg1;
+		task->args[2] = arg2;
+		task->args[3] = arg3;
+		task->args[4] = arg4;
+	}
+
+	/**
+	 * @brief Gets children of a task.
+	 *
+	 * @param task Task pointer.
+	 *
+	 * @return Pointer to the arguments.
+	 */
+	static inline const word_t * task_get_arguments(struct task * task)
+	{
+		KASSERT(task != NULL);
+		return ((const word_t *) (task->args));
+	}
+
+	/**
+	 * @brief Replate all child arguments.
+	 *
+	 * @param exit_args  Arguments passed from the task_exit call.
+	 * @param child_args Pointer to the arguments of a child task.
+	 */
+	static inline void task_args_replace(
+		const word_t exit_args[TASK_ARGS_NUM],
+		word_t child_args[TASK_ARGS_NUM]
+	)
+	{
+		for (int i = 0; i < TASK_ARGS_NUM; ++i)
+			child_args[i] = exit_args[i];
+	}
+
+	/**
+	 * @brief Get current task.
+	 *
+	 * @returns Current thread running. NULL if the dispatcher is not executing
+	 * a task.
+	 */
+	EXTERN struct task * task_current(void);
+
+/*----------------------------------------------------------------------------*
+ *                             Task Functionalities                           *
+ *----------------------------------------------------------------------------*/
+
+	/**
+	 * @brief Create a task.
+	 *
+	 * Sets the struct parameters and initializes the mutex for the waiting
+	 * control. The @p arg pointer can be a NULL pointer.
+	 *
+	 * @param task     Task pointer.
+	 * @param fn       Function pointer.
+	 * @param period   Period of the task (0 is meaning no periodic).
+	 * @param releases When the semaphore will be released based on the
+	 *                 management value.
+	 *
+	 * @return Zero if successfully create the task, non-zero otherwise.
+	 */
+	EXTERN int task_create(struct task * task, task_fn fn, int period, char releases);
+
+	/**
+	 * @brief Destroy a task.
+	 *
+	 * Sets the struct parameters and initializes the mutex for the waiting
+	 * control. The @p arg pointer can be a NULL pointer.
+	 *
+	 * @param task Task pointer.
+	 *
+	 * @return Zero if successfully create the task, non-zero otherwise.
+	 */
+	EXTERN int task_unlink(struct task * task);
+
+	/**
+	 * @brief Create a connection on the @p child task to the @p parent task.
+	 *
+	 * @param parent        Independent task.
+	 * @param child         Dependent task.
+	 * @param is_dependency Connection's type.
+	 * @param is_temporary  Connection's lifetime.
+	 * @param triggers      Connection's triggers.
+	 *
+	 * @return Zero if successfully create the dependency, non-zero otherwise.
+	 */
+	EXTERN int task_connect(
+		struct task * parent,
+		struct task * child,
+		bool is_dependency,
+		bool is_temporary,
+		char triggers
+	);
+
+	/**
+	 * @brief Destroy a dependency on the @p child task to the @p parent task.
+	 *
+	 * @param parent Independent task.
+	 * @param child  Dependent task.
+	 *
+	 * @return Zero if successfully create the dependency, non-zero otherwise.
+	 */
+	EXTERN int task_disconnect(struct task * parent, struct task * child);
+
+	/**
+	 * @brief Enqueue a task to the dispatcher thread operate.
+	 *
+	 * @param task Task pointer.
+	 * @param arg0 Argument value.
+	 * @param arg1 Argument value.
+	 * @param arg2 Argument value.
+	 * @param arg3 Argument value.
+	 * @param arg4 Argument value.
+	 *
+	 * @return Zero if successfully dispatch a task, non-zero otherwise.
+	 */
+	EXTERN int task_dispatch(
+		struct task * task,
+		word_t arg0,
+		word_t arg1,
+		word_t arg2,
+		word_t arg3,
+		word_t arg4
+	);
+
+	/**
+	 * @brief Emit a task to the target core operate.
+	 *
+	 * @param task   Task pointer.
+	 * @param coreid Core ID.
+	 * @param arg0   Argument value.
+	 * @param arg1   Argument value.
+	 * @param arg2   Argument value.
+	 * @param arg3   Argument value.
+	 * @param arg4   Argument value.
+	 *
+	 * @returns Zero if successfully emit the task, non-zero otherwise.
+	 */
+	EXTERN int task_emit(
+		struct task * task,
+		int coreid,
+		word_t arg0,
+		word_t arg1,
+		word_t arg2,
+		word_t arg3,
+		word_t arg4
+	);
+
+	/**
+	 * @brief Emit a task to the target core operate.
+	 *
+	 * @param retval     Return value.
+	 * @param management Management action.
+	 * @param merge      Function to pass the arguments to the child task.
+	 * @param arg0       Argument value.
+	 * @param arg1       Argument value.
+	 * @param arg2       Argument value.
+	 * @param arg3       Argument value.
+	 * @param arg4       Argument value.
+	 */
+	EXTERN void task_exit(
+		int retval,
+		int management,
+		task_merge_args_fn merge,
+		word_t arg0,
+		word_t arg1,
+		word_t arg2,
+		word_t arg3,
+		word_t arg4
+	);
+
+	/**
+	 * @brief Wait for a task to complete.
+	 *
+	 * @param task Task pointer.
+	 *
+	 * @return Zero if successfully wait for a task, non-zero otherwise.
+	 */
+	EXTERN int task_wait(struct task * task);
+
+	/**
+	 * @brief Tries to wait for a task to complete.
+	 *
+	 * @param task Task pointer.
+	 *
+	 * @return Zero if successfully wait for a task, non-zero otherwise.
+	 */
+	EXTERN int task_trywait(struct task * task);
+
+	/**
+	 * @brief Stop a task.
+	 *
+	 * @param task Task pointer.
+	 *
+	 * @returns Zero if successfully stop the task, non-zero otherwise.
+	 */
+	EXTERN int task_stop(struct task * task);
+
+	/**
+	 * @brief Continue a blocked task.
+	 *
+	 * @param task Task pointer.
+	 *
+	 * @returns Zero if successfully wakeup the task, non-zero otherwise.
+	 */
+	EXTERN int task_continue(struct task * task);
+
+	/**
+	 * @brief Complete a task.
+	 *
+	 * @param task       Task pointer.
+	 * @param management Management triggers (only user-defined management).
+	 *
+	 * @returns Zero if successfully complete the task, non-zero otherwise.
+	 */
+	EXTERN int task_complete(struct task * task, char management);
+
+/*----------------------------------------------------------------------------*
+ *                         Task System Functionalities                        *
+ *----------------------------------------------------------------------------*/
+
+	/**
+	 * @brief Notify a system tick to the time-based queue (periodic queue).
+	 */
+	EXTERN void task_tick(void);
+
+	/**
+	 * @brief Initializes task system.
+	 */
+	EXTERN void task_init(void);
+
+#endif /* __NANVIX_USE_TASKS */
 
 #endif /* NANVIX_THREAD_H_ */
 

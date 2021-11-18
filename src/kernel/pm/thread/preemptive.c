@@ -824,6 +824,7 @@ error0:
  */
 /**@{*/
 EXTERN void _kmain(void);
+EXTERN void task_loop(void);
 /**@}*/
 
 /**
@@ -943,6 +944,45 @@ PUBLIC void __thread_init(void)
 		/* Puts thread in the schedule queue. */
 		thread_schedule(master);
 
+#if __NANVIX_USE_TASKS
+
+	/**
+	 * Create Dispatcher thread.
+	 */
+
+		/* Gets the dispatcher thread. */
+		struct thread * dispatcher = KTHREAD_DISPATCHER;
+
+#if __NANVIX_MICROKERNEL_THREAD_STATS
+		dispatcher->stats.exec_start = 0ULL;
+		dispatcher->stats.exec_total = 0ULL;
+#endif
+
+		/* Initialize thread structure. */
+		KASSERT(dispatcher->coreid   == KTHREAD_DISPATCHER_CORE);
+		KASSERT(dispatcher->affinity == KTHREAD_AFFINITY_FIXED(KTHREAD_DISPATCHER_CORE));
+
+		/* Allocate stacks to the thread. */
+		KASSERT((ustacks[KSTACK_MAX - 3] = (struct stack *) kpage_get(1)) != NULL);
+		KASSERT((kstacks[KSTACK_MAX - 4] = (struct stack *) kpage_get(1)) != NULL);
+
+		/* Create initial context of the thread. */
+		KASSERT((dispatcher->ctx =
+			context_create(
+				task_loop,
+				ustacks[KSTACK_MAX - 3],
+				kstacks[KSTACK_MAX - 4]
+			)
+		) != NULL);
+
+		/* Puts thread in the schedule queue. */
+		thread_schedule(dispatcher);
+
+		/* Wakeup the dispatcher thread.*/
+		if (KTHREAD_DISPATCHER_CORE != COREID_MASTER)
+			kevent_notify(KEVENT_SCHED, KTHREAD_DISPATCHER_CORE);
+
+#endif /* __NANVIX_USE_TASKS */
 }
 
 #endif /* CLUSTER_IS_MULTICORE && CORE_SUPPORTS_MULTITHREADING */
