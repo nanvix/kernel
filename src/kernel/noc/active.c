@@ -497,7 +497,7 @@ PUBLIC void active_handler_wait(const struct active_pool * pool, int hwfd, char 
 		/* Found. */
 		if (actives[i].hwfd == hwfd)
 		{
-			/* It myst be set to busy before the wait operation. */
+			/* It must be set to busy before the wait operation. */
 			KASSERT(resource_is_busy(&actives[i].resource));
 
 			semaphore_down(&actives[i].waiting);
@@ -534,6 +534,13 @@ PUBLIC void active_handler_wakeup(const struct active_pool * pool, int hwfd, cha
 		{
 			semaphore_up(&actives[i].waiting);
 
+#if __NANVIX_USE_COMM_WITH_TASKS
+			if (task_get_number_children(&actives[i].task) != 1)
+				kpanic("[kernel][ikc][task] Active task must have one child.");
+
+			task_dispatch(&actives[i].task, 0, 0, 0, 0, 0);
+#endif
+
 			return;
 		}
 	}
@@ -541,6 +548,113 @@ PUBLIC void active_handler_wakeup(const struct active_pool * pool, int hwfd, cha
 	/* Should not happens. */
 	kpanic("[kernel][noc][%s] Tried to wake up for an invalid active.", rule);
 }
+
+#if __NANVIX_USE_TASKS
+
+/*============================================================================*
+ * active_set_task()                                                          *
+ *============================================================================*/
+
+/**
+ * @brief Connect the task to the child of the current running task.
+ *
+ * @param active Active pointer.
+ */
+PRIVATE void active_set_task(struct active * active)
+{
+#if __NANVIX_USE_COMM_WITH_TASKS
+
+	int ret;              /* Return value. */
+	struct task * config; /* Config task.  */
+	struct task * wait;   /* Waiting task. */
+
+	/* Active mustn't have children. */
+	if (task_get_number_children(&active->task) != 0)
+		kpanic("[kernel][ikc][task] Active task already connected.");
+
+	config = task_current();
+
+	/* Config must have only one child. */
+	if (task_get_number_children(config) != 1)
+		kpanic("[kernel][ikc][task] Configuration task must have one child.");
+
+	if ((wait = task_get_child(config, 0)) == NULL)
+		kpanic("[kernel][ikc][task] Waiting task doesn't exist.");
+
+	/* Waiting task must have only one parent. */
+	if (task_get_number_parents(wait) != 1)
+		kpanic("[kernel][ikc][task] Waiting task must have one parent.");
+
+	/* Connect active task to the child of current task, creating
+	 * a dependency to it:
+	 *
+	 *        config (awrite/aread) ------- wait
+	 *                                       |
+	 *  active.task (op. completed) ---------+
+	 *
+	 * As the handler is going to create dispatching the atask, the
+	 * task of waiting will only happen when the operation is completed.
+	 */
+	ret = task_connect(
+		&active->task,
+		wait,
+		TASK_CONN_IS_DEPENDENCY,
+		TASK_CONN_IS_TEMPORARY,
+		TASK_TRIGGER_DEFAULT
+	);
+
+	if (ret < 0)
+		kpanic("[kernel][ikc][task] Cannot connect the active to the waiting task.");
+
+#else
+	UNUSED(active);
+#endif /* __NANVIX_USE_COMM_WITH_TASKS  */
+}
+
+/*============================================================================*
+ * active_unset_task()                                                        *
+ *============================================================================*/
+
+/**
+ * @brief Disconnect the task from the child of the current running task.
+ *
+ * @param active Active pointer.
+ */
+PRIVATE void active_unset_task(struct active * active)
+{
+#if __NANVIX_USE_COMM_WITH_TASKS
+
+	struct task * wait; /* Waiting task. */
+
+	/* Active must have one children. */
+	if (task_get_number_children(&active->task) != 1)
+		kpanic("[kernel][ikc][task] Active task must have one child.");
+
+	if ((wait = task_get_child(&active->task, 0)) == NULL)
+		kpanic("[kernel][ikc][task] Waiting task doesn't exist.");
+
+	/* Waiting task must have only two parent. */
+	if (task_get_number_parents(wait) != 2)
+		kpanic("[kernel][ikc][task] Waiting task must have two parents.");
+
+	/* Disconnect active task from the child of current task, removing
+	 * the dependency:
+	 *
+	 *        ctask (awrite/aread) ----- child (wait)
+	 *
+	 *        atask (op. completed) ---X
+	 *
+	 * This is needed because a awrite/aread can failed for N reasons.
+	 */
+	if (task_disconnect(&active->task, wait) < 0)
+		kpanic("[kernel][ikc][task] Cannot discconnect the active from the waiting task.");
+
+#else
+	UNUSED(active);
+#endif /* __NANVIX_USE_COMM_WITH_TASKS  */
+}
+
+#endif /* __NANVIX_USE_TASKS */
 
 /*============================================================================*
  * active_aread()                                                             *
@@ -665,6 +779,11 @@ PUBLIC ssize_t active_aread(
 		port->mbufferpool = active->mbufferpool;
 		buf = mbuffer_get(port->mbufferpool, mbufferid);
 
+#if __NANVIX_USE_TASKS
+		/* Connect active task to the current task. */
+		active_set_task(active);
+#endif
+
 		t1 = clock_read();
 
 			/* Setup asynchronous read. */
@@ -690,6 +809,11 @@ discard_message:
 		KASSERT(mbuffer_release(port->mbufferpool, mbufferid, MBUFFER_DISCARD_MESSAGE) == 0);
 		port->mbufferid   = -1;
 		port->mbufferpool = NULL;
+
+#if __NANVIX_USE_TASKS
+		/* Disconnect active task from the current task. */
+		active_unset_task(active);
+#endif
 
 error:
 	spinlock_unlock(&active->lock);
@@ -831,11 +955,16 @@ PUBLIC ssize_t active_awrite(
 		if (resource_is_busy(&active->resource))
 			goto error;
 
+#if __NANVIX_USE_TASKS
+		/* Connect active task to the current task. */
+		active_set_task(active);
+#endif
+
 		t1 = clock_read();
 
 			/* Setup asynchronous write. */
 			if ((ret = active->fn->do_awrite(active->hwfd, (void *) &buf->message, active->size)) < 0)
-				goto error;
+				goto unset_task;
 
 		t2 = clock_read();
 
@@ -846,6 +975,13 @@ PUBLIC ssize_t active_awrite(
 		resource_set_busy(&active->resource);
 
 		ret = (ACTIVE_COMM_SUCCESS);
+
+unset_task:
+#if __NANVIX_USE_TASKS
+		/* Disconnect active task from the current task. */
+		if (ret < 0)
+			active_unset_task(active);
+#endif
 
 error:
 	spinlock_unlock(&active->lock);
@@ -1032,6 +1168,31 @@ PRIVATE void _active_free(const struct active_pool * pool, int id)
 	resource_set_unused(&pool->actives[id].resource);
 }
 
+#if __NANVIX_USE_TASKS
+
+/*============================================================================*
+ * active_task_dummy()                                                        *
+ *============================================================================*/
+
+PRIVATE int active_task_dummy(
+	word_t arg0,
+	word_t arg1,
+	word_t arg2,
+	word_t arg3,
+	word_t arg4
+)
+{
+	UNUSED(arg0);
+	UNUSED(arg1);
+	UNUSED(arg2);
+	UNUSED(arg3);
+	UNUSED(arg4);
+
+	return (0);
+}
+
+#endif /* __NANVIX_USE_TASKS */
+
 /*============================================================================*
  * _active_create()                                                           *
  *============================================================================*/
@@ -1077,6 +1238,13 @@ PUBLIC int _active_create(const struct active_pool * pool, int local)
 	active->refcount = 0;
 	resource_set_rdonly(&active->resource);
 	resource_set_notbusy(&active->resource);
+
+#if __NANVIX_USE_TASKS
+
+	if (task_create(&active->task, active_task_dummy, TASK_PRIORITY_HIGH, 0, TASK_TRIGGER_NONE) != 0)
+		return (-EINVAL);
+
+#endif
 
 	return (active - pool->actives);
 }
@@ -1134,6 +1302,13 @@ PUBLIC int _active_open(const struct active_pool * pool, int local, int remote)
 	active->remote   = remote;
 	resource_set_wronly(&active->resource);
 	resource_set_notbusy(&active->resource);
+
+#if __NANVIX_USE_TASKS
+
+	if (task_create(&active->task, active_task_dummy, TASK_PRIORITY_HIGH, 0, TASK_TRIGGER_NONE) != 0)
+		return (-EINVAL);
+
+#endif
 
 	return (active - pool->actives);
 }

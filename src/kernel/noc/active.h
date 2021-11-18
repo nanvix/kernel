@@ -223,6 +223,9 @@
 		 */
 		/**@{*/
 		struct semaphore waiting;              /**< Thread queue waiting for a communication.   */
+#if __NANVIX_USE_TASKS
+		struct task task;                      /**< Task used to releasing the waiting task.    */
+#endif
 		/**@}*/
 
 		/**
