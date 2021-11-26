@@ -40,6 +40,17 @@
 	#define EXCP_ACTION_HANDLE 1 /**< Handle */
 	/**@}*/
 
+	/**
+	 * @brief Enable handle exceptions with tasks.
+	 */
+	#define __NANVIX_USE_EXCEPTION_WITH_TASKS (__NANVIX_USE_TASKS && 1)
+
+#if __NANVIX_USE_EXCEPTION_WITH_TASKS
+
+	typedef void (* exception_handler_fn)(const struct exception *excp);
+
+#endif
+
 #ifdef __NANVIX_MICROKERNEL
 
 	/**
@@ -67,6 +78,22 @@
 	 * failure a negative error code is returned instead.
 	 */
 	EXTERN int exception_control(int excpnum, int action);
+
+#if __NANVIX_USE_EXCEPTION_WITH_TASKS
+
+	/**
+	 * @brief Sets a user-space exception handler.
+	 *
+	 * @param excpnum Number of the target exception.
+	 * @param action  Action upon target exception.
+	 * @param handler Function to handle the exception.
+	 *
+	 * @return Upon successful completion, zero is returned. Upon
+	 * failure a negative error code is returned instead.
+	 */
+	EXTERN int exception_set_handler(int excpnum, exception_handler_fn handler);
+
+#endif
 
 	/**
 	 * @brief Pauses the user-space exception handler.

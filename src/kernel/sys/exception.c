@@ -48,6 +48,23 @@ PUBLIC int kernel_excp_ctrl(int excpnum, int action)
 	return (exception_control(excpnum, action));
 }
 
+#if __NANVIX_USE_EXCEPTION_WITH_TASKS
+
+/**
+ * The kernel_excp_ctrl() function sets @p h as the user-space handler for
+ * handling the exception @p excpnum.
+ */
+PUBLIC int kernel_excp_set_handler(int excpnum, exception_handler_fn handler)
+{
+	/* Invalid exception. */
+	if (!exception_is_valid(excpnum))
+		return (-EINVAL);
+
+	return (exception_set_handler(excpnum, handler));
+}
+
+#endif
+
 /**
  * The kernel_excp_resume() function pauses the user-space handler and
  * waits for the develiery of the exception @p excpnum.

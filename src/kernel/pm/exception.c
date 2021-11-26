@@ -60,6 +60,13 @@ PRIVATE struct
 	 */
 	int action;
 
+#if __NANVIX_USE_EXCEPTION_WITH_TASKS
+	/**
+	 * @brief Handler of the exception.
+	 */
+	exception_handler_fn handler;
+#endif
+
 	/**
 	 * @brief Waiting threads.
 	 */
@@ -90,19 +97,42 @@ PUBLIC int exception_control(int excpnum, int action)
 				/* Yes, so we cannot proceed. */
 				if (kexceptions[excpnum].waiting[i].thread != NULL)
 				{
-					kprintf("[kernel][excp] cannot igore exception");
+					kprintf("[kernel][excp] cannot ignore exception");
 					spinlock_unlock(&lock);
 					return (-EPERM);
 				}
 			}
 		}
 
-		kexceptions[excpnum].action = action;
+		kexceptions[excpnum].action  = action;
+#if __NANVIX_USE_EXCEPTION_WITH_TASKS
+		if (action == EXCP_ACTION_IGNORE)
+			kexceptions[excpnum].handler = NULL;
+#endif
 
 	spinlock_unlock(&lock);
 
 	return (0);
 }
+
+#if __NANVIX_USE_EXCEPTION_WITH_TASKS
+
+/**
+ * @todo TODO Provide a detailed description for this function.
+ */
+PUBLIC int exception_set_handler(int excpnum, exception_handler_fn handler)
+{
+	/* Sanity check. */
+	KASSERT(exception_is_valid(excpnum));
+
+	spinlock_lock(&lock);
+		kexceptions[excpnum].handler = handler;
+	spinlock_unlock(&lock);
+
+	return (0);
+}
+
+#endif
 
 /**
  * @todo TODO: Provide a detailed description for this function.
@@ -207,6 +237,54 @@ PUBLIC int exception_resume(void)
 	return (0);
 }
 
+#if __NANVIX_USE_EXCEPTION_WITH_TASKS
+
+PRIVATE int exception_handler_pause(
+	word_t arg0,
+	word_t arg1,
+	word_t arg2,
+	word_t arg3,
+	word_t arg4
+)
+{
+	struct exception excp;
+
+	UNUSED(arg0);
+	UNUSED(arg1);
+	UNUSED(arg2);
+	UNUSED(arg3);
+	UNUSED(arg4);
+
+	KASSERT(exception_pause(&excp) == 0);
+
+	KASSERT(kexceptions[handling.excpnum].handler != NULL);
+
+	kexceptions[handling.excpnum].handler(&excp);
+
+	return (0);
+}
+
+PRIVATE int exception_handler_resume(
+	word_t arg0,
+	word_t arg1,
+	word_t arg2,
+	word_t arg3,
+	word_t arg4
+)
+{
+	UNUSED(arg0);
+	UNUSED(arg1);
+	UNUSED(arg2);
+	UNUSED(arg3);
+	UNUSED(arg4);
+
+	KASSERT(exception_resume() == 0);
+
+	return (0);
+}
+
+#endif /* __NANVIX_USE_EXCEPTION_WITH_TASKS */
+
 /**
  * @todo TODO Provide a detailed description for this function.
  */
@@ -214,6 +292,10 @@ PUBLIC int exception_wait(int excpnum, const struct exception *excp)
 {
 	int coreid;
 	struct thread *t;
+#if __NANVIX_USE_EXCEPTION_WITH_TASKS
+	struct task handler_pause;
+	struct task handler_resume;
+#endif
 
 	UNUSED(excp);
 
@@ -236,6 +318,18 @@ PUBLIC int exception_wait(int excpnum, const struct exception *excp)
 		kexceptions[excpnum].waiting[coreid].thread = t;
 		kexceptions[excpnum].waiting[coreid].excp = excp;
 
+#if __NANVIX_USE_EXCEPTION_WITH_TASKS
+		if (kexceptions[excpnum].handler != NULL)
+		{
+			KASSERT(task_create(&handler_pause, exception_handler_pause, TASK_PRIORITY_HIGH, 0, TASK_TRIGGER_DEFAULT) == 0);
+			KASSERT(task_create(&handler_resume, exception_handler_resume, TASK_PRIORITY_HIGH, 0, TASK_TRIGGER_DEFAULT) == 0);
+
+			KASSERT(task_connect(&handler_pause, &handler_resume, true, false, TASK_TRIGGER_DEFAULT) == 0);
+
+			KASSERT(task_dispatch(&handler_pause, 0, 0, 0, 0, 0) == 0);
+		}
+#endif
+
 	spinlock_unlock(&lock);
 
 	/*
@@ -248,6 +342,8 @@ PUBLIC int exception_wait(int excpnum, const struct exception *excp)
 	 */
 	semaphore_up(&ulock);
 	semaphore_down(&kexceptions[excpnum].waiting[coreid].lock);
+
+	/* TODO: Unlink tasks? */
 
 	return (0);
 }
@@ -265,7 +361,11 @@ PUBLIC void exception_init(void)
 
 	for (int i = 0; i < EXCEPTIONS_NUM; i++)
 	{
-		kexceptions[i].action = EXCP_ACTION_IGNORE;
+		kexceptions[i].action  = EXCP_ACTION_IGNORE;
+#if __NANVIX_USE_EXCEPTION_WITH_TASKS
+		kexceptions[i].handler = NULL;
+#endif
+
 		for (int j = 0; j < THREAD_MAX; j++)
 		{
 			kexceptions[i].waiting[j].thread = NULL;

@@ -362,6 +362,17 @@ PUBLIC void do_kcall2(void)
 			);
 			break;
 
+#if __NANVIX_USE_EXCEPTION_WITH_TASKS
+
+		case NR_excp_set_handler:
+			ret = kernel_excp_set_handler(
+				(int) sysboard[coreid].arg0,
+				(exception_handler_fn) sysboard[coreid].arg1
+			);
+			break;
+
+#endif
+
 		case NR_excp_resume:
 			ret = kernel_excp_resume();
 			break;
