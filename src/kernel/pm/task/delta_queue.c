@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include "periodic_queue.h"
+#include "delta_queue.h"
 
 #if __NANVIX_USE_TASKS
 
@@ -32,80 +32,74 @@
 #define TASK_PTR(t) ((struct task *) t)
 
 /*============================================================================*
- * periodic_task_order()                                                      *
+ * delta_queue_order()                                                        *
  *============================================================================*/
 
 /**
- * @brief Compare two resource to order them. Specifically, if b has a period
- * that is less than the period of a, we sinalizes that b is smaller and it
- * will be insert before a. Otherwise, we decrement the period of b by the
- * period o @p a.
+ * @brief Compare two resource to order them. Specifically, if b has a delta
+ * factor that is less than the delta factor of a, we sinalizes that b is
+ * smaller and it will be insert before a. Otherwise, we decrement the delta
+ * factor of b by the delta factor o @p a.
  *
- * @param a Current period task on arrangement.
- * @param b New periodic task.
+ * @param a Current delta factor task on arrangement.
+ * @param b New task.
  *
  * @return 1 if b is smaller than a, -1 otherwise.
  */
-PRIVATE int periodic_task_order(struct resource * a, struct resource * b)
+PRIVATE int delta_queue_order(struct resource * a, struct resource * b)
 {
 	struct task * curr = TASK_PTR(a);
 	struct task * newt = TASK_PTR(b);
 
-	if (newt->period < curr->period)
+	if (newt->delta_factor < curr->delta_factor)
 		return (1);
 
-	newt->period -= curr->period;
+	newt->delta_factor -= curr->delta_factor;
 
 	return (-1);
 }
 
 /*============================================================================*
- * periodic_task_enqueue()                                                    *
+ * delta_queue_enqueue()                                                      *
  *============================================================================*/
 
 /**
- * @brief Enqueue a periodic resource on a periodic queue.
+ * @brief Enqueue a resource on a delta queue.
  *
- * @param arr Periodic queue
- * @param t   New periodic task
+ * @param arr Delta queue
+ * @param t   New task
  */
-PUBLIC int periodic_task_enqueue(
-	struct resource_arrangement * arr,
-	struct task * t
-)
+PUBLIC int delta_queue_enqueue(struct resource_arrangement * arr, struct task * t)
 {
 	/* Sanity checks. */
 	KASSERT(arr && t);
 
-	/* Insert in order based on period. */
-	KASSERT(resource_insert_ordered(arr, &t->resource, periodic_task_order) >= 0);
+	/* Insert in order based on delta factor. */
+	KASSERT(resource_insert_ordered(arr, &t->resource, delta_queue_order) >= 0);
 
 	/**
-	 * Update next period.
+	 * Update next delta factor.
 	 *
-	 * @details We need to do this because the next task needs to have its period
-	 * based on the new task inserted.
+	 * @details We need to do this because the next task needs to have its delta
+	 * factor based on the new task inserted.
 	 */
 	if (t->resource.next)
-		TASK_PTR(t->resource.next)->period -= t->period;
+		TASK_PTR(t->resource.next)->delta_factor -= t->delta_factor;
 
 	return (0);
 }
 
 /*============================================================================*
- * periodic_task_remove()                                                     *
+ * delta_queue_remove()                                                       *
  *============================================================================*/
 
 /**
- * @brief Remove a periodic resource from a periodic queue.
+ * @brief Remove a resource from a delta queue.
  *
- * @param arr Periodic queue
- * @param t   Periodic task
+ * @param arr Delta queue
+ * @param t   Task
  */
-PUBLIC int periodic_task_remove(
-	struct resource_arrangement * arr,
-	struct task * t
-)
+PUBLIC int delta_queue_remove(struct resource_arrangement * arr, struct task * t)
 {
 	/* Sanity checks. */
 	KASSERT(arr || t);
@@ -115,30 +109,31 @@ PUBLIC int periodic_task_remove(
 		return (-EINVAL);
 
 	/**
-	 * Update next period.
+	 * Update next delta fector.
 	 *
-	 * @details We must add the period that it will be remove to the next task.
+	 * @details We must add the delta factor that it will be remove to the next
+	 * task.
 	 */
 	if (t->resource.next)
-		TASK_PTR(t->resource.next)->period += t->period;
+		TASK_PTR(t->resource.next)->delta_factor += t->delta_factor;
 
 	/* Remove it. */
 	return (resource_pop(arr, &t->resource));
 }
 
 /*============================================================================*
- * periodic_task_tick()                                                       *
+ * delta_queue_tick()                                                         *
  *============================================================================*/
 
 /**
  * @brief Try to dequeue a resource from a queue, but it is poped only if its
- * period reach 0.
+ * delta factor reach 0.
  *
- * @param arr Periodic resource queue
+ * @param arr Delta resource queue
  *
- * @returns Valid task if it reachs 0 on its period. NULL otherwise.
+ * @returns Valid task if it reachs 0 on its delta factor. NULL otherwise.
  */
-PUBLIC struct task * periodic_task_dequeue(struct resource_arrangement * arr)
+PUBLIC struct task * delta_queue_dequeue(struct resource_arrangement * arr)
 {
 	struct task * head;
 
@@ -148,8 +143,8 @@ PUBLIC struct task * periodic_task_dequeue(struct resource_arrangement * arr)
 	if ((head = TASK_PTR(arr->head)) == NULL)
 		return (NULL);
 
-	/* The head period is over. */
-	if (head->period == 0)
+	/* The head delta factor is over. */
+	if (head->delta_factor == 0)
 	{
 		KASSERT(resource_dequeue(arr) == &head->resource);
 		head->state = TASK_STATE_NOT_STARTED;
@@ -157,28 +152,29 @@ PUBLIC struct task * periodic_task_dequeue(struct resource_arrangement * arr)
 		return (head);
 	}
 
-	/* Decrement head period. */
-	head->period--;
+	/* Decrement head delta factor. */
+	head->delta_factor--;
 
-	/* The head period is not over. */
+	/* The head delta factor is not over. */
 	return (NULL);
 }
 
 /*============================================================================*
- * periodic_task_next_period()                                                *
+ * delta_queue_head_factor()                                                  *
  *============================================================================*/
 
 /**
- * @brief Get the period of the head.
+ * @brief Get the factor of the head.
  *
- * @param queue Periodic resource queue
+ * @param queue delta resource queue
  *
- * @returns Greater or equal to 0 if the queue head is valid, Negative otherwise.
+ * @returns Greater or equal to 0 if the queue head is valid, Negative
+ * otherwise.
  */
-PUBLIC int periodic_task_next_period(struct resource_arrangement * arr)
+PUBLIC int delta_queue_head_factor(struct resource_arrangement * arr)
 {
 	KASSERT(arr != NULL);
-	return ((arr->head != NULL) ? (TASK_PTR(arr->head)->period) : (-1));
+	return ((arr->head != NULL) ? (TASK_PTR(arr->head)->delta_factor) : (-1));
 }
 
 #endif /* __NANVIX_USE_TASKS */

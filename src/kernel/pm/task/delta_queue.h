@@ -22,64 +22,73 @@
  * SOFTWARE.
  */
 
-#include "delta_queue.h"
+#include <nanvix/kernel/thread.h>
 
 #if __NANVIX_USE_TASKS
 
-#ifndef NANVIX_PERIODIC_QUEUE_H_
-#define NANVIX_PERIODIC_QUEUE_H_
+#include <nanvix/hlib.h>
+
+#ifndef NANVIX_DELTA_QUEUE_H_
+#define NANVIX_DELTA_QUEUE_H_
 
 	/*============================================================================*
-	 * resource_periodic_enqueue()                                                *
+	 * resource_delta_enqueue()                                                   *
 	 *============================================================================*/
 
 	/**
-	 * @brief Enqueue a periodic resource on a periodic queue.
+	 * @brief Enqueue a resource on a delta queue.
 	 *
-	 * @param queue Periodic queue
-	 * @param newp  New periodic task 
+	 * @param queue Delta queue
+	 * @param newp  New task 
 	 */
-	#define periodic_queue_enqueue(_arr, _p) delta_queue_enqueue((_arr), (_p))
+	EXTERN int delta_queue_enqueue(
+		struct resource_arrangement * arr,
+		struct task * p
+	);
 
 	/*============================================================================*
-	 * resource_periodic_remote()                                                 *
+	 * resource_delta_remote()                                                    *
 	 *============================================================================*/
 
 	/**
-	 * @brief Remove a periodic resource on a periodic queue.
+	 * @brief Remove a resource on a delta queue.
 	 *
-	 * @param queue Periodic queue
-	 * @param newp  Periodic task 
+	 * @param queue Delta queue
+	 * @param newp  Task 
 	 */
-	#define periodic_queue_remove(_arr, _p) delta_queue_remove((_arr), (_p))
+	EXTERN int delta_queue_remove(
+		struct resource_arrangement * arr,
+		struct task * p
+	);
 
 	/*============================================================================*
-	 * resource_periodic_tick()                                                   *
+	 * delta_queue_dequeue()                                                      *
 	 *============================================================================*/
 
 	/**
 	 * @brief Try to dequeue a resource from a queue, but it is poped only if its
 	 * period reach 0.
 	 *
-	 * @param queue Periodic resource queue
+	 * @param queue Delta resource queue
 	 *
 	 * @returns Valid resource if it reachs 0 on its period. NULL otherwise.
 	 */
-	#define periodic_queue_dequeue(_arr) delta_queue_dequeue((_arr))
+	EXTERN struct task * delta_queue_dequeue(struct resource_arrangement * arr);
 
 	/*============================================================================*
-	 * resource_periodic_next_period()                                            *
+	 * delta_queue_head_factor()                                                  *
 	 *============================================================================*/
 
 	/**
-	 * @brief Get the period of the head.
+	 * @brief Get the factor of the head.
 	 *
-	 * @param queue Periodic resource queue
+	 * @param queue delta resource queue
 	 *
-	 * @returns Greater or equal to 0 if the queue head is valid, Negative otherwise.
+	 * @returns Greater or equal to 0 if the queue head is valid, Negative
+	 * otherwise.
 	 */
-	#define periodic_queue_next_period(_arr) delta_queue_head_factor((_arr))
+	EXTERN int delta_queue_head_factor(struct resource_arrangement * arr);
 
-#endif /* NANVIX_PERIODIC_QUEUE_H_ */
+#endif /* NANVIX_DELTA_QUEUE_H_ */
 
 #endif /* __NANVIX_USE_TASKS */

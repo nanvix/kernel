@@ -58,7 +58,13 @@ PUBLIC int kernel_task_current(struct task ** task)
  * kernel_task_create()                                                       *
  *============================================================================*/
 
-PUBLIC int kernel_task_create(struct task * task, task_fn fn, int period, char releases)
+PUBLIC int kernel_task_create(
+	struct task * task,
+	task_fn fn,
+	int priority,
+	int period,
+	char releases
+)
 {
 #if __NANVIX_USE_TASKS
 
@@ -70,7 +76,7 @@ PUBLIC int kernel_task_create(struct task * task, task_fn fn, int period, char r
 	if (UNLIKELY(period < 0))
 		return (-EINVAL);
 
-	return (task_create(task, fn, period, releases));
+	return (task_create(task, fn, priority, period, releases));
 
 #else
 

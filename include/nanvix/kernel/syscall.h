@@ -143,7 +143,7 @@
 	EXTERN int kernel_thread_yield(void);
 	EXTERN int kernel_thread_stats(int, uint64_t *, int);
 
-	EXTERN int kernel_task_create(struct task *, task_fn, int, char);
+	EXTERN int kernel_task_create(struct task *, task_fn, int, int, char);
 	EXTERN int kernel_task_unlink(struct task *);
 	EXTERN int kernel_task_connect(struct task *, struct task *, bool, bool, char);
 	EXTERN int kernel_task_disconnect(struct task *, struct task *);

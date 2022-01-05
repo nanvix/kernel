@@ -529,7 +529,8 @@ PUBLIC int do_kcall(
 				(struct task *) arg0,
 				(task_fn) arg1,
 				(int) arg2,
-				(char) arg3
+				(int) arg3,
+				(char) arg4
 			);
 			break;
 

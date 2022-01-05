@@ -103,7 +103,6 @@ PRIVATE inline bool task_is_invalid(struct task * task)
 		|| !WITHIN(task->id, 0, taskboard.counter)
 		|| task->state == TASK_STATE_INVALID
 	);
-		//|| task->state == TASK_STATE_ERROR
 }
 
 /*============================================================================*
@@ -132,7 +131,7 @@ PRIVATE inline int __task_remove(struct task * task)
 
 		/* Remove from the periodic queue. */
 		case TASK_STATE_PERIODIC:
-			return (periodic_task_remove(&taskboard.periodics, task));
+			return (periodic_queue_remove(&taskboard.periodics, task));
 
 		/* It is not in any queue. */
 		case TASK_STATE_NOT_STARTED:
@@ -170,9 +169,14 @@ PRIVATE inline int __task_insert(struct task * task, int new_state)
 	{
 		/* Insert in the active queue and notify the Dispatcher. */
 		case TASK_STATE_READY:
-			resource_enqueue(&taskboard.actives, &task->resource);
+		{
+			if (task->priority == TASK_PRIORITY_HIGH)
+				resource_push_front(&taskboard.actives, &task->resource);
+			else
+				resource_push_back(&taskboard.actives, &task->resource);
+
 			semaphore_up(&taskboard.sem);
-			break;
+		} break;
 
 		/* Insert in the waiting queue. */
 		case TASK_STATE_STOPPED:
@@ -181,8 +185,8 @@ PRIVATE inline int __task_insert(struct task * task, int new_state)
 
 		/* Insert in the periodic queue. */
 		case TASK_STATE_PERIODIC:
-			task->period = task->rperiod;
-			periodic_task_enqueue(&taskboard.periodics, task);
+			task->delta_factor = task->period;
+			periodic_queue_enqueue(&taskboard.periodics, task);
 			break;
 
 		/* We don't put in any queue. */
@@ -204,7 +208,7 @@ PRIVATE inline int __task_insert(struct task * task, int new_state)
 	task->state = new_state;
 
 	/* Restore schedule type. */
-	task->schedule_type = task->rperiod > 0 ?
+	task->schedule_type = task->period > 0 ?
 		TASK_SCHEDULE_PERIODIC : TASK_SCHEDULE_READY;
 
 	return (0);
@@ -866,13 +870,20 @@ PUBLIC void task_exit(
  *
  * @param task     Task pointer.
  * @param fn       Function pointer.
+ * @param priority Priority level.
  * @param period   Period of the task.
  * @param releases When the semaphore will be released based on the
  *                 management value.
  *
  * @return Zero if successfully create the task, non-zero otherwise.
  */
-PUBLIC int task_create(struct task * task, task_fn fn, int period, char releases)
+PUBLIC int task_create(
+	struct task * task,
+	task_fn fn,
+	int priority,
+	int period,
+	char releases
+)
 {
 	/* Invalid task. */
 	if (UNLIKELY(task == NULL || fn == NULL))
@@ -895,7 +906,6 @@ PUBLIC int task_create(struct task * task, task_fn fn, int period, char releases
 	if (period > 0)
 	{
 		task->period        = period;
-		task->rperiod       = period;
 		task->schedule_type = TASK_SCHEDULE_PERIODIC;
 	}
 
@@ -903,7 +913,6 @@ PUBLIC int task_create(struct task * task, task_fn fn, int period, char releases
 	else
 	{
 		task->period        = 0;
-		task->rperiod       = 0;
 		task->schedule_type = TASK_SCHEDULE_READY;
 	}
 
@@ -925,6 +934,7 @@ PUBLIC int task_create(struct task * task, task_fn fn, int period, char releases
 	spinlock_unlock(&taskboard.lock);
 
 	/* Control variables. */
+	task->priority = priority;
 	task->releases = releases;
 	semaphore_init(&task->sem, 0);
 
@@ -1257,7 +1267,7 @@ PUBLIC int task_continue(struct task * task)
 			/* Restore schedule type. */
 			case TASK_STATE_NOT_STARTED:
 			case TASK_STATE_COMPLETED:
-				task->schedule_type = task->rperiod > 0 ?
+				task->schedule_type = task->period > 0 ?
 					TASK_SCHEDULE_PERIODIC : TASK_SCHEDULE_READY;
 			/* Do nothing. */
 			case TASK_STATE_READY:
@@ -1538,12 +1548,12 @@ PUBLIC void task_tick(void)
 		 * Decrement the period of the periodic queue's head and try to
 		 * dequeue the task.
 		 */
-		while ((task = periodic_task_dequeue(&taskboard.periodics)) != NULL)
+		while ((task = periodic_queue_dequeue(&taskboard.periodics)) != NULL)
 		{
 			__task_dispatch(task);
 
 			/* There is no more task to pop. */
-			if (periodic_task_next_period(&taskboard.periodics) != 0)
+			if (periodic_queue_next_period(&taskboard.periodics) != 0)
 				break;
 		}
 

@@ -758,6 +758,14 @@
 	/**@}*/
 
 	/**
+	 * @name Priority level.
+	 */
+	/**@{*/
+	#define TASK_PRIORITY_LOW  (0) /**< Low priority.  */
+	#define TASK_PRIORITY_HIGH (1) /**< High priority. */
+	/**@}*/
+
+	/**
 	 * @name Connection's trigger condition.
 	 *
 	 * @details When a connection is notified.
@@ -827,6 +835,7 @@
 	#define TASK_MANAGEMENT_DEFAULT    TASK_MANAGEMENT_USER0      /**< Release the task with success.                      */
 	#define TASK_TRIGGER_DEFAULT \
 		(TASK_TRIGGER_USER0 | TASK_TRIGGER_ERROR_THROW)           /**< All conditions except finalization and error catch. */
+	#define TASK_PRIORITY_DEFAULT TASK_PRIORITY_LOW               /**< Low priority.                                       */
 	/**@}*/
 
 /*----------------------------------------------------------------------------*
@@ -905,8 +914,8 @@
 		 * @name Period.
 		 */
 		/**@{*/
-		int period;                                   /**< Current period value.           */
-		int rperiod;                                  /**< Reload value of the period.     */
+		int delta_factor;                             /**< Factor used on a delta queue.   */
+		int period;                                   /**< Reload value of the period.     */
 		/**@}*/
 
 		/**
@@ -917,6 +926,7 @@
 		int color;                                    /**< Color.                          */
 		byte_t state;                                 /**< State.                          */
 		byte_t schedule_type;                         /**< Schedule type.                  */
+		byte_t priority;                              /**< Priority level.                 */
 		/**@}*/
 
 		/**
@@ -979,6 +989,30 @@
 	}
 
 	/**
+	 * @brief Gets the priority of a task.
+	 *
+	 * @param task Task pointer.
+	 *
+	 * @return Priority.
+	 */
+	static inline int task_get_priority(const struct task * task)
+	{
+		KASSERT(task != NULL);
+		return (task->priority);
+	}
+
+	/**
+	 * @brief Sets the priority of a task.
+	 *
+	 * @param task Task pointer.
+	 */
+	static inline void task_set_priority(struct task * task, int priority)
+	{
+		KASSERT(task != NULL);
+		task->priority = (byte_t) priority;
+	}
+
+	/**
 	 * @brief Gets the number of parents of a task.
 	 *
 	 * @param task Task pointer.
@@ -1033,7 +1067,7 @@
 	static inline int task_get_period(const struct task * task)
 	{
 		KASSERT(task != NULL);
-		return (task->rperiod);
+		return (task->period);
 	}
 
 	/**
@@ -1045,7 +1079,7 @@
 	static inline void task_set_period(struct task * task, int period)
 	{
 		KASSERT(task != NULL);
-		task->rperiod = period > 0 ? period : 0;
+		task->period = period > 0 ? period : 0;
 	}
 
 	/**
@@ -1121,13 +1155,20 @@
 	 *
 	 * @param task     Task pointer.
 	 * @param fn       Function pointer.
+	 * @param priority Priority.
 	 * @param period   Period of the task (0 is meaning no periodic).
 	 * @param releases When the semaphore will be released based on the
 	 *                 management value.
 	 *
 	 * @return Zero if successfully create the task, non-zero otherwise.
 	 */
-	EXTERN int task_create(struct task * task, task_fn fn, int period, char releases);
+	EXTERN int task_create(
+		struct task * task,
+		task_fn fn,
+		int priority,
+		int period,
+		char releases
+	);
 
 	/**
 	 * @brief Destroy a task.
