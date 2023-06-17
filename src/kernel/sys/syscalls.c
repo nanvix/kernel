@@ -362,6 +362,17 @@ PUBLIC void do_kcall2(void)
 			);
 			break;
 
+#if __NANVIX_USE_EXCEPTION_WITH_TASKS
+
+		case NR_excp_set_handler:
+			ret = kernel_excp_set_handler(
+				(int) sysboard[coreid].arg0,
+				(exception_handler_fn) sysboard[coreid].arg1
+			);
+			break;
+
+#endif
+
 		case NR_excp_resume:
 			ret = kernel_excp_resume();
 			break;
@@ -521,6 +532,104 @@ PUBLIC int do_kcall(
 			break;
 
 #endif
+
+#if __NANVIX_USE_TASKS
+
+		case NR_task_create:
+			ret = kernel_task_create(
+				(struct task *) arg0,
+				(task_fn) arg1,
+				(int) arg2,
+				(int) arg3,
+				(char) arg4
+			);
+			break;
+
+		case NR_task_unlink:
+			ret = kernel_task_unlink(
+				(struct task *) arg0
+			);
+			break;
+
+		case NR_task_connect:
+			ret = kernel_task_connect(
+				(struct task *) arg0,
+				(struct task *) arg1,
+				(bool) arg2,
+				(bool) arg3,
+				(char) arg4
+			);
+			break;
+
+		case NR_task_disconnect:
+			ret = kernel_task_disconnect(
+				(struct task *) arg0,
+				(struct task *) arg1
+			);
+			break;
+
+		case NR_task_dispatch:
+			ret = kernel_task_dispatch(
+				(struct task *) arg0,
+				(word_t *) arg1
+			);
+			break;
+
+		case NR_task_emit:
+			ret = kernel_task_emit(
+				(struct task *) arg0,
+				(int) arg1,
+				(word_t *) arg2
+			);
+			break;
+
+		case NR_task_exit:
+			ret = kernel_task_exit(
+				(int) arg0,
+				(int) arg1,
+				(task_merge_args_fn) arg2,
+				(word_t *) arg3
+			);
+			break;
+
+		case NR_task_wait:
+			ret = kernel_task_wait(
+				(struct task *) arg0
+			);
+			break;
+
+		case NR_task_trywait:
+			ret = kernel_task_trywait(
+				(struct task *) arg0
+			);
+			break;
+
+		case NR_task_stop:
+			ret = kernel_task_stop(
+				(struct task *) arg0
+			);
+			break;
+
+		case NR_task_continue:
+			ret = kernel_task_continue(
+				(struct task *) arg0
+			);
+			break;
+
+		case NR_task_complete:
+			ret = kernel_task_complete(
+				(struct task *) arg0,
+				(char) arg1
+			);
+			break;
+
+		case NR_task_current:
+			ret = kernel_task_current(
+				(struct task **) arg0
+			);
+			break;
+
+#endif /* __NANVIX_USE_TASKS */
 
 		/* Forward system call. */
 		default:

@@ -105,12 +105,26 @@
 	#define NR_upage_unlink        52 /**< kernel_upage_unlink()        */
 	#define NR_upage_unmap         53 /**< kernel_upage_unmap()         */
 	#define NR_excp_ctrl           54 /**< kernel_excp_ctrl()           */
-	#define NR_excp_pause          55 /**< kernel_excp_pause()          */
-	#define NR_excp_resume         56 /**< kernel_excp_resume()         */
-	#define NR_cluster_get_num     57 /**< kernel_cluster_get_num()     */
-	#define NR_comm_get_port       58 /**< kernel_comm_get_port()       */
+	#define NR_excp_set_handler    55 /**< kernel_excp_set_handler()    */
+	#define NR_excp_pause          56 /**< kernel_excp_pause()          */
+	#define NR_excp_resume         57 /**< kernel_excp_resume()         */
+	#define NR_cluster_get_num     58 /**< kernel_cluster_get_num()     */
+	#define NR_comm_get_port       59 /**< kernel_comm_get_port()       */
+	#define NR_task_create         60 /**< kernel_task_create()         */
+	#define NR_task_unlink         61 /**< kernel_task_unlink()         */
+	#define NR_task_connect        62 /**< kernel_task_connect()        */
+	#define NR_task_disconnect     63 /**< kernel_task_disconnect()     */
+	#define NR_task_dispatch       64 /**< kernel_task_dispatch()       */
+	#define NR_task_emit           65 /**< kernel_task_emit()           */
+	#define NR_task_exit           66 /**< kernel_task_exit()           */
+	#define NR_task_wait           67 /**< kernel_task_wait()           */
+	#define NR_task_trywait        68 /**< kernel_task_trywait()        */
+	#define NR_task_stop           69 /**< kernel_task_stop()           */
+	#define NR_task_continue       70 /**< kernel_task_continue()       */
+	#define NR_task_complete       71 /**< kernel_task_complete()       */
+	#define NR_task_current        72 /**< kernel_task_current()        */
 
-	#define NR_last_kcall          59 /**< NR_SYSCALLS definer          */
+	#define NR_last_kcall          73 /**< NR_SYSCALLS definer          */
 	/**@}*/
 
 /*============================================================================*
@@ -129,6 +143,20 @@
 	EXTERN int kernel_wakeup(int);
 	EXTERN int kernel_thread_yield(void);
 	EXTERN int kernel_thread_stats(int, uint64_t *, int);
+
+	EXTERN int kernel_task_create(struct task *, task_fn, int, int, char);
+	EXTERN int kernel_task_unlink(struct task *);
+	EXTERN int kernel_task_connect(struct task *, struct task *, bool, bool, char);
+	EXTERN int kernel_task_disconnect(struct task *, struct task *);
+	EXTERN int kernel_task_dispatch(struct task *, word_t args[TASK_ARGS_NUM]);
+	EXTERN int kernel_task_emit(struct task *, int, word_t args[TASK_ARGS_NUM]);
+	EXTERN int kernel_task_exit(int, int, task_merge_args_fn, word_t args[TASK_ARGS_NUM]);
+	EXTERN int kernel_task_wait(struct task *);
+	EXTERN int kernel_task_trywait(struct task *);
+	EXTERN int kernel_task_stop(struct task *);
+	EXTERN int kernel_task_continue(struct task *);
+	EXTERN int kernel_task_complete(struct task *, char);
+	EXTERN int kernel_task_current(struct task **);
 
 	/**
 	 * @brief Shutdowns the kernel.
@@ -374,6 +402,21 @@
 	 * failure a negative error code is returned instead.
 	 */
 	EXTERN int kernel_excp_ctrl(int excpnum, int action);
+
+#if __NANVIX_USE_EXCEPTION_WITH_TASKS
+
+	/**
+	 * @brief Sets a user-space exception handler.
+	 *
+	 * @param excpnum Number of the target exception.
+	 * @param handler Function handler.
+	 *
+	 * @return Upon successful completion, zero is returned. Upon
+	 * failure a negative error code is returned instead.
+	 */
+	EXTERN int kernel_excp_set_handler(int excpnum, exception_handler_fn handler);
+
+#endif
 
 	/**
 	 * @brief Pauses the user-space exception handler.

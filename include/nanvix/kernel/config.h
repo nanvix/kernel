@@ -48,6 +48,17 @@
 	/**@}*/
 
 	/**
+	 * @name Task
+	 */
+	/**@{*/
+	#if defined(__mppa256__)
+		#define __NANVIX_USE_TASKS 0 /**< Use an dedicated thread to perform tasks? */
+	#else
+		#error "Currently, only MPPA-256 supports the task engine"
+	#endif
+	/**@}*/
+
+	/**
 	 * @brief Network Capabilities
 	 */
 	#if defined(__qemu_x86__) || defined(__qemu_openrisc__)
