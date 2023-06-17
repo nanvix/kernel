@@ -712,7 +712,7 @@
 	/**
 	 * @brief Enable communication with tasks.
 	 */
-	#define __NANVIX_USE_COMM_WITH_TASKS 1
+	#define __NANVIX_USE_COMM_WITH_TASKS (__NANVIX_USE_TASKS && 1)
 
 	/**
 	 * @brief Invalid Task ID.
