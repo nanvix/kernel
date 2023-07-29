@@ -1,0 +1,64 @@
+# Copyright(c) 2011-2023 The Maintainers of Nanvix.
+# Licensed under the MIT License.
+
+name: x86
+
+on: push
+
+env:
+  TARGET_BRANCH: ${{ github.ref_name }}
+
+jobs:
+
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+    steps:
+    - name: Setup
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.hostname }}
+        username: ${{ secrets.username }}
+        key: ${{ secrets.sshkey }}
+        port: ${{ secrets.portnum }}
+        envs: TARGET_BRANCH
+        script: |
+          cd microkernel
+          git pull
+          git checkout origin/${TARGET_BRANCH}
+          git status
+
+  build:
+    name: Build
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+    - name: Build
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.hostname }}
+        username: ${{ secrets.username }}
+        key: ${{ secrets.sshkey }}
+        port: ${{ secrets.portnum }}
+        script: |
+          cd microkernel
+          make TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 clean all
+
+  cleanup:
+    name: Cleanup
+    needs: build
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+    - name: Cleanup
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.hostname }}
+        username: ${{ secrets.username }}
+        key: ${{ secrets.sshkey }}
+        port: ${{ secrets.portnum }}
+        script: |
+          cd microkernel
+          git checkout dev
+          git clean -fdx
+          git remote prune origin
