@@ -98,15 +98,15 @@ static void gdt_load(const struct gdtptr *_gdtptr)
 static void set_gdte(int n, unsigned base, unsigned limit, unsigned granularity,
                      unsigned access)
 {
-    /* Set segment base address. */
+    // Set the base address of the segment.
     gdt[n].base_low = (base & 0xffffff);
     gdt[n].base_high = (base >> 24) & 0xff;
 
-    /* Set segment limit. */
+    // Set the limit of the segment.
     gdt[n].limit_low = (limit & 0xffff);
     gdt[n].limit_high = (limit >> 16) & 0xf;
 
-    /* Set granularity and access. */
+    // Set the granularity of the segment.
     gdt[n].granularity = granularity;
     gdt[n].access = access;
 }
@@ -124,24 +124,24 @@ unsigned gdt_kernel_cs(void)
 }
 
 /**
- * @todo Provide a detailed description for this function (TODO).
+ * @details Initializes the Global Descriptor Table (GDT).
  */
 void gdt_init(void)
 {
-    /* Size-error checking. */
+    kprintf("[hal][cpu] initializing gdt...");
+
+    // Ensure that size of structures match what we expect.
     KASSERT_SIZE(sizeof(struct gdte), GDTE_SIZE);
     KASSERT_SIZE(sizeof(struct gdtptr), GDTPTR_SIZE);
 
-    kprintf("[hal][cpu] initializing gdt...");
-
-    /* Initialize TSS. */
+    // Initialize the TSS.
     const struct tss *tss = tss_init(KERNEL_DS);
 
-    /* Blank GDT and GDT pointer. */
+    // Blank the GDT and GDTPTR structures.
     __memset(gdt, 0, sizeof(gdt));
     __memset(&gdtptr, 0, GDTPTR_SIZE);
 
-    /* Set GDT entries. */
+    // Initialize GDT structure.
     set_gdte(GDT_NULL, 0, 0x00000, 0x0, 0x00);
     set_gdte(GDT_CODE_DPL0, 0, 0xfffff, 0xc, 0x9a);
     set_gdte(GDT_DATA_DPL0, 0, 0xfffff, 0xc, 0x92);
@@ -149,13 +149,13 @@ void gdt_init(void)
     set_gdte(GDT_DATA_DPL3, 0, 0xfffff, 0xc, 0xf2);
     set_gdte(GDT_TSS, (unsigned)&tss, (unsigned)&tss + TSS_SIZE, 0x0, 0xe9);
 
-    /* Set GDT pointer. */
+    // Initialize the GDTPTR structure.
     gdtptr.size = sizeof(gdt) - 1;
     gdtptr.ptr = (unsigned)gdt;
 
-    /* Load GDT. */
+    // Load the GDT.
     gdt_load(&gdtptr);
 
-    /* Flush TSS. */
+    // Load the TSS.
     tss_load(TSS);
 }

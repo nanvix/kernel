@@ -6,6 +6,14 @@
 #ifndef ARCH_X86_CPU_TSS_H_
 #define ARCH_X86_CPU_TSS_H_
 
+/**
+ * @addtogroup x86-cpu-tss x86 TSS
+ * @ingroup x86
+ *
+ * @brief x86 TSS
+ */
+/**@{*/
+
 /*============================================================================*
  * Constants                                                                  *
  *============================================================================*/
@@ -22,7 +30,7 @@
 #ifndef _ASM_FILE_
 
 /**
- * @details Task state segment.
+ * @brief Task state segment (TSS).
  */
 struct tss {
     unsigned link;   /** Previous TSS in the list. */
@@ -54,5 +62,9 @@ struct tss {
 } __attribute__((packed));
 
 #endif /* _ASM_FILE_ */
+
+/*============================================================================*/
+
+/**@}*/
 
 #endif /* ARCH_X86_CPU_TSS_H_ */

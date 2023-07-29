@@ -6,6 +6,14 @@
 #ifndef ARCH_X86_CPU_GDT_H_
 #define ARCH_X86_CPU_GDT_H_
 
+/**
+ * @addtogroup x86-cpu-gdt x86 GDT
+ * @ingroup x86
+ *
+ * @brief x86 GDT
+ */
+/**@{*/
+
 /*============================================================================*
  * Constants                                                                  *
  *============================================================================*/
@@ -27,7 +35,7 @@
 #ifndef _ASM_FILE_
 
 /**
- * @brief Global descriptor table entry.
+ * @brief Global descriptor table entry (GDTE).
  */
 struct gdte {
     unsigned limit_low : 16;  /** Limit low.   */
@@ -39,7 +47,7 @@ struct gdte {
 } __attribute__((packed));
 
 /**
- * @brief Global descriptor table pointer.
+ * @brief Global descriptor table pointer (GDTPTR).
  */
 struct gdtptr {
     unsigned size : 16; /** GDT size.            */
@@ -47,5 +55,9 @@ struct gdtptr {
 } __attribute__((packed));
 
 #endif /* _ASM_FILE_ */
+
+/*============================================================================*/
+
+/**@}*/
 
 #endif /* ARCH_X86_CPU_GDT_H_ */

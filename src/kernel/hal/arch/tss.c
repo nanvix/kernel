@@ -13,11 +13,11 @@
 #include <nanvix/libcore.h>
 
 /*============================================================================*
- * Variables                                                                  *
+ * Private Variables                                                          *
  *============================================================================*/
 
 /**
- * @brief Task state segment.
+ * @brief Task state segment (TSS).
  */
 static struct tss tss;
 
@@ -40,19 +40,20 @@ void tss_load(unsigned tss_selector)
 }
 
 /**
- * @todo Provide a detailed description for this function (TODO).
+ * @details Initializes the Task State Segment (TSS).
  */
 const struct tss *tss_init(unsigned ss_selector)
 {
-    /* Size-error checking. */
-    KASSERT_SIZE(sizeof(struct tss), TSS_SIZE);
-
     kprintf("[hal][cpu] initializing tss...");
 
-    /* Blank TSS. */
+    // Ensure that size of structures match what we expect.
+    KASSERT_SIZE(sizeof(struct tss), TSS_SIZE);
+
+    // Blank TSS.
     __memset(&tss, 0, TSS_SIZE);
 
-    /* Fill up TSS. */
+    // Initialize the TSS.
+    // FIXME: Provide definitions for the following magic constants.
     tss.ss0 = ss_selector;
     tss.iomap = (TSS_SIZE - 1) << 16;
 
