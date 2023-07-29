@@ -124,9 +124,4 @@ void frame_init(void)
 #ifndef __NANVIX_FAST_BOOT
     __memset(frames, 0, FRAMES_SIZE);
 #endif
-
-#ifdef __ENABLE_SELF_TESTS
-    kprintf("[kernel][mm] running tests on the page frame allocator");
-    frame_test_driver();
-#endif
 }
