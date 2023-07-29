@@ -1,0 +1,136 @@
+# Copyright(c) 2011-2023 The Maintainers of Nanvix.
+# Licensed under the MIT License.
+
+# Script Arguments
+TARGET=$1   # Target
+BINARY=$2   # Binary Image
+MODE=$3     # Run Mode
+TIMEOUT=$4  # Timeout
+
+# Global Variables
+export SCRIPT_NAME=$0
+export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd)"
+
+#==============================================================================
+# usage()
+#==============================================================================
+
+#
+# Prints script usage and exits.
+#
+function usage
+{
+	echo "$SCRIPT_NAME <binary> [mode] [timeout]"
+	exit 1
+}
+
+#==============================================================================
+# check_args()
+#==============================================================================
+
+# Check script arguments.
+function check_args
+{
+	# Missing binary?
+	if [ -z $BINARY ];
+	then
+		echo "$SCRIPT_NAME: missing binary"
+		usage
+	fi
+}
+
+#==============================================================================
+# run_qemu()
+#==============================================================================
+
+# Runs a binary in QEMU.
+function run_qemu
+{
+	local target=$1     # Target architecture.
+	local binary=$2     # Binary image.
+	local mode=$3       # Spawn mode (run or debug).
+	local timeout=$4    # Timeout for test mode.
+	local GDB_PORT=1234 # GDB port used for debugging.
+	local cmd=""
+
+	# Target configuration.
+	local MEMSIZE=128M # Memory Size
+
+	if [ $target == "i386" ]; then
+		machine="-machine pc"
+	fi
+
+	qemu_cmd="$TOOLCHAIN_DIR/qemu/bin/qemu-system-$target
+	  		$machine
+			-serial stdio
+			-display none
+			-m $MEMSIZE
+			-mem-prealloc"
+
+	cmd="$qemu_cmd -gdb tcp::$GDB_PORT"
+	cmd="$cmd -kernel $binary"
+
+	# Run.
+	if [ $mode == "--debug" ];
+	then
+		cmd="$cmd -S"
+		$cmd
+	else
+
+		if [ ! -z $timeout ];
+		then
+			cmd="timeout -s SIGINT --preserve-status --foreground $timeout $cmd"
+		fi
+
+		$cmd
+	fi
+}
+
+#==============================================================================
+# run_host()
+#==============================================================================
+
+# Runs a binary in the host.
+function run_host
+{
+	local binary=$1     # Binary image.
+	local timeout=$2    # Timeout for test mode.
+	local cmd=$binary
+
+	if [ ! -z $timeout ];
+	then
+		cmd="timeout -s SIGINT --preserve-status --foreground $timeout $cmd"
+	fi
+
+	$cmd
+}
+
+#==============================================================================
+
+# No debug mode.
+if [ -z $MODE ];
+then
+	MODE="--no-debug"
+fi
+
+# Verbose mode.
+if [[ ! -z $VERBOSE ]];
+then
+	echo "====================================================================="
+	echo "TARGET      = $TARGET"
+	echo "SCRIPT_DIR  = $SCRIPT_DIR"
+	echo "SCRIPT_NAME = $SCRIPT_NAME"
+	echo "BINARY      = $BINARY"
+	echo "MODE        = $MODE"
+	echo "TIMEOUT     = $TIMEOUT"
+	echo "====================================================================="
+fi
+
+case "$TARGET" in
+	"x86")
+		run_qemu "i386" $BINARY $MODE $TIMEOUT
+		;;
+    *)
+        echo "Unsupported target: $TARGET"
+        ;;
+esac

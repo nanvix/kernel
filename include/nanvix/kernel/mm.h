@@ -1,0 +1,404 @@
+/*
+ * Copyright(c) 2011-2023 The Maintainers of Nanvix.
+ * Licensed under the MIT License.
+ */
+
+#ifndef NANVIX_KERNEL_MM_H_
+#define NANVIX_KERNEL_MM_H_
+
+/*============================================================================*
+ * Imports                                                                    *
+ *============================================================================*/
+
+#include <nanvix/kernel/hal.h>
+#include <stdbool.h>
+#include <stddef.h>
+
+/*============================================================================*
+ * Variables                                                                  *
+ *============================================================================*/
+
+/**
+ * @brief Memory layout.
+ */
+extern struct memory_region mem_layout[MEM_REGIONS];
+
+/*============================================================================*
+ * Functions                                                                  *
+ *============================================================================*/
+
+/**
+ * @brief Initializes the memory interface.
+ */
+extern void memory_init(void);
+
+/**
+ * @name Memory area identification
+ */
+/**@{*/
+#define KMEM_AREA 0 /** Kernel memory area. */
+#define UMEM_AREA 1 /** User memory area.   */
+/**@}*/
+
+/**
+ * @brief Initializes the Memory Management (MM) system.
+ */
+extern void mm_init(void);
+
+/**
+ * @brief Asserts a user virtual address.
+ *
+ * The mm_is_uaddr() function asserts whether or not the virtual
+ * address @p vaddr lies in user space.
+ *
+ * @returns If @p vaddr lies in user space, non zero is returned.
+ * Otherwise, zero is returned instead.
+ */
+static inline int mm_is_uaddr(vaddr_t vaddr)
+{
+    return ((vaddr >= USER_BASE_VIRT) &&
+            (vaddr < (USER_BASE_VIRT + UMEM_SIZE)));
+}
+
+/**
+ * @brief Asserts a kernel virtual address.
+ *
+ * The mm_is_kaddr() function asserts whether or not the virtual
+ * address @p vaddr lies in kernel space.
+ *
+ * @returns If @p vaddr lies in kernel space, non zero is
+ * returned. Otherwise, zero is returned instead.
+ */
+static inline int mm_is_kaddr(vaddr_t vaddr)
+{
+    return ((vaddr < (KERNEL_BASE_VIRT + KMEM_SIZE)) ||
+            ((vaddr >= KPOOL_BASE_VIRT) &&
+             (vaddr < (KPOOL_BASE_VIRT + KPOOL_SIZE))));
+}
+
+/**
+ * @brief Checks access permissions to a memory area.
+ *
+ * @param addr Address to be checked.
+ * @param size Size of memory area.
+ * @param area User memory area.
+ *
+ * @returns Non-zero if access is authorized, and zero otherwise.
+ */
+static inline int mm_check_area(vaddr_t vaddr, uint64_t size, int area)
+{
+
+    return ((area == UMEM_AREA)
+                ? mm_is_uaddr(vaddr) && mm_is_uaddr(vaddr + size)
+                : mm_is_kaddr(vaddr) && mm_is_kaddr(vaddr + size));
+}
+
+/*============================================================================*
+ * Page Frame Allocator                                                       *
+ *============================================================================*/
+
+/**
+ * @addtogroup kernel-mm-frame Frame Allocator
+ * @ingroup kernel-mm
+ *
+ * @brief Page Frame Allocator
+ */
+/**@{*/
+
+/**
+ * @brief Number of page frames for user use.
+ */
+#define NUM_UFRAMES (UMEM_SIZE / PAGE_SIZE)
+
+/**
+ * @param Null frame.
+ */
+#define FRAME_NULL ((frame_t)-1)
+
+/**
+ * @brief Asserts if a frame ID is valid.
+ *
+ * The frame_is_valid_id() function asserts whether or not the
+ * frame @p ID is valid.
+ *
+ * @returns If @p id is valid, non zero is returned. Otherwise,
+ * zero is returned instead.
+ *
+ * @author Pedro Henrique Penna
+ */
+static inline int frame_is_valid_id(frame_t id)
+{
+    return (id < NUM_UFRAMES);
+}
+
+/**
+ * @brief Converts an ID of a user page frame to a page frame number.
+ *
+ * @param id ID of target user page frame.
+ *
+ * @returns Frame number of target user page frame.
+ *
+ * @author Pedro Henrique Penna
+ */
+static inline frame_t frame_id_to_num(frame_t id)
+{
+    /* Invalid ID. */
+    if (!frame_is_valid_id(id))
+        return (FRAME_NULL);
+
+    return ((USER_BASE_PHYS >> PAGE_SHIFT) + id);
+}
+
+/**
+ * @brief Asserts if a frame number is valid.
+ *
+ * The frame_is_valid_num() function asserts whether or not the
+ * frame number @p frame is valid.
+ *
+ * @returns If @p frame is valid, non zero is returned. Otherwise,
+ * zero is returned instead.
+ *
+ * @author Pedro Henrique Penna
+ */
+static inline int frame_is_valid_num(frame_t frame)
+{
+    return ((frame >= (USER_BASE_PHYS >> PAGE_SHIFT)) &&
+            (frame < ((USER_BASE_PHYS >> PAGE_SHIFT) + NUM_UFRAMES)));
+}
+
+/**
+ * @brief Converts a page frame number to an ID of a user page frame.
+ *
+ * @param frame Number of the target page frame.
+ *
+ * @returns ID of target user page frame.
+ *
+ * @author Pedro Henrique Penna
+ */
+static inline int frame_num_to_id(frame_t frame)
+{
+    /* Invalid frame. */
+    if (!frame_is_valid_num(frame))
+        return (-1);
+
+    return (frame - (USER_BASE_PHYS >> PAGE_SHIFT));
+}
+
+/**
+ * @brief Asserts if a page frame is allocated.
+ *
+ * @param frame Number of the target page frame.
+ *
+ * @returns One if the target page frame is allocated and zero
+ * otherwise.
+ */
+extern int frame_is_allocated(frame_t frame);
+
+/**
+ * @brief Allocates a page frame.
+ *
+ * @returns Upon successful completion, the number of the
+ * allocated page frame is returned. Upon failure, @p FRAME_NULL
+ * is returned instead.
+ */
+extern frame_t frame_alloc(void);
+
+/**
+ * @brief Frees a page frame.
+ *
+ * @param frame Number of the target page frame.
+ *
+ * @returns Upon successful completion, zero is returned. Upon
+ * failure, a negative error code is returned instead.
+ */
+extern int frame_free(frame_t frame);
+
+/**
+ * @brief Runs unit tests on the frame allocator.
+ */
+extern void frame_test_driver(void);
+
+/**
+ * @brief Initializes the frame allocator.
+ */
+extern void frame_init(void);
+
+/**@}*/
+
+/*============================================================================*
+ * Kernel Page Pool                                                           *
+ *============================================================================*/
+
+/**
+ * @addtogroup kernel-mm-kpool Kernel Pool
+ * @ingroup kernel-mm
+ *
+ * @brief Kernel Page Pool
+ *
+ * The Kernel Page Pool is a subsystem of the Memory Management (MM)
+ * system that maintains a pool of pages for kernel use. Overall, this
+ * subsystem exposes an interface for allocating and releasing kernel
+ * pages, thereby providing the bare-bones for dynamic memory
+ * allocation in kernel land.
+ *
+ * Page frames for the Kernel Page Pool are reserved at system
+ * startup. These frames are contiguously located in the physical
+ * memory area, but the actual location and the size of this area  is
+ * platform dependent, thus being safely accessed through the Hardware
+ * Abstraction Layer (HAL).
+ */
+/**@{*/
+
+/**
+ * @brief Number of pages for kernel use.
+ */
+#define NUM_KPAGES (KPOOL_SIZE / PAGE_SIZE)
+
+/**
+ * @brief Asserts a kernel page address.
+ *
+ * The kpool_is_kpage() function asserts whether or not the
+ * virtual address @p vaddr refers to a kernel page.
+ *
+ * @returns If @p vaddr refers to a kernel page, non zero is
+ * returned. Otherwise, zero is returned instead.
+ *
+ * @author Pedro Henrique Penna
+ */
+static inline int kpool_is_kpage(vaddr_t vaddr)
+{
+    return ((vaddr >= KPOOL_BASE_VIRT) &&
+            (vaddr < KPOOL_BASE_VIRT + KPOOL_SIZE));
+}
+
+/**
+ * @brief Translates a kernel page ID into a virtual address.
+ *
+ * The kpool_id_to_addr() function converts the kernel page ID @p
+ * id into a virtual address.
+ *
+ * @param id ID of target kernel page.
+ *
+ * @returns The virtual address of the target kernel page.
+ *
+ * @note This function expects that @p is valid.
+ *
+ * @author Pedro Henrique Penna
+ */
+static inline vaddr_t kpool_id_to_addr(unsigned id)
+{
+    return (KPOOL_BASE_VIRT + (id << PAGE_SHIFT));
+}
+
+/**
+ * @brief Translates a frame number into a virtual address.
+ *
+ * The kpool_frame_to_addr() function converts the frame number @p
+ * frame into a virtual address.
+ *
+ * @param frame Target frame.
+ *
+ * @returns The virtual address of the target frame.
+ *
+ * @note This function expects that @p frame is valid.
+ *
+ * @author Pedro Henrique Penna
+ */
+static inline vaddr_t kpool_frame_to_addr(frame_t frame)
+{
+    return (kpool_id_to_addr(frame - (KPOOL_BASE_PHYS >> PAGE_SHIFT)));
+}
+
+/**
+ * @brief Translates a virtual address into a kernel page ID.
+ *
+ * The kpool_addr_to_id() function converts the virtual address @p
+ * vaddr into a kernel page ID.
+ *
+ * @param vaddr Target virtual address.
+ *
+ * @returns The kernel page ID of the target virtual address.
+ *
+ * @note This function expects that @p vaddr is valid.
+ *
+ * @author Pedro Henrique Penna
+ */
+static inline int kpool_addr_to_id(vaddr_t vaddr)
+{
+    return ((vaddr - KPOOL_BASE_VIRT) >> PAGE_SHIFT);
+}
+
+/**
+ * @brief Translates a kernel page into a frame number.
+ *
+ * The kpool_addr_to_frame() function converts the virtual address
+ * @p vaddr into a frame number.
+ *
+ * @param vaddr Target virtual address.
+ *
+ * @returns The frame number of a kernel page.
+ *
+ * @note This function expects that @p vaddr is valid.
+ *
+ * @author Pedro Henrique Penna
+ */
+static inline frame_t kpool_addr_to_frame(vaddr_t vaddr)
+{
+    return (kpool_addr_to_id(vaddr) + (KPOOL_BASE_PHYS >> PAGE_SHIFT));
+}
+
+/**
+ * @brief Allocates a kernel page.
+ *
+ * @param clean Should the page be cleaned?
+ *
+ * @returns Upon successful completion, a pointer to a kernel page
+ * is returned. Upon failure, a @p NULL pointer is returned
+ * instead.
+ */
+extern void *kpage_get(int clean);
+
+/**
+ * @brief Releases kernel page.
+ *
+ * @param kpg Kernel page to be released.
+ *
+ * @returns Upon successful completion, zero is returned. Upon
+ * failure, a negative error code is returned instead.
+ */
+extern int kpage_put(void *kpg);
+
+/**
+ * @brief Initializes the kernel page pool.
+ */
+extern void kpool_init(void);
+
+/**@}*/
+
+/*============================================================================*
+ * User Page Allocator                                                        *
+ *============================================================================*/
+
+/**
+ * @addtogroup kernel-mm-upage Page Allocator
+ * @ingroup kernel-mm
+ *
+ * @brief User Page Allocator
+ */
+/**@{*/
+
+/**
+ * @brief Number of pages for user use
+ */
+#define NUM_UPAGES NUM_UFRAMES
+
+/**
+ * @brief Idle page directory.
+ *
+ * @todo This shall be moved to the Hardware Abstraction Layer (HAL).
+ */
+extern struct pde *root_pgdir;
+
+/**@}*/
+
+#endif /* NANVIX_KERNEL_MM_H_ */

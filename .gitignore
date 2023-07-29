@@ -7,6 +7,11 @@ build-gcc
 build-gdb
 toolchain
 
+# Build artifacts
+*.a
+*.elf
+*.o
+
 # IDEs
 *.swo
 *.swp
