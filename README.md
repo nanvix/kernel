@@ -1,6 +1,7 @@
 # Nanvix Microkernel
 
 [![Join us on Slack!](https://img.shields.io/badge/chat-on%20Slack-e01563.svg)](https://join.slack.com/t/nanvix/shared_invite/zt-1yu30bs28-nsNmw8IwCyh6MBBV~B~X7w)
+![x86](https://github.com/nanvix/microkernel/actions/workflows/x86.yml/badge.svg)
 
 This repository hosts the microkernel of Nanvix.
 
