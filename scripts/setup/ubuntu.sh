@@ -8,6 +8,7 @@ apt-get update
 apt-get install -y   \
     bison            \
     build-essential  \
+    clang-format     \
     flex             \
     libglib2.0-dev   \
     libgmp-dev       \
