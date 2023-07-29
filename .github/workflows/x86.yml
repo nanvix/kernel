@@ -28,9 +28,25 @@ jobs:
           git checkout origin/${TARGET_BRANCH}
           git status
 
+  build-doc:
+    name: Build Documentation
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+    - name: Build
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.hostname }}
+        username: ${{ secrets.username }}
+        key: ${{ secrets.sshkey }}
+        port: ${{ secrets.portnum }}
+        script: |
+          cd microkernel
+          make TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 doxygen
+
   build:
     name: Build
-    needs: setup
+    needs: [build-doc]
     runs-on: ubuntu-latest
     steps:
     - name: Build
