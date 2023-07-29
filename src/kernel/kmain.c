@@ -36,8 +36,7 @@ void *init(void *args)
 /**
  * @brief Kernel main function.
  *
- * @param argc Unused.
- * @param argv Unused.
+ * @param mboot_info Multiboot information.
  *
  * @returns This function does not return.
  */
