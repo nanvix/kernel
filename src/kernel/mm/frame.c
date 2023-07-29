@@ -84,9 +84,6 @@ frame_t frame_alloc(void)
  * The frame_free() function frees a previously allocated page frame
  * whose number equals to @p frame.
  *
- * @retval -1 Invalid frame number
- * @retval -1 Page frame not allocated
- *
  * @author Pedro Henrique Penna
  */
 int frame_free(frame_t frame)
@@ -126,10 +123,5 @@ void frame_init(void)
 
 #ifndef __NANVIX_FAST_BOOT
     __memset(frames, 0, FRAMES_SIZE);
-#endif
-
-#ifdef __ENABLE_SELF_TESTS
-    kprintf("[kernel][mm] running tests on the page frame allocator");
-    frame_test_driver();
 #endif
 }

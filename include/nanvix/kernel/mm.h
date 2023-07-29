@@ -214,11 +214,6 @@ extern frame_t frame_alloc(void);
 extern int frame_free(frame_t frame);
 
 /**
- * @brief Runs unit tests on the frame allocator.
- */
-extern void frame_test_driver(void);
-
-/**
  * @brief Initializes the frame allocator.
  */
 extern void frame_init(void);

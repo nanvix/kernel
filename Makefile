@@ -101,6 +101,10 @@ check-format:
 	$(shell find include src -type f \( -name "*.c" -o -name "*.h" \) -print0 | xargs -0 clang-format --sort-includes --dry-run -Werror)
 	@exit $(.SHELLSTATUS)
 
+# Builds Doxygen documentation.
+doxygen:
+	doxygen doc/kernel.doxygen
+
 #===============================================================================
 # Run and Debug Rules
 #===============================================================================
