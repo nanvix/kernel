@@ -152,7 +152,6 @@ void thread_yield(void)
     running->quantum = 0;
     running->state = THREAD_RUNNING;
 
-    kprintf("[kernel][pm] switching from %d to %d...", prev->tid, next->tid);
     __context_switch(&prev->ctx, &next->ctx);
 }
 
