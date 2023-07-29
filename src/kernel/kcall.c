@@ -40,15 +40,6 @@ noreturn void handle_syscall(void)
     while (true) {
         semaphore_down(&kernel_semahore);
 
-        kprintf(
-            "kcall(): kcall_nr=%d, arg0=%d, arg1=%d, arg2=%d, arg3=%d, arg4=%d",
-            scoreboard.kcall_nr,
-            scoreboard.arg0,
-            scoreboard.arg1,
-            scoreboard.arg2,
-            scoreboard.arg3,
-            scoreboard.arg4);
-
         scoreboard.ret = 0;
 
         semaphore_up(&user_semaphore);
