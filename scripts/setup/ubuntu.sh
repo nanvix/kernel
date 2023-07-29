@@ -9,7 +9,9 @@ apt-get install -y   \
     bison            \
     build-essential  \
     clang-format     \
+    doxygen          \
     flex             \
+    graphviz         \
     libglib2.0-dev   \
     libgmp-dev       \
     libncurses5-dev  \
