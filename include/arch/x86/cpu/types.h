@@ -37,7 +37,7 @@
  */
 /**@{*/
 typedef uint8_t byte_t;   /** Byte        */
-typedef uint32_t hword_t; /** Half Word   */
+typedef uint16_t hword_t; /** Half Word   */
 typedef uint32_t word_t;  /** Word        */
 typedef uint64_t dword_t; /** Double Word */
 /**@}*/
