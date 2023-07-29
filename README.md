@@ -6,6 +6,10 @@ This repository hosts the microkernel of Nanvix.
 
 > Nanvix is a distributed operating system for manycore platforms.
 
+## Documentation
+
+- See [doc/setup.md](doc/setup.md) for instructions on how to setup your development environment.
+
 ## Usage Statement
 
 This project is a prototype. As such, we provide no guarantees that it will work and you are assuming any risks with using the code. We welcome comments and feedback. Please send any questions or comments to any [maintainer of the project](https://github.com/orgs/nanvix/people).
