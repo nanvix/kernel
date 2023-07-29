@@ -52,8 +52,6 @@ static void do_timer(void)
     /* Increment timer value. */
     timer_value++;
 
-    kprintf("[hal][core] tick %d!", timer_value);
-
     /* Forward timer interrupt handling. */
     if (timer_handler != NULL) {
         timer_handler();

@@ -6,6 +6,16 @@
 #ifndef NANVIX_KERNEL_HAL_ARCH_X86_GDT_H_
 #define NANVIX_KERNEL_HAL_ARCH_X86_GDT_H_
 
+/**
+ * @addtogroup x86-cpu-gdt x86 GDT
+ * @ingroup x86
+ */
+/**@{*/
+
+/*============================================================================*
+ * Functions                                                                  *
+ *============================================================================*/
+
 #ifndef _ASM_FILE_
 
 /**
@@ -21,5 +31,9 @@ extern void gdt_init(void);
 extern unsigned gdt_kernel_cs(void);
 
 #endif /* !_ASM_FILE_ */
+
+/*============================================================================*/
+
+/**@}*/
 
 #endif /* NANVIX_KERNEL_HAL_ARCH_X86_GDT_H_ */

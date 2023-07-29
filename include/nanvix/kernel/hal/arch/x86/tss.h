@@ -6,6 +6,18 @@
 #ifndef NANVIX_KERNEL_HAL_ARCH_X86_TSS_H_
 #define NANVIX_KERNEL_HAL_ARCH_X86_TSS_H_
 
+/**
+ * @addtogroup x86-cpu-tss x86 TSS
+ * @ingroup x86
+ *
+ * @brief x86 TSS
+ */
+/**@{*/
+
+/*============================================================================*
+ * Functions                                                                  *
+ *============================================================================*/
+
 #ifndef _ASM_FILE_
 
 /**
@@ -25,5 +37,9 @@ extern void tss_load(unsigned tss_selector);
 extern const struct tss *tss_init(unsigned ss_selector);
 
 #endif /* !_ASM_FILE_ */
+
+/*============================================================================*/
+
+/**@}*/
 
 #endif /* NANVIX_KERNEL_HAL_ARCH_X86_TSS_H_ */
