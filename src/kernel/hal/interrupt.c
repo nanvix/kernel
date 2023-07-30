@@ -136,7 +136,7 @@ int interrupt_register(int num, interrupt_handler_t handler)
     if ((num < 0) || (num >= INTERRUPTS_NUM))
         return (-1);
 
-    if (num != INTERRUPT_TIMER && num != INTERRUPT_IPI) {
+    if (num != INTERRUPT_TIMER) {
         /* Handler function already registered. */
         if (interrupt_handlers[num] != NULL)
             return (-1);
@@ -177,7 +177,7 @@ int interrupt_unregister(int num)
     if ((num < 0) || (num >= INTERRUPTS_NUM))
         return (-1);
 
-    if (num != INTERRUPT_TIMER && num != INTERRUPT_IPI) {
+    if (num != INTERRUPT_TIMER) {
         /* No handler function is registered. */
         if (interrupt_handlers[num] == NULL)
             return (-1);

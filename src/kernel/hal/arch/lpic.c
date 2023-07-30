@@ -16,12 +16,9 @@
  *============================================================================*/
 
 /**
- * @name Slave Slave LPIC Registers
+ * @brief Name of this module.
  */
-/**@{*/
-#define LPIC_CTRL_SLAVE 0xa0 /** Control register. */
-#define LPIC_DATA_SLAVE 0xa1 /** Data register.    */
-/**@}*/
+#define MODULE_NAME "[hal][cpu][lpci]]"
 
 /**
  * @name Commands Codes
@@ -90,36 +87,11 @@ static int currlevel = IRQLVL_5;
 static uint16_t currmask = IRQLVL_MASK_5;
 
 /*============================================================================*
- * Private Variables                                                          *
+ * Public Functions                                                           *
  *============================================================================*/
 
 /**
- * @brief interrupt handlers.
- */
-interrupt_handler_t interrupt_handlers[INTERRUPTS_NUM] = {NULL,
-                                                          NULL,
-                                                          NULL,
-                                                          NULL,
-                                                          NULL,
-                                                          NULL,
-                                                          NULL,
-                                                          NULL,
-                                                          NULL,
-                                                          NULL,
-                                                          NULL,
-                                                          NULL,
-                                                          NULL,
-                                                          NULL,
-                                                          NULL,
-                                                          NULL};
-
-/*============================================================================*
- * Public Functions                                                      *
- *============================================================================*/
-
-/**
- * @details The lpic_mask() function masks the interrupt request line in which
- * the interrupt @p irq is hooked up.
+ * @details This function masks the interrupt request line @p irq.
  */
 int lpic_mask(int irq)
 {
@@ -127,16 +99,20 @@ int lpic_mask(int irq)
     uint8_t value;
     uint16_t newmask;
 
-    /* Invalid interrupt number. */
-    if ((irq < 0) || (irq >= IRQ_NUM)) {
+    // Check for invalid interrupt request. IRQ 2 is reserved for the cascade.
+    if (UNLIKELY((irq < 0) || (irq == 2) || (irq >= LPIC_NUM_IRQS))) {
+        kprintf(MODULE_NAME " ERROR: mask invalid irq=%d", irq);
         return (-1);
     }
 
-    if (irq < 8) {
+    // Check which pick owns the target IRQ.
+    if (irq < LPIC_NUM_IRQS_MASTER) {
+        // Mask IRQ in master PIC.
         port = LPIC_DATA_MASTER;
         newmask = currmask | (1 << irq);
         value = newmask & 0xff;
     } else {
+        // Mask IRQ in slave PIC.
         port = LPIC_DATA_SLAVE;
         newmask = currmask | (1 << irq);
         value = (newmask >> 8) & 0xff;
@@ -150,8 +126,7 @@ int lpic_mask(int irq)
 }
 
 /**
- * @details The lpic_unmask() function unmasks the interrupt request line in
- * which the interrupt @p irq is hooked up.
+ * @details This function function unmasks the interrupt request line @p irq.
  */
 int lpic_unmask(int irq)
 {
@@ -159,15 +134,20 @@ int lpic_unmask(int irq)
     uint8_t value;
     uint16_t newmask;
 
-    /* Invalid interrupt number. */
-    if ((irq < 0) || (irq >= IRQ_NUM))
+    // Check for invalid interrupt request. IRQ 2 is reserved for the cascade.
+    if (UNLIKELY((irq < 0) || (irq == 2) || (irq >= LPIC_NUM_IRQS))) {
+        kprintf(MODULE_NAME " ERROR: unmkask invalid irq=%d", irq);
         return (-1);
+    }
 
-    if (irq < 8) {
+    // Check which pick owns the target IRQ.
+    if (irq < LPIC_NUM_IRQS_MASTER) {
+        // Unmask IRQ in master PIC.
         port = LPIC_DATA_MASTER;
         newmask = currmask & ~(1 << irq);
         value = newmask & 0xff;
     } else {
+        // Unmask IRQ in slave PIC.
         port = LPIC_DATA_SLAVE;
         newmask = currmask & ~(1 << irq);
         value = (newmask >> 8) & 0xff;
@@ -181,8 +161,7 @@ int lpic_unmask(int irq)
 }
 
 /**
- * @details The lpic_get() function gets the interrupt level of the calling core
- * to @p new_level. The old interrupt level is returned.
+ * @details This function gets the current interrupt level.
  */
 int lpic_lvl_get(void)
 {
@@ -190,37 +169,41 @@ int lpic_lvl_get(void)
 }
 
 /**
- * @details The lpic_set() function sets the interrupt level of the calling core
- * to @p new_level. The old interrupt level is returned.
+ * @details This function sets the interrupt level to @p new_level. The old
+ * interrupt level is returned.
  */
 int lpic_lvl_set(int new_level)
 {
-    int oldlevel;
-    uint16_t mask;
-
-    mask = intlvl_masks[new_level];
+    const uint16_t mask = intlvl_masks[new_level];
 
     output8(LPIC_DATA_MASTER, mask & 0xff);
     output8(LPIC_DATA_SLAVE, mask >> 8);
 
     currmask = mask;
-    oldlevel = currlevel;
+    const int oldlevel = currlevel;
     currlevel = new_level;
 
     return (oldlevel);
 }
 
 /**
- * @brief Acknowledges an interrupt.
- *
- * @param irq Number of the target interrupt.
+ * @details Acknowledges interrupt request @p irq.
  */
 void lpic_ack(int irq)
 {
-    if (irq >= 8) {
+    // Check for invalid interrupt request. IRQ 2 is reserved for the cascade.
+    if (UNLIKELY((irq < 0) || (irq == 2) || (irq >= LPIC_NUM_IRQS))) {
+        kprintf(MODULE_NAME " ERROR: ack invalid irq=%d", irq);
+        return;
+    }
+
+    // Check if EOI is managed by slave PIC.
+    if (irq >= LPIC_NUM_IRQS_MASTER) {
+        // Send EOI to slave PIC.
         output8(LPIC_CTRL_SLAVE, LPIC_EOI);
     }
 
+    // Send EOI to master PIC.
     output8(LPIC_CTRL_MASTER, LPIC_EOI);
 }
 
@@ -233,10 +216,8 @@ int lpic_next(void)
 }
 
 /**
- * @brief Enables hardware interrupts.
- *
- * The i486_hwint_enable() function enables all hardware interrupts in the
- * underlying i486 core.
+ * @details This function enables all hardware interrupts in the underlying
+ * core.
  */
 void lpic_enable(void)
 {
@@ -244,10 +225,8 @@ void lpic_enable(void)
 }
 
 /**
- * @brief Disables hardware interrupts.
- *
- * The i486_hwint_disable() function disables all hardware interrupts in the
- * underlying i486 core.
+ * @details This function disables all hardware interrupts in the underlying
+ * core.
  */
 void lpic_disable(void)
 {
@@ -255,45 +234,40 @@ void lpic_disable(void)
 }
 
 /**
- * @details The lpic_init() function initializes the programmable interrupt
- * controller of the i486 core. Upon completion, it drops the interrupt level to
- * the slowest ones, so that all interrupt lines are enabled.
+ * @details This function initializes the programmable interrupt controller of
+ * the underlying core. Upon completion, it raises the interrupt level to the
+ * slowest one, so that all interrupt lines are disable.
  */
 void lpic_init(uint8_t offset1, uint8_t offset2)
 {
-    kprintf("[hal] initializing lpic...");
+    kprintf(MODULE_NAME " initializing lpic...");
 
-    /*
-     * Starts initialization sequence
-     * in cascade mode.
-     */
+    // Starts initialization sequence in cascade mode.
     output8(LPIC_CTRL_MASTER, LPIC_ICW1_INIT | LPIC_ICW1_ICW4);
     iowait();
     output8(LPIC_CTRL_SLAVE, LPIC_ICW1_INIT | LPIC_ICW1_ICW4);
     iowait();
 
-    /* Send new vector offset. */
+    // Send new vector offset.
     output8(LPIC_DATA_MASTER, offset1);
     iowait();
     output8(LPIC_DATA_SLAVE, offset2);
     iowait();
 
-    /*
-     * Tell the master that there is a slave
-     * LPIC hired up at IRQ line 2 and tell
-     * the slave LPIC that it is the second LPIC.
-     */
+    // Tell the master that there is a slave
+    // LPIC hired up at IRQ line 2 and tell
+    // the slave LPIC that it is the second LPIC.
     output8(LPIC_DATA_MASTER, 0x04);
     iowait();
     output8(LPIC_DATA_SLAVE, 0x02);
     iowait();
 
-    /* Set 8086 mode. */
+    // Set 8086 mode.
     output8(LPIC_DATA_MASTER, LPIC_ICW4_8086);
     iowait();
     output8(LPIC_DATA_SLAVE, LPIC_ICW4_8086);
     iowait();
 
-    /* Clears interrupt mask. */
+    // Clears interrupt mask.
     lpic_lvl_set(IRQLVL_5);
 }
