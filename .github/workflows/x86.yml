@@ -74,7 +74,9 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd microkernel
-          make TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 run
+          make TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 run | tee output.txt
+          echo "Magic String: $(cat output.txt | tail -n 1)"
+          [ "$(cat output.txt | tail -n 1)" != "PANIC: Hello World!" ] && exit 1 || exit 0 ;
 
   cleanup:
     name: Cleanup
