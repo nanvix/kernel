@@ -60,9 +60,25 @@ jobs:
           cd microkernel
           make TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 clean all
 
+  test:
+    name: Test
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Test
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.hostname }}
+        username: ${{ secrets.username }}
+        key: ${{ secrets.sshkey }}
+        port: ${{ secrets.portnum }}
+        script: |
+          cd microkernel
+          make TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 run
+
   cleanup:
     name: Cleanup
-    needs: build
+    needs: test
     if: always()
     runs-on: ubuntu-latest
     steps:
