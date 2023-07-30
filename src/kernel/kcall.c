@@ -43,6 +43,10 @@ noreturn void handle_syscall(void)
         scoreboard.ret = 0;
 
         semaphore_up(&user_semaphore);
+
+        // Magic string.
+        // Our CI will look for this as the last print statement.
+        kpanic("Hello World!");
     }
 }
 
