@@ -16,6 +16,12 @@
  *============================================================================*/
 
 /**
+ * @brief Module name.
+ *
+ */
+#define MODULE_NAME "[hal][timer]"
+
+/**
  * @brief Oscillator frequency (in Hz)
  */
 #define PIT_FREQUENCY 1193182
@@ -33,20 +39,20 @@
  *============================================================================*/
 
 /**
- * @details Initializes the timer driver in the
- * i486 architecture. The frequency of the device is set to @p freq
- * Hz.
+ * @details This function initializes the timer device. The frequency of the
+ * device is set to @p freq Hz.
  */
 void timer_init(unsigned freq)
 {
-    uint16_t freq_divisor = PIT_FREQUENCY / freq;
+    const uint16_t freq_divisor = PIT_FREQUENCY / freq;
 
-    kprintf("[hal] initializing timer...");
+    kprintf(MODULE_NAME " initializing timer...");
 
-    /* Send control byte: adjust frequency divisor. */
+    // Send control byte: adjust frequency divisor.
+    kprintf(MODULE_NAME " setting frequency to %d Hz", freq);
     output8(PIT_CTRL, 0x36);
 
-    /* Send data byte: divisor_low and divisor_high. */
+    // Send data byte: divisor_low and divisor_high.
     output8(PIT_DATA, (uint8_t)(freq_divisor & 0xff));
     output8(PIT_DATA, (uint8_t)((freq_divisor >> 8)));
 }

@@ -7,6 +7,7 @@
  * Imports                                                                    *
  *============================================================================*/
 
+#include <nanvix/kernel/config.h>
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/lib.h>
 
@@ -32,8 +33,8 @@ void cpu_init(void)
     KASSERT_SIZE(sizeof(dword_t), DWORD_SIZE);
 
     gdt_init();
-    unsigned kernel_cs = gdt_kernel_cs();
-    idt_init(kernel_cs);
-    lpic_init(0x20, 0x28);
-    timer_init(32);
+    const unsigned kernel_cs = gdt_kernel_cs();
+    const unsigned hwint_off = idt_init(kernel_cs);
+    lpic_init(hwint_off);
+    timer_init(KERNEL_TIMER_FREQUENCY);
 }
