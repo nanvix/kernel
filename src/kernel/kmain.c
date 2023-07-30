@@ -47,12 +47,8 @@ noreturn void kmain(struct mboot_info *mboot_info)
     stdout_init();
     klib_init(stdout_write, disable_interrupts);
 
-    cpu_init();
-
-    exceptions_init();
-    interrupts_init();
+    hal_init();
     memory_init();
-
     mm_init();
     pm_init();
 
