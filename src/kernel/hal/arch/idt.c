@@ -76,7 +76,7 @@ extern void _do_kcall(void); /** Kernel Call */
 /**@}*/
 
 /*============================================================================*
- * Variables                                                                  *
+ * Private Variables                                                          *
  *============================================================================*/
 
 /**
@@ -103,6 +103,7 @@ static struct idtptr idtptr;
 static void idt_load(const struct idtptr *_idtptr)
 {
     kprintf("[hal][cpu] loading idt...");
+
     asm volatile("mov %0, %%eax;\
 			lidt (%%eax);"
                  :
@@ -122,14 +123,14 @@ static void idt_load(const struct idtptr *_idtptr)
 static void set_idte(int n, unsigned handler, unsigned selector, unsigned flags,
                      unsigned type)
 {
-    /* Set handler. */
+    // Set handler.
     idt[n].handler_low = (handler & 0xffff);
     idt[n].handler_high = (handler >> 16) & 0xffff;
 
-    /* Set GDT selector. */
+    // Set GDT selector.
     idt[n].selector = selector;
 
-    /* Set type and flags. */
+    // Set type and flags.
     idt[n].type = type;
     idt[n].flags = flags;
 }
@@ -139,21 +140,21 @@ static void set_idte(int n, unsigned handler, unsigned selector, unsigned flags,
  *============================================================================*/
 
 /**
- * @todo Provide a detailed description for this function (TODO).
+ * @details Initializes the Interrupt Descriptor Table (IDT).
  */
 void idt_init(unsigned cs_selector)
 {
-    /* Size-error checking. */
+    kprintf("[hal][cpu] initializing idt...");
+
+    // Ensure that size of structures match what we expect.
     KASSERT_SIZE(sizeof(struct idte), IDTE_SIZE);
     KASSERT_SIZE(sizeof(struct idtptr), IDTPTR_SIZE);
 
-    kprintf("[hal][cpu] initializing idt...");
-
-    /* Blank IDT and IDT pointer. */
+    // Blank IDT and IDT pointer.
     __memset(idt, 0, sizeof(idt));
     __memset(&idtptr, 0, IDTPTR_SIZE);
 
-    /* Set exception hooks. */
+    // Set exception hooks.
     set_idte(0, (unsigned)_do_excp0, cs_selector, 0x8, IDT_INT32);
     set_idte(1, (unsigned)_do_excp1, cs_selector, 0x8, IDT_INT32);
     set_idte(2, (unsigned)_do_excp2, cs_selector, 0x8, IDT_INT32);
@@ -177,7 +178,7 @@ void idt_init(unsigned cs_selector)
     set_idte(30, (unsigned)_do_excp30, cs_selector, 0x8, IDT_INT32);
     set_idte(31, (unsigned)_do_excp15, cs_selector, 0x8, IDT_INT32);
 
-    /* Set hardware interrupts. */
+    // Set hardware interrupts.
     set_idte(32, (unsigned)_do_hwint0, cs_selector, 0x8, IDT_INT32);
     set_idte(33, (unsigned)_do_hwint1, cs_selector, 0x8, IDT_INT32);
     set_idte(34, (unsigned)_do_hwint2, cs_selector, 0x8, IDT_INT32);
@@ -195,13 +196,13 @@ void idt_init(unsigned cs_selector)
     set_idte(46, (unsigned)_do_hwint14, cs_selector, 0x8, IDT_INT32);
     set_idte(47, (unsigned)_do_hwint15, cs_selector, 0x8, IDT_INT32);
 
-    /* Set kernel call interrupt. */
+    // Set kernel call interrupt.
     set_idte(TRAP_GATE, (unsigned)_do_kcall, cs_selector, 0xe, IDT_INT32);
 
-    /* Set IDT pointer. */
+    // Set IDT pointer.
     idtptr.size = sizeof(idt) - 1;
     idtptr.ptr = (unsigned)&idt;
 
-    /* Load IDT. */
+    // Load IDT.
     idt_load(&idtptr);
 }
