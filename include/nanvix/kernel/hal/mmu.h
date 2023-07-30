@@ -73,6 +73,11 @@ extern int mmu_pgtab_map(struct pde *pgdir, paddr_t paddr, vaddr_t vaddr);
  */
 extern void *mmu_page_walk(struct pde *pgdir, paddr_t paddr);
 
+/**
+ * @brief Initializes the MMU.
+ */
+extern void mmu_init(void);
+
 #endif /* !_ASM_FILE_ */
 
 #endif /* NANVIX_KERNEL_HAL_MMU_H_ */
