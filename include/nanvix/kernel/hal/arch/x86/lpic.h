@@ -45,10 +45,9 @@
 /**
  * @brief Initializes the LPIC.
  *
- * @param offset1 Vector offset for master PIC.
- * @param offset2 Vector offset for slave PIC.
+ * @param hwint_off Vector offset for hardware interrupts.
  */
-extern void lpic_init(uint8_t offset1, uint8_t offset2);
+extern void lpic_init(unsigned hwint_off);
 
 /**
  * @brief Masks an interrupt.

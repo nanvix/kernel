@@ -32,8 +32,8 @@ void cpu_init(void)
     KASSERT_SIZE(sizeof(dword_t), DWORD_SIZE);
 
     gdt_init();
-    unsigned kernel_cs = gdt_kernel_cs();
-    idt_init(kernel_cs);
-    lpic_init(0x20, 0x28);
+    const unsigned kernel_cs = gdt_kernel_cs();
+    const unsigned hwint_off = idt_init(kernel_cs);
+    lpic_init(hwint_off);
     timer_init(32);
 }

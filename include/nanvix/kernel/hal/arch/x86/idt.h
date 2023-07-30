@@ -30,9 +30,11 @@
 /**
  * @brief Initializes the Interrupt Descriptor Table (IDT).
  *
- * @param cs_selector IOPL 0 code segment selector.
+ * @param cs_sel IOPL 0 code segment selector.
+ *
+ * @return The vector offset for hardware interrupts.
  */
-extern void idt_init(unsigned cs_selector);
+extern unsigned idt_init(unsigned cs_sel);
 
 #endif /* !_ASM_FILE_ */
 

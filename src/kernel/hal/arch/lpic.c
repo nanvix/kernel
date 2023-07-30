@@ -238,7 +238,7 @@ void lpic_disable(void)
  * the underlying core. Upon completion, it raises the interrupt level to the
  * slowest one, so that all interrupt lines are disable.
  */
-void lpic_init(uint8_t offset1, uint8_t offset2)
+void lpic_init(unsigned hwint_off)
 {
     kprintf(MODULE_NAME " initializing lpic...");
 
@@ -249,9 +249,9 @@ void lpic_init(uint8_t offset1, uint8_t offset2)
     iowait();
 
     // Send new vector offset.
-    output8(LPIC_DATA_MASTER, offset1);
+    output8(LPIC_DATA_MASTER, hwint_off + 0);
     iowait();
-    output8(LPIC_DATA_SLAVE, offset2);
+    output8(LPIC_DATA_SLAVE, hwint_off + LPIC_NUM_IRQS_MASTER);
     iowait();
 
     // Tell the master that there is a slave
