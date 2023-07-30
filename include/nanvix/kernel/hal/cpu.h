@@ -8,7 +8,6 @@
 
 #include <nanvix/kernel/hal/arch.h>
 #include <nanvix/kernel/hal/cpu/context.h>
-#include <nanvix/kernel/hal/cpu/exception.h>
 
 #ifndef _ASM_FILE_
 

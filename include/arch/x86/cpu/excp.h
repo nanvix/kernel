@@ -7,6 +7,18 @@
 #define ARCH_X86_CPU_EXCP_H_
 
 /**
+ * @addtogroup x86-cpu-exception x86 Software Exceptions
+ * @ingroup x86-cpu
+ *
+ * @brief Software Exceptions Module
+ */
+/**@{*/
+
+/*============================================================================*
+ * Constants                                                                  *
+ *============================================================================*/
+
+/**
  * @brief Number of exceptions in the i486 core.
  */
 #define EXCEPTIONS_NUM 21
@@ -36,6 +48,10 @@
 #define EXCEPTION_SIMD_ERROR 19            /** SMID Unit Exception         */
 #define EXCEPTION_VIRTUAL_EXCEPTION 20     /** Virtual Exception           */
 #define EXCEPTION_SECURITY_EXCEPTION 30    /** Security Exception.         */
+/**@}*/
+
+/*============================================================================*/
+
 /**@}*/
 
 #endif /* ARCH_X86_CPU_EXCP_H_ */

@@ -20,6 +20,7 @@
 
 #include <nanvix/kernel/hal/arch.h>
 #include <nanvix/kernel/hal/cpu.h>
+#include <nanvix/kernel/hal/exception.h>
 #include <nanvix/kernel/hal/interrupt.h>
 #include <nanvix/kernel/hal/memory.h>
 #include <nanvix/kernel/hal/mmu.h>
