@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /**
- * @brief Lookup table with information about exceptions.
+ * @details Lookup table with information about exceptions.
  */
 struct exception_info exceptions[EXCEPTIONS_NUM] = {
     {NULL, "division-by-zero error"},
@@ -46,7 +46,8 @@ struct exception_info exceptions[EXCEPTIONS_NUM] = {
  *============================================================================*/
 
 /**
- * @todo TODO provide a detailed description for this function.
+ * @details This function dumps information about the exception pointed to by
+ * @p excp on the standard output device.
  */
 void exception_dump(const struct exception *excp)
 {
@@ -54,9 +55,8 @@ void exception_dump(const struct exception *excp)
 }
 
 /**
- * @details The exception_get_num() function gets the exception number
- * stored in the exception information structure pointed to by @p
- * excp.
+ * @details This function gets the exception number stored in the exception
+ * information structure pointed to by @p excp.
  */
 int exception_get_num(const struct exception *excp)
 {
