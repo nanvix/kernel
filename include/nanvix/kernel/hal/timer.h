@@ -6,6 +6,18 @@
 #ifndef NANVIX_KERNEL_HAL_TIMER_H_
 #define NANVIX_KERNEL_HAL_TIMER_H_
 
+/**
+ * @addtogroup hal-timer HAL TImer
+ * @ingroup hal
+ *
+ * @brief HAL Timer
+ */
+/**@{*/
+
+/*============================================================================*
+ * Functions                                                                  *
+ *============================================================================*/
+
 #ifndef _ASM_FILE_
 
 /**
@@ -16,5 +28,9 @@
 extern void timer_init(unsigned freq);
 
 #endif /* _ASM_FILE_ */
+
+/*============================================================================*/
+
+/**@}*/
 
 #endif /* NANVIX_KERNEL_HAL_TIMER_H_ */
