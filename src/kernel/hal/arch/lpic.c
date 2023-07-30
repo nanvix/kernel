@@ -18,7 +18,7 @@
 /**
  * @brief Name of this module.
  */
-#define MODULE_NAME "[hal][cpu][lpci]]"
+#define MODULE_NAME "[hal][cpu][lpci]"
 
 /**
  * @name Commands Codes
