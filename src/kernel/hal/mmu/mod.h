@@ -3,23 +3,25 @@
  * Licensed under the MIT License.
  */
 
-/*============================================================================*
- * Imports                                                                    *
- *============================================================================*/
-
-#include <nanvix/kernel/hal.h>
+#ifndef HAL_MMU_H_
+#define HAL_MMU_H_
 
 /*============================================================================*
- * Public Functions                                                           *
+ * Constants                                                                  *
  *============================================================================*/
 
 /**
- * @details Initializes the Hardware Abstraction Layer (HAL).
+ * @brief Name of this module.
  */
-void hal_init(void)
-{
-    cpu_init();
-    exceptions_init();
-    interrupts_init();
-    mmu_init();
-}
+#define MODULE_NAME "[hal][mmu]"
+
+/*============================================================================*
+ * Functions                                                                  *
+ *============================================================================*/
+
+/**
+ * @brief Runs self-tests on the MMU module.
+ */
+extern void test_mmu(void);
+
+#endif /* HAL_MMU_H_ */

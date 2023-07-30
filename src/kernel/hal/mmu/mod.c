@@ -7,7 +7,9 @@
  * Imports                                                                    *
  *============================================================================*/
 
+#include "mod.h"
 #include <nanvix/kernel/hal.h>
+#include <nanvix/kernel/lib.h>
 
 /*============================================================================*
  * Constants                                                                  *
@@ -88,4 +90,13 @@ out:
         return (NULL);
     else
         return (void *)(vaddr + (paddr - paddr_aligned));
+}
+
+/**
+ * @details This function initializes the MMU.
+ */
+void mmu_init(void)
+{
+    kprintf(MODULE_NAME "INFO: initializing...");
+    test_mmu();
 }
