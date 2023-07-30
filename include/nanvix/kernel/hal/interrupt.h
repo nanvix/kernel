@@ -6,7 +6,23 @@
 #ifndef NANVIX_KERNEL_HAL_INTERRUPT_H_
 #define NANVIX_KERNEL_HAL_INTERRUPT_H_
 
+/**
+ * @addtogroup kernel-hal-interrupt Interrupts
+ * @ingroup kernel-hal
+ *
+ * @brief Interrupts Module
+ */
+/**@{*/
+
+/*============================================================================*
+ * Imports                                                                    *
+ *============================================================================*/
+
 #include <nanvix/kernel/hal/arch.h>
+
+/*============================================================================*
+ * Constants                                                                  *
+ *============================================================================*/
 
 /**
  * @brief Threshold for spurious interrupts.
@@ -17,12 +33,24 @@
  */
 #define INTERRUPT_SPURIOUS_THRESHOLD 100
 
+/*============================================================================*
+ * Types                                                                      *
+ *============================================================================*/
+
 #ifndef _ASM_FILE_
 
 /**
  * @brief Hardware interrupt handler.
  */
 typedef void (*interrupt_handler_t)(void);
+
+#endif /* !_ASM_FILE_ */
+
+/*============================================================================*
+ * Functions                                                                  *
+ *============================================================================*/
+
+#ifndef _ASM_FILE_
 
 /**
  * @brief High-level hardware interrupt dispatcher.
@@ -73,5 +101,9 @@ extern void interrupts_init(void);
 extern interrupt_handler_t interrupt_handlers[INTERRUPTS_NUM];
 
 #endif /* !_ASM_FILE_ */
+
+/*============================================================================*/
+
+/**@}*/
 
 #endif /* NANVIX_KERNEL_HAL_INTERRUPT_H_ */
