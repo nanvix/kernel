@@ -7,10 +7,22 @@
  * Imports                                                                    *
  *============================================================================*/
 
+#include "mod.h"
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/mm.h>
 
+/*============================================================================*
+ * Private Variables                                                          *
+ *============================================================================*/
+
+/**
+ * @brief A kilobyte.
+ */
 #define KB 1024
+
+/**
+ * @brief A megabyte.
+ */
 #define MB (KB * KB)
 
 /*============================================================================*
@@ -20,13 +32,12 @@
 /**
  * @brief Root page directory.
  */
-static struct pde cluster_root_pgdir[PGDIR_LENGTH]
-    __attribute__((aligned(PAGE_SIZE)));
+struct pde root_pgdir[PGDIR_LENGTH] __attribute__((aligned(PAGE_SIZE)));
 
 /**
  * @brief Root page tables.
  */
-static struct pte cluster_root_pgtabs[ROOT_PGTAB_NUM][PGTAB_LENGTH]
+static struct pte root_pgtabs[ROOT_PGTAB_NUM][PGTAB_LENGTH]
     __attribute__((aligned(PAGE_SIZE)));
 
 /*============================================================================*
@@ -36,30 +47,28 @@ static struct pte cluster_root_pgtabs[ROOT_PGTAB_NUM][PGTAB_LENGTH]
 /**
  * @brief Prints information about memory layout.
  *
- * The mem_info() prints information about the virtual
+ * The memory_info() prints information about the virtual
  * memory layout.
  *
  * @author Davidson Francis
  */
-static void mem_info(void)
+static void memory_info(void)
 {
-    int i; /* Loop index. */
-
-    kprintf("[hal][cluster] text = %d KB data = %d KB bss = %d KB",
+    kprintf(MODULE_NAME " INFO: text = %d KB data = %d KB bss = %d KB",
             __div((&__TEXT_END - &__TEXT_START), KB),
             __div((&__DATA_END - &__DATA_START), KB),
             __div((&__BSS_END - &__BSS_START), KB));
-    for (i = 0; i < MEM_REGIONS; i++) {
-        kprintf("[hal][cluster] %s_base=%x %s_end=%x",
+    for (int i = 0; i < VMEM_REGION; i++) {
+        kprintf(MODULE_NAME " INFO: %s_base=%x %s_end=%x",
                 mem_layout[i].desc,
                 mem_layout[i].vbase,
                 mem_layout[i].desc,
                 mem_layout[i].vend);
     }
-    kprintf("[hal][cluster] user_base=%x   user_end=%x",
+    kprintf(MODULE_NAME " INFO: user_base=%x   user_end=%x",
             USER_BASE_VIRT,
             USER_END_VIRT);
-    kprintf("[hal][cluster] memsize=%d MB kmem=%d KB kpool=%d KB umem=%d KB",
+    kprintf(MODULE_NAME " memsize=%d MB kmem=%d KB kpool=%d KB umem=%d KB",
             MEMORY_SIZE / MB,
             KMEM_SIZE / KB,
             KPOOL_SIZE / KB,
@@ -75,24 +84,26 @@ static void mem_info(void)
  *
  * @author Davidson Francis
  */
-static void mem_check_align(void)
+static void memory_check_align(void)
 {
-    int i; /* Loop index. */
-
     /* These should be aligned at page boundaries. */
-    for (i = MREGION_PG_ALIGN_START; i < MREGION_PG_ALIGN_END; i++) {
-        if (mem_layout[i].vbase & (PAGE_SIZE - 1))
+    for (int i = MREGION_PG_ALIGN_START; i < MREGION_PG_ALIGN_END; i++) {
+        if (mem_layout[i].vbase & (PAGE_SIZE - 1)) {
             kpanic("%s base address misaligned", mem_layout[i].desc);
-        if (mem_layout[i].vend & (PAGE_SIZE - 1))
+        }
+        if (mem_layout[i].vend & (PAGE_SIZE - 1)) {
             kpanic("%s end address misaligned", mem_layout[i].desc);
+        }
     }
 
     /* These should be aligned at page table boundaries. */
-    for (i = MREGION_PT_ALIGN_START; i < MREGION_PT_ALIGN_END; i++) {
-        if (mem_layout[i].vbase & (PGTAB_SIZE - 1))
+    for (int i = MREGION_PT_ALIGN_START; i < MREGION_PT_ALIGN_END; i++) {
+        if (mem_layout[i].vbase & (PGTAB_SIZE - 1)) {
             kpanic("%s base address misaligned", mem_layout[i].desc);
-        if (mem_layout[i].vend & (PGTAB_SIZE - 1))
+        }
+        if (mem_layout[i].vend & (PGTAB_SIZE - 1)) {
             kpanic("%s end address misaligned", mem_layout[i].desc);
+        }
     }
 
     if (USER_BASE_VIRT & (PGTAB_SIZE - 1))
@@ -107,20 +118,18 @@ static void mem_check_align(void)
  * Checks if the memory layout is as expected, i.e: if the virtual
  * and physical memories are identity mapped.
  */
-static void mem_check_layout(void)
+static void memory_check_layout(void)
 {
-    int i; /* Loop index. */
-
     /*
      * These should be identity mapped, because the this is called
      * with paging disabled.
      */
-    for (i = 0; i < MEM_REGIONS; i++) {
-        if (mem_layout[i].vbase != mem_layout[i].pbase) {
+    for (int i = 0; i < VMEM_REGION; i++) {
+        if (mem_layout[i].vbase != mem_layout[i].phys.pbase) {
             kpanic("%s base address is not identity mapped",
                    mem_layout[i].desc);
         }
-        if (mem_layout[i].vend != mem_layout[i].pend) {
+        if (mem_layout[i].vend != mem_layout[i].phys.pend) {
             kpanic("%s end address is not identity mapped", mem_layout[i].desc);
         }
     }
@@ -134,25 +143,25 @@ static void mem_check_layout(void)
  *
  * @author Davidson Francis
  */
-static void mem_map(void)
+static void memory_map(void)
 {
     /* Clean root page directory. */
-    for (int i = 0; i < PGDIR_LENGTH; i++)
-        pde_clear(&cluster_root_pgdir[i]);
+    for (int i = 0; i < PGDIR_LENGTH; i++) {
+        pde_clear(&root_pgdir[i]);
+    }
 
     /* Build root address space. */
-    for (int i = 0; i < MEM_REGIONS; i++) {
-        paddr_t pbase = mem_layout[i].pbase;
+    for (int i = 0; i < VMEM_REGION; i++) {
+        paddr_t pbase = mem_layout[i].phys.pbase;
         vaddr_t vbase = mem_layout[i].vbase;
-        size_t size = mem_layout[i].size;
-        int w = mem_layout[i].writable;
-        int x = mem_layout[i].executable;
+        size_t size = mem_layout[i].phys.size;
+        int w = mem_layout[i].phys.writable;
+        int x = mem_layout[i].phys.executable;
 
         /* Map underlying pages. */
         for (paddr_t j = pbase, k = vbase; k < (pbase + size);
              j += PAGE_SIZE, k += PAGE_SIZE) {
-            mmu_page_map(
-                cluster_root_pgtabs[mem_layout[i].root_pgtab_num], j, k, w, x);
+            mmu_page_map(root_pgtabs[mem_layout[i].root_pgtab_num], j, k, w, x);
         }
 
         /*
@@ -161,13 +170,13 @@ static void mem_map(void)
          * It is important to note that there are no problems to
          * map multiple times the same page table.
          */
-        mmu_pgtab_map(cluster_root_pgdir,
-                      PADDR(cluster_root_pgtabs[mem_layout[i].root_pgtab_num]),
+        mmu_pgtab_map(root_pgdir,
+                      PADDR(root_pgtabs[mem_layout[i].root_pgtab_num]),
                       TRUNCATE(vbase, PGTAB_SIZE));
     }
 
     /* Load virtual address space and enable MMU. */
-    tlb_load(PADDR(cluster_root_pgdir));
+    tlb_load(PADDR(root_pgdir));
 }
 
 /*============================================================================*
@@ -179,13 +188,13 @@ static void mem_map(void)
  */
 void memory_init(void)
 {
-    kprintf("[hal][memory] initializing memory layout...");
+    kprintf(MODULE_NAME " INFO: initializing memory layout...");
 
-    mem_info();
+    memory_info();
 
     /* Check for memory layout. */
-    mem_check_align();
-    mem_check_layout();
+    memory_check_align();
+    memory_check_layout();
 
-    mem_map();
+    memory_map();
 }

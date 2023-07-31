@@ -3,9 +3,18 @@
  * Licensed under the MIT License.
  */
 
+/*============================================================================*
+ * Imports                                                                    *
+ *============================================================================*/
+
+#include "mod.h"
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/mm.h>
+
+/*============================================================================*
+ * Variables                                                                  *
+ *============================================================================*/
 
 /**
  * @brief Reference count for kernel pages.
@@ -113,4 +122,6 @@ void kpool_init(void)
     for (unsigned i = 0; i < NUM_KPAGES; i++) {
         kpages[i] = 0;
     }
+
+    test_kpool();
 }
