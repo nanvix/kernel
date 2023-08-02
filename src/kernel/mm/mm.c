@@ -3,8 +3,17 @@
  * Licensed under the MIT License.
  */
 
+/*============================================================================*
+ * Imports                                                                    *
+ *============================================================================*/
+
+#include "mod.h"
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/mm.h>
+
+/*============================================================================*
+ * Public Functions                                                           *
+ *============================================================================*/
 
 /**
  * The mm_init() function initializes the Memory Management (MM)
@@ -19,7 +28,9 @@
  */
 void mm_init(void)
 {
-    kprintf("[kernel][mm] initializing the memory system");
+    kprintf(MODULE_NAME " INFO: initializing the memory system");
+    memory_init();
     frame_init();
     kpool_init();
+    upool_init();
 }

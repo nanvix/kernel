@@ -163,6 +163,23 @@ static inline int tlb_load(paddr_t pgdir)
     return (0);
 }
 
+/**
+ * @brief Flushes changes in the TLB.
+ */
+static inline int tlb_flush(void)
+{
+    __asm__ volatile("movl %%cr3, %%eax\n"
+                     "movl %%eax, %%cr3\n"
+                     "movl %%cr0, %%eax\n"
+                     "orl $0x80000000, %%eax\n"
+                     "movl %%eax, %%cr0\n"
+                     :
+                     :
+                     : "eax");
+
+    return (0);
+}
+
 #endif /* !_ASM_FILE_ */
 
 #endif /* ARCH_X86_MMU_H_ */

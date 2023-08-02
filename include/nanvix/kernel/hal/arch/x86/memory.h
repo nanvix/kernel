@@ -49,8 +49,8 @@
  * @name Memory Regions Constants
  */
 /**@{*/
-#define MEM_REGIONS 2              /** Memory Regions number.            */
-#define ROOT_PGTAB_NUM MEM_REGIONS /** Root page table size.             */
+#define VMEM_REGION 2              /** Memory Regions number.            */
+#define ROOT_PGTAB_NUM VMEM_REGION /** Root page table size.             */
 #define MREGION_PT_ALIGN_START 0   /** MRegion start page table aligned. */
 #define MREGION_PT_ALIGN_END 2     /** MRegion end page table aligned.   */
 #define MREGION_PG_ALIGN_START 0   /** MRegion start page aligned.       */

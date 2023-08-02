@@ -13,26 +13,39 @@
  * Public Variables                                                           *
  *============================================================================*/
 
+const struct phys_memory_region phys_memory_layout[2] = {
+    {
+        .pbase = KERNEL_BASE_PHYS,
+        .pend = KERNEL_END_PHYS,
+        .size = KMEM_SIZE,
+        .writable = true,
+        .executable = true,
+        .desc = "kernel",
+    },
+    {
+        .pbase = KPOOL_BASE_PHYS,
+        .pend = KPOOL_END_PHYS,
+        .size = KPOOL_SIZE,
+        .writable = true,
+        .executable = false,
+        .desc = "kpool",
+    },
+};
+
 /**
  * @brief Memory layout.
  */
-struct memory_region mem_layout[MEM_REGIONS] = {
-    {.pbase = KERNEL_BASE_PHYS,
-     .vbase = KERNEL_BASE_VIRT,
-     .pend = KERNEL_END_PHYS,
-     .vend = KERNEL_END_VIRT,
-     .size = KMEM_SIZE,
-     .writable = true,
-     .executable = true,
-     .root_pgtab_num = 0,
-     .desc = "kernel"},
-    {.pbase = KPOOL_BASE_PHYS,
-     .vbase = KPOOL_BASE_VIRT,
-     .pend = KPOOL_END_PHYS,
-     .vend = KPOOL_END_VIRT,
-     .size = KPOOL_SIZE,
-     .writable = true,
-     .executable = false,
-     .root_pgtab_num = 1,
-     .desc = "kpool"},
+struct virt_memory_region mem_layout[VMEM_REGION] = {
+    {
+        .phys = phys_memory_layout[0],
+        .vbase = KERNEL_BASE_VIRT,
+        .vend = KERNEL_END_VIRT,
+        .root_pgtab_num = 0,
+    },
+    {
+        .phys = phys_memory_layout[1],
+        .vbase = KPOOL_BASE_VIRT,
+        .vend = KPOOL_END_VIRT,
+        .root_pgtab_num = 1,
+    },
 };

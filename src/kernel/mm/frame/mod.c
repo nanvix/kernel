@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/*============================================================================*
+ * Imports                                                                    *
+ *============================================================================*/
+
+#include "mod.h"
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/mm.h>
@@ -29,8 +34,6 @@ static bitmap_t frames[FRAMES_LENGTH];
 /**
  * The frame_is_allocated() function asserts if the target page frame
  * @p frame is allocated.
- *
- * @author Pedro Henrique Penna
  */
 int frame_is_allocated(frame_t frame)
 {
@@ -55,8 +58,6 @@ int frame_is_allocated(frame_t frame)
  * number is returned.
  *
  * @retval FRAME_NULL Cannot allocate another frame.
- *
- * @author Pedro Henrique Penna
  */
 frame_t frame_alloc(void)
 {
@@ -83,8 +84,6 @@ frame_t frame_alloc(void)
 /**
  * The frame_free() function frees a previously allocated page frame
  * whose number equals to @p frame.
- *
- * @author Pedro Henrique Penna
  */
 int frame_free(frame_t frame)
 {
@@ -114,14 +113,12 @@ int frame_free(frame_t frame)
  * page frame allocator. Additionally, if the kernel is compiled
  * without the @p NDEBUG build option, unit tests on the page frame
  * allocator are launched once its initialization is completed.
- *
- * @author Pedro Henrique Penna
  */
 void frame_init(void)
 {
-    kprintf("[kernel][mm] initializing the page frame allocator");
+    kprintf(MODULE_NAME " INFO: initializing the page frame allocator");
 
-#ifndef __NANVIX_FAST_BOOT
     __memset(frames, 0, FRAMES_SIZE);
-#endif
+
+    test_frame();
 }

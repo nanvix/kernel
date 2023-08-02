@@ -276,6 +276,7 @@ struct test {
     void (*test_fn)(void); /**< Test function. */
     const char *name;      /**< Test name.     */
 };
+
 /**
  * @brief Unit tests.
  */
