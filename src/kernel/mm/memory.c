@@ -60,9 +60,9 @@ static void memory_info(void)
             __div((&__BSS_END - &__BSS_START), KB));
     for (int i = 0; i < VMEM_REGION; i++) {
         kprintf(MODULE_NAME " INFO: %s_base=%x %s_end=%x",
-                mem_layout[i].desc,
+                mem_layout[i].phys.desc,
                 mem_layout[i].vbase,
-                mem_layout[i].desc,
+                mem_layout[i].phys.desc,
                 mem_layout[i].vend);
     }
     kprintf(MODULE_NAME " INFO: user_base=%x   user_end=%x",
@@ -89,20 +89,20 @@ static void memory_check_align(void)
     /* These should be aligned at page boundaries. */
     for (int i = MREGION_PG_ALIGN_START; i < MREGION_PG_ALIGN_END; i++) {
         if (mem_layout[i].vbase & (PAGE_SIZE - 1)) {
-            kpanic("%s base address misaligned", mem_layout[i].desc);
+            kpanic("%s base address misaligned", mem_layout[i].phys.desc);
         }
         if (mem_layout[i].vend & (PAGE_SIZE - 1)) {
-            kpanic("%s end address misaligned", mem_layout[i].desc);
+            kpanic("%s end address misaligned", mem_layout[i].phys.desc);
         }
     }
 
     /* These should be aligned at page table boundaries. */
     for (int i = MREGION_PT_ALIGN_START; i < MREGION_PT_ALIGN_END; i++) {
         if (mem_layout[i].vbase & (PGTAB_SIZE - 1)) {
-            kpanic("%s base address misaligned", mem_layout[i].desc);
+            kpanic("%s base address misaligned", mem_layout[i].phys.desc);
         }
         if (mem_layout[i].vend & (PGTAB_SIZE - 1)) {
-            kpanic("%s end address misaligned", mem_layout[i].desc);
+            kpanic("%s end address misaligned", mem_layout[i].phys.desc);
         }
     }
 
@@ -127,10 +127,11 @@ static void memory_check_layout(void)
     for (int i = 0; i < VMEM_REGION; i++) {
         if (mem_layout[i].vbase != mem_layout[i].phys.pbase) {
             kpanic("%s base address is not identity mapped",
-                   mem_layout[i].desc);
+                   mem_layout[i].phys.desc);
         }
         if (mem_layout[i].vend != mem_layout[i].phys.pend) {
-            kpanic("%s end address is not identity mapped", mem_layout[i].desc);
+            kpanic("%s end address is not identity mapped",
+                   mem_layout[i].phys.desc);
         }
     }
 }
