@@ -12,6 +12,7 @@ apt-get install -y   \
     doxygen          \
     flex             \
     graphviz         \
+    grub2            \
     libglib2.0-dev   \
     libgmp-dev       \
     libncurses5-dev  \
@@ -19,6 +20,8 @@ apt-get install -y   \
     libncursesw5-dev \
     libpixman-1-dev  \
     libsdl2-dev      \
+    mtools           \
     ninja-build      \
     pkg-config       \
     texinfo          \
+    xorriso          \

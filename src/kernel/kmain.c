@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-#include <grub/mboot.h>
+/*============================================================================*
+ * Imports                                                                    *
+ *============================================================================*/
+
 #include <nanvix/cc.h>
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/lib.h>
@@ -14,15 +17,31 @@
 #include <stdnoreturn.h>
 
 /**
+ * @brief Prints Multiboot information.
+ *
+ * @param addr Address of the Multiboot information.
+ * @param magic Magic number.
+ */
+extern void mboot_print(unsigned magic, unsigned long addr);
+
+extern noreturn void handle_syscall(void);
+
+/*============================================================================*
+ * Private Variables                                                          *
+ *============================================================================*/
+
+/**
  * @brief Kernels stack.
  *
  * @note This is defined in assembly code.
  */
 extern byte_t kstack[PAGE_SIZE];
 
-extern noreturn void handle_syscall(void);
+/*============================================================================*
+ * Private Functions                                                          *
+ *============================================================================*/
 
-void *init(void *args)
+static void *init(void *args)
 {
     UNUSED(args);
 
@@ -33,19 +52,24 @@ void *init(void *args)
     return (NULL);
 }
 
+/*============================================================================*
+ * Public Functions                                                           *
+ *============================================================================*/
+
 /**
  * @brief Kernel main function.
  *
- * @param mboot_info Multiboot information.
+ * @param magic Magic number.
+ * @param addr  Address of the Multiboot information.
  *
  * @returns This function does not return.
  */
-noreturn void kmain(struct mboot_info *mboot_info)
+noreturn void kmain(unsigned long magic, unsigned long addr)
 {
-    UNUSED(mboot_info);
-
     stdout_init();
     klib_init(stdout_write, disable_interrupts);
+
+    mboot_print(magic, addr);
 
     hal_init();
     mm_init();
