@@ -8,6 +8,7 @@ build-gdb
 toolchain
 
 # Build artifacts
+nanvix.iso
 *.a
 *.elf
 *.o

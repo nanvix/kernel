@@ -3,7 +3,7 @@
 
 # Script Arguments
 TARGET=$1   # Target
-BINARY=$2   # Binary Image
+IMAGE=$2    # Image
 MODE=$3     # Run Mode
 TIMEOUT=$4  # Timeout
 
@@ -32,9 +32,9 @@ function usage
 function check_args
 {
 	# Missing binary?
-	if [ -z $BINARY ];
+	if [ -z $IMAGE ];
 	then
-		echo "$SCRIPT_NAME: missing binary"
+		echo "$SCRIPT_NAME: missing image"
 		usage
 	fi
 }
@@ -47,7 +47,7 @@ function check_args
 function run_qemu
 {
 	local target=$1     # Target architecture.
-	local binary=$2     # Binary image.
+	local image=$2      # Image.
 	local mode=$3       # Spawn mode (run or debug).
 	local timeout=$4    # Timeout for test mode.
 	local GDB_PORT=1234 # GDB port used for debugging.
@@ -68,7 +68,7 @@ function run_qemu
 			-mem-prealloc"
 
 	cmd="$qemu_cmd -gdb tcp::$GDB_PORT"
-	cmd="$cmd -kernel $binary"
+	cmd="$cmd -cdrom $image"
 
 	# Run.
 	if [ $mode == "--debug" ];
@@ -87,25 +87,6 @@ function run_qemu
 }
 
 #==============================================================================
-# run_host()
-#==============================================================================
-
-# Runs a binary in the host.
-function run_host
-{
-	local binary=$1     # Binary image.
-	local timeout=$2    # Timeout for test mode.
-	local cmd=$binary
-
-	if [ ! -z $timeout ];
-	then
-		cmd="timeout -s SIGINT --preserve-status --foreground $timeout $cmd"
-	fi
-
-	$cmd
-}
-
-#==============================================================================
 
 # No debug mode.
 if [ -z $MODE ];
@@ -120,7 +101,7 @@ then
 	echo "TARGET      = $TARGET"
 	echo "SCRIPT_DIR  = $SCRIPT_DIR"
 	echo "SCRIPT_NAME = $SCRIPT_NAME"
-	echo "BINARY      = $BINARY"
+	echo "IMAGE       = $IMAGE"
 	echo "MODE        = $MODE"
 	echo "TIMEOUT     = $TIMEOUT"
 	echo "====================================================================="
@@ -128,7 +109,7 @@ fi
 
 case "$TARGET" in
 	"x86")
-		run_qemu "i386" $BINARY $MODE $TIMEOUT
+		run_qemu "i386" $IMAGE $MODE $TIMEOUT
 		;;
     *)
         echo "Unsupported target: $TARGET"

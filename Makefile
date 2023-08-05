@@ -15,7 +15,7 @@ export VERBOSE ?= no
 export RELEASE ?= no
 
 # Timeout
-export TIMEOUT ?= 1
+export TIMEOUT ?= 5
 
 #===============================================================================
 # Directories
@@ -25,6 +25,7 @@ export ROOT_DIR      := $(CURDIR)
 export BINARIES_DIR  := $(ROOT_DIR)/bin
 export LIBRARIES_DIR := $(ROOT_DIR)/lib
 export INCLUDE_DIR   := $(ROOT_DIR)/include
+export IMAGE_DIR     := $(ROOT_DIR)/iso
 export BUILD_DIR     := $(ROOT_DIR)/build
 export SOURCES_DIR   := $(ROOT_DIR)/src
 export SCRIPTS_DIR   := $(ROOT_DIR)/scripts
@@ -36,6 +37,9 @@ export TOOLCHAIN_DIR ?= $(ROOT_DIR)/toolchain
 
 # Binary
 export KERNEL := nanvix.elf
+
+# Image
+export IMAGE := nanvix.iso
 
 # Libraries
 export LIBCORE := libcore.a
@@ -54,7 +58,7 @@ include $(ROOT_DIR)/build/$(TARGET)/makefile
 # Compiler Options
 export CFLAGS += -std=c17
 export CFLAGS += -Wall -Wextra -Werror
-export CFLAGS += -Winit-self -Wswitch-default -Wfloat-equal
+export CFLAGS += -Winit-self -Wswitch-default -Wfloat-equal -Wno-pointer-arith
 export CFLAGS += -Wundef -Wshadow -Wuninitialized -Wlogical-op
 export CFLAGS += -Wvla -Wredundant-decls -Wno-error=switch-default
 export CFLAGS += -pedantic-errors
@@ -109,10 +113,15 @@ doxygen:
 # Run and Debug Rules
 #===============================================================================
 
+# Builds the system image.
+image: all
+	@cp -f $(BINARIES_DIR)/$(KERNEL) $(IMAGE_DIR)/
+	@grub-mkrescue  $(IMAGE_DIR) -o $(IMAGE)
+
 # Runs system in release mode.
-run:
-	bash $(SCRIPTS_DIR)/run.sh $(TARGET) "$(BINARIES_DIR)/$(KERNEL)" --no-debug $(TIMEOUT)
+run: image
+	bash $(SCRIPTS_DIR)/run.sh $(TARGET) $(IMAGE) --no-debug $(TIMEOUT)
 
 # Runs system in debug mode.
-debug:
-	bash $(SCRIPTS_DIR)/run.sh $(TARGET) "$(BINARIES_DIR)/$(KERNEL)" --debug $(TIMEOUT)
+debug: image
+	bash $(SCRIPTS_DIR)/run.sh $(TARGET) $(IMAGE) --debug $(TIMEOUT)

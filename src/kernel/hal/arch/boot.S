@@ -10,14 +10,9 @@
  * Imported Symbols                                                           *
  *============================================================================*/
 
-#include <grub/mboot.h>
+#include <grub/mboot2.h>
 #include <arch/x86.h>
 #include <asm/x86.S>
-
-/**
- * @brief Multiboot flags.
- */
-#define MBOOT_FLAGS (MBOOT_PAGE_ALIGN | MBOOT_MEMORY_INFO)
 
 .extern kmain
 
@@ -34,19 +29,24 @@
 .section .bootstrap,"ax",@progbits
 
 /*----------------------------------------------------------------------------*
- * multiboot_header                                                           *
+ * mboot_header                                                           *
  *----------------------------------------------------------------------------*/
 
-/**
- * @brief Multiboot header.
+/*
+ *  Multiboot2 header.
  */
-.align 4
- mboot_header:
-    .long  MBOOT_MAGIC                  /* Magic number.              */
-    .long  MBOOT_FLAGS                  /* Flags.                     */
-    .long  -(MBOOT_MAGIC + MBOOT_FLAGS) /* Checksum.                  */
-    .long  mboot_header                 /* Pointer to this structure. */
-
+.align 8
+mboot_header:
+        .long   MULTIBOOT2_HEADER_MAGIC /*  Magic number. */
+        .long  MBOOT_ARCHITECTURE_I386 /* Architecture */
+        .long   mboot_header_end - mboot_header /* Header Length */
+        /*  checksum */
+        .long   -(MULTIBOOT2_HEADER_MAGIC + MBOOT_ARCHITECTURE_I386 + (mboot_header_end - mboot_header))
+        framebuffer_tag_end:
+        .short MBOOT_HEADER_TAG_END
+        .short 0
+        .long 8
+mboot_header_end:
 
 /*----------------------------------------------------------------------------*
  * _do_start()                                                                *
@@ -62,6 +62,7 @@ _do_start:
     reset_stack
 
     push %ebx
+    push %eax
 
     /*
      * Clear all general purpose registers,
@@ -72,7 +73,7 @@ _do_start:
     call kmain
 
     /* Halt execution. */
-   halt
+    halt
 
 /*============================================================================*
  * Data Section                                                               *
