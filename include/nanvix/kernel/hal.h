@@ -23,6 +23,7 @@
 #include <nanvix/kernel/hal/exception.h>
 #include <nanvix/kernel/hal/interrupt.h>
 #include <nanvix/kernel/hal/memory.h>
+#include <nanvix/kernel/hal/mmap.h>
 #include <nanvix/kernel/hal/mmu.h>
 #include <nanvix/kernel/hal/stdout.h>
 #include <nanvix/kernel/hal/timer.h>

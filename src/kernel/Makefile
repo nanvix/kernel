@@ -9,6 +9,7 @@
 SRC_C = $(wildcard hal/arch/*.c)      \
 		$(wildcard hal/exception/*.c) \
 		$(wildcard hal/interrupt/*.c) \
+		$(wildcard hal/mmap/*.c)      \
 		$(wildcard hal/mmu/*.c)       \
 		$(wildcard hal/*.c)           \
 		$(wildcard lib/*.c)           \
