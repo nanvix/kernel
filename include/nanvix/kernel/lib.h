@@ -166,7 +166,8 @@ static inline void _kassert(int expr, const char *msg, const char *filename,
  * @param write_fn Stdout write function.
  * @param halt_fn  Target halt function.
  */
-void klib_init(void (*write_fn)(const char *, size_t), void (*halt_fn)(void));
+extern void klib_init(void (*write_fn)(const char *, size_t),
+                      void (*halt_fn)(void));
 
 /**
  * @brief Stdout write function.
