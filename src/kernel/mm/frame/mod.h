@@ -15,6 +15,11 @@
  */
 #define MODULE_NAME "[kernel][mm][frame]"
 
+/**
+ * @brief Number of page frames for user use.
+ */
+#define NUM_UFRAMES (UMEM_SIZE / PAGE_SIZE)
+
 /*============================================================================*
  * Functions                                                                  *
  *============================================================================*/
