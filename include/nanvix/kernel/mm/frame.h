@@ -48,10 +48,7 @@
  *
  * @author Pedro Henrique Penna
  */
-static inline int frame_is_valid_id(frame_t id)
-{
-    return (id < NUM_UFRAMES);
-}
+extern int frame_is_valid_id(frame_t id);
 
 /**
  * @brief Converts an ID of a user page frame to a page frame number.
@@ -62,14 +59,7 @@ static inline int frame_is_valid_id(frame_t id)
  *
  * @author Pedro Henrique Penna
  */
-static inline frame_t frame_id_to_num(frame_t id)
-{
-    /* Invalid ID. */
-    if (!frame_is_valid_id(id))
-        return (FRAME_NULL);
-
-    return ((USER_BASE_PHYS >> PAGE_SHIFT) + id);
-}
+extern frame_t frame_id_to_num(frame_t id);
 
 /**
  * @brief Asserts if a frame number is valid.
@@ -82,11 +72,7 @@ static inline frame_t frame_id_to_num(frame_t id)
  *
  * @author Pedro Henrique Penna
  */
-static inline int frame_is_valid_num(frame_t frame)
-{
-    return ((frame >= (USER_BASE_PHYS >> PAGE_SHIFT)) &&
-            (frame < ((USER_BASE_PHYS >> PAGE_SHIFT) + NUM_UFRAMES)));
-}
+extern int frame_is_valid_num(frame_t frame);
 
 /**
  * @brief Converts a page frame number to an ID of a user page frame.
@@ -97,15 +83,7 @@ static inline int frame_is_valid_num(frame_t frame)
  *
  * @author Pedro Henrique Penna
  */
-static inline int frame_num_to_id(frame_t frame)
-{
-    /* Invalid frame. */
-    if (!frame_is_valid_num(frame)) {
-        return (-1);
-    }
-
-    return (frame - (USER_BASE_PHYS >> PAGE_SHIFT));
-}
+extern int frame_num_to_id(frame_t frame);
 
 /**
  * @brief Asserts if a page frame is allocated.

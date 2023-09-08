@@ -27,6 +27,49 @@
  */
 static bitmap_t frames[FRAMES_LENGTH];
 
+/**
+ * This function asserts whether or not frame @p ID is valid.
+ */
+int frame_is_valid_id(frame_t id)
+{
+    return (id < NUM_UFRAMES);
+}
+
+/**
+ * This function converts frame @p id to a page frame number.
+ */
+frame_t frame_id_to_num(frame_t id)
+{
+    /* Invalid ID. */
+    if (!frame_is_valid_id(id))
+        return (FRAME_NULL);
+
+    return ((USER_BASE_PHYS >> PAGE_SHIFT) + id);
+}
+
+/**
+ * This function function asserts whether or not the frame number @p frame is
+ * valid.
+ */
+int frame_is_valid_num(frame_t frame)
+{
+    return ((frame >= (USER_BASE_PHYS >> PAGE_SHIFT)) &&
+            (frame < ((USER_BASE_PHYS >> PAGE_SHIFT) + NUM_UFRAMES)));
+}
+
+/**
+ * This function Converts a page frame number to an ID of a page frame.
+ */
+int frame_num_to_id(frame_t frame)
+{
+    /* Invalid frame. */
+    if (!frame_is_valid_num(frame)) {
+        return (-1);
+    }
+
+    return (frame - (USER_BASE_PHYS >> PAGE_SHIFT));
+}
+
 /*============================================================================*
  * frame_is_allocated()                                                       *
  *============================================================================*/
