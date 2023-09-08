@@ -29,36 +29,17 @@ struct test {
  *============================================================================*/
 
 /**
- * @brief Attempts to perform a page frame address translation.
- */
-static void test_frame_translation(void)
-{
-    KASSERT(frame_num_to_id(USER_BASE_PHYS >> PAGE_SHIFT) == 0);
-    KASSERT(frame_id_to_num(0) == (USER_BASE_PHYS >> PAGE_SHIFT));
-}
-
-/**
  * @brief Attempts to allocate a page frame.
  */
 static void test_frame_allocation(void)
 {
     frame_t frame;
 
-    KASSERT((frame = frame_alloc()) != FRAME_NULL);
+    KASSERT((frame = frame_alloc_any()) != FRAME_NULL);
+    kprintf("%x != %x", frame, USER_BASE_PHYS >> PAGE_SHIFT);
     KASSERT(frame >= (USER_BASE_PHYS >> PAGE_SHIFT));
     KASSERT(frame < ((USER_BASE_PHYS + UMEM_SIZE) >> PAGE_SHIFT));
     KASSERT(frame_free(frame) == 0);
-}
-
-/**
- * @brief attempts to perform an invalid page frame address translation.
- */
-static void test_frame_invalid_translation(void)
-{
-    KASSERT(frame_num_to_id(KERNEL_BASE_VIRT >> PAGE_SHIFT) == -1);
-    KASSERT(frame_num_to_id((USER_BASE_VIRT - PAGE_SIZE) >> PAGE_SHIFT) == -1);
-    KASSERT(frame_id_to_num(-1) == FRAME_NULL);
-    KASSERT(frame_id_to_num((UMEM_SIZE / PAGE_SIZE) + 1) == FRAME_NULL);
 }
 
 /**
@@ -66,8 +47,8 @@ static void test_frame_invalid_translation(void)
  */
 static void test_frame_invalid_free(void)
 {
-    KASSERT(frame_free(0) == -1);
-    KASSERT(frame_free((USER_BASE_VIRT + UMEM_SIZE) >> PAGE_SHIFT) == -1);
+    KASSERT(frame_free((MEMORY_SIZE / PAGE_SIZE) + 1) == -1);
+    KASSERT(frame_free((USER_BASE_PHYS) >> PAGE_SHIFT) == -1);
 }
 
 /**
@@ -75,8 +56,8 @@ static void test_frame_invalid_free(void)
  */
 static void test_frame_bad_free(void)
 {
-    KASSERT(frame_free(frame_id_to_num(0)) == -1);
-    KASSERT(frame_free(frame_id_to_num(NUM_UFRAMES - 1)) == -1);
+    KASSERT(frame_free((USER_BASE_PHYS / PAGE_SIZE)) == -1);
+    KASSERT(frame_free((NUM_FRAMES - 1)) == -1);
 }
 
 /**
@@ -86,25 +67,9 @@ static void test_frame_double_free(void)
 {
     frame_t frame;
 
-    KASSERT((frame = frame_alloc()) != FRAME_NULL);
+    KASSERT((frame = frame_alloc_any()) != FRAME_NULL);
     KASSERT(frame_free(frame) == 0);
     KASSERT(frame_free(frame) == -1);
-}
-
-/**
- * @brief Attempts to perform a page frame address translation several times.
- */
-static void test_frame_translation_stress(void)
-{
-    /* Release all page frames. */
-    for (frame_t i = 0; i < NUM_UFRAMES; i++) {
-        frame_t frame;
-
-        KASSERT((frame = frame_id_to_num(i)) != FRAME_NULL);
-
-        KASSERT(frame >= (USER_BASE_PHYS >> PAGE_SHIFT));
-        KASSERT(frame < ((USER_BASE_PHYS + UMEM_SIZE) >> PAGE_SHIFT));
-    }
 }
 
 /**
@@ -112,17 +77,17 @@ static void test_frame_translation_stress(void)
  */
 static void test_frame_allocation_overflow(void)
 {
-    /* Allocate all page frames. */
-    for (frame_t i = 0; i < NUM_UFRAMES; i++) {
-        KASSERT(frame_alloc() != FRAME_NULL);
+    /* Allocate all user page frames. */
+    for (frame_t i = USER_BASE_PHYS / PAGE_SIZE; i < NUM_FRAMES; i++) {
+        KASSERT(frame_alloc_any() != FRAME_NULL);
     }
 
     /* Fail to allocate an extra page frame. */
-    KASSERT(frame_alloc() == FRAME_NULL);
+    KASSERT(frame_alloc_any() == FRAME_NULL);
 
     /* Release all page frames. */
-    for (frame_t i = 0; i < NUM_UFRAMES; i++) {
-        KASSERT(frame_free(frame_id_to_num(i)) == 0);
+    for (frame_t i = USER_BASE_PHYS / PAGE_SIZE; i < NUM_FRAMES; i++) {
+        KASSERT(frame_free((i)) == 0);
     }
 }
 
@@ -132,13 +97,13 @@ static void test_frame_allocation_overflow(void)
 static void test_frame_allocation_stress(void)
 {
     /* Allocate all page frames. */
-    for (frame_t i = 0; i < NUM_UFRAMES; i++) {
-        KASSERT(frame_alloc() != FRAME_NULL);
+    for (frame_t i = USER_BASE_PHYS / PAGE_SIZE; i < NUM_FRAMES; i++) {
+        KASSERT(frame_alloc_any() != FRAME_NULL);
     }
 
     /* Release all page frames. */
-    for (frame_t i = 0; i < NUM_UFRAMES; i++) {
-        KASSERT(frame_free(frame_id_to_num(i)) == 0);
+    for (frame_t i = USER_BASE_PHYS / PAGE_SIZE; i < NUM_FRAMES; i++) {
+        KASSERT(frame_free(i) == 0);
     }
 }
 
@@ -150,13 +115,10 @@ static void test_frame_allocation_stress(void)
  * @brief Page Frame unit tests.
  */
 static struct test frame_tests[] = {
-    {test_frame_translation, "frame address translation"},
     {test_frame_allocation, "frame allocation"},
-    {test_frame_invalid_translation, "invalid frame address translation"},
     {test_frame_invalid_free, "invalid frame release"},
     {test_frame_bad_free, "bad frame release"},
     {test_frame_double_free, "double frame release"},
-    {test_frame_translation_stress, "frame address translation"},
     {test_frame_allocation_stress, "frame allocation"},
     {test_frame_allocation_overflow, "frame allocation overflow"},
     {NULL, NULL},

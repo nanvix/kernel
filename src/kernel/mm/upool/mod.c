@@ -403,7 +403,7 @@ int upage_alloc(struct pde *pgdir, vaddr_t vaddr)
      */
 
     /* Allocate user frame. */
-    if ((frame = frame_alloc()) == FRAME_NULL)
+    if ((frame = frame_alloc_any()) == FRAME_NULL)
         return (-1);
 
     /* Map user page. */

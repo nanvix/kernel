@@ -12,133 +12,133 @@
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/mm.h>
 
+/*============================================================================*
+ * Constants                                                                  *
+ *============================================================================*/
+
 /**
  * @brief Length for bitmap of page frames.
  */
-#define FRAMES_LENGTH (NUM_UFRAMES / BITMAP_WORD_LENGTH)
+#define FRAMES_LENGTH (NUM_FRAMES / BITMAP_WORD_LENGTH)
 
 /**
  * @brief Size for bitmap of page frames (in bytes)
  */
 #define FRAMES_SIZE (FRAMES_LENGTH * sizeof(bitmap_t))
 
+/*============================================================================*
+ * Private Variables                                                          *
+ *============================================================================*/
+
 /**
  * @brief Bitmap of page frames.
  */
 static bitmap_t frames[FRAMES_LENGTH];
 
+/*============================================================================*
+ * Private Functions                                                          *
+ *============================================================================*/
+
 /**
- * This function asserts whether or not frame @p ID is valid.
+ * @brief Asserts if a frame is valid.
+ *
+ * @returns If @p frame is valid, non zero is returned. Otherwise,
+ * zero is returned instead.
  */
-int frame_is_valid_id(frame_t id)
+static int frame_is_valid(frame_t frame)
 {
-    return (id < NUM_UFRAMES);
+    return (frame < NUM_FRAMES);
 }
 
 /**
- * This function converts frame @p id to a page frame number.
+ * @brief Attempts to allocate a specific page frame.
+ *
+ * @param frame Number of the target page frame.
+ *
+ * @returns Upon successful completion, zero is returned. Upon failure, a
+ * negative number is returned instead.
  */
-frame_t frame_id_to_num(frame_t id)
+static int frame_alloc(frame_t frame)
 {
-    /* Invalid ID. */
-    if (!frame_is_valid_id(id))
-        return (FRAME_NULL);
-
-    return ((USER_BASE_PHYS >> PAGE_SHIFT) + id);
-}
-
-/**
- * This function function asserts whether or not the frame number @p frame is
- * valid.
- */
-int frame_is_valid_num(frame_t frame)
-{
-    return ((frame >= (USER_BASE_PHYS >> PAGE_SHIFT)) &&
-            (frame < ((USER_BASE_PHYS >> PAGE_SHIFT) + NUM_UFRAMES)));
-}
-
-/**
- * This function Converts a page frame number to an ID of a page frame.
- */
-int frame_num_to_id(frame_t frame)
-{
-    /* Invalid frame. */
-    if (!frame_is_valid_num(frame)) {
+    // Check wether or not target page frame is valid.
+    if (!frame_is_valid(frame)) {
+        kprintf(MODULE_NAME " ERROR: invalid frame (frame=%x)", frame);
         return (-1);
     }
 
-    return (frame - (USER_BASE_PHYS >> PAGE_SHIFT));
+    const bitmap_t bit = frame;
+
+    // Check wether or not the target page frame is available.
+    if (bitmap_check_bit(frames, bit) == 1) {
+        kprintf(MODULE_NAME " ERROR: busy frame (frame=%x)", frame);
+        return (-1);
+    }
+
+    // Allocate request frame.
+    bitmap_set(frames, bit);
+
+    return (0);
 }
 
-/*============================================================================*
- * frame_is_allocated()                                                       *
- *============================================================================*/
-
 /**
- * The frame_is_allocated() function asserts if the target page frame
- * @p frame is allocated.
- */
-int frame_is_allocated(frame_t frame)
-{
-    bitmap_t bit;
-
-    /* Invalid page frame. */
-    if (!frame_is_valid_num(frame))
-        return (0);
-
-    bit = frame_num_to_id(frame);
-
-    return (bitmap_check_bit(frames, bit));
-}
-
-/*============================================================================*
- * frame_alloc()                                                              *
- *============================================================================*/
-
-/**
- * The frame_alloc() function searches sequentially, for a free frame
- * to be allocated. The first free frame is allocated (if any) and its
- * number is returned.
+ * @brief Books all page frames within a range.
  *
- * @retval FRAME_NULL Cannot allocate another frame.
+ * @param base Base address.
+ * @param end  End address.
+ *
+ * @return Upon successful completion, zero is returned. Upon failure, a
+ * negative number is returned instead.
  */
-frame_t frame_alloc(void)
+static int frame_book_range(paddr_t base, paddr_t end)
+{
+    int ret = 0;
+
+    // Attempt to allocate all page frames within the taget range.
+    for (paddr_t addr = base; addr < end; addr += PAGE_SIZE) {
+        ret |= frame_alloc(addr / PAGE_SIZE);
+    }
+
+    return (ret);
+}
+
+/*============================================================================*
+ * Public Functions                                                           *
+ *============================================================================*/
+
+/**
+ * This function attempts to allocates a page frame using a first-free policy.
+ */
+frame_t frame_alloc_any(void)
 {
     bitmap_t bit;
 
     /* Search for a free frame. */
     bit = bitmap_first_free(frames, FRAMES_SIZE);
 
+    // Check wether we succeeded to allocate a frame.
     if (bit == BITMAP_FULL) {
-        kprintf("[kernel][mm] page frame overflow");
-
+        kprintf(MODULE_NAME " ERROR: overflow");
         return (FRAME_NULL);
     }
 
     bitmap_set(frames, bit);
 
-    return (frame_id_to_num(bit));
+    return (bit);
 }
 
-/*============================================================================*
- * frame_free()                                                               *
- *============================================================================*/
-
 /**
- * The frame_free() function frees a previously allocated page frame
- * whose number equals to @p frame.
+ * This function releases a page frame that was previously allocated.
  */
 int frame_free(frame_t frame)
 {
-    bitmap_t bit;
-
-    if (!frame_is_valid_num(frame))
+    if (!frame_is_valid(frame))
         return (-1);
 
-    bit = frame_num_to_id(frame);
+    bitmap_t bit = frame;
 
+    // Check wether or not the target page frame was previously allocated.
     if (bitmap_check_bit(frames, bit) == 0) {
-        kprintf("[kernel][mm] double free on page frame %x", frame);
+        kprintf(MODULE_NAME " ERROR: double free (frame=%x)", frame);
         return (-1);
     }
 
@@ -162,6 +162,18 @@ void frame_init(void)
     kprintf(MODULE_NAME " INFO: initializing the page frame allocator");
 
     __memset(frames, 0, FRAMES_SIZE);
+
+    // Book all page frames that lie in the kernel address range.
+    kprintf(MODULE_NAME " INFO: booking kernel address range");
+    if (frame_book_range(KERNEL_BASE_PHYS, KERNEL_END_PHYS) != 0) {
+        kpanic("failed to book kernel page frames");
+    }
+
+    // Book all page frames that lie in the kernel pool address range.
+    kprintf(MODULE_NAME " INFO: booking kpool address range");
+    if (frame_book_range(KPOOL_BASE_PHYS, KPOOL_END_PHYS) != 0) {
+        kpanic("failed to book kpool page frames");
+    }
 
     test_frame();
 }

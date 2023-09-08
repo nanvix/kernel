@@ -18,7 +18,7 @@
 /**
  * @brief Number of page frames for user use.
  */
-#define NUM_UFRAMES (UMEM_SIZE / PAGE_SIZE)
+#define NUM_FRAMES (MEMORY_SIZE / PAGE_SIZE)
 
 /*============================================================================*
  * Functions                                                                  *
