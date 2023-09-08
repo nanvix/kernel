@@ -23,12 +23,12 @@
  * @name Physical Memory Layout
  */
 /**@{*/
-#define KERNEL_BASE_PHYS MEMORY_BASE /** Kernel Code and Data */
-#define KERNEL_END_PHYS (KERNEL_BASE_PHYS + PGTAB_SIZE) /** Kernel End */
-#define KPOOL_BASE_PHYS (KERNEL_END_PHYS + PGTAB_SIZE)  /** Kernel Page Pool */
+#define KERNEL_BASE_PHYS MEMORY_BASE                    /** Kernel          */
+#define KERNEL_END_PHYS (KERNEL_BASE_PHYS + PGTAB_SIZE) /** Kernel End      */
+#define KPOOL_BASE_PHYS (KERNEL_END_PHYS)               /** Kernel  Pool    */
 #define KPOOL_END_PHYS (KPOOL_BASE_PHYS + PGTAB_SIZE)   /** Kernel Pool End */
-#define USER_BASE_PHYS KPOOL_END_PHYS /** User Base            */
-#define USER_END_PHYS MEMORY_END_PHYS /** User End             */
+#define USER_BASE_PHYS KPOOL_END_PHYS                   /** User Base       */
+#define USER_END_PHYS MEMORY_END_PHYS                   /** User End        */
 /**@}*/
 
 /**
