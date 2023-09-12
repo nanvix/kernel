@@ -22,6 +22,19 @@
 #define KMOD_CMDLINE_MAX 64
 
 /*============================================================================*
+ * Structures                                                                 *
+ *============================================================================*/
+
+/**
+ * @brief Kernel module.
+ */
+struct kmod {
+    paddr_t start;                  /**< Start address. */
+    paddr_t end;                    /**< End address.   */
+    char cmdline[KMOD_CMDLINE_MAX]; /**< Command line.  */
+};
+
+/*============================================================================*
  * Public Functions                                                           *
  *============================================================================*/
 
@@ -45,36 +58,19 @@ extern int kmod_register(paddr_t start, paddr_t end, const char *cmdline);
 extern unsigned kmod_count(void);
 
 /**
- * @brief Returns the start address of a kernel module
+ * @brief Retrieves information of a kernel module.
  *
- * @param i Index of the target kernel module.
- * @param start Storage locations for the start address of the target module.
+ * @param info  Storage location for the target kernel module information.
+ * @param index Target kernel module.
  *
  * @returns Upon successful completion, zero is returned. Upon failure, a
- * negative number is returned instead.
+ * negative error code is returned instead.
  */
-extern int kmod_get_start(unsigned i, paddr_t *start);
+extern int kmod_get(struct kmod *info, unsigned index);
 
 /**
- * @brief Returns the end address of a kernel module
- *
- * @param i Index of the target kernel module.
- * @param end Storage locations for the end address of the target module.
- *
- * @returns Upon successful completion, zero is returned. Upon failure, a
- * negative number is returned instead.
+ * @brief Prints kernel modules table.extern void kmod_print(void);
  */
-extern int kmod_get_end(unsigned i, paddr_t *end);
-
-/**
- * @brief Returns the command line of a kernel module
- *
- * @param i Index of the target kernel module.
- * @param cmdline Storage locations for the command line of the target module.
- *
- * @returns Upon successful completion, zero is returned. Upon failure, a
- * negative number is returned instead.
- */
-extern int kmod_get_cmdline(unsigned i, char *cmdline);
+extern void kmod_print(void);
 
 #endif /* NANVIX_KERNEL_KMOD_H_ */

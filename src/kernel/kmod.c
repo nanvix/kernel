@@ -19,25 +19,12 @@
 /**
  * @brief Name of this module.
  */
-#define MODULE_NAME "kmod"
+#define MODULE_NAME "[kernel][kmod]"
 
 /**
  * @brief Maximum number of kernel modules.
  */
 #define KMOD_MAX 8
-
-/*============================================================================*
- * Structures                                                                 *
- *============================================================================*/
-
-/**
- * @brief Kernel module.
- */
-struct kmod {
-    paddr_t start;                  /**< Start address. */
-    paddr_t end;                    /**< End address.   */
-    char cmdline[KMOD_CMDLINE_MAX]; /**< Command line.  */
-};
 
 /*============================================================================*
  * Private Variables                                                          *
@@ -84,67 +71,41 @@ unsigned kmod_count(void)
 }
 
 /**
- * @details Returns the start address of a kernel module.
+ * @details Retrieves information of a kernel module.
  */
-int kmod_get_start(unsigned i, paddr_t *start)
+int kmod_get(struct kmod *info, unsigned index)
 {
     // Check if target kernel module is valid.
-    if (i >= kmods_table.n) {
+    if (index >= kmods_table.n) {
         kprintf(MODULE_NAME " ERROR: invalid kernel module");
         return (-1);
     }
 
     // Check if storage location is valid.
-    if (start == NULL) {
+    if (info == NULL) {
         kprintf(MODULE_NAME " ERROR: invalid storage location");
         return (-1);
     }
 
-    *start = kmods_table.mods[i].start;
+    info->start = kmods_table.mods[index].start;
+    info->end = kmods_table.mods[index].end;
+    __strncpy(info->cmdline, kmods_table.mods[index].cmdline, KMOD_CMDLINE_MAX);
 
     return (0);
 }
 
 /**
- * @details Returns the end address of a kernel module.
+ * @details Prints kernel modules table.
  */
-int kmod_get_end(unsigned i, paddr_t *end)
+void kmod_print(void)
 {
-    // Check if target kernel module is valid.
-    if (i >= kmods_table.n) {
-        kprintf(MODULE_NAME " ERROR: invalid kernel module");
-        return (-1);
+    kprintf(MODULE_NAME " INFO: %d kernel modules registered", kmods_table.n);
+
+    for (unsigned i = 0; i < kmods_table.n; i++) {
+        kprintf(MODULE_NAME " INFO: kernel module %s (id=%d, start=%x, end=%x)",
+                kmods_table.mods[i].cmdline,
+                i,
+                kmods_table.mods[i].start,
+                kmods_table.mods[i].end);
     }
-
-    // Check if storage location is valid.
-    if (end == NULL) {
-        kprintf(MODULE_NAME " ERROR: invalid storage location");
-        return (-1);
-    }
-
-    *end = kmods_table.mods[i].end;
-
-    return (0);
-}
-
-/**
- * @details Returns the command line of a kernel module.
- */
-int kmod_get_cmdline(unsigned i, char *cmdline)
-{
-    // Check if target kernel module is valid.
-    if (i >= kmods_table.n) {
-        kprintf(MODULE_NAME " ERROR: invalid kernel module");
-        return (-1);
-    }
-
-    // Check if storage location is valid.
-    if (cmdline == NULL) {
-        kprintf(MODULE_NAME " ERROR: invalid storage location");
-        return (-1);
-    }
-
-    __strncpy(cmdline, kmods_table.mods[i].cmdline, KMOD_CMDLINE_MAX);
-
-    return (0);
 }
