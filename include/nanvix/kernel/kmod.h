@@ -68,4 +68,9 @@ extern unsigned kmod_count(void);
  */
 extern int kmod_get(struct kmod *info, unsigned index);
 
+/**
+ * @brief Prints kernel modules table.extern void kmod_print(void);
+ */
+extern void kmod_print(void);
+
 #endif /* NANVIX_KERNEL_KMOD_H_ */

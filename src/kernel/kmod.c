@@ -94,3 +94,18 @@ int kmod_get(struct kmod *info, unsigned index)
     return (0);
 }
 
+/**
+ * @details Prints kernel modules table.
+ */
+void kmod_print(void)
+{
+    kprintf(MODULE_NAME " INFO: %d kernel modules registered", kmods_table.n);
+
+    for (unsigned i = 0; i < kmods_table.n; i++) {
+        kprintf(MODULE_NAME " INFO: kernel module %s (id=%d, start=%x, end=%x)",
+                kmods_table.mods[i].cmdline,
+                i,
+                kmods_table.mods[i].start,
+                kmods_table.mods[i].end);
+    }
+}
