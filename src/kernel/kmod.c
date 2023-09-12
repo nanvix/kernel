@@ -19,7 +19,7 @@
 /**
  * @brief Name of this module.
  */
-#define MODULE_NAME "kmod"
+#define MODULE_NAME "[kernel][kmod]"
 
 /**
  * @brief Maximum number of kernel modules.
