@@ -35,7 +35,7 @@
  * @returns Upon successful completion, zero is returned. Upon failure, a
  * negative number is returned instead.
  */
-extern int kmod_register(vaddr_t start, vaddr_t end, const char *cmdline);
+extern int kmod_register(paddr_t start, paddr_t end, const char *cmdline);
 
 /**
  * @brief Returns the number of registered kernel modules.
@@ -53,7 +53,7 @@ extern unsigned kmod_count(void);
  * @returns Upon successful completion, zero is returned. Upon failure, a
  * negative number is returned instead.
  */
-extern int kmod_get_start(unsigned i, vaddr_t *start);
+extern int kmod_get_start(unsigned i, paddr_t *start);
 
 /**
  * @brief Returns the end address of a kernel module
@@ -64,7 +64,7 @@ extern int kmod_get_start(unsigned i, vaddr_t *start);
  * @returns Upon successful completion, zero is returned. Upon failure, a
  * negative number is returned instead.
  */
-extern int kmod_get_end(unsigned i, vaddr_t *end);
+extern int kmod_get_end(unsigned i, paddr_t *end);
 
 /**
  * @brief Returns the command line of a kernel module

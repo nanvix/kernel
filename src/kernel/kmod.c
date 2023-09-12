@@ -34,8 +34,8 @@
  * @brief Kernel module.
  */
 struct kmod {
-    vaddr_t start;                  /**< Start address. */
-    vaddr_t end;                    /**< End address.   */
+    paddr_t start;                  /**< Start address. */
+    paddr_t end;                    /**< End address.   */
     char cmdline[KMOD_CMDLINE_MAX]; /**< Command line.  */
 };
 
@@ -58,7 +58,7 @@ static struct {
 /**
  * @details Registers a kernel module.
  */
-int kmod_register(vaddr_t start, vaddr_t end, const char *cmdline)
+int kmod_register(paddr_t start, paddr_t end, const char *cmdline)
 {
     // Check if there is space for a new kernel module.
     if (kmods_table.n >= KMOD_MAX) {
@@ -86,7 +86,7 @@ unsigned kmod_count(void)
 /**
  * @details Returns the start address of a kernel module.
  */
-int kmod_get_start(unsigned i, vaddr_t *start)
+int kmod_get_start(unsigned i, paddr_t *start)
 {
     // Check if target kernel module is valid.
     if (i >= kmods_table.n) {
@@ -108,7 +108,7 @@ int kmod_get_start(unsigned i, vaddr_t *start)
 /**
  * @details Returns the end address of a kernel module.
  */
-int kmod_get_end(unsigned i, vaddr_t *end)
+int kmod_get_end(unsigned i, paddr_t *end)
 {
     // Check if target kernel module is valid.
     if (i >= kmods_table.n) {
