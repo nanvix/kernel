@@ -69,7 +69,7 @@ static int frame_alloc(frame_t frame)
     const bitmap_t bit = frame;
 
     // Check wether or not the target page frame is available.
-    if (bitmap_check_bit(frames, bit) == 1) {
+    if (bitmap_check_bit(frames, bit) != 0) {
         kprintf(MODULE_NAME " ERROR: busy frame (frame=%x)", frame);
         return (-1);
     }
