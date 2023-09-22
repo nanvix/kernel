@@ -36,9 +36,7 @@ static void test_frame_allocation(void)
     frame_t frame;
 
     KASSERT((frame = frame_alloc_any()) != FRAME_NULL);
-    kprintf("%x != %x", frame, USER_BASE_PHYS >> PAGE_SHIFT);
-    KASSERT(frame >= (USER_BASE_PHYS >> PAGE_SHIFT));
-    KASSERT(frame < ((USER_BASE_PHYS + UMEM_SIZE) >> PAGE_SHIFT));
+    KASSERT(frame < ((MEMORY_SIZE) >> PAGE_SHIFT));
     KASSERT(frame_free(frame) == 0);
 }
 
@@ -77,16 +75,19 @@ static void test_frame_double_free(void)
  */
 static void test_frame_allocation_overflow(void)
 {
+    const frame_t start = USER_BASE_PHYS / PAGE_SIZE;
+    const frame_t end = USER_END_PHYS / PAGE_SIZE;
+
     /* Allocate all user page frames. */
-    for (frame_t i = USER_BASE_PHYS / PAGE_SIZE; i < NUM_FRAMES; i++) {
-        KASSERT(frame_alloc_any() != FRAME_NULL);
+    for (frame_t i = start; i < end; i++) {
+        KASSERT(frame_alloc(i) == 0);
     }
 
     /* Fail to allocate an extra page frame. */
-    KASSERT(frame_alloc_any() == FRAME_NULL);
+    KASSERT(frame_alloc(end) != 0);
 
     /* Release all page frames. */
-    for (frame_t i = USER_BASE_PHYS / PAGE_SIZE; i < NUM_FRAMES; i++) {
+    for (frame_t i = start; i < end; i++) {
         KASSERT(frame_free((i)) == 0);
     }
 }
@@ -96,13 +97,16 @@ static void test_frame_allocation_overflow(void)
  */
 static void test_frame_allocation_stress(void)
 {
+    const frame_t start = USER_BASE_PHYS / PAGE_SIZE;
+    const frame_t end = USER_END_PHYS / PAGE_SIZE;
+
     /* Allocate all page frames. */
-    for (frame_t i = USER_BASE_PHYS / PAGE_SIZE; i < NUM_FRAMES; i++) {
-        KASSERT(frame_alloc_any() != FRAME_NULL);
+    for (frame_t i = start; i < end; i++) {
+        KASSERT(frame_alloc(i) == 0);
     }
 
     /* Release all page frames. */
-    for (frame_t i = USER_BASE_PHYS / PAGE_SIZE; i < NUM_FRAMES; i++) {
+    for (frame_t i = start; i < end; i++) {
         KASSERT(frame_free(i) == 0);
     }
 }
