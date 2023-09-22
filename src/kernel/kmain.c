@@ -52,6 +52,14 @@ static void *init(void *args)
     return (NULL);
 }
 
+/**
+ * @brief Clears the BSS section.
+ */
+static void clear_bss(void)
+{
+    __memset(&__BSS_START, 0, &__BSS_END - &__BSS_START);
+}
+
 /*============================================================================*
  * Public Functions                                                           *
  *============================================================================*/
@@ -66,6 +74,10 @@ static void *init(void *args)
  */
 noreturn void kmain(unsigned long magic, unsigned long addr)
 {
+    // Clear BSS before doing anything else, to ensure a
+    // deterministic starting state for uninitialized data structures.
+    clear_bss();
+
     stdout_init();
     klib_init(stdout_write, disable_interrupts);
 
