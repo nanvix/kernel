@@ -29,8 +29,8 @@
 void mm_init(void)
 {
     kprintf(MODULE_NAME " INFO: initializing the memory system");
-    memory_init();
     frame_init();
+    memory_init();
     kpool_init();
     upool_init();
 }
