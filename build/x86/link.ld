@@ -45,7 +45,7 @@ SECTIONS
 	}
 
 	/* Uninitialized data section. */
-	.bss :
+	.bss : ALIGN(PAGE_SIZE)
 	{
 		__BSS_START = .;
 		*(.bss*)
