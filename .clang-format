@@ -4,6 +4,7 @@
     TabWidth: 4,
     IndentWidth: 4,
     BreakBeforeBraces: Linux,
+    IndentCaseLabels: true,
     BinPackArguments: false,
     ColumnLimit: 80,
     AllowAllParametersOfDeclarationOnNextLine: true,

@@ -26,40 +26,8 @@ extern unsigned char __RODATA_END;      /** Ready-Only Data End   */
 /**@}*/
 
 /*============================================================================*
- * Structures                                                                 *
- *============================================================================*/
-
-/**
- * @brief Physical memory region.
- */
-struct phys_memory_region {
-    paddr_t pbase;    /** Base physical address. */
-    paddr_t pend;     /** End physical address.  */
-    size_t size;      /** Size.                  */
-    bool writable;    /** Writable?              */
-    bool executable;  /** Executable?            */
-    const char *desc; /** Description.           */
-};
-
-/**
- * @brief Memory region.
- */
-struct virt_memory_region {
-    struct phys_memory_region phys; /** Physical memory region. */
-    vaddr_t vbase;                  /** Base virtual address.   */
-    vaddr_t vend;                   /** End virtual address.    */
-    int root_pgtab_num;             /** Root page table number. */
-    const char *desc;               /** Description.            */
-};
-
-/*============================================================================*
  * Variables                                                                  *
  *============================================================================*/
-
-/**
- * @brief Memory layout.
- */
-extern struct virt_memory_region mem_layout[VMEM_REGION];
 
 #endif /* !_ASM_FILE_ */
 

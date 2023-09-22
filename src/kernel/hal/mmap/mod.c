@@ -47,12 +47,12 @@ static struct {
 static const char *mmap_entry_type_str(enum mmap_entry_type type)
 {
     switch (type) {
-    case MMAP_ENTRY_AVAILABLE:
-        return ("available");
-    case MMAP_ENTRY_BADRAM:
-        return ("malfunctioning");
-    default:
-        return ("reserved");
+        case MMAP_ENTRY_AVAILABLE:
+            return ("available");
+        case MMAP_ENTRY_BADRAM:
+            return ("malfunctioning");
+        default:
+            return ("reserved");
     }
 }
 
