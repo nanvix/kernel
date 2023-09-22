@@ -10,6 +10,7 @@
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/pm.h>
+#include <stdbool.h>
 
 /*============================================================================*
  * Public Functions                                                           *
