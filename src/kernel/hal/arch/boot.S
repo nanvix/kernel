@@ -61,8 +61,9 @@ _do_start:
     /* Reset stack. */
     reset_stack
 
-    push %ebx
-    push %eax
+    /* Save multiboot parameters on the stack. */
+    push %ebx /* Address of multiboot2 structure. */
+    push %eax /* Magic value.                     */
 
     /*
      * Clear all general purpose registers,
@@ -70,7 +71,13 @@ _do_start:
      */
     clear_gprs
 
+    /* Call kernel main function. */
+    push %esp
     call kmain
+    addl $4, %esp
+
+    /* Cleanup multiboot parameters. */
+    addl $8, %esp
 
     /* Halt execution. */
     halt
