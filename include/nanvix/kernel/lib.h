@@ -113,8 +113,12 @@ extern void kputs(const char *str);
 #define ARRAY_LENGTH(x) (sizeof(x) / sizeof((x)[0]))
 
 /**
- * @brief Truncate a value on a boundary.
+ * @brief Truncates a value on a boundary.
  *
+ * @param x Target value
+ * @param a Boundary.
+ *
+ * @returns A truncated value.
  */
 #define TRUNCATE(x, a) (((x) + ((a)-1)) & ~((a)-1))
 
