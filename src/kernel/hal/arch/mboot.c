@@ -58,18 +58,20 @@ static int mboot_parse_mmap(struct mboot_tag *tag)
                                        ((struct mboot_tag_mmap *)tag)
                                            ->entry_size)) {
         switch (mmap->type) {
-        case MBOOT_MEMORY_AVAILABLE:
-            ret |= mmap_register_available((unsigned long)mmap->addr,
-                                           (size_t)(unsigned long)mmap->len);
-            break;
-        case MBOOT_MEMORY_BADRAM:
-            ret |= mmap_register_erroneous((unsigned long)mmap->addr,
-                                           (size_t)(unsigned long)mmap->len);
-            break;
-        default:
-            ret |= mmap_register_reserved((unsigned long)mmap->addr,
-                                          (size_t)(unsigned long)mmap->len);
-            break;
+            case MBOOT_MEMORY_AVAILABLE:
+                ret |=
+                    mmap_register_available((unsigned long)mmap->addr,
+                                            (size_t)(unsigned long)mmap->len);
+                break;
+            case MBOOT_MEMORY_BADRAM:
+                ret |=
+                    mmap_register_erroneous((unsigned long)mmap->addr,
+                                            (size_t)(unsigned long)mmap->len);
+                break;
+            default:
+                ret |= mmap_register_reserved((unsigned long)mmap->addr,
+                                              (size_t)(unsigned long)mmap->len);
+                break;
         }
     }
 
@@ -104,29 +106,29 @@ static int mboot_parse(unsigned magic, unsigned long addr)
 
     while (tag->type != MBOOT_TAG_TYPE_END) {
         switch (tag->type) {
-        case MBOOT_TAG_TYPE_CMDLINE: {
-            // TODO: Parse command line.
-        } break;
-        case MBOOT_TAG_TYPE_BOOT_LOADER_NAME: {
-            // TODO: Parse boot loader name.
-        } break;
-        case MBOOT_TAG_TYPE_MODULE: {
-            ret |= mboot_parse_module(tag);
-        } break;
-        case MBOOT_TAG_TYPE_BASIC_MEMINFO: {
-            // TODO: Parse basic memory information.
-        } break;
-        case MBOOT_TAG_TYPE_BOOTDEV: {
-            // TODO: Parse boot device.
-        } break;
-        case MBOOT_TAG_TYPE_MMAP: {
-            ret |= mboot_parse_mmap(tag);
-        } break;
-        case MBOOT_TAG_TYPE_FRAMEBUFFER: {
-            // TODO: Parse framebuffer.
-        } break;
-        default:
-            break;
+            case MBOOT_TAG_TYPE_CMDLINE: {
+                // TODO: Parse command line.
+            } break;
+            case MBOOT_TAG_TYPE_BOOT_LOADER_NAME: {
+                // TODO: Parse boot loader name.
+            } break;
+            case MBOOT_TAG_TYPE_MODULE: {
+                ret |= mboot_parse_module(tag);
+            } break;
+            case MBOOT_TAG_TYPE_BASIC_MEMINFO: {
+                // TODO: Parse basic memory information.
+            } break;
+            case MBOOT_TAG_TYPE_BOOTDEV: {
+                // TODO: Parse boot device.
+            } break;
+            case MBOOT_TAG_TYPE_MMAP: {
+                ret |= mboot_parse_mmap(tag);
+            } break;
+            case MBOOT_TAG_TYPE_FRAMEBUFFER: {
+                // TODO: Parse framebuffer.
+            } break;
+            default:
+                break;
         }
 
         tag =

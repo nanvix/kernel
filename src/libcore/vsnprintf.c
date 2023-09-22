@@ -99,33 +99,34 @@ int __vsnprintf(char *str, size_t size, const char *fmt, va_list args)
             *str++ = *fmt;
         } else {
             switch (*(++fmt)) {
-            /* Character. */
-            case 'c': {
-                *str++ = (char)va_arg(args, int);
-            } break;
-            /* Number. */
-            case 'd': {
-                unsigned num = va_arg(args, unsigned);
-                if ((size_t)(count_digits(num) + (str - base)) <= (size - 1)) {
-                    str += itoa(str, num, *fmt);
-                }
-            } break;
-            case 'x': {
-                /* Hex numbers are currently being converted
-                 * using always 0x + 8 digits. */
-                if ((size_t)(10 + (str - base)) <= (size - 1))
-                    str += itoa(str, va_arg(args, unsigned), *fmt);
-            } break;
-            /* String. */
-            case 's': {
-                const char *s = va_arg(args, const char *);
-                while (*s != '\0' && (size_t)(str - base) < (size - 1)) {
-                    *str++ = *s++;
-                }
-            } break;
-            /* Ignore. */
-            default:
-                break;
+                /* Character. */
+                case 'c': {
+                    *str++ = (char)va_arg(args, int);
+                } break;
+                /* Number. */
+                case 'd': {
+                    unsigned num = va_arg(args, unsigned);
+                    if ((size_t)(count_digits(num) + (str - base)) <=
+                        (size - 1)) {
+                        str += itoa(str, num, *fmt);
+                    }
+                } break;
+                case 'x': {
+                    /* Hex numbers are currently being converted
+                     * using always 0x + 8 digits. */
+                    if ((size_t)(10 + (str - base)) <= (size - 1))
+                        str += itoa(str, va_arg(args, unsigned), *fmt);
+                } break;
+                /* String. */
+                case 's': {
+                    const char *s = va_arg(args, const char *);
+                    while (*s != '\0' && (size_t)(str - base) < (size - 1)) {
+                        *str++ = *s++;
+                    }
+                } break;
+                /* Ignore. */
+                default:
+                    break;
             }
         }
 
