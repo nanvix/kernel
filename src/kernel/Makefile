@@ -36,7 +36,7 @@ export LIBS += $(LIBRARIES_DIR)/$(LIBCORE)
 #===============================================================================
 
 # Linker Options
-export LDFLAGS += -L $(BUILD_DIR)/$(TARGET) -T link.ld
+export LDFLAGS += -L $(BUILD_DIR)/$(TARGET) -T kernel.ld
 
 #===============================================================================
 # Build Rules
