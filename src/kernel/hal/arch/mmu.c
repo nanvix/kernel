@@ -48,6 +48,7 @@ int mmu_pgtab_map(struct pde *pgdir, paddr_t paddr, vaddr_t vaddr)
 
     const int idx = pde_idx_get(vaddr);
 
+    pgdir[idx].writable = 1;
     pgdir[idx].present = 1;
     pgdir[idx].frame = FRAME(paddr >> PAGE_SHIFT);
 
