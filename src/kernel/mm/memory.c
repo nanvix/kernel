@@ -246,11 +246,69 @@ static void memory_map(struct phys_memory_region mem_layout_[VMEM_REGION])
         paddr_t pend = mem_layout_[i].pend;
         int w = mem_layout_[i].writable;
         int x = mem_layout_[i].executable;
-        int root_pgtab_num = mem_layout_[i].pbase >> PGTAB_SHIFT;
+        int root_pgtab_num = pbase >> PGTAB_SHIFT;
+
+        // We expect that kernel memory regions reside
+        // in kernel memory. Panic if it does not.
+        if (root_pgtab_num >= ROOT_PGTAB_NUM) {
+            kpanic("kernel memory region does not reside in kernel memory");
+        }
 
         /* Map underlying pages. */
         for (paddr_t j = pbase, k = pbase; k < pend;
              j += PAGE_SIZE, k += PAGE_SIZE) {
+
+            // We expect that kernel memory regions do not
+            // overlap with user memory. Panic if it does.
+            if (k >= USER_BASE_VIRT) {
+                kpanic("kernel memory region overlaps with user memory");
+            }
+
+            mmu_page_map(root_pgtabs[root_pgtab_num], j, k, w, x);
+        }
+
+        /*
+         * Map underlying page table.
+         *
+         * It is important to note that there are no problems to
+         * map multiple times the same page table.
+         */
+        mmu_pgtab_map(root_pgdir,
+                      PADDR(root_pgtabs[root_pgtab_num]),
+                      ALIGN(pbase, PGTAB_SIZE));
+    }
+
+    for (unsigned i = 0; i < kmod_count(); i++) {
+        struct kmod kmod = {0};
+
+        // Assert shouldn't fail because we request details of a valid module.
+        KASSERT(kmod_get(&kmod, i) == 0);
+
+        kprintf(MODULE_NAME " INFO: booking address range for module %s",
+                kmod.cmdline);
+
+        paddr_t pbase = ALIGN(kmod.start, PAGE_SIZE);
+        paddr_t pend = TRUNCATE(kmod.end, PAGE_SIZE);
+        int w = false;
+        int x = false;
+        int root_pgtab_num = pbase >> PGTAB_SHIFT;
+
+        // We expect that kernel modules resides
+        // in kernel memory. Panic if it does not.
+        if (root_pgtab_num >= ROOT_PGTAB_NUM) {
+            kpanic("kernel modules do not reside in kernel memory");
+        }
+
+        /* Map underlying pages. */
+        for (paddr_t j = pbase, k = pbase; k < pend;
+             j += PAGE_SIZE, k += PAGE_SIZE) {
+
+            // We assume that kernel modules do not
+            // overlap with user memory. Panic if it does.
+            if (k >= USER_BASE_VIRT) {
+                kpanic("kernel modules overlaps with user memory");
+            }
+
             mmu_page_map(root_pgtabs[root_pgtab_num], j, k, w, x);
         }
 
