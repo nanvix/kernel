@@ -35,8 +35,11 @@ export TOOLCHAIN_DIR ?= $(ROOT_DIR)/toolchain
 # Libraries and Binaries
 #===============================================================================
 
+# File format for executables.
+export EXEC_FORMAT := elf
+
 # Binary
-export KERNEL := nanvix.elf
+export KERNEL := nanvix.$(EXEC_FORMAT)
 
 # Image
 export IMAGE := nanvix.iso
@@ -115,7 +118,7 @@ doxygen:
 
 # Builds the system image.
 image: all
-	@cp -f $(BINARIES_DIR)/$(KERNEL) $(IMAGE_DIR)/
+	@cp -f $(BINARIES_DIR)/*.$(EXEC_FORMAT) $(IMAGE_DIR)/
 	@grub-mkrescue  $(IMAGE_DIR) -o $(IMAGE)
 
 # Runs system in release mode.
