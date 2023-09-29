@@ -10,17 +10,9 @@
 #include <elf.h>
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/mm.h>
+#include <nanvix/kernel/pm.h>
 #include <stdbool.h>
 #include <stdint.h>
-
-/*============================================================================*
- * External Variables                                                         *
- *============================================================================*/
-
-/**
- * @brief Root page directory.
- */
-extern struct pde root_pgdir[];
 
 /*============================================================================*
  * Private Functions                                                          *
@@ -210,9 +202,12 @@ static vaddr_t do_elf32_load(const struct elf32_fhdr *elf, bool dry_run)
         // Check if we are running on dry mode.
         if (!dry_run) {
             // We are not, thus load segment.
+            const struct thread *curr = thread_get_curr();
+            int result = upage_map(
+                (struct pde *)curr->pgdir, vbase, pbase >> PAGE_SHIFT, w, x);
+
             // FIXME: rollback instead of panicking.
-            KASSERT(upage_map(root_pgdir, vbase, pbase >> PAGE_SHIFT, w, x) ==
-                    0);
+            KASSERT(result == 0);
         }
     }
 
