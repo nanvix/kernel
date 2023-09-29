@@ -5,9 +5,9 @@
 # Build Rules
 #===============================================================================
 
-all: all-kernel
+all: all-kernel all-servers
 
-clean: clean-kernel
+clean: clean-kernel clean-servers
 
 all-libcore:
 	@$(MAKE) -C libcore all
@@ -21,9 +21,14 @@ all-libdev:
 clean-libdev:
 	@$(MAKE) -C libdev clean
 
-
 all-kernel: all-libcore all-libdev
 	@$(MAKE) -C kernel all
 
 clean-kernel: clean-libcore clean-libdev
 	@$(MAKE) -C kernel clean
+
+all-servers:
+	@$(MAKE) -C servers all
+
+clean-servers:
+	@$(MAKE) -C servers clean
