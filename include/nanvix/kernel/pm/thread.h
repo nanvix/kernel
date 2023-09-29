@@ -53,6 +53,13 @@ struct thread {
     /**@}*/
 
     /**
+     * @name Memory Information
+     */
+    /**@{*/
+    const void *pgdir; /** Page directory. */
+    /**@}*/
+
+    /**
      * @name Arguments and functions.
      */
     /**@{*/
