@@ -8,7 +8,6 @@
  *============================================================================*/
 
 #include <elf.h>
-#include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/mm.h>
 #include <stdbool.h>
@@ -163,8 +162,8 @@ static vaddr_t do_elf32_load(const struct elf32_fhdr *elf, bool dry_run)
 
     /* Load segments. */
     for (unsigned i = 0; i < elf->e_phnum; i++) {
-        int w = 0;
-        int x = 0;
+        bool w = false;
+        bool x = false;
 
         // Check if segment is loadable.
         if (phdr[i].p_type != PT_LOAD) {
@@ -183,12 +182,12 @@ static vaddr_t do_elf32_load(const struct elf32_fhdr *elf, bool dry_run)
         /* Text section. */
         // Check if segment is executable.
         if (!(phdr[i].p_flags ^ (PF_R | PF_X))) {
-            x = 1;
+            x = true;
         }
 
         // Check if segment is writable.
         else if (!(phdr[i].p_flags ^ (PF_R | PF_W))) {
-            w = 1;
+            w = true;
         }
 
         // Print program header.
@@ -212,11 +211,8 @@ static vaddr_t do_elf32_load(const struct elf32_fhdr *elf, bool dry_run)
         if (!dry_run) {
             // We are not, thus load segment.
             // FIXME: rollback instead of panicking.
-            void *pgtab = NULL;
-            KASSERT((pgtab = kpage_get(true)) != NULL);
-            KASSERT(mmu_page_map(pgtab, pbase, vbase, w, x) == 0);
-            KASSERT(mmu_pgtab_map(root_pgdir, PADDR(pgtab), vbase) == 0);
-            tlb_flush();
+            KASSERT(upage_map(root_pgdir, vbase, pbase >> PAGE_SHIFT, w, x) ==
+                    0);
         }
     }
 
