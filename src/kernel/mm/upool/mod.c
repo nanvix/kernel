@@ -527,5 +527,4 @@ int upage_link(struct pde *pgdir, vaddr_t vaddr1, vaddr_t vaddr2)
 void upool_init(void)
 {
     kprintf("[kernel][mm] initializing the user page allocator");
-    test_upool();
 }

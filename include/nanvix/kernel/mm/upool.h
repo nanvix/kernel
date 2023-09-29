@@ -113,11 +113,6 @@ extern int upage_free(struct pde *pgdir, vaddr_t vaddr);
 extern int upage_link(struct pde *pgdir, vaddr_t vaddr1, vaddr_t vaddr2);
 
 /**
- * @brief Runs unit tests on the user page allocator.
- */
-extern void upool_test_driver(void);
-
-/**
  * @brief Initializes the user page allocator.
  */
 extern void upool_init(void);
