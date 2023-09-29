@@ -11,6 +11,7 @@
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/mm.h>
+#include <stdbool.h>
 
 #if ((PGDIR_LENGTH * PDE_SIZE) > PAGE_SIZE)
 #error "page size too small"
@@ -230,7 +231,7 @@ int upage_inval(vaddr_t vaddr)
  *
  * @author Pedro Henrique Penna
  */
-int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame)
+int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame, bool w, bool x)
 {
     struct pte *pte;   /* Working page table table entry. */
     struct pde *pde;   /* Working page directory entry.   */
@@ -286,7 +287,7 @@ int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame)
      * FIXME: in a multicore platform, we should
      * flush the TLB of each affected core core.
      */
-    mmu_page_map(pgtab, frame << PAGE_SHIFT, vaddr, true, false);
+    mmu_page_map(pgtab, frame << PAGE_SHIFT, vaddr, w, x);
     KASSERT(pte_is_present(pte));
 
     tlb_flush();
@@ -389,7 +390,7 @@ frame_t upage_unmap(struct pde *pgdir, vaddr_t vaddr)
  * address @p vaddr, or a page frame cannot be allocated to
  * accommodate the new page.
  */
-int upage_alloc(struct pde *pgdir, vaddr_t vaddr)
+int upage_alloc(struct pde *pgdir, vaddr_t vaddr, bool w, bool x)
 {
     int err;       /* Error code. */
     frame_t frame; /* Page frame. */
@@ -407,7 +408,7 @@ int upage_alloc(struct pde *pgdir, vaddr_t vaddr)
         return (-1);
 
     /* Map user page. */
-    if ((err = upage_map(pgdir, vaddr, frame)) < 0) {
+    if ((err = upage_map(pgdir, vaddr, frame, w, x)) < 0) {
         if (frame_free(frame) < 0)
             kprintf("[kernel][mm] page frame leak");
 
@@ -507,8 +508,10 @@ int upage_link(struct pde *pgdir, vaddr_t vaddr1, vaddr_t vaddr2)
         return (-1);
 
     frame = pte_frame_get(pte1);
+    const bool w = pte_is_write(pte1);
+    const bool x = pte_is_exec(pte1);
 
-    return (upage_map(pgdir, vaddr2, frame));
+    return (upage_map(pgdir, vaddr2, frame, w, x));
 }
 
 /*============================================================================*

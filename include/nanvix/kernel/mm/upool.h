@@ -19,6 +19,7 @@
  *============================================================================*/
 
 #include <nanvix/kernel/hal.h>
+#include <stdbool.h>
 
 /*============================================================================*
  * Constants                                                                  *
@@ -46,13 +47,16 @@ extern int upage_inval(vaddr_t vaddr);
  * @param pgdir Target page directory.
  * @param vaddr Target virtual address.
  * @param frame Target page frame.
+ * @param w     Write permission?
+ * @param x     Execute permission?
  *
  * @returns Upon successful completion, zero is returned. Upon
  * failure, a negative error code is returned instead.
  *
  * @see upage_unmap().
  */
-extern int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame);
+extern int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame, bool w,
+                     bool x);
 
 /**
  * @brief Unmaps a page frame.
@@ -73,13 +77,15 @@ extern frame_t upage_unmap(struct pde *pgdir, vaddr_t vaddr);
  *
  * @param pgdir Target page directory.
  * @param vaddr Target virtual address.
+ * @param w     Write permission?
+ * @param x     Execute permission?
  *
  * @returns Upon successful completion, zero is returned. Upon
  * failure, a negative error code is returned instead.
  *
  * @see upage_free().
  */
-extern int upage_alloc(struct pde *pgdir, vaddr_t vaddr);
+extern int upage_alloc(struct pde *pgdir, vaddr_t vaddr, bool w, bool x);
 
 /**
  * @brief Releases a user page.
