@@ -26,11 +26,13 @@
  *
  * @author Pedro Henrique Penna
  */
-void mm_init(void)
+const void *mm_init(void)
 {
     kprintf(MODULE_NAME " INFO: initializing the memory system");
     frame_init();
-    memory_init();
+    const void *root_pgdir = memory_init();
     kpool_init();
     upool_init();
+
+    return (root_pgdir);
 }

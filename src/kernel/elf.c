@@ -10,10 +10,18 @@
 #include <elf.h>
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/lib.h>
+#include <nanvix/kernel/mm.h>
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <nanvix/kernel/mm.h>
+/*============================================================================*
+ * External Variables                                                         *
+ *============================================================================*/
+
+/**
+ * @brief Root page directory.
+ */
+extern struct pde root_pgdir[];
 
 /*============================================================================*
  * Private Functions                                                          *

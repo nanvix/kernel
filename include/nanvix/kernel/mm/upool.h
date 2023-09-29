@@ -116,11 +116,6 @@ extern void upool_test_driver(void);
  */
 extern void upool_init(void);
 
-/**
- * @brief Root page directory.
- */
-extern struct pde root_pgdir[];
-
 /*============================================================================*/
 
 /**@}*/

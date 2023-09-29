@@ -68,8 +68,10 @@
 
 /**
  * @brief Initializes the memory interface.
+ *
+ * @returns The root page directory.
  */
-extern void memory_init(void);
+extern const void *memory_init(void);
 
 /*============================================================================*/
 

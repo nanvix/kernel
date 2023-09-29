@@ -20,7 +20,9 @@
 
 /**
  * @brief Initializes the processor management subsystem.
+ *
+ * @param root_pgdir Root page directory.
  */
-extern void pm_init(void);
+extern void pm_init(const void *root_pgdir);
 
 #endif /* NANVIX_KERNEL_PM_H_ */

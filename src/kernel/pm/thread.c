@@ -190,7 +190,7 @@ void thread_wakeup(struct thread *t)
 /**
  * @details Initializes the thread system.
  */
-void thread_init(void)
+void thread_init(const void *root_pgdir)
 {
     kprintf("[kernel][pm] initializing thread system...");
 

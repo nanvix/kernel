@@ -100,8 +100,8 @@ noreturn void kmain(struct kargs *args)
     }
 
     hal_init();
-    mm_init();
-    pm_init();
+    const void *root_pgdir = mm_init();
+    pm_init(root_pgdir);
 
     // Spawn the init server. Note that although we create a new thread, we will
     // not switch to it, because interrupts are disabled. This will save us from

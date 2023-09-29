@@ -66,10 +66,13 @@ static inline int mm_check_area(vaddr_t vaddr, uint64_t size, int area)
                 ? mm_is_uaddr(vaddr) && mm_is_uaddr(vaddr + size)
                 : mm_is_kaddr(vaddr) && mm_is_kaddr(vaddr + size));
 }
+
 /**
  * @brief Initializes the Memory Management (MM) system.
+ *
+ * @returns The root page directory.
  */
-extern void mm_init(void);
+extern const void *mm_init(void);
 
 /*============================================================================*/
 
