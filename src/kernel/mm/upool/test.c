@@ -10,6 +10,7 @@
 #include "mod.h"
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/mm.h>
+#include <nanvix/kernel/pm.h>
 #include <stddef.h>
 
 /*============================================================================*
@@ -44,7 +45,8 @@ struct test {
  */
 static void test_api_upage_allocation(void)
 {
-    KASSERT(upage_alloc(root_pgdir, USER_BASE_VIRT) == 0);
+    struct pde *root_pgdir = (struct pde *)thread_get_curr()->pgdir;
+    KASSERT(upage_alloc(root_pgdir, USER_BASE_VIRT, true, false) == 0);
     KASSERT(upage_free(root_pgdir, USER_BASE_VIRT) == 0);
 }
 
@@ -57,11 +59,12 @@ static void test_api_upage_write(void)
 {
     unsigned *upg;
     const unsigned magic = 0xdeadbeef;
+    struct pde *root_pgdir = (struct pde *)thread_get_curr()->pgdir;
 
     upg = (unsigned *)(USER_BASE_VIRT);
 
     /* Allocate.*/
-    KASSERT(upage_alloc(root_pgdir, VADDR(upg)) == 0);
+    KASSERT(upage_alloc(root_pgdir, VADDR(upg), true, false) == 0);
 
     /* Write. */
     for (size_t i = 0; i < PAGE_SIZE / sizeof(unsigned); i++)
@@ -80,10 +83,13 @@ static void test_api_upage_write(void)
  */
 static void test_fault_upage_invalid_allocation(void)
 {
-    KASSERT(upage_alloc(NULL, USER_BASE_VIRT) == -1);
-    KASSERT(upage_alloc(root_pgdir, KERNEL_BASE_VIRT) == -1);
-    KASSERT(upage_alloc(root_pgdir, USER_BASE_VIRT - PAGE_SIZE) == -1);
-    KASSERT(upage_alloc(root_pgdir, USER_BASE_VIRT + PAGE_SIZE - 1) == -1);
+    struct pde *root_pgdir = (struct pde *)thread_get_curr()->pgdir;
+    KASSERT(upage_alloc(NULL, USER_BASE_VIRT, true, false) == -1);
+    KASSERT(upage_alloc(root_pgdir, KERNEL_BASE_VIRT, true, false) == -1);
+    KASSERT(upage_alloc(root_pgdir, USER_BASE_VIRT - PAGE_SIZE, true, false) ==
+            -1);
+    KASSERT(upage_alloc(
+                root_pgdir, USER_BASE_VIRT + PAGE_SIZE - 1, true, false) == -1);
 }
 
 /**
@@ -93,8 +99,9 @@ static void test_fault_upage_invalid_allocation(void)
  */
 static void test_fault_upage_double_allocation(void)
 {
-    KASSERT(upage_alloc(root_pgdir, USER_BASE_VIRT) == 0);
-    KASSERT(upage_alloc(root_pgdir, USER_BASE_VIRT) == -1);
+    struct pde *root_pgdir = (struct pde *)thread_get_curr()->pgdir;
+    KASSERT(upage_alloc(root_pgdir, USER_BASE_VIRT, true, false) == 0);
+    KASSERT(upage_alloc(root_pgdir, USER_BASE_VIRT, true, false) == -1);
     KASSERT(upage_free(root_pgdir, USER_BASE_VIRT) == 0);
 }
 
@@ -105,6 +112,7 @@ static void test_fault_upage_double_allocation(void)
  */
 static void test_fault_upage_invalid_free(void)
 {
+    struct pde *root_pgdir = (struct pde *)thread_get_curr()->pgdir;
     KASSERT(upage_free(NULL, USER_BASE_VIRT) == -1);
     KASSERT(upage_free(root_pgdir, KERNEL_BASE_VIRT) == -1);
     KASSERT(upage_free(root_pgdir, USER_BASE_VIRT - PAGE_SIZE) == -1);
@@ -118,6 +126,7 @@ static void test_fault_upage_invalid_free(void)
  */
 static void test_fault_upage_bad_free(void)
 {
+    struct pde *root_pgdir = (struct pde *)thread_get_curr()->pgdir;
     KASSERT(upage_free(root_pgdir, USER_BASE_VIRT) == -1);
 }
 
@@ -128,7 +137,8 @@ static void test_fault_upage_bad_free(void)
  */
 static void test_fault_upage_double_free(void)
 {
-    KASSERT(upage_alloc(root_pgdir, USER_BASE_VIRT) == 0);
+    struct pde *root_pgdir = (struct pde *)thread_get_curr()->pgdir;
+    KASSERT(upage_alloc(root_pgdir, USER_BASE_VIRT, true, false) == 0);
     KASSERT(upage_free(root_pgdir, USER_BASE_VIRT) == 0);
     KASSERT(upage_free(root_pgdir, USER_BASE_VIRT) == -1);
 }
@@ -140,9 +150,13 @@ static void test_fault_upage_double_free(void)
  */
 static void test_stress_upage_allocation(void)
 {
+    struct pde *root_pgdir = (struct pde *)thread_get_curr()->pgdir;
+
     /* Allocate pages. */
     for (unsigned i = 0; i < NUM_UPAGES_TEST; i++)
-        KASSERT(upage_alloc(root_pgdir, USER_BASE_VIRT + i * PAGE_SIZE) == 0);
+        KASSERT(upage_alloc(
+                    root_pgdir, USER_BASE_VIRT + i * PAGE_SIZE, true, false) ==
+                0);
 
     /* Release pages. */
     for (unsigned i = 0; i < NUM_UPAGES_TEST; i++)
@@ -158,12 +172,13 @@ static void test_stress_upage_write(void)
 {
     unsigned *upg;
     const unsigned magic = 0xdeadbeef;
+    struct pde *root_pgdir = (struct pde *)thread_get_curr()->pgdir;
 
     /* Allocate pages. */
     for (unsigned i = 0; i < NUM_UPAGES_TEST; i++) {
         upg = (void *)(USER_BASE_VIRT + i * PAGE_SIZE);
 
-        KASSERT(upage_alloc(root_pgdir, VADDR(upg)) == 0);
+        KASSERT(upage_alloc(root_pgdir, VADDR(upg), true, false) == 0);
 
         /* Write to kernel page. */
         for (unsigned j = 0; j < PAGE_SIZE / sizeof(unsigned); j++)

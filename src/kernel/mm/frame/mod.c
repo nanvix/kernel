@@ -209,6 +209,4 @@ void frame_init(void)
     // Print number of available page frames.
     kprintf(MODULE_NAME " INFO: %d page frames available",
             bitmap_nclear(frames, FRAMES_SIZE));
-
-    test_frame();
 }

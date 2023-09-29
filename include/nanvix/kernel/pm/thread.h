@@ -53,6 +53,13 @@ struct thread {
     /**@}*/
 
     /**
+     * @name Memory Information
+     */
+    /**@{*/
+    const void *pgdir; /** Page directory. */
+    /**@}*/
+
+    /**
      * @name Arguments and functions.
      */
     /**@{*/
@@ -110,8 +117,10 @@ extern noreturn void thread_exit(void);
 
 /**
  * @details Initializes the thread system.
+ *
+ * @param root_pgdir Root page directory.
  */
-extern void thread_init(void);
+extern void thread_init(const void *root_pgdir);
 
 /**
  * @brief Atomically puts the calling thread to sleep.

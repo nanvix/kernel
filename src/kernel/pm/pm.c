@@ -10,8 +10,8 @@
 /**
  * @details Initializes the processor management subsystem.
  */
-void pm_init(void)
+void pm_init(const void *root_pgdir)
 {
     kprintf("[kernel] initializing processor management subsystem...");
-    thread_init();
+    thread_init(root_pgdir);
 }

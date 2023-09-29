@@ -45,8 +45,10 @@ struct phys_memory_region {
 
 /**
  * @brief Root page directory.
+ *
+ * @todo FIXME: make this variable private.
  */
-struct pde root_pgdir[PGDIR_LENGTH] __attribute__((aligned(PAGE_SIZE)));
+static struct pde root_pgdir[PGDIR_LENGTH] __attribute__((aligned(PAGE_SIZE)));
 
 /**
  * @brief Root page tables.
@@ -334,9 +336,9 @@ static void memory_map(struct phys_memory_region mem_layout_[VMEM_REGION])
 static struct phys_memory_region phys_memory_layout[VMEM_REGION];
 
 /**
- * @details The memory_init() function initializes the memory interface.
+ * @details This function initializes the memory interface.
  */
-void memory_init(void)
+const void *memory_init(void)
 {
     kprintf(MODULE_NAME " INFO: initializing memory layout...");
 
@@ -356,4 +358,6 @@ void memory_init(void)
     memory_info(phys_memory_layout);
 
     memory_map(phys_memory_layout);
+
+    return (&root_pgdir);
 }

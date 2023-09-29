@@ -122,6 +122,4 @@ void kpool_init(void)
     for (unsigned i = 0; i < NUM_KPAGES; i++) {
         kpages[i] = 0;
     }
-
-    test_kpool();
 }

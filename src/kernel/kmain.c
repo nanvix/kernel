@@ -24,6 +24,25 @@ extern vaddr_t elf32_load(const struct elf32_fhdr *elf);
 extern noreturn void handle_syscall(void);
 
 /*============================================================================*
+ * Extern Functions                                                           *
+ *============================================================================*/
+
+/**
+ * @brief Runs unit tests on the Page Frame Allocator.
+ */
+extern void test_frame(void);
+
+/**
+ * @brief Runs unit tests on the Kernel Page Allocator.
+ */
+extern void test_kpool(void);
+
+/**
+ * @brief Runs unit tests on the User Page Allocator.
+ */
+extern void test_upool(void);
+
+/*============================================================================*
  * Private Variables                                                          *
  *============================================================================*/
 
@@ -100,8 +119,12 @@ noreturn void kmain(struct kargs *args)
     }
 
     hal_init();
-    mm_init();
-    pm_init();
+    const void *root_pgdir = mm_init();
+    pm_init(root_pgdir);
+
+    test_frame();
+    test_kpool();
+    test_upool();
 
     // Spawn the init server. Note that although we create a new thread, we will
     // not switch to it, because interrupts are disabled. This will save us from
