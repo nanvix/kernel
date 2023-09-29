@@ -7,9 +7,11 @@
  * Imports                                                                    *
  *============================================================================*/
 
+#include <elf.h>
 #include <nanvix/cc.h>
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/kargs.h>
+#include <nanvix/kernel/kmod.h>
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/mm.h>
 #include <nanvix/kernel/pm.h>
@@ -17,6 +19,8 @@
 #include <stdint.h>
 #include <stdnoreturn.h>
 
+// TODO: place these on a header file.
+extern vaddr_t elf32_load(const struct elf32_fhdr *elf);
 extern noreturn void handle_syscall(void);
 
 /*============================================================================*
@@ -34,15 +38,33 @@ extern byte_t kstack[PAGE_SIZE];
  * Private Functions                                                          *
  *============================================================================*/
 
-static void *init(void *args)
+/**
+ * @brief Spawns init server.
+ */
+static void spawn_init(void)
 {
-    UNUSED(args);
-
-    while (1) {
-        __kcall5(0, 1, 2, 3, 4, 5);
+    // Check if init was loaded.
+    if (kmod_count() == 0) {
+        // It was not, thus panic because the whole system depends on it.
+        kpanic("ERROR: missing init server");
     }
 
-    return (NULL);
+    struct kmod kmod = {0};
+
+    // Assert shouldn't fail because we request details of a valid module.
+    KASSERT(kmod_get(&kmod, 0) == 0);
+
+    kprintf("INFO: loading module %s", kmod.cmdline);
+
+    const vaddr_t start = elf32_load((struct elf32_fhdr *)kmod.start);
+
+    // Check if the module was loaded successfully.
+    if (start == 0) {
+        kpanic("ERROR: failed to load module %s", kmod.cmdline);
+    }
+
+    // Spawn init server.
+    thread_create((void *(*)(void *))start, NULL);
 }
 
 /**
@@ -81,8 +103,13 @@ noreturn void kmain(struct kargs *args)
     mm_init();
     pm_init();
 
-    thread_create(init, NULL);
+    // Spawn the init server. Note that although we create a new thread, we will
+    // not switch to it, because interrupts are disabled. This will save us from
+    // a race condition in the system call dispatcher module.
+    spawn_init();
 
+    // Start handling system calls. Interrupts will be enabled as soon as we
+    // block waiting for a kernel call to be issued.
     handle_syscall();
 
     UNREACHABLE();

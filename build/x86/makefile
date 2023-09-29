@@ -14,7 +14,6 @@ export CFLAGS += -nostdlib -ffreestanding
 
 # Linker Options
 export LDFLAGS += -nostdlib -ffreestanding -Wl,--entry=_do_start
-export LDFLAGS += -L $(BUILD_DIR)/$(TARGET) -T link.ld
 
 # Libraries
 export THEIR_LIBS += -lgcc
