@@ -22,6 +22,15 @@
 static struct tss tss;
 
 /*============================================================================*
+ * Private Variables                                                          *
+ *============================================================================*/
+
+/**
+ * @brief Stack used on mode switches to ring 0.
+ */
+static byte_t ring0_stack[PAGE_SIZE] __attribute__((aligned(PAGE_SIZE)));
+
+/*============================================================================*
  * Public Functions                                                           *
  *============================================================================*/
 
@@ -42,7 +51,7 @@ void tss_load(unsigned tss_selector)
 /**
  * @details Initializes the Task State Segment (TSS).
  */
-const struct tss *tss_init(unsigned ss_selector)
+const struct tss *tss_init(unsigned ss0)
 {
     kprintf("[hal][cpu] initializing tss...");
 
@@ -53,9 +62,8 @@ const struct tss *tss_init(unsigned ss_selector)
     __memset(&tss, 0, TSS_SIZE);
 
     // Initialize the TSS.
-    // FIXME: Provide definitions for the following magic constants.
-    tss.ss0 = ss_selector;
-    tss.iomap = (TSS_SIZE - 1) << 16;
+    tss.ss0 = ss0;
+    tss.esp0 = (word_t)ring0_stack + PAGE_SIZE;
 
     return (&tss);
 }

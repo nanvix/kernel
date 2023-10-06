@@ -30,11 +30,11 @@ extern void tss_load(unsigned tss_selector);
 /**
  * @brief Initializes the Task State Segment (TSS).
  *
- * @param ss_selector IOPL 0 stack segment selector.
+ * @param ss0 GDT selector for ring 0 data segment.
  *
  * @return Returns a pointer to the TSS.
  */
-extern const struct tss *tss_init(unsigned ss_selector);
+extern const struct tss *tss_init(unsigned ss0);
 
 #endif /* !_ASM_FILE_ */
 
