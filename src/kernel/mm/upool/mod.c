@@ -261,6 +261,7 @@ int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame, bool w, bool x)
     if (!pde_is_present(pde)) {
         if ((pde = pgtab_map(pgdir, vaddr)) == NULL)
             return (-1);
+        pde_user_set(pde, 1);
     }
 
     /*
@@ -288,6 +289,7 @@ int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame, bool w, bool x)
      * flush the TLB of each affected core core.
      */
     mmu_page_map(pgtab, frame << PAGE_SHIFT, vaddr, w, x);
+    pte_user_set(pte, 1);
     KASSERT(pte_is_present(pte));
 
     tlb_flush();
