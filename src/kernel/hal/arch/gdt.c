@@ -116,11 +116,27 @@ static void set_gdte(int n, unsigned base, unsigned limit, unsigned granularity,
  *============================================================================*/
 
 /**
- * @details Returns the segment selector of the kernel code segment.
+ * @details Gets the segment selector for the kernel code segment.
  */
 unsigned gdt_kernel_cs(void)
 {
     return (KERNEL_CS);
+}
+
+/**
+ * @details Gets the segment selector for the user code segment.
+ */
+unsigned gdt_user_cs(void)
+{
+    return (USER_CS);
+}
+
+/**
+ * @details Gets the segment selector for the user data segment.
+ */
+unsigned gdt_user_ds(void)
+{
+    return (USER_DS);
 }
 
 /**

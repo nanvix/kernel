@@ -24,11 +24,25 @@
 extern void gdt_init(void);
 
 /**
- * @brief Returns the segment selector of the kernel code segment.
+ * @brief Gets the segment selector for the kernel code segment.
  *
  * @returns The segment selector of the kernel code segment.
  */
 extern unsigned gdt_kernel_cs(void);
+
+/**
+ * @brief Gets the segment selector for the user code segment.
+ *
+ * @return The segment selector for the user code segment.
+ */
+extern unsigned gdt_user_cs(void);
+
+/**
+ * @brief Gets the segment selector for the user data segment.
+ *
+ * @return The segment selector for the user data segment.
+ */
+extern unsigned gdt_user_ds(void);
 
 #endif /* !_ASM_FILE_ */
 
