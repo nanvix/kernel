@@ -20,7 +20,7 @@ extern void context_dump(const struct context *ctx);
 /**
  * @brief Initializes an execution context.
  */
-extern void context_create(struct context *ctx, void *stack,
+extern void context_create(struct context *ctx, const void *pgddir, void *stack,
                            void (*func)(void));
 
 /**

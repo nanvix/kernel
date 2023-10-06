@@ -37,7 +37,8 @@ void context_dump(const struct context *ctx)
  * @brief Initializes an execution context.
  *
  */
-void context_create(struct context *ctx, void *stack, void (*func)(void))
+void context_create(struct context *ctx, const void *pgdir, void *stack,
+                    void (*func)(void))
 {
     __memset(ctx, 0, sizeof(struct context));
     __memset(stack, 0, PAGE_SIZE);
@@ -49,6 +50,7 @@ void context_create(struct context *ctx, void *stack, void (*func)(void))
     *--stackp = (word_t)func;           /* user eip    */
     *--stackp = (word_t)__leave_kernel; /* kernel eip  */
 
+    ctx->cr3 = (word_t)pgdir;
     ctx->esp = (word_t)stackp;
     ctx->ebp = (word_t)stackp;
     ctx->eflags = 0x00;
