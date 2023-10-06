@@ -20,7 +20,7 @@
 /**
  * @brief Software-saved execution context size (in bytes).
  */
-#define CONTEXT_SW_SIZE 44
+#define CONTEXT_SW_SIZE 48
 
 /**
  * @brief Execution context size (in bytes).
@@ -31,23 +31,24 @@
  * @name Offsets to the Context Structure
  */
 /**@{*/
-#define CONTEXT_GS 0      /** Extra Data Segment #3 Register        */
-#define CONTEXT_FS 4      /** Extra Data Segment #2 Register        */
-#define CONTEXT_ES 8      /** Extra Data Segment #1 Register        */
-#define CONTEXT_DS 12     /** Data Segment Register                 */
-#define CONTEXT_EDI 16    /** Extended Destination Index Register   */
-#define CONTEXT_ESI 20    /** Extended Source Index Register        */
-#define CONTEXT_EBP 24    /** Extended Stack base Pointer Register  */
-#define CONTEXT_EDX 28    /** Extended Accumulator #2 Register      */
-#define CONTEXT_ECX 32    /** Extended Counter Register             */
-#define CONTEXT_EBX 36    /** Extended Base Index Register          */
-#define CONTEXT_EAX 40    /** Extended Accumulator #1 Register      */
-#define CONTEXT_ERR 44    /* Error code                             */
-#define CONTEXT_EIP 48    /** Extended Instruction Pointer Register */
-#define CONTEXT_CS 52     /** Code Segment Register                 */
-#define CONTEXT_EFLAGS 56 /** Extended Flags Register               */
-#define CONTEXT_ESP 60    /** Extended Stack Pointer Register       */
-#define CONTEXT_SS 64     /** Stack Segment Register                */
+#define CONTEXT_CR3 0     /** Page Directory Register               */
+#define CONTEXT_GS 4      /** Extra Data Segment #3 Register        */
+#define CONTEXT_FS 8      /** Extra Data Segment #2 Register        */
+#define CONTEXT_ES 12     /** Extra Data Segment #1 Register        */
+#define CONTEXT_DS 16     /** Data Segment Register                 */
+#define CONTEXT_EDI 20    /** Extended Destination Index Register   */
+#define CONTEXT_ESI 24    /** Extended Source Index Register        */
+#define CONTEXT_EBP 28    /** Extended Stack base Pointer Register  */
+#define CONTEXT_EDX 32    /** Extended Accumulator #2 Register      */
+#define CONTEXT_ECX 36    /** Extended Counter Register             */
+#define CONTEXT_EBX 40    /** Extended Base Index Register          */
+#define CONTEXT_EAX 44    /** Extended Accumulator #1 Register      */
+#define CONTEXT_ERR 48    /* Error code                             */
+#define CONTEXT_EIP 52    /** Extended Instruction Pointer Register */
+#define CONTEXT_CS 56     /** Code Segment Register                 */
+#define CONTEXT_EFLAGS 60 /** Extended Flags Register               */
+#define CONTEXT_ESP 64    /** Extended Stack Pointer Register       */
+#define CONTEXT_SS 68     /** Stack Segment Register                */
 /**@}*/
 
 /*============================================================================*
@@ -60,6 +61,7 @@
  * @brief Saved execution context upon interrupts and exceptions.
  */
 struct context {
+    word_t cr3;                               /** Page Directory     */
     word_t gs, fs, es, ds;                    /** Segment Registers  */
     word_t edi, esi, ebp, edx, ecx, ebx, eax; /** GPRs               */
     word_t err, eip, cs, eflags, esp, ss;     /** Special Registers  */

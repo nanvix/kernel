@@ -202,14 +202,22 @@ __context_switch:
     pushf
     pop CONTEXT_EFLAGS(%eax)
 
+    /* Save address space. */
+    movl %cr3, %ebx
+    movl %ebx, CONTEXT_CR3(%eax)
+
     /* Restore execution context. */
     movl CONTEXT_EBX(%edx), %ebx
     movl CONTEXT_ESI(%edx), %esi
     movl CONTEXT_EDI(%edx), %edi
     movl CONTEXT_EBP(%edx), %ebp
     movl CONTEXT_ESP(%edx), %esp
-    push CONTEXT_EFLAGS(%eax)
+    push CONTEXT_EFLAGS(%edx)
     popfl
+
+    /* Restore address space.*/
+    movl CONTEXT_CR3(%edx), %eax
+    movl %eax, %cr3
 
     __context_switch.out:
     ret

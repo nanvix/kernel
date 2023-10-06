@@ -123,7 +123,7 @@ tid_t thread_create(void *(*start)(void *), void *arg)
     thread->start = start;
     thread->stack = kpage_get(true);
     thread->pgdir = running->pgdir;
-    context_create(&thread->ctx, thread->stack, thread_run);
+    context_create(&thread->ctx, thread->pgdir, thread->stack, thread_run);
 
     return (thread->tid);
 }
