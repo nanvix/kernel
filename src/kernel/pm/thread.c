@@ -41,6 +41,11 @@ static struct thread threads[KTHREAD_MAX];
  */
 static struct thread *running = NULL;
 
+/**
+ * @brief Kernel thread.
+ */
+static struct thread *kernel = &threads[0];
+
 /*============================================================================*
  * Private Functions                                                          *
  *============================================================================*/
@@ -122,8 +127,9 @@ tid_t thread_create(void *(*start)(void *), void *arg)
     thread->arg = arg;
     thread->start = start;
     thread->stack = kpage_get(true);
-    thread->pgdir = running->pgdir;
-    context_create(&thread->ctx, thread->pgdir, thread->stack, thread_run);
+    virtmem_create(&thread->virtmem, kernel->virtmem.pgdir);
+    context_create(
+        &thread->ctx, thread->virtmem.pgdir, thread->stack, thread_run);
 
     return (thread->tid);
 }
@@ -196,17 +202,16 @@ void thread_init(const void *root_pgdir)
     kprintf("[kernel][pm] initializing thread system...");
 
     // Initializes the table of threads.
-    for (int i = 1; i < KTHREAD_MAX; i++) {
+    for (int i = 0; i < KTHREAD_MAX; i++) {
         threads[i].age = 0;
         threads[i].state = THREAD_NOT_STARTED;
         threads[i].arg = NULL;
         threads[i].start = NULL;
-        threads[i].pgdir = NULL;
     }
 
     // Initialize.
-    threads[0].pgdir = root_pgdir;
-    threads[0].state = THREAD_RUNNING;
+    virtmem_init(&kernel->virtmem, root_pgdir);
+    kernel->state = THREAD_RUNNING;
 
     running = &threads[0];
 

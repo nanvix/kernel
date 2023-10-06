@@ -45,7 +45,7 @@ struct test {
  */
 static void test_api_upage_allocation(void)
 {
-    struct pde *root_pgdir = (struct pde *)thread_get_curr()->pgdir;
+    struct pde *root_pgdir = (struct pde *)thread_get_curr()->virtmem.pgdir;
     KASSERT(upage_alloc(root_pgdir, USER_BASE_VIRT, true, false) == 0);
     KASSERT(upage_free(root_pgdir, USER_BASE_VIRT) == 0);
 }
@@ -59,7 +59,7 @@ static void test_api_upage_write(void)
 {
     unsigned *upg;
     const unsigned magic = 0xdeadbeef;
-    struct pde *root_pgdir = (struct pde *)thread_get_curr()->pgdir;
+    struct pde *root_pgdir = (struct pde *)thread_get_curr()->virtmem.pgdir;
 
     upg = (unsigned *)(USER_BASE_VIRT);
 
@@ -83,7 +83,7 @@ static void test_api_upage_write(void)
  */
 static void test_fault_upage_invalid_allocation(void)
 {
-    struct pde *root_pgdir = (struct pde *)thread_get_curr()->pgdir;
+    struct pde *root_pgdir = (struct pde *)thread_get_curr()->virtmem.pgdir;
     KASSERT(upage_alloc(NULL, USER_BASE_VIRT, true, false) == -1);
     KASSERT(upage_alloc(root_pgdir, KERNEL_BASE_VIRT, true, false) == -1);
     KASSERT(upage_alloc(root_pgdir, USER_BASE_VIRT - PAGE_SIZE, true, false) ==
@@ -99,7 +99,7 @@ static void test_fault_upage_invalid_allocation(void)
  */
 static void test_fault_upage_double_allocation(void)
 {
-    struct pde *root_pgdir = (struct pde *)thread_get_curr()->pgdir;
+    struct pde *root_pgdir = (struct pde *)thread_get_curr()->virtmem.pgdir;
     KASSERT(upage_alloc(root_pgdir, USER_BASE_VIRT, true, false) == 0);
     KASSERT(upage_alloc(root_pgdir, USER_BASE_VIRT, true, false) == -1);
     KASSERT(upage_free(root_pgdir, USER_BASE_VIRT) == 0);
@@ -112,7 +112,7 @@ static void test_fault_upage_double_allocation(void)
  */
 static void test_fault_upage_invalid_free(void)
 {
-    struct pde *root_pgdir = (struct pde *)thread_get_curr()->pgdir;
+    struct pde *root_pgdir = (struct pde *)thread_get_curr()->virtmem.pgdir;
     KASSERT(upage_free(NULL, USER_BASE_VIRT) == -1);
     KASSERT(upage_free(root_pgdir, KERNEL_BASE_VIRT) == -1);
     KASSERT(upage_free(root_pgdir, USER_BASE_VIRT - PAGE_SIZE) == -1);
@@ -126,7 +126,7 @@ static void test_fault_upage_invalid_free(void)
  */
 static void test_fault_upage_bad_free(void)
 {
-    struct pde *root_pgdir = (struct pde *)thread_get_curr()->pgdir;
+    struct pde *root_pgdir = (struct pde *)thread_get_curr()->virtmem.pgdir;
     KASSERT(upage_free(root_pgdir, USER_BASE_VIRT) == -1);
 }
 
@@ -137,7 +137,7 @@ static void test_fault_upage_bad_free(void)
  */
 static void test_fault_upage_double_free(void)
 {
-    struct pde *root_pgdir = (struct pde *)thread_get_curr()->pgdir;
+    struct pde *root_pgdir = (struct pde *)thread_get_curr()->virtmem.pgdir;
     KASSERT(upage_alloc(root_pgdir, USER_BASE_VIRT, true, false) == 0);
     KASSERT(upage_free(root_pgdir, USER_BASE_VIRT) == 0);
     KASSERT(upage_free(root_pgdir, USER_BASE_VIRT) == -1);
@@ -150,7 +150,7 @@ static void test_fault_upage_double_free(void)
  */
 static void test_stress_upage_allocation(void)
 {
-    struct pde *root_pgdir = (struct pde *)thread_get_curr()->pgdir;
+    struct pde *root_pgdir = (struct pde *)thread_get_curr()->virtmem.pgdir;
 
     /* Allocate pages. */
     for (unsigned i = 0; i < NUM_UPAGES_TEST; i++)
@@ -172,7 +172,7 @@ static void test_stress_upage_write(void)
 {
     unsigned *upg;
     const unsigned magic = 0xdeadbeef;
-    struct pde *root_pgdir = (struct pde *)thread_get_curr()->pgdir;
+    struct pde *root_pgdir = (struct pde *)thread_get_curr()->virtmem.pgdir;
 
     /* Allocate pages. */
     for (unsigned i = 0; i < NUM_UPAGES_TEST; i++) {

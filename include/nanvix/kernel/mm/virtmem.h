@@ -13,10 +13,15 @@
 #include <nanvix/kernel/hal.h>
 
 /*============================================================================*
- * Opaque Structures                                                          *
+ * Structures                                                                 *
  *============================================================================*/
 
-struct virtmem;
+/**
+ * @brief Virtual memory.
+ */
+struct virtmem {
+    struct pde *pgdir; /** Underlying page directory*/
+};
 
 /*============================================================================*
  * Functions                                                                  *
