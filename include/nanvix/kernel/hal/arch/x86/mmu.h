@@ -86,7 +86,7 @@ static inline int pde_present_set(struct pde *pde, int set)
  * @returns If the present bit of the target page table is set,
  * non zero is returned. Otherwise, zero is returned instead.
  */
-static inline int pde_is_present(struct pde *pde)
+static inline int pde_is_present(const struct pde *pde)
 {
     /* Invalid PDE. */
     if (pde == NULL) {
@@ -103,7 +103,7 @@ static inline int pde_is_present(struct pde *pde)
  *
  * @returns The frame number of the target page directory entry.
  */
-static inline frame_t pde_frame_get(struct pde *pde)
+static inline frame_t pde_frame_get(const struct pde *pde)
 {
     return (pde->frame);
 }
@@ -134,7 +134,7 @@ static inline int pde_read_set(struct pde *pde, int set)
  * @returns If the read bit of the target page table is set, non
  * zero is returned. Otherwise, zero is returned instead.
  */
-static inline int pde_is_read(struct pde *pde)
+static inline int pde_is_read(const struct pde *pde)
 {
     /* Invalid PDE. */
     if (pde == NULL) {
@@ -170,7 +170,7 @@ static inline int pde_write_set(struct pde *pde, int set)
  * @returns If the write bit of the target page table is set, non
  * zero is returned. Otherwise, zero is returned instead.
  */
-static inline int pde_is_write(struct pde *pde)
+static inline int pde_is_write(const struct pde *pde)
 {
     /* Invalid PDE. */
     if (pde == NULL) {
@@ -206,7 +206,7 @@ static inline int pde_exec_set(struct pde *pde, int set)
  * @returns If the exec bit of the target page table is set, non
  * zero is returned. Otherwise, zero is returned instead.
  */
-static inline int pde_is_exec(struct pde *pde)
+static inline int pde_is_exec(const struct pde *pde)
 {
     /* Invalid PDE. */
     if (pde == NULL) {
@@ -242,7 +242,7 @@ static inline int pde_user_set(struct pde *pde, int set)
  * @returns If the user bit of the target page table is set, non
  * zero is returned. Otherwise, zero is returned instead.
  */
-static inline int pde_is_user(struct pde *pde)
+static inline int pde_is_user(const struct pde *pde)
 {
     /* Invalid PDE. */
     if (pde == NULL) {
@@ -295,7 +295,7 @@ static inline int pte_present_set(struct pte *pte, int set)
  * @returns If the present bit of the target page, non zero is
  * returned. Otherwise, zero is returned instead.
  */
-static inline int pte_is_present(struct pte *pte)
+static inline int pte_is_present(const struct pte *pte)
 {
     /* Invalid PTE. */
     if (pte == NULL) {
@@ -335,7 +335,7 @@ static inline int pte_frame_set(struct pte *pte, frame_t frame)
  *
  * @returns Number of the frame that is linked to the target page.
  */
-static inline frame_t pte_frame_get(struct pte *pte)
+static inline frame_t pte_frame_get(const struct pte *pte)
 {
     return (pte->frame);
 }
@@ -366,7 +366,7 @@ static inline int pte_read_set(struct pte *pte, int set)
  * @returns If the read bit of the target page, non zero is
  * returned. Otherwise, zero is returned instead.
  */
-static inline int pte_is_read(struct pte *pte)
+static inline int pte_is_read(const struct pte *pte)
 {
     /* Invalid PTE. */
     if (pte == NULL) {
@@ -402,7 +402,7 @@ static inline int pte_write_set(struct pte *pte, int set)
  * @returns If the write bit of the target page, non zero is
  * returned. Otherwise, zero is returned instead.
  */
-static inline int pte_is_write(struct pte *pte)
+static inline int pte_is_write(const struct pte *pte)
 {
     /* Invalid PTE. */
     if (pte == NULL) {
@@ -438,7 +438,7 @@ static inline int pte_exec_set(struct pte *pte, int set)
  * @returns If the exec bit of the target page, non zero is
  * returned. Otherwise, zero is returned instead.
  */
-static inline int pte_is_exec(struct pte *pte)
+static inline int pte_is_exec(const struct pte *pte)
 {
     /* Invalid PTE. */
     if (pte == NULL) {
@@ -474,7 +474,7 @@ static inline int pte_user_set(struct pte *pte, int set)
  * @returns If the user bit of the target page, non zero is
  * returned. Otherwise, zero is returned instead.
  */
-static inline int pte_is_user(struct pte *pte)
+static inline int pte_is_user(const struct pte *pte)
 {
     /* Invalid PTE. */
     if (pte == NULL) {
