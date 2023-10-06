@@ -15,7 +15,7 @@ export VERBOSE ?= no
 export RELEASE ?= no
 
 # Timeout
-export TIMEOUT ?= 5
+export TIMEOUT ?= 10
 
 #===============================================================================
 # Directories
