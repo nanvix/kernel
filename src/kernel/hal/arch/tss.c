@@ -55,7 +55,6 @@ const struct tss *tss_init(unsigned ss_selector)
     // Initialize the TSS.
     // FIXME: Provide definitions for the following magic constants.
     tss.ss0 = ss_selector;
-    tss.iomap = (TSS_SIZE - 1) << 16;
 
     return (&tss);
 }
