@@ -130,7 +130,7 @@ _do_excp:
 	/* Pop error code. */
 	addl $WORD_SIZE, %esp
 
-	iret
+    jmp __leave_kernel
 
 /*----------------------------------------------------------------------------*
  * _do_kcall()                                                                *
@@ -157,7 +157,7 @@ _do_kcall:
     /* Wipe out kernel call parameters. */
     addl $6*WORD_SIZE, %esp
 
-    iret
+    jmp __leave_kernel
 
 /*----------------------------------------------------------------------------*
  * _do_hwint()                                                                *
