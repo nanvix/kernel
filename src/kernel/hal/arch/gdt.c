@@ -41,7 +41,7 @@
 #define KERNEL_DS (GDTE_SIZE * GDT_DATA_DPL0)   /** Kernel data. */
 #define USER_CS (GDTE_SIZE * GDT_CODE_DPL3 + 3) /** User code.   */
 #define USER_DS (GDTE_SIZE * GDT_DATA_DPL3 + 3) /** User data.   */
-#define TSS (GDTE_SIZE * GDT_TSS + 3)           /** TSS.         */
+#define TSS (GDTE_SIZE * GDT_TSS)               /** TSS.         */
 /**@}*/
 
 /*============================================================================*
@@ -147,7 +147,7 @@ void gdt_init(void)
     set_gdte(GDT_DATA_DPL0, 0, 0xfffff, 0xc, 0x92);
     set_gdte(GDT_CODE_DPL3, 0, 0xfffff, 0xc, 0xfa);
     set_gdte(GDT_DATA_DPL3, 0, 0xfffff, 0xc, 0xf2);
-    set_gdte(GDT_TSS, (unsigned)&tss, (unsigned)&tss + TSS_SIZE, 0x0, 0xe9);
+    set_gdte(GDT_TSS, (unsigned)tss, TSS_SIZE, 0x00, 0x89);
 
     // Initialize the GDTPTR structure.
     gdtptr.size = sizeof(gdt) - 1;
