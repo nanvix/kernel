@@ -26,9 +26,9 @@ static struct tss tss;
  *============================================================================*/
 
 /**
- * @brief Stack used on mode switches to ring 0.
+ * @brief Kernel stack.
  */
-static byte_t ring0_stack[PAGE_SIZE] __attribute__((aligned(PAGE_SIZE)));
+extern byte_t kstack[PAGE_SIZE];
 
 /*============================================================================*
  * Public Functions                                                           *
@@ -63,7 +63,7 @@ const struct tss *tss_init(unsigned ss0)
 
     // Initialize the TSS.
     tss.ss0 = ss0;
-    tss.esp0 = (word_t)ring0_stack + PAGE_SIZE;
+    tss.esp0 = (word_t)kstack + PAGE_SIZE;
 
     return (&tss);
 }
