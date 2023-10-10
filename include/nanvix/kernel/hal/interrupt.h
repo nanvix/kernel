@@ -96,6 +96,21 @@ extern void interrupts_enable(void);
 extern void interrupts_init(void);
 
 /**
+ * @brief Forges an interrupt stack.
+ *
+ * @param user_stack   User stack.
+ * @param kernel_stack Kernel stack.
+ * @param user_func    User function.
+ * @param kernel_func  Kernel function.
+ *
+ * @returns Upon successful completion, a pointer to the forged stack is
+ * returned. Upon failure, a null pointer is returned instead.
+ */
+extern void *interrupt_forge_stack(void *user_stack, void *kernel_stack,
+                                   void (*user_func)(void),
+                                   void (*kernel_func)(void));
+
+/**
  * @brief interrupt handlers.
  */
 extern interrupt_handler_t interrupt_handlers[INTERRUPTS_NUM];
