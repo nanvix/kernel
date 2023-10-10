@@ -16,6 +16,7 @@
 .extern do_exception
 .extern do_kcall
 .extern do_interrupt
+.extern do_thread_setup
 .extern tss
 
 /*============================================================================*
@@ -69,6 +70,7 @@
 
 /* Other */
 .globl __context_switch
+.globl __do_thread_setup
 .globl __leave_kernel
 
 /*============================================================================*
@@ -235,5 +237,17 @@ __context_switch:
 /*
  * Leaves the kernel.
  */
+__do_thread_setup:
+    call do_thread_setup
+
+    /*
+     * Restore data segment registers.
+     */
+    movl 16(%esp), %eax /* eax <= esp0 */
+    movw %ax, %ds
+    movw %ax, %es
+    movw %ax, %fs
+    movw %ax, %gs
+
 __leave_kernel:
     iret

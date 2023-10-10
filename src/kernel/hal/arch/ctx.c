@@ -34,24 +34,18 @@ void context_dump(const struct context *ctx)
 }
 
 /**
- * @brief Initializes an execution context.
- *
+ * @details Initializes an execution context.
  */
-void context_create(struct context *ctx, const void *pgdir, void *stack,
-                    void (*func)(void))
+int context_create(struct context *ctx, const void *pgdir, const void *kbp,
+                   const void *ksp)
 {
     __memset(ctx, 0, sizeof(struct context));
-    __memset(stack, 0, PAGE_SIZE);
 
-    // TODO: review this once user mode is working.
-    word_t *stackp = (word_t *)((word_t)stack + PAGE_SIZE);
-    *--stackp = EFLAGS_IF;              /* eflags      */
-    *--stackp = gdt_kernel_cs();        /* cs          */
-    *--stackp = (word_t)func;           /* user eip    */
-    *--stackp = (word_t)__leave_kernel; /* kernel eip  */
-
+    // Initialize context.
     ctx->cr3 = (word_t)pgdir;
-    ctx->esp = (word_t)stackp;
-    ctx->ebp = (word_t)stackp;
-    ctx->eflags = 0x00;
+    ctx->esp = (word_t)ksp;
+    ctx->ebp = (word_t)kbp;
+    ctx->esp0 = (word_t)kbp;
+
+    return (0);
 }

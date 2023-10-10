@@ -7,6 +7,7 @@
  * Imports                                                                    *
  *============================================================================*/
 
+#include <elf.h>
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/mm.h>
@@ -51,6 +52,11 @@ static struct thread *kernel = &threads[0];
  *============================================================================*/
 
 /**
+ * @brief Low-level routine for bootstrapping a new thread.
+ */
+extern void __do_thread_setup(void);
+
+/**
  * @brief Releases all resources that are used by a thread.
  *
  * @param thread Target thread.
@@ -62,18 +68,6 @@ static void thread_free(struct thread *thread)
     thread->arg = NULL;
     thread->start = NULL;
     kpage_put(thread->stack);
-}
-
-/**
- * @brief Runs the calling thread.
- *
- * @return This function does not return.
- */
-noreturn static void thread_run(void)
-{
-    running->retval = running->start(running->arg);
-    thread_exit();
-    UNREACHABLE();
 }
 
 /**
@@ -90,6 +84,8 @@ static void do_timer(void)
  * Public Functions                                                           *
  *============================================================================*/
 
+extern vaddr_t elf32_load(const struct elf32_fhdr *elf);
+
 /**
  * @details This function returns a pointer to the thread
  * that is running in the underlying core.
@@ -97,6 +93,20 @@ static void do_timer(void)
 struct thread *thread_get_curr(void)
 {
     return (running);
+}
+
+/**
+ * @brief Bootstraps a new thread.
+ */
+void do_thread_setup(void)
+{
+    const vaddr_t user_fn_addr =
+        elf32_load((struct elf32_fhdr *)((vaddr_t)running->start));
+    KASSERT(user_fn_addr == USER_BASE_VIRT);
+
+    vaddr_t user_stack_addr = USER_END_VIRT - PAGE_SIZE;
+
+    KASSERT(virtmem_attach_stack(&running->virtmem, user_stack_addr) == 0);
 }
 
 /**
@@ -128,8 +138,16 @@ tid_t thread_create(void *(*start)(void *), void *arg)
     thread->start = start;
     thread->stack = kpage_get(true);
     virtmem_create(&thread->virtmem, kernel->virtmem.pgdir);
-    context_create(
-        &thread->ctx, thread->virtmem.pgdir, thread->stack, thread_run);
+
+    const void *ksp = interrupt_forge_stack((void *)(USER_END_VIRT),
+                                            thread->stack,
+                                            (void (*)(void))USER_BASE_VIRT,
+                                            __do_thread_setup);
+
+    context_create(&thread->ctx,
+                   thread->virtmem.pgdir,
+                   (const void *)((vaddr_t)thread->stack + PAGE_SIZE),
+                   ksp);
 
     return (thread->tid);
 }

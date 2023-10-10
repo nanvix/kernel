@@ -19,9 +19,17 @@ extern void context_dump(const struct context *ctx);
 
 /**
  * @brief Initializes an execution context.
+ *
+ * @param ctx   Storage location for the execution context.
+ * @param pgdir Page directory.
+ * @param kbp   Kernel stack base pointer.
+ * @param ksp   Kernel stack pointer.
+ *
+ * @returns Upon successful completion, zero is returned. Upon failure,
+ * a negative number is returned instead.
  */
-extern void context_create(struct context *ctx, const void *pgddir, void *stack,
-                           void (*func)(void));
+extern int context_create(struct context *ctx, const void *pgdir,
+                          const void *kbp, const void *ksp);
 
 /**
  * @brief Switches execution context.
