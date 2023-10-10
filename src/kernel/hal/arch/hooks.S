@@ -16,6 +16,7 @@
 .extern do_exception
 .extern do_kcall
 .extern do_interrupt
+.extern tss
 
 /*============================================================================*
  * Exported Symbols                                                           *
@@ -218,6 +219,11 @@ __context_switch:
     /* Restore address space.*/
     movl CONTEXT_CR3(%edx), %eax
     movl %eax, %cr3
+
+    /* Update ESP0 on TSS. */
+    movl CONTEXT_ESP0(%edx), %eax
+    movl $tss, %edx
+    movl %eax, TSS_ESP0(%edx)
 
     __context_switch.out:
     ret

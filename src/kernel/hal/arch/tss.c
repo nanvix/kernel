@@ -19,7 +19,7 @@
 /**
  * @brief Task state segment (TSS).
  */
-static struct tss tss;
+struct tss tss;
 
 /*============================================================================*
  * Private Variables                                                          *
