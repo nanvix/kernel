@@ -31,8 +31,6 @@ extern void context_create(struct context *ctx, const void *pgddir, void *stack,
  */
 extern void __context_switch(struct context *from, struct context *to);
 
-extern void __leave_kernel(void);
-
 #endif /* !_ASM_FILE_ */
 
 #endif /* NANVIX_KERNEL_HAL_CPU_CONTEXT_H_ */
