@@ -6,6 +6,7 @@
 /*============================================================================*
  * Imports                                                                    *
  *============================================================================*/
+
 #include <nanvix/kernel/hal.h>
 
 /*============================================================================*
@@ -15,17 +16,11 @@
 /**
  * @brief Server entry point.
  *
- * @param args Arguments (unused).
- *
  * @return This function does not return.
  */
-int _do_start(void *args)
+int main(void)
 {
-    ((void)args);
-
-    while (1) {
-        __kcall5(0, 1, 2, 3, 4, 5);
-    }
+    __kcall5(0, 1, 2, 3, 4, 5);
 
     return 0;
 }

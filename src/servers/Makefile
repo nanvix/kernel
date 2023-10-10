@@ -6,10 +6,14 @@
 #===============================================================================
 
 # C Source Files
-SRC = $(wildcard *.c)
+SRC_C = $(wildcard *.c)
+
+# Asembly Source Files
+SRC_ASM = $(wildcard *.S)
 
 # Object Files
-OBJ = $(SRC:.c=.$(TARGET).o)
+OBJ = $(SRC_ASM:.S=.$(TARGET).o) \
+      $(SRC_C:.c=.$(TARGET).o)
 
 # Linker Options
 export LDFLAGS += -L $(BUILD_DIR)/$(TARGET) -T user.ld
@@ -43,6 +47,15 @@ endif
 
 # Builds a C source file.
 %.$(TARGET).o: %.c
+ifeq ($(VERBOSE), no)
+	@echo [CC] $@
+	@$(CC) $(CFLAGS) $< -c -o $@
+else
+	$(CC) $(CFLAGS) $< -c -o $@
+endif
+
+# Builds an assembly source file.
+%.$(TARGET).o: %.S
 ifeq ($(VERBOSE), no)
 	@echo [CC] $@
 	@$(CC) $(CFLAGS) $< -c -o $@
