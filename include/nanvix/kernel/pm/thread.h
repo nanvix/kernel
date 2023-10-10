@@ -11,6 +11,7 @@
  *============================================================================*/
 
 #include <nanvix/kernel/hal.h>
+#include <nanvix/kernel/mm.h>
 
 /*============================================================================*
  * Constants                                                                  *
@@ -56,7 +57,7 @@ struct thread {
      * @name Memory Information
      */
     /**@{*/
-    const void *pgdir; /** Page directory. */
+    struct virtmem virtmem;
     /**@}*/
 
     /**
