@@ -16,6 +16,8 @@
 .extern do_exception
 .extern do_kcall
 .extern do_interrupt
+.extern do_thread_setup
+.extern tss
 
 /*============================================================================*
  * Exported Symbols                                                           *
@@ -68,6 +70,7 @@
 
 /* Other */
 .globl __context_switch
+.globl __do_thread_setup
 .globl __leave_kernel
 
 /*============================================================================*
@@ -130,7 +133,7 @@ _do_excp:
 	/* Pop error code. */
 	addl $WORD_SIZE, %esp
 
-	iret
+    jmp __leave_kernel
 
 /*----------------------------------------------------------------------------*
  * _do_kcall()                                                                *
@@ -157,7 +160,7 @@ _do_kcall:
     /* Wipe out kernel call parameters. */
     addl $6*WORD_SIZE, %esp
 
-    iret
+    jmp __leave_kernel
 
 /*----------------------------------------------------------------------------*
  * _do_hwint()                                                                *
@@ -219,6 +222,11 @@ __context_switch:
     movl CONTEXT_CR3(%edx), %eax
     movl %eax, %cr3
 
+    /* Update ESP0 on TSS. */
+    movl CONTEXT_ESP0(%edx), %eax
+    movl $tss, %edx
+    movl %eax, TSS_ESP0(%edx)
+
     __context_switch.out:
     ret
 
@@ -229,5 +237,17 @@ __context_switch:
 /*
  * Leaves the kernel.
  */
+__do_thread_setup:
+    call do_thread_setup
+
+    /*
+     * Restore data segment registers.
+     */
+    movl 16(%esp), %eax /* eax <= esp0 */
+    movw %ax, %ds
+    movw %ax, %es
+    movw %ax, %fs
+    movw %ax, %gs
+
 __leave_kernel:
     iret

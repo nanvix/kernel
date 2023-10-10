@@ -20,7 +20,6 @@
 #include <stdnoreturn.h>
 
 // TODO: place these on a header file.
-extern vaddr_t elf32_load(const struct elf32_fhdr *elf);
 extern noreturn void handle_syscall(void);
 
 /*============================================================================*
@@ -75,7 +74,7 @@ static void spawn_init(void)
 
     kprintf("INFO: loading module %s", kmod.cmdline);
 
-    const vaddr_t start = elf32_load((struct elf32_fhdr *)kmod.start);
+    const vaddr_t start = kmod.start;
 
     // Check if the module was loaded successfully.
     if (start == 0) {
