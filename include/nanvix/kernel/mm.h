@@ -14,6 +14,7 @@
 #include <nanvix/kernel/mm/kpool.h>
 #include <nanvix/kernel/mm/memory.h>
 #include <nanvix/kernel/mm/upool.h>
+#include <nanvix/kernel/mm/virtmem.h>
 
 /*============================================================================*
  * Functions                                                                  *
