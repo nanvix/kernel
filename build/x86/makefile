@@ -13,7 +13,4 @@ export CFLAGS += -D__x86__
 export CFLAGS += -nostdlib -ffreestanding
 
 # Linker Options
-export LDFLAGS += -nostdlib -ffreestanding -Wl,--entry=_do_start
-
-# Libraries
-export THEIR_LIBS += -lgcc
+export LDFLAGS += -nostdlib --entry=_do_start

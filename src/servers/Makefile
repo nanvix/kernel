@@ -28,9 +28,9 @@ export BIN = init.$(EXEC_FORMAT)
 all: $(OBJ)
 ifeq ($(VERBOSE), no)
 	@echo [CC] $(BINARIES_DIR)/$(BIN)
-	@$(CC) $(LDFLAGS) -o $(BINARIES_DIR)/$(BIN) $(OBJ) $(LIBS) $(THEIR_LIBS)
+	@$(LD) $(LDFLAGS) -o $(BINARIES_DIR)/$(BIN) $(OBJ) $(LIBS)
 else
-	$(CC) $(LDFLAGS) -o $(BINARIES_DIR)/$(BIN) $(OBJ) $(LIBS) $(THEIR_LIBS)
+	$(LD) $(LDFLAGS) -o $(BINARIES_DIR)/$(BIN) $(OBJ) $(LIBS)
 endif
 
 # Cleans build objects.

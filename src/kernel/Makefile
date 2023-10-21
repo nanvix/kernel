@@ -46,9 +46,9 @@ export LDFLAGS += -L $(BUILD_DIR)/$(TARGET) -T kernel.ld
 all: $(OBJ)
 ifeq ($(VERBOSE), no)
 	@echo [CC] $(BINARIES_DIR)/$(KERNEL)
-	@$(CC) $(LDFLAGS) -o $(BINARIES_DIR)/$(KERNEL) $(OBJ) $(LIBS) $(THEIR_LIBS)
+	@$(LD) $(LDFLAGS) -o $(BINARIES_DIR)/$(KERNEL) $(OBJ) $(LIBS)
 else
-	$(CC) $(LDFLAGS) -o $(BINARIES_DIR)/$(KERNEL) $(OBJ) $(LIBS) $(THEIR_LIBS)
+	$(LD) $(LDFLAGS) -o $(BINARIES_DIR)/$(KERNEL) $(OBJ) $(LIBS)
 endif
 
 # Cleans build objects.
