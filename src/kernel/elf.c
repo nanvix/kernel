@@ -203,11 +203,7 @@ static vaddr_t do_elf32_load(const struct elf32_fhdr *elf, bool dry_run)
         if (!dry_run) {
             // We are not, thus load segment.
             const struct thread *curr = thread_get_curr();
-            int result = upage_map((struct pde *)curr->virtmem.pgdir,
-                                   vbase,
-                                   pbase >> PAGE_SHIFT,
-                                   w,
-                                   x);
+            int result = vmem_map(curr->vmem, vbase, pbase, PAGE_SIZE, w, x);
 
             // FIXME: rollback instead of panicking.
             KASSERT(result == 0);

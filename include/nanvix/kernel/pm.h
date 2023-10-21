@@ -10,6 +10,7 @@
  * Imports                                                                    *
  *============================================================================*/
 
+#include <nanvix/kernel/mm.h>
 #include <nanvix/kernel/pm/cond.h>
 #include <nanvix/kernel/pm/semaphore.h>
 #include <nanvix/kernel/pm/thread.h>
@@ -21,8 +22,8 @@
 /**
  * @brief Initializes the processor management subsystem.
  *
- * @param root_pgdir Root page directory.
+ * @param root_vmem Root virtual memory space.
  */
-extern void pm_init(const void *root_pgdir);
+extern void pm_init(const struct vmem *root_vmem);
 
 #endif /* NANVIX_KERNEL_PM_H_ */

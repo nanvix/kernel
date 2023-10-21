@@ -106,7 +106,7 @@ void do_thread_setup(void)
 
     vaddr_t user_stack_addr = USER_END_VIRT - PAGE_SIZE;
 
-    KASSERT(virtmem_attach_stack(&running->virtmem, user_stack_addr) == 0);
+    KASSERT(vmem_attach(running->vmem, user_stack_addr, PAGE_SIZE) == 0);
 }
 
 /**
@@ -127,7 +127,19 @@ tid_t thread_create(void *(*start)(void *), void *arg)
 
     // No thread available.
     if (thread == NULL) {
-        return (-1);
+        goto error0;
+    }
+
+    // Create a virtual memory space.
+    struct vmem *vmem = vmem_create(kernel->vmem);
+    if (vmem == NULL) {
+        goto error0;
+    }
+
+    // Create a stack.
+    void *kstack = kpage_get(true);
+    if (kstack == NULL) {
+        goto error1;
     }
 
     // Initializes thread control block.
@@ -136,8 +148,8 @@ tid_t thread_create(void *(*start)(void *), void *arg)
     thread->state = THREAD_READY;
     thread->arg = arg;
     thread->start = start;
-    thread->stack = kpage_get(true);
-    virtmem_create(&thread->virtmem, kernel->virtmem.pgdir);
+    thread->stack = kstack;
+    thread->vmem = vmem;
 
     const void *ksp = interrupt_forge_stack((void *)(USER_END_VIRT),
                                             thread->stack,
@@ -145,11 +157,16 @@ tid_t thread_create(void *(*start)(void *), void *arg)
                                             __do_thread_setup);
 
     context_create(&thread->ctx,
-                   thread->virtmem.pgdir,
+                   vmem_pgdir_get(thread->vmem),
                    (const void *)((vaddr_t)thread->stack + PAGE_SIZE),
                    ksp);
 
     return (thread->tid);
+
+error1:
+    vmem_destroy(vmem);
+error0:
+    return (-1);
 }
 
 /**
@@ -215,7 +232,7 @@ void thread_wakeup(struct thread *t)
 /**
  * @details Initializes the thread system.
  */
-void thread_init(const void *root_pgdir)
+void thread_init(const struct vmem *root_vmem)
 {
     kprintf("[kernel][pm] initializing thread system...");
 
@@ -228,7 +245,7 @@ void thread_init(const void *root_pgdir)
     }
 
     // Initialize.
-    virtmem_init(&kernel->virtmem, root_pgdir);
+    kernel->vmem = (struct vmem *)root_vmem;
     kernel->state = THREAD_RUNNING;
 
     running = &threads[0];

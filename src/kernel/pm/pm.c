@@ -10,8 +10,8 @@
 /**
  * @details Initializes the processor management subsystem.
  */
-void pm_init(const void *root_pgdir)
+void pm_init(const struct vmem *root_vmem)
 {
     kprintf("[kernel] initializing processor management subsystem...");
-    thread_init(root_pgdir);
+    thread_init(root_vmem);
 }

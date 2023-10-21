@@ -57,7 +57,7 @@ struct thread {
      * @name Memory Information
      */
     /**@{*/
-    struct virtmem virtmem;
+    struct vmem *vmem;
     /**@}*/
 
     /**
@@ -117,11 +117,11 @@ extern void thread_yield(void);
 extern noreturn void thread_exit(void);
 
 /**
- * @details Initializes the thread system.
+ * @brief Initializes the thread system.
  *
- * @param root_pgdir Root page directory.
+ * @param root_vmem Root virtual memory space.
  */
-extern void thread_init(const void *root_pgdir);
+extern void thread_init(const struct vmem *root_vmem);
 
 /**
  * @brief Atomically puts the calling thread to sleep.

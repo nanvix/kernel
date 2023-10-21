@@ -14,7 +14,7 @@
 #include <nanvix/kernel/mm/kpool.h>
 #include <nanvix/kernel/mm/memory.h>
 #include <nanvix/kernel/mm/upool.h>
-#include <nanvix/kernel/mm/virtmem.h>
+#include <nanvix/kernel/mm/vmem.h>
 
 /*============================================================================*
  * Functions                                                                  *
@@ -71,9 +71,9 @@ static inline int mm_check_area(vaddr_t vaddr, uint64_t size, int area)
 /**
  * @brief Initializes the Memory Management (MM) system.
  *
- * @returns The root page directory.
+ * @returns The root virtual memory space.
  */
-extern const void *mm_init(void);
+extern const struct vmem *mm_init(void);
 
 /*============================================================================*/
 
