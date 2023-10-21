@@ -76,6 +76,12 @@ export CFLAGS += -O0
 export CFLAGS += -g
 endif
 
+# Cargo Options
+export CARGO_FLAGS += -Z build-std=core
+ifeq ($(RELEASE), yes)
+export CARGO_FLAGS += --release
+endif
+
 # Archiver Options
 export ARFLAGS = rc
 
