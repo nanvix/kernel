@@ -183,30 +183,29 @@ static vaddr_t do_elf32_load(const struct elf32_fhdr *elf, bool dry_run)
         }
 
         // Print program header.
-        elf32_phdr_print(&phdr[i]);
-
-        // Check if segment fits in one page table.
-        if (phdr[i].p_filesz > PAGE_SIZE) {
-            // TODO: support segments that are bigger than one page.
-            kpanic("UNIMPLEMETED: segment is too big");
+        if (dry_run) {
+            elf32_phdr_print(&phdr[i]);
         }
 
-        const paddr_t pbase = PADDR((char *)elf + phdr[i].p_offset);
-        const vaddr_t vbase = VADDR(addr);
+        paddr_t pbase = PADDR((char *)elf + phdr[i].p_offset);
+        const paddr_t pend = ALIGN(pbase + phdr[i].p_filesz, PAGE_SIZE);
+        for (vaddr_t vbase = VADDR(addr); pbase <= pend;
+             vbase += PAGE_SIZE, pbase += PAGE_SIZE) {
+            if (vbase < USER_BASE_VIRT) {
+                kprintf("ERROR: invalid load address");
+                return (0);
+            }
 
-        if (vbase < USER_BASE_VIRT) {
-            kprintf("ERROR: invalid load address");
-            return (0);
-        }
+            // Check if we are running on dry mode.
+            if (!dry_run) {
+                // We are not, thus load segment.
+                const struct thread *curr = thread_get_curr();
+                int result =
+                    vmem_map(curr->vmem, vbase, pbase, PAGE_SIZE, w, x);
 
-        // Check if we are running on dry mode.
-        if (!dry_run) {
-            // We are not, thus load segment.
-            const struct thread *curr = thread_get_curr();
-            int result = vmem_map(curr->vmem, vbase, pbase, PAGE_SIZE, w, x);
-
-            // FIXME: rollback instead of panicking.
-            KASSERT(result == 0);
+                // FIXME: rollback instead of panicking.
+                KASSERT(result == 0);
+            }
         }
     }
 
