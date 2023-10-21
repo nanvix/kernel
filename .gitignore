@@ -13,6 +13,8 @@ nanvix.iso
 *.elf
 *.o
 doc/doxygen
+target/
+Cargo.lock
 
 # IDEs
 *.swo

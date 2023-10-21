@@ -5,39 +5,41 @@
 # Artifacts
 #===============================================================================
 
-# C Source Files
-SRC_C = $(wildcard *.c)
-
 # Asembly Source Files
-SRC_ASM = $(wildcard *.S)
+SRC_ASM := $(BUILD_DIR)/$(TARGET)/crt0.S
 
 # Object Files
-OBJ = $(SRC_ASM:.S=.$(TARGET).o) \
-      $(SRC_C:.c=.$(TARGET).o)
+OBJ = $(SRC_ASM:.S=.$(TARGET).o)
 
 # Linker Options
 export LDFLAGS += -L $(BUILD_DIR)/$(TARGET) -T user.ld
+export LDFLAGS += --gc-sections
 
-export BIN = init.$(EXEC_FORMAT)
+# Cargo Options
+export CARGO_FLAGS += --target=$(BUILD_DIR)/$(TARGET)/target.json
+
+export NAME := init
+export LIB := lib$(NAME).a
+export BIN := $(NAME).$(EXEC_FORMAT)
 
 #===============================================================================
 # Build Rules
 #===============================================================================
 
 # Builds binary file.
-all: $(OBJ)
+all: $(OBJ) $(LIB)
 ifeq ($(VERBOSE), no)
 	@echo [CC] $(BINARIES_DIR)/$(BIN)
-	@$(LD) $(LDFLAGS) -o $(BINARIES_DIR)/$(BIN) $(OBJ) $(LIBS)
+	@$(LD) $(LDFLAGS) -o $(BINARIES_DIR)/$(BIN) $(OBJ) $(LIB) $(LIBS)
 else
-	$(LD) $(LDFLAGS) -o $(BINARIES_DIR)/$(BIN) $(OBJ) $(LIBS)
+	$(LD) $(LDFLAGS) -o $(BINARIES_DIR)/$(BIN) $(OBJ) $(LIB) $(LIBS)
 endif
 
 # Cleans build objects.
 clean:
 ifeq ($(VERBOSE), no)
-	@echo [CLEAN] $(OBJ)
-	@rm -rf $(OBJ)
+	@echo [CLEAN] $(OBJ) $(LIB) target
+	@rm -rf $(OBJ) $(LIB) target
 	@echo [CLEAN] $(BINARIES_DIR)/$(BIN)
 	@rm -rf $(BINARIES_DIR)/$(BIN)
 else
@@ -45,13 +47,13 @@ else
 	rm -rf $(BINARIES_DIR)/$(BIN)
 endif
 
-# Builds a C source file.
-%.$(TARGET).o: %.c
-ifeq ($(VERBOSE), no)
-	@echo [CC] $@
-	@$(CC) $(CFLAGS) $< -c -o $@
+# Compile rust kernel object
+$(LIB):
+	$(CARGO) build $(CARGO_FLAGS)
+ifeq ($(RELEASE), yes)
+	cp --preserve target/target/release/$(LIB) $@
 else
-	$(CC) $(CFLAGS) $< -c -o $@
+	cp --preserve target/target/debug/$(LIB) $@
 endif
 
 # Builds an assembly source file.

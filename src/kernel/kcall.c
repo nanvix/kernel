@@ -8,9 +8,11 @@
  *============================================================================*/
 
 #include <nanvix/kernel/hal.h>
+#include <nanvix/kernel/kcall.h>
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/pm.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdnoreturn.h>
 
 /*============================================================================*
@@ -36,11 +38,18 @@ static volatile struct {
 
 noreturn void handle_syscall(void)
 {
+    int ret = -1;
 
     while (true) {
         semaphore_down(&kernel_semahore);
 
-        scoreboard.ret = 0;
+        KASSERT(scoreboard.kcall_nr == 0);
+        KASSERT(scoreboard.arg0 == 1);
+        KASSERT(scoreboard.arg1 == 2);
+        KASSERT(scoreboard.arg2 == 3);
+        KASSERT(scoreboard.arg3 == 4);
+
+        scoreboard.ret = ret;
 
         semaphore_up(&user_semaphore);
 

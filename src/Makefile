@@ -28,7 +28,7 @@ clean-kernel: clean-libcore clean-libdev
 	@$(MAKE) -C kernel clean
 
 all-servers:
-	@$(MAKE) -C servers all
+	@$(MAKE) -C servers/init all
 
 clean-servers:
-	@$(MAKE) -C servers clean
+	@$(MAKE) -C servers/init clean
