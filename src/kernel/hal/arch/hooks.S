@@ -144,11 +144,11 @@ _do_kcall:
 
     /* Push kernel call parameters. */
     pushl %eax
-    pushl %ebx
-    pushl %ecx
-    pushl %edx
     pushl %esi
     pushl %edi
+    pushl %edx
+    pushl %ecx
+    pushl %ebx
 
     cli
 
