@@ -117,7 +117,7 @@ static inline word_t __kcall4(word_t kcall_nr, word_t arg0, word_t arg1,
                        "b"(arg0),
                        "c"(arg1),
                        "d"(arg2),
-                       "S"(arg3)
+                       "D"(arg3)
                      : "memory", "cc");
 
     return (ret);
@@ -147,8 +147,8 @@ static inline word_t __kcall5(word_t kcall_nr, word_t arg0, word_t arg1,
                        "b"(arg0),
                        "c"(arg1),
                        "d"(arg2),
-                       "S"(arg3),
-                       "D"(arg4)
+                       "D"(arg3),
+                       "S"(arg4)
                      : "memory", "cc");
 
     return (ret);
