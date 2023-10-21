@@ -39,7 +39,7 @@ extern void test_kpool(void);
 /**
  * @brief Runs unit tests on the User Page Allocator.
  */
-extern void test_upool(void);
+extern void test_upool(struct pde *pgdir);
 
 /*============================================================================*
  * Private Variables                                                          *
@@ -118,12 +118,12 @@ noreturn void kmain(struct kargs *args)
     }
 
     hal_init();
-    const void *root_pgdir = mm_init();
-    pm_init(root_pgdir);
+    const struct vmem *root_vmem = mm_init();
+    pm_init(root_vmem);
 
     test_frame();
     test_kpool();
-    test_upool();
+    test_upool((struct pde *)vmem_pgdir_get(root_vmem));
 
     // Spawn the init server. Note that although we create a new thread, we will
     // not switch to it, because interrupts are disabled. This will save us from
