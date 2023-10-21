@@ -80,7 +80,7 @@ endif
 export ARFLAGS = rc
 
 # Linker Options
-export LDFLAGS += -Wl,-z,noexecstack
+export LDFLAGS += -z noexecstack
 
 #===============================================================================
 # Build Rules
