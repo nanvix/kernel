@@ -7,12 +7,11 @@
  * Imports                                                                    *
  *============================================================================*/
 
+#include "mod.h"
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/kcall.h>
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/pm.h>
-#include <stdbool.h>
-#include <stddef.h>
 #include <stdnoreturn.h>
 
 /*============================================================================*
@@ -38,24 +37,11 @@ static volatile struct {
 
 noreturn void handle_syscall(void)
 {
-    int ret = -1;
 
     while (true) {
         semaphore_down(&kernel_semahore);
 
-        KASSERT(scoreboard.kcall_nr == 0);
-        KASSERT(scoreboard.arg0 == 1);
-        KASSERT(scoreboard.arg1 == 2);
-        KASSERT(scoreboard.arg2 == 3);
-        KASSERT(scoreboard.arg3 == 4);
-
-        scoreboard.ret = ret;
-
         semaphore_up(&user_semaphore);
-
-        // Magic string.
-        // Our CI will look for this as the last print statement.
-        kpanic("Hello World!");
     }
 }
 
@@ -75,16 +61,46 @@ noreturn void handle_syscall(void)
 int do_kcall(word_t arg0, word_t arg1, word_t arg2, word_t arg3, word_t arg4,
              word_t kcall_nr)
 {
-    // Copy kernel call parameters.
-    scoreboard.kcall_nr = kcall_nr;
-    scoreboard.arg0 = arg0;
-    scoreboard.arg1 = arg1;
-    scoreboard.arg2 = arg2;
-    scoreboard.arg3 = arg3;
-    scoreboard.arg4 = arg4;
+    int ret = -1;
 
-    semaphore_up(&kernel_semahore);
-    semaphore_down(&user_semaphore);
+    switch (kcall_nr) {
+        case NR_void0:
+            kcall_void0();
+            break;
+        case NR_void1:
+            kcall_void1((int)arg0);
+            break;
+        case NR_void2:
+            kcall_void2((int)arg0, (int)arg1);
+            break;
+        case NR_void3:
+            kcall_void3((int)arg0, (int)arg1, (int)arg2);
+            break;
+        case NR_void4:
+            kcall_void4((int)arg0, (int)arg1, (int)arg2, (int)arg3);
+            break;
+        case NR_void5:
+            kcall_void5((int)arg0, (int)arg1, (int)arg2, (int)arg3, (int)arg4);
+            break;
+        case NR_write:
+            kcall_write((int)arg0, (const char *)arg1, (size_t)arg2);
+            break;
+        case NR_shutdown:
+            kcall_shutdown();
+            break;
+        default:
+            // Copy kernel call parameters.
+            scoreboard.kcall_nr = kcall_nr;
+            scoreboard.arg0 = arg0;
+            scoreboard.arg1 = arg1;
+            scoreboard.arg2 = arg2;
+            scoreboard.arg3 = arg3;
+            scoreboard.arg4 = arg4;
 
-    return (scoreboard.ret);
+            semaphore_up(&kernel_semahore);
+            semaphore_down(&user_semaphore);
+            break;
+    };
+
+    return (ret);
 }

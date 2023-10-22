@@ -12,12 +12,13 @@ SRC_C = $(wildcard hal/arch/*.c)      \
 		$(wildcard hal/mmap/*.c)      \
 		$(wildcard hal/mmu/*.c)       \
 		$(wildcard hal/*.c)           \
+		$(wildcard kcall/*.c)         \
 		$(wildcard lib/*.c)           \
 		$(wildcard pm/*.c)            \
 		$(wildcard mm/frame/*.c)      \
 		$(wildcard mm/kpool/*.c)      \
 		$(wildcard mm/upool/*.c)      \
-		$(wildcard mm/vmem/*.c)      \
+		$(wildcard mm/vmem/*.c)       \
 		$(wildcard mm/*.c)            \
 		$(wildcard *.c)
 
