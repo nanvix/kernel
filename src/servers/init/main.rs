@@ -10,6 +10,10 @@
 // Modules
 //==============================================================================
 
+#[macro_use]
+mod macros;
+
+mod logging;
 mod nanvix;
 mod unwind;
 
@@ -31,8 +35,7 @@ pub fn main() {
     kcall::void3(1, 2, 3);
     kcall::void4(1, 2, 3, 4);
 
-    let message: &str = "Hello, world!\n";
-    kcall::write(0, message.as_ptr(), message.len());
+    log!("Hello, world!\n");
 
     kcall::shutdown();
 }
