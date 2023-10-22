@@ -10,6 +10,7 @@
  * Imports                                                                    *
  *============================================================================*/
 
+#include <nanvix/kernel/mm.h>
 #include <stddef.h>
 #include <stdnoreturn.h>
 
@@ -94,6 +95,24 @@ extern noreturn void kcall_shutdown(void);
  * @returns The number of bytes written is returned.
  */
 extern size_t kcall_write(int fd, const char *buf, size_t n);
+
+/**
+ * @brief Attempts to allocate a page frame.
+ *
+ * @return On success, the number of the allocated page frame is returned.
+ * On failure, @p FRAME_NULL is returned instead.
+ */
+extern frame_t kcall_fralloc(void);
+
+/**
+ * @brief Frees a page frame.
+ *
+ * @param frame Number of the target page frame.
+ *
+ * @returns Upon successful completion, zero is returned. Upon
+ * failure, a negative error code is returned instead.
+ */
+int kcall_frfree(frame_t frame);
 
 /*============================================================================*/
 
