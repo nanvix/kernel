@@ -32,5 +32,10 @@ int kcall_frfree(frame_t frame)
 {
     // TODO: Check if the calling process has enough permissions.
 
+    // Check if the target frame number is invalid.
+    if (frame < (USER_BASE_PHYS >> PAGE_SHIFT)) {
+        return (-1);
+    }
+
     return (frame_free(frame));
 }
