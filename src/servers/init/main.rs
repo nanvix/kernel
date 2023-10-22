@@ -15,13 +15,14 @@ mod macros;
 
 mod logging;
 mod nanvix;
+mod test;
 mod unwind;
 
 //==============================================================================
 // Imports
 //==============================================================================
 
-use nanvix::kcall::{self,};
+use nanvix::kcall;
 
 //==============================================================================
 // Standalone Functions
@@ -29,13 +30,7 @@ use nanvix::kcall::{self,};
 
 #[no_mangle]
 pub fn main() {
-    kcall::void0();
-    kcall::void1(1);
-    kcall::void2(1, 2);
-    kcall::void3(1, 2, 3);
-    kcall::void4(1, 2, 3, 4);
-
-    log!("Hello, world!\n");
+    test::test_kernel_calls();
 
     kcall::shutdown();
 }
