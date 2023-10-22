@@ -22,6 +22,8 @@ enum KcallNumbers {
     Void4 = 4,
     Shutdown = 6,
     Write = 7,
+    FrameAlloc = 8,
+    FrameFree = 9,
 }
 
 //==============================================================================
@@ -280,4 +282,36 @@ pub fn shutdown() -> ! {
     }
     // Never gets here.
     loop {}
+}
+
+///
+/// **Description**
+///
+/// Allocates a page frame.
+///
+/// **Return**
+///
+/// On successful completion, the number of the allocated page frame
+/// is returned. On error, `FRAME_NULL` is returned instead.
+///
+pub fn fralloc() -> u32 {
+    unsafe { kcall0(KcallNumbers::FrameAlloc as u32) }
+}
+
+///
+///
+/// **Description**
+///
+/// Frees a page frame.
+///
+/// **Parameters**
+/// - `frame` - Number of the target page frame.
+///
+/// **Return**
+///
+/// On successful completion, zero is returned. On error, a negative
+/// error code is returned instead.
+///
+pub fn frfree(frame: u32) -> u32 {
+    unsafe { kcall1(KcallNumbers::FrameFree as u32, frame) }
 }
