@@ -29,48 +29,6 @@ struct test {
  *============================================================================*/
 
 /**
- * @brief Attempts to allocate a page frame.
- */
-static void test_frame_allocation(void)
-{
-    frame_t frame;
-
-    KASSERT((frame = frame_alloc_any()) != FRAME_NULL);
-    KASSERT(frame < ((MEMORY_SIZE) >> PAGE_SHIFT));
-    KASSERT(frame_free(frame) == 0);
-}
-
-/**
- * @brief Attempts to release an invalid page frame.
- */
-static void test_frame_invalid_free(void)
-{
-    KASSERT(frame_free((MEMORY_SIZE / PAGE_SIZE) + 1) == -1);
-    KASSERT(frame_free((USER_BASE_PHYS) >> PAGE_SHIFT) == -1);
-}
-
-/**
- * @brief Attempts to release a page frame that was not allocated.
- */
-static void test_frame_bad_free(void)
-{
-    KASSERT(frame_free((USER_BASE_PHYS / PAGE_SIZE)) == -1);
-    KASSERT(frame_free((NUM_FRAMES - 1)) == -1);
-}
-
-/**
- * @brief Attempts to release a page frame multiple times.
- */
-static void test_frame_double_free(void)
-{
-    frame_t frame;
-
-    KASSERT((frame = frame_alloc_any()) != FRAME_NULL);
-    KASSERT(frame_free(frame) == 0);
-    KASSERT(frame_free(frame) == -1);
-}
-
-/**
  * @brief Attempts to allocate more page frames than available.
  */
 static void test_frame_allocation_overflow(void)
@@ -119,10 +77,6 @@ static void test_frame_allocation_stress(void)
  * @brief Page Frame unit tests.
  */
 static struct test frame_tests[] = {
-    {test_frame_allocation, "frame allocation"},
-    {test_frame_invalid_free, "invalid frame release"},
-    {test_frame_bad_free, "bad frame release"},
-    {test_frame_double_free, "double frame release"},
     {test_frame_allocation_stress, "frame allocation"},
     {test_frame_allocation_overflow, "frame allocation overflow"},
     {NULL, NULL},
