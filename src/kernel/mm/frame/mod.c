@@ -80,7 +80,7 @@ frame_t frame_alloc_any(void)
     bitmap_t bit;
 
     /* Search for a free frame. */
-    bit = bitmap_first_free(frames, FRAMES_SIZE);
+    bit = bitmap_first_free(frames, USER_BASE_PHYS >> PAGE_SHIFT, FRAMES_SIZE);
 
     // Check wether we succeeded to allocate a frame.
     if (bit == BITMAP_FULL) {

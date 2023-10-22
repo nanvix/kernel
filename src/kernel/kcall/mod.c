@@ -89,6 +89,13 @@ int do_kcall(word_t arg0, word_t arg1, word_t arg2, word_t arg3, word_t arg4,
         case NR_shutdown:
             kcall_shutdown();
             break;
+        case NR_fralloc:
+            ret = kcall_fralloc();
+            break;
+
+        case NR_frfree:
+            ret = kcall_frfree((frame_t)arg0);
+            break;
         default:
             // Copy kernel call parameters.
             scoreboard.kcall_nr = kcall_nr;
