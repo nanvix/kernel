@@ -74,24 +74,23 @@ bitmap_t bitmap_nclear(bitmap_t *bitmap, size_t size)
  * @brief Searches for the first free bit in a bitmap.
  *
  * @details Searches for the first free bit in a bitmap. In order to speedup
- *		  computation, bits are checked in chunks of 4 bytes.
+ * computation, bits are checked in chunks of 4 bytes.
  *
  * @param bitmap Bitmap to be searched.
+ * @param start  Start index.
  * @param size   Size (in bytes) of the bitmap.
  *
  * @returns If a free bit is found, the number of that bit is returned. However,
- *		  if no free bit is found #BITMAP_FULL is returned instead.
- *
- * @todo TODO: provide a detailed description for this function.
+ * if no free bit is found #BITMAP_FULL is returned instead.
  */
-bitmap_t bitmap_first_free(bitmap_t *bitmap, size_t size)
+bitmap_t bitmap_first_free(bitmap_t *bitmap, bitmap_t start, size_t size)
 {
     bitmap_t *max;          /* Bitmap bondary. */
     register bitmap_t off;  /* Bit offset.     */
     register bitmap_t *idx; /* Bit index.      */
 
-    idx = bitmap;
-    max = (idx + (size >> 2));
+    idx = bitmap + (start >> BITMAP_WORD_SHIFT);
+    max = (bitmap + (size >> 2));
 
     /* Find bit index. */
     while (idx < max) {

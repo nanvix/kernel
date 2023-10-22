@@ -60,7 +60,7 @@ typedef uint32_t bitmap_t;
 
 extern bitmap_t bitmap_nset(bitmap_t *, size_t);
 extern bitmap_t bitmap_nclear(bitmap_t *, size_t);
-extern bitmap_t bitmap_first_free(bitmap_t *, size_t);
+extern bitmap_t bitmap_first_free(bitmap_t *, bitmap_t start, size_t);
 extern bitmap_t bitmap_check_bit(bitmap_t *, bitmap_t);
 
 /*============================================================================*
