@@ -10,14 +10,19 @@
 // Modules
 //==============================================================================
 
+#[macro_use]
+mod macros;
+
+mod logging;
 mod nanvix;
+mod test;
 mod unwind;
 
 //==============================================================================
 // Imports
 //==============================================================================
 
-use nanvix::kcall::{self,};
+use nanvix::kcall;
 
 //==============================================================================
 // Standalone Functions
@@ -25,14 +30,7 @@ use nanvix::kcall::{self,};
 
 #[no_mangle]
 pub fn main() {
-    kcall::void0();
-    kcall::void1(1);
-    kcall::void2(1, 2);
-    kcall::void3(1, 2, 3);
-    kcall::void4(1, 2, 3, 4);
-
-    let message: &str = "Hello, world!\n";
-    kcall::write(0, message.as_ptr(), message.len());
+    test::test_kernel_calls();
 
     kcall::shutdown();
 }
