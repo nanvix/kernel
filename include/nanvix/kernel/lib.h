@@ -104,6 +104,17 @@ extern void kputs(const char *str);
 #define KASSERT_SIZE(a, b) ((void)sizeof(char[(((a) == (b)) ? 1 : -1)]))
 
 /**
+ * @brief Asserts if size of 'a' is less than size of 'b'
+ *
+ * @param a Probing size.
+ * @param b Control size.
+ *
+ * @returns Upon success, compilation proceeds as normal. Upon
+ * failure, a compilation error is generated.
+ */
+#define KASSERT_SIZE_LE(a, b) ((void)sizeof(char[((a) <= (b)) ? 1 : -1]))
+
+/**
  * @brief Returns the length of an array.
  *
  * @param x Target array.
