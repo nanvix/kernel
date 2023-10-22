@@ -31,8 +31,11 @@ all: $(OBJ) $(LIB)
 ifeq ($(VERBOSE), no)
 	@echo [CC] $(BINARIES_DIR)/$(BIN)
 	@$(LD) $(LDFLAGS) -o $(BINARIES_DIR)/$(BIN) $(OBJ) $(LIB) $(LIBS)
+	@echo [CLEAN] $(LIB)
+	@rm -rf $(LIB)
 else
 	$(LD) $(LDFLAGS) -o $(BINARIES_DIR)/$(BIN) $(OBJ) $(LIB) $(LIBS)
+	rm -rf $(LIB)
 endif
 
 # Cleans build objects.
