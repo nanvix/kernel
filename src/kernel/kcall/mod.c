@@ -65,25 +65,26 @@ int do_kcall(word_t arg0, word_t arg1, word_t arg2, word_t arg3, word_t arg4,
 
     switch (kcall_nr) {
         case NR_void0:
-            kcall_void0();
+            ret = kcall_void0();
             break;
         case NR_void1:
-            kcall_void1((int)arg0);
+            ret = kcall_void1((int)arg0);
             break;
         case NR_void2:
-            kcall_void2((int)arg0, (int)arg1);
+            ret = kcall_void2((int)arg0, (int)arg1);
             break;
         case NR_void3:
-            kcall_void3((int)arg0, (int)arg1, (int)arg2);
+            ret = kcall_void3((int)arg0, (int)arg1, (int)arg2);
             break;
         case NR_void4:
-            kcall_void4((int)arg0, (int)arg1, (int)arg2, (int)arg3);
+            ret = kcall_void4((int)arg0, (int)arg1, (int)arg2, (int)arg3);
             break;
         case NR_void5:
-            kcall_void5((int)arg0, (int)arg1, (int)arg2, (int)arg3, (int)arg4);
+            ret = kcall_void5(
+                (int)arg0, (int)arg1, (int)arg2, (int)arg3, (int)arg4);
             break;
         case NR_write:
-            kcall_write((int)arg0, (const char *)arg1, (size_t)arg2);
+            ret = kcall_write((int)arg0, (const char *)arg1, (size_t)arg2);
             break;
         case NR_shutdown:
             kcall_shutdown();
