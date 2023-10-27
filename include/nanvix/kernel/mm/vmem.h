@@ -92,7 +92,7 @@ extern int vmem_attach(vmem_t vmem, vaddr_t addr, size_t size);
  *
  * @param vmem Target virtual memory space.
  * @param vaddr Target virtual address.
- * @param paddr Target page frame.
+ * @param frame Target page frame.
  * @param size Size of virtual address range.
  * @param w Write permission.
  * @param x Execute permission.

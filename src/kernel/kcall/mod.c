@@ -92,9 +92,24 @@ int do_kcall(word_t arg0, word_t arg1, word_t arg2, word_t arg3, word_t arg4,
         case NR_fralloc:
             ret = kcall_fralloc();
             break;
-
         case NR_frfree:
             ret = kcall_frfree((frame_t)arg0);
+            break;
+        case NR_vmcreate:
+            ret = kcall_vmcreate();
+            break;
+        case NR_vmremove:
+            ret = kcall_vmremove((vmem_t)arg0);
+            break;
+        case NR_vmmap:
+            ret = kcall_vmmap((vmem_t)arg0, (vaddr_t)arg1, (frame_t)arg2);
+            break;
+        case NR_vmunmap:
+            ret = kcall_vmunmap((vmem_t)arg0, (vaddr_t)arg1);
+            break;
+        case NR_vmctrl:
+            ret = kcall_vmctrl(
+                (vmem_t)arg0, (unsigned)arg1, (unsigned)arg2, (unsigned)arg3);
             break;
         default:
             // Copy kernel call parameters.

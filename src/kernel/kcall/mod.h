@@ -112,7 +112,62 @@ extern frame_t kcall_fralloc(void);
  * @returns Upon successful completion, zero is returned. Upon
  * failure, a negative error code is returned instead.
  */
-int kcall_frfree(frame_t frame);
+extern int kcall_frfree(frame_t frame);
+
+/**
+ * @brief Creates a virtual memory space.
+ *
+ * @return Upon successful completion, a handle to the newly created virtual
+ * memory space is returned. Upon failure, @p VMEM_NULL is returned instead.
+ */
+extern vmem_t kcall_vmcreate(void);
+
+/**
+ * @brief Removes a virtual memory space.
+ *
+ * @param vmem Handle to the target virtual memory space.
+ *
+ * @return Upon successful completion, zero is returned. Upon failure, a
+ * negative number is returned instead.
+ */
+extern int kcall_vmremove(vmem_t vmem);
+
+/**
+ * @brief Maps a page frame at a virtual address.
+ *
+ * @param vmem Handle to the target virtual memory space.
+ * @param vaddr Handle to the virtual address.
+ * @param frame Target page frame
+ *
+ * @return Upon successful completion, zero is returned. Upon failure, a
+ * negative number is returned instead.
+ */
+extern int kcall_vmmap(vmem_t vmem, vaddr_t vaddr, frame_t frame);
+
+/**
+ * @brief Unmaps a page frame from a virtual address.
+ *
+ * @param vmem Handle to the target virtual memory space.
+ * @param vaddr Handle to the target virtual address.
+ *
+ * @return Upon successful completion, a handle to the unmapped page frame is
+ * returned. Upon failure, @p FRAME_NULL is returned instead.
+ */
+extern frame_t kcall_vmunmap(vmem_t vmem, vaddr_t vaddr);
+
+/**
+ * @brief Manipulates various parameters from a virtual memory space.
+ *
+ * @param vmem Handle to the target virtual memory space.
+ * @param request Request.
+ * @param arg0 First argument.
+ * @param arg1 Second argument.
+ *
+ * @return Upon successful completion, zero is returned. Upon failure, a
+ * negative number is returned instead.
+ */
+extern int kcall_vmctrl(vmem_t vmem, unsigned request, unsigned arg0,
+                        unsigned arg1);
 
 /*============================================================================*/
 
