@@ -12,6 +12,7 @@
 
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/mm.h>
+#include <stdnoreturn.h>
 
 /*============================================================================*
  * Constants                                                                  *
@@ -57,7 +58,7 @@ struct thread {
      * @name Memory Information
      */
     /**@{*/
-    struct vmem *vmem;
+    vmem_t vmem;
     /**@}*/
 
     /**
@@ -121,7 +122,7 @@ extern noreturn void thread_exit(void);
  *
  * @param root_vmem Root virtual memory space.
  */
-extern void thread_init(const struct vmem *root_vmem);
+extern void thread_init(vmem_t root_vmem);
 
 /**
  * @brief Atomically puts the calling thread to sleep.

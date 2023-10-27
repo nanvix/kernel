@@ -73,7 +73,7 @@ static inline int mm_check_area(vaddr_t vaddr, uint64_t size, int area)
  *
  * @returns The root virtual memory space.
  */
-extern const struct vmem *mm_init(void);
+extern vmem_t mm_init(void);
 
 /*============================================================================*/
 

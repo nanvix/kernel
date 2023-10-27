@@ -13,13 +13,25 @@
 #include <nanvix/kernel/hal.h>
 
 /*============================================================================*
- * Opaque Structures                                                          *
+ * Constants                                                                  *
  *============================================================================*/
 
 /**
- * @brief Virtual Memory Space
+ * @brief Null virtual memory space.
+ *
+ * @note This is set so as it falls beyond the valid range of indexes in the
+ * table of virtual memory spaces.
  */
-struct vmem;
+#define VMEM_NULL ((vmem_t)-1)
+
+/*============================================================================*
+ * Type Definitions                                                           *
+ *============================================================================*/
+
+/**
+ * @brief Virtual memory space handle.
+ */
+typedef int vmem_t;
 
 /*============================================================================*
  * Functions                                                                  *
@@ -30,17 +42,15 @@ struct vmem;
  *
  * @deprecated
  */
-extern const struct pde *vmem_pgdir_get(const struct vmem *vmem);
+extern const struct pde *vmem_pgdir_get(vmem_t vmem);
 
 /**
  * @brief Creates a virtual memory space.
  *
- * @param src_vmem Source virtual memory space.
- *
  * @returns Upon successful completion, a pointer to the newly allocated virtual
  * memory space is returned. On failure, a null pointer is returned instead.
  */
-extern struct vmem *vmem_create(const struct vmem *src_vmem);
+extern vmem_t vmem_create(void);
 
 /**
  * @brief Destroys a virtual memory space.
@@ -50,7 +60,20 @@ extern struct vmem *vmem_create(const struct vmem *src_vmem);
  * @returns Upon successful completion, zero is returned. Upon failure, a
  * negative number is returned instead.
  */
-extern int vmem_destroy(struct vmem *vmem);
+extern int vmem_destroy(vmem_t vmem);
+
+/**
+ * @brief Changes access permissions of a user page.
+ *
+ * @param vmem  Target virtual memory space.
+ * @param vaddr Target virtual address.
+ * @param w     Write permission?
+ * @param x     Execute permission?
+ *
+ * @returns Upon successful completion, zero is returned. Upon failure, a
+ * negative error code is returned instead.
+ */
+extern int vmem_ctrl(vmem_t vmem, vaddr_t vaddr, bool w, bool x);
 
 /**
  * @brief Attaches a virtual address range to a virtual memory space.
@@ -62,14 +85,14 @@ extern int vmem_destroy(struct vmem *vmem);
  * @return Upon successful completion, zero is returned. Upon failure, a
  * negative number is returned instead.
  */
-extern int vmem_attach(struct vmem *vmem, vaddr_t addr, size_t size);
+extern int vmem_attach(vmem_t vmem, vaddr_t addr, size_t size);
 
 /**
  * @brief Maps a virtual address range into a virtual memory space.
  *
  * @param vmem Target virtual memory space.
  * @param vaddr Target virtual address.
- * @param paddr Target physical address.
+ * @param frame Target page frame.
  * @param size Size of virtual address range.
  * @param w Write permission.
  * @param x Execute permission.
@@ -77,8 +100,19 @@ extern int vmem_attach(struct vmem *vmem, vaddr_t addr, size_t size);
  * @returns Upon successful completion, zero is returned. Upon failure, a
  * negative number is returned instead.
  */
-extern int vmem_map(struct vmem *vmem, vaddr_t vaddr, paddr_t paddr,
-                    size_t size, bool w, bool x);
+extern int vmem_map(vmem_t vmem, vaddr_t vaddr, frame_t frame, size_t size,
+                    bool w, bool x);
+
+/**
+ * @brief Maps a virtual address range into a virtual memory space.
+ *
+ * @param vmem Target virtual memory space.
+ * @param vaddr Target virtual address.
+ *
+ * @returns Upon successful completion, a handle to the unmapped page frame is
+ * returned. Upon failure, @p FRAME_NULL is returned instead.
+ */
+extern frame_t vmem_unmap(vmem_t vmem, vaddr_t vaddr);
 
 /**
  * @brief Prints a virtual memory space.
@@ -88,7 +122,7 @@ extern int vmem_map(struct vmem *vmem, vaddr_t vaddr, paddr_t paddr,
  * @returns Upon successful completion, zero is returned. Upon failure, a
  * negative number is returned instead.
  */
-extern int vmem_print(const struct vmem *vmem);
+extern int vmem_print(vmem_t vmem);
 
 /**
  * @brief Initializes the virtual memory manager.
@@ -98,7 +132,7 @@ extern int vmem_print(const struct vmem *vmem);
  * @returns A pointer to the root virtual memory space is returned. If this
  * function does not succeed, the kernel panics.
  */
-extern const struct vmem *vmem_init(const struct pde *root_pgdir);
+extern vmem_t vmem_init(const struct pde *root_pgdir);
 
 /*============================================================================*/
 

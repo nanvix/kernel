@@ -14,6 +14,20 @@
 #define NR_SYSCALLS NR_last_kcall
 
 /**
+ * @brief Requests for vmctrl()
+ */
+/**@{*/
+#define VMEM_CHMOD 0 /** Change permissions. */
+/**@}*/
+
+/**
+ * @brief Access permissions on a virtual memory space.
+ */
+#define VMEM_READ (1 << 0)  /** Read permission.    */
+#define VMEM_WRITE (1 << 1) /** Write permission.   */
+#define VMEM_EXEC (1 << 2)  /** Execute permission. */
+
+/**
  * @name System Call Numbers
  */
 /**@{*/
@@ -27,7 +41,12 @@
 #define NR_write 7       /** kernel_write()            */
 #define NR_fralloc 8     /** kernel_fralloc()          */
 #define NR_frfree 9      /** kernel_frfree()           */
-#define NR_last_kcall 10 /** NR_SYSCALLS definer       */
+#define NR_vmcreate 10   /** kernel_vmcreate()         */
+#define NR_vmremove 11   /** kernel_vmremove()         */
+#define NR_vmmap 12      /** kernel_vmmap()            */
+#define NR_vmunmap 13    /** kernel_vmunmap()          */
+#define NR_vmctrl 14     /** kernel_vmctrl()           */
+#define NR_last_kcall 15 /** NR_SYSCALLS definer       */
 #define NR__exit         /** kernel_exit()             */
 #define NR_thread_get_id /** kernel_thread_get_id()    */
 #define NR_thread_create /** kernel_thread_create()    */

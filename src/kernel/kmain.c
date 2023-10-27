@@ -118,7 +118,7 @@ noreturn void kmain(struct kargs *args)
     }
 
     hal_init();
-    const struct vmem *root_vmem = mm_init();
+    vmem_t root_vmem = mm_init();
     pm_init(root_vmem);
 
     test_frame();

@@ -131,8 +131,8 @@ tid_t thread_create(void *(*start)(void *), void *arg)
     }
 
     // Create a virtual memory space.
-    struct vmem *vmem = vmem_create(kernel->vmem);
-    if (vmem == NULL) {
+    vmem_t vmem = vmem_create();
+    if (vmem == VMEM_NULL) {
         goto error0;
     }
 
@@ -232,7 +232,7 @@ void thread_wakeup(struct thread *t)
 /**
  * @details Initializes the thread system.
  */
-void thread_init(const struct vmem *root_vmem)
+void thread_init(vmem_t root_vmem)
 {
     kprintf("[kernel][pm] initializing thread system...");
 
@@ -245,7 +245,7 @@ void thread_init(const struct vmem *root_vmem)
     }
 
     // Initialize.
-    kernel->vmem = (struct vmem *)root_vmem;
+    kernel->vmem = (vmem_t)root_vmem;
     kernel->state = THREAD_RUNNING;
 
     running = &threads[0];
