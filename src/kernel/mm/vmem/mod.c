@@ -254,6 +254,18 @@ int vmem_map(vmem_t vmem, vaddr_t vaddr, frame_t frame, size_t size, bool w,
     return (upage_map(vmem_table[vmem].pgdir, vaddr, frame, w, x));
 }
 
+/**
+ * @details Unmaps a page frame from a virtual address.
+ */
+frame_t vmem_unmap(vmem_t vmem, vaddr_t vaddr)
+{
+    // Check for valid virtual memory space.
+    if (!vmem_is_valid(vmem)) {
+        kprintf(MODULE_NAME " ERROR: invalid virtual memory space");
+        return (-1);
+    }
+
+    return (upage_unmap(vmem_table[vmem].pgdir, vaddr));
 }
 
 /**

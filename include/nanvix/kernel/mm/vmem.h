@@ -104,6 +104,17 @@ extern int vmem_map(vmem_t vmem, vaddr_t vaddr, frame_t frame, size_t size,
                     bool w, bool x);
 
 /**
+ * @brief Maps a virtual address range into a virtual memory space.
+ *
+ * @param vmem Target virtual memory space.
+ * @param vaddr Target virtual address.
+ *
+ * @returns Upon successful completion, a handle to the unmapped page frame is
+ * returned. Upon failure, @p FRAME_NULL is returned instead.
+ */
+extern frame_t vmem_unmap(vmem_t vmem, vaddr_t vaddr);
+
+/**
  * @brief Prints a virtual memory space.
  *
  * @param vmem Target virtual memory space.
