@@ -12,6 +12,7 @@
 
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/mm.h>
+#include <stdnoreturn.h>
 
 /*============================================================================*
  * Constants                                                                  *
