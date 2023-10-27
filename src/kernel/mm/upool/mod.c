@@ -238,18 +238,24 @@ int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame, bool w, bool x)
     struct pte *pgtab; /* Working page table.             */
 
     /* Invalid page directory. */
-    if (pgdir == NULL)
+    if (pgdir == NULL) {
+        kprintf(MODULE_NAME " ERROR: invalid page directory");
         return (-1);
+    }
 
     /* TODO: check for bad page directory. */
 
     /* Bad virtual address. */
-    if (!mm_is_uaddr(vaddr))
+    if (!mm_is_uaddr(vaddr)) {
+        kprintf(MODULE_NAME " ERROR: bad virtual address");
         return (-1);
+    }
 
     /* Misaligned target address. */
-    if (vaddr & (~PAGE_MASK))
+    if (vaddr & (~PAGE_MASK)) {
+        kprintf(MODULE_NAME " ERROR: misaligned virtual address");
         return (-1);
+    }
 
     /* TODO: check for bad page frame. */
 
@@ -397,8 +403,10 @@ int upage_alloc(struct pde *pgdir, vaddr_t vaddr, bool w, bool x)
     int err;       /* Error code. */
     frame_t frame; /* Page frame. */
 
-    if (pgdir == NULL)
+    if (pgdir == NULL) {
+        kprintf(MODULE_NAME " ERROR: invalid page directory");
         return (-1);
+    }
 
     /*
      * upage_map() checks the
@@ -406,8 +414,9 @@ int upage_alloc(struct pde *pgdir, vaddr_t vaddr, bool w, bool x)
      */
 
     /* Allocate user frame. */
-    if ((frame = frame_alloc_any()) == FRAME_NULL)
+    if ((frame = frame_alloc_any()) == FRAME_NULL) {
         return (-1);
+    }
 
     /* Map user page. */
     if ((err = upage_map(pgdir, vaddr, frame, w, x)) < 0) {
