@@ -63,6 +63,19 @@ extern vmem_t vmem_create(void);
 extern int vmem_destroy(vmem_t vmem);
 
 /**
+ * @brief Changes access permissions of a user page.
+ *
+ * @param vmem  Target virtual memory space.
+ * @param vaddr Target virtual address.
+ * @param w     Write permission?
+ * @param x     Execute permission?
+ *
+ * @returns Upon successful completion, zero is returned. Upon failure, a
+ * negative error code is returned instead.
+ */
+extern int vmem_ctrl(vmem_t vmem, vaddr_t vaddr, bool w, bool x);
+
+/**
  * @brief Attaches a virtual address range to a virtual memory space.
  *
  * @param vmem Target virtual memory space.
