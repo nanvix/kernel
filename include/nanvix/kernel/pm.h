@@ -24,6 +24,6 @@
  *
  * @param root_vmem Root virtual memory space.
  */
-extern void pm_init(const struct vmem *root_vmem);
+extern void pm_init(vmem_t root_vmem);
 
 #endif /* NANVIX_KERNEL_PM_H_ */
