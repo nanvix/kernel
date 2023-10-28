@@ -55,7 +55,7 @@ static struct vmem vmem_table[VMEM_MAX];
  */
 static bool vmem_is_valid(vmem_t vmem)
 {
-    return ((vmem < VMEM_MAX) && (vmem_table[vmem].used));
+    return ((vmem >= 0) && (vmem < VMEM_MAX) && (vmem_table[vmem].used));
 }
 
 /**
