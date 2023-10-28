@@ -182,6 +182,12 @@ int vmem_destroy(vmem_t vmem)
         return (-1);
     }
 
+    // Check for root virtual memory space.
+    if (vmem == vmem_get_root()) {
+        kprintf(MODULE_NAME " ERROR: cannot destroy root virtual memory space");
+        return (-1);
+    }
+
     // Check if the target virtual memory is busy.
     for (unsigned i = pde_idx_get(USER_BASE_VIRT);
          i < pde_idx_get(USER_END_VIRT);
