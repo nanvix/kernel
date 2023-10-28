@@ -16,3 +16,6 @@ pub const PAGE_SIZE: u32 = 4096;
 
 /// Null page frame.
 pub const NULL_FRAME: u32 = u32::MAX;
+
+/// Null virtual memory space.
+pub const NULL_VMEM: i32 = i32::MIN;
