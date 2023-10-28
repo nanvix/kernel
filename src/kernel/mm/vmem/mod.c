@@ -31,7 +31,8 @@
  * @details Virtual memory space.
  */
 struct vmem {
-    struct pde *pgdir; /** Underlying page directory*/
+    bool used;         /** Used?                     */
+    struct pde *pgdir; /** Underlying page directory */
 };
 
 /*============================================================================*
@@ -54,7 +55,7 @@ static struct vmem vmem_table[VMEM_MAX];
  */
 static bool vmem_is_valid(vmem_t vmem)
 {
-    return (vmem < VMEM_MAX);
+    return ((vmem < VMEM_MAX) && (vmem_table[vmem].used));
 }
 
 /**
@@ -68,8 +69,9 @@ static vmem_t vmem_alloc(void)
     // Traverse all entries in the table of virtual memory spaces.
     for (int i = 0; i < VMEM_MAX; i++) {
         // Check if entry is free.
-        if (vmem_table[i].pgdir == NULL) {
-            // It is, thus return it.
+        if (!vmem_table[i].used) {
+            // It is, thus allocate and return it.
+            vmem_table[i].used = true;
             return (i);
         }
     }
@@ -95,14 +97,8 @@ static int vmem_free(vmem_t vmem)
         return (-1);
     }
 
-    // Check if the target virtual memory is busy.
-    if (vmem_table[vmem].pgdir != NULL) {
-        kprintf(MODULE_NAME " ERROR: virtual memory space is busy");
-        return (-1);
-    }
-
     // Release the target virtual memory space.
-    vmem_table[vmem].pgdir = NULL;
+    vmem_table[vmem].used = false;
 
     return (0);
 }
@@ -178,6 +174,8 @@ error0:
  */
 int vmem_destroy(vmem_t vmem)
 {
+    int ret = 0;
+
     // Check for valid virtual memory space.
     if (!vmem_is_valid(vmem)) {
         kprintf(MODULE_NAME " ERROR: invalid virtual memory space");
@@ -185,18 +183,25 @@ int vmem_destroy(vmem_t vmem)
     }
 
     // Check if the target virtual memory is busy.
-    if (vmem_table[vmem].pgdir == NULL) {
-        kprintf(MODULE_NAME " ERROR: virtual memory space is busy");
-        return (-1);
+    for (unsigned i = pde_idx_get(USER_BASE_VIRT);
+         i < pde_idx_get(USER_END_VIRT);
+         i++) {
+        if (pde_is_present(&vmem_table[vmem].pgdir[i])) {
+            kprintf(MODULE_NAME " ERROR: virtual memory space is busy");
+            return (-1);
+        }
     }
-
-    // Release the target virtual memory space.
-    vmem_free(vmem);
 
     // Release the page directory.
     kpage_put(vmem_table[vmem].pgdir);
+    vmem_table[vmem].pgdir = NULL;
 
-    return (0);
+    // Release the target virtual memory space.
+    if ((ret = vmem_free(vmem)) != 0) {
+        return (ret);
+    }
+
+    return (ret);
 }
 
 /**
@@ -306,9 +311,11 @@ vmem_t vmem_init(const struct pde *root_pgdir)
     kprintf(MODULE_NAME "initializing the virtual memory manager...");
 
     for (int i = 1; i < VMEM_MAX; i++) {
+        vmem_table[i].used = false;
         vmem_table[i].pgdir = NULL;
     }
 
+    vmem_table[0].used = true;
     vmem_table[0].pgdir = (struct pde *)root_pgdir;
 
     kprintf(MODULE_NAME "%d virtual memory spaces available", VMEM_MAX - 1);
