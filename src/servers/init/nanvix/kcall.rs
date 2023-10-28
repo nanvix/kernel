@@ -24,6 +24,10 @@ enum KcallNumbers {
     Write = 7,
     FrameAlloc = 8,
     FrameFree = 9,
+    VmemCreate = 10,
+    VmemRemove = 11,
+    VmemMap = 12,
+    VmemUnmap = 13,
 }
 
 //==============================================================================
@@ -314,4 +318,83 @@ pub fn fralloc() -> u32 {
 ///
 pub fn frfree(frame: u32) -> u32 {
     unsafe { kcall1(KcallNumbers::FrameFree as u32, frame) }
+}
+
+pub type VirtualMemory = i32;
+pub type VirtualAddress = u32;
+pub type FrameNumber = u32;
+
+///
+/// **Description**
+///
+/// Creates a virtual memory space.
+///
+/// **Return**
+///
+/// On successful completion, the number of the created virtual memory
+/// space is returned. On error, `VMEM_NULL` is returned instead.
+///
+pub fn vmcreate() -> VirtualMemory {
+    unsafe { kcall0(KcallNumbers::VmemCreate as u32) as VirtualMemory }
+}
+
+///
+/// **Description**
+///
+/// Removes a virtual memory space.
+///
+/// **Parameters**
+///
+/// - `vmem` - Number of the target virtual memory space.
+///
+/// **Return**
+///
+/// On successful completion, zero is returned. On error, a negative
+/// error code is returned instead.
+///
+pub fn vmremove(vmem: VirtualMemory) -> u32 {
+    unsafe { kcall1(KcallNumbers::VmemRemove as u32, vmem as u32) }
+}
+
+///
+/// **Description**
+///
+/// Maps a page frame into a virtual memory space.
+///
+/// **Parameters**
+///
+/// - `vmem` - Number of the target virtual memory space.
+/// - `vaddr` - Target virtual address.
+/// - `frame` - Number of the target page frame.
+///
+/// **Return**
+///
+/// On successful completion, zero is returned. On error, a negative
+/// error code is returned instead.
+///
+pub fn vmmap(
+    vmem: VirtualMemory,
+    vaddr: VirtualAddress,
+    frame: FrameNumber,
+) -> u32 {
+    unsafe { kcall3(KcallNumbers::VmemMap as u32, vmem as u32, vaddr, frame) }
+}
+
+///
+/// **Description**
+///
+/// Unmaps a page frame from a virtual memory space.
+///
+/// **Parameters**
+///
+/// - `vmem` - Number of the target virtual memory space.
+/// - `vaddr` - Target virtual address.
+///
+/// **Return**
+///
+/// On successful completion, zero is returned. On error, a negative
+/// error code is returned instead.
+///
+pub fn vmunmap(vmem: VirtualMemory, vaddr: VirtualAddress) -> u32 {
+    unsafe { kcall2(KcallNumbers::VmemUnmap as u32, vmem as u32, vaddr) }
 }
