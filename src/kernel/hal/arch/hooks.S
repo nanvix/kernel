@@ -139,7 +139,12 @@ _do_excp:
  * _do_kcall()                                                                *
  *----------------------------------------------------------------------------*/
 
-/* Kernel call hook. */
+/*
+ * Kernel call hook.
+ *
+ * NOTE: This was registered as an interrupt gate in the IDT, thus we do not
+ * clear/set the IF flag here, because that is taken care by the hardware.
+ */
 _do_kcall:
 
     /* Push kernel call parameters. */
@@ -150,12 +155,8 @@ _do_kcall:
     pushl %ecx
     pushl %ebx
 
-    cli
-
     /* Handle kernel call. */
     call do_kcall
-
-    sti
 
     /* Wipe out kernel call parameters. */
     addl $6*WORD_SIZE, %esp
