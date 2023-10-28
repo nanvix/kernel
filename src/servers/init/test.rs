@@ -10,7 +10,11 @@
 use crate::{
     nanvix::{
         self,
-        kcall,
+        kcall::{
+            self,
+            VirtualMemory,
+        },
+        USER_BASE_ADDRESS,
     },
     test,
 };
@@ -152,6 +156,93 @@ fn double_free_frame() -> bool {
     true
 }
 
+/// Attempts to create and release a virtual memory space.
+fn create_remove_vmem() -> bool {
+    // Attempt to create a virtual memory space.
+    let vmem: VirtualMemory = kcall::vmcreate();
+
+    // Check if we failed to create a virtual memory space.
+    if vmem == nanvix::NULL_VMEM {
+        log!("failed to create a virtual memory space");
+        return false;
+    }
+
+    // Attempt to remove the virtual memory space.
+    let result: u32 = kcall::vmremove(vmem);
+
+    // Check if we failed to remove the virtual memory space.
+    if result != 0 {
+        log!("failed to remove a valid virtual memory space");
+        return false;
+    }
+
+    true
+}
+
+/// Attempts to remove the null virtual memory space.
+fn remove_null_vmem() -> bool {
+    // Attempt to remove the null virtual memory space.
+    let result: u32 = kcall::vmremove(nanvix::NULL_VMEM);
+
+    // Check if we succeeded to remove the null virtual memory space.
+    if result == 0 {
+        log!("succeded to remove null virtual memory space");
+        return false;
+    }
+
+    true
+}
+
+/// Attempts to map and unmap a page frame to a virtual memory space.
+fn map_unmap_vmem() -> bool {
+    // Attempt to create a virtual memory space.
+    let vmem: VirtualMemory = kcall::vmcreate();
+
+    // Check if we failed to create a virtual memory space.
+    if vmem == nanvix::NULL_VMEM {
+        log!("failed to create a virtual memory space");
+        return false;
+    }
+
+    // Attempt to allocate a page frame.
+    let frame: u32 = kcall::fralloc();
+
+    // Check if we failed to allocate a page frame.
+    if frame == nanvix::NULL_FRAME {
+        log!("failed to allocate a page frame");
+        return false;
+    }
+
+    // Attempt to map the page frame to the virtual memory space.
+    let result: u32 = kcall::vmmap(vmem, USER_BASE_ADDRESS, frame);
+
+    // Check if we failed to map the page frame to the virtual memory space.
+    if result != 0 {
+        log!("failed to map a page frame to a virtual memory space");
+        return false;
+    }
+
+    // Attempt to unmap the page frame from the virtual memory space.
+    let result: u32 = kcall::vmunmap(vmem, USER_BASE_ADDRESS);
+
+    // Check if we failed to unmap the page frame from the virtual memory space.
+    if result != frame {
+        log!("failed to unmap a page frame from a virtual memory space");
+        return false;
+    }
+
+    // Attempt to remove the virtual memory space.
+    let result: u32 = kcall::vmremove(vmem);
+
+    // Check if we failed to remove the virtual memory space.
+    if result != 0 {
+        log!("failed to remove a valid virtual memory space");
+        return false;
+    }
+
+    true
+}
+
 //==============================================================================
 // Public Standalone Functions
 //==============================================================================
@@ -171,4 +262,7 @@ pub fn test_kernel_calls() {
     test!(free_null_frame());
     test!(free_invalid_frame());
     test!(double_free_frame());
+    test!(create_remove_vmem());
+    test!(remove_null_vmem());
+    test!(map_unmap_vmem());
 }
