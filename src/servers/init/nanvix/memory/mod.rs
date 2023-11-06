@@ -3,34 +3,20 @@
  * Licensed under the MIT License.
  */
 
-#![no_std]
-#![feature(panic_info_message)]
-
 //==============================================================================
 // Modules
 //==============================================================================
 
-#[macro_use]
-mod macros;
-
-mod logging;
-mod nanvix;
-mod test;
-mod unwind;
+mod constants;
+mod kcall;
+mod types;
 
 //==============================================================================
-// Imports
+// Exports
 //==============================================================================
 
-use nanvix::power;
-
-//==============================================================================
-// Standalone Functions
-//==============================================================================
-
-#[no_mangle]
-pub fn main() {
-    test::test_kernel_calls();
-
-    power::shutdown();
-}
+pub use self::{
+    constants::*,
+    kcall::*,
+    types::*,
+};

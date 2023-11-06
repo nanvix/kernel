@@ -3,34 +3,28 @@
  * Licensed under the MIT License.
  */
 
-#![no_std]
-#![feature(panic_info_message)]
-
-//==============================================================================
-// Modules
-//==============================================================================
-
-#[macro_use]
-mod macros;
-
-mod logging;
-mod nanvix;
-mod test;
-mod unwind;
-
 //==============================================================================
 // Imports
 //==============================================================================
 
-use nanvix::power;
+use nanvix::{
+    kcall,
+    kcall::KcallNumbers,
+};
 
 //==============================================================================
-// Standalone Functions
+// Public Standalone Functions
 //==============================================================================
 
-#[no_mangle]
-pub fn main() {
-    test::test_kernel_calls();
-
-    power::shutdown();
+///
+/// **Description**
+///
+/// Shutdowns the system.
+///
+pub fn shutdown() -> ! {
+    unsafe {
+        kcall::kcall0(KcallNumbers::Shutdown as u32);
+    }
+    // Never gets here.
+    loop {}
 }

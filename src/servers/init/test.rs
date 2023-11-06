@@ -7,19 +7,16 @@
 // Imports
 //==============================================================================
 
-use crate::{
-    nanvix::{
+use crate::nanvix::{
+    kcall,
+    memory::{
         self,
-        kcall,
-        AccessMode,
-        FrameNumber,
         PageInfo,
         VirtualAddress,
         VirtualMemory,
         VmCtrlRequest,
-        USER_BASE_ADDRESS,
     },
-    test,
+    security::AccessMode,
 };
 
 ///
@@ -71,22 +68,22 @@ fn issue_void4_kcall() -> bool {
 /// Attempts to allocate and release page frame.
 fn alloc_free_frame() -> bool {
     // Attempt to allocate a page frame.
-    let frame: u32 = kcall::fralloc();
+    let frame: u32 = memory::fralloc();
 
     // Check if we failed to allocate a page frame.
-    if frame == nanvix::NULL_FRAME {
+    if frame == memory::NULL_FRAME {
         log!("failed to allocate a page frame");
         return false;
     }
 
     // Check if the page frame lies on a valid range.
-    if (frame * nanvix::PAGE_SIZE) < nanvix::USER_BASE_ADDRESS {
+    if (frame * memory::PAGE_SIZE) < memory::USER_BASE_ADDRESS {
         log!("succeded to allocate an invalid page frame");
         return false;
     }
 
     // Attempt to release the page frame.
-    let result: u32 = kcall::frfree(frame);
+    let result: u32 = memory::frfree(frame);
 
     // Check if we failed to release the page frame.
     if result != 0 {
@@ -100,7 +97,7 @@ fn alloc_free_frame() -> bool {
 /// Attempts release the null page frame.
 fn free_null_frame() -> bool {
     // Attempt to release the null page frame.
-    let result: u32 = kcall::frfree(nanvix::NULL_FRAME);
+    let result: u32 = memory::frfree(memory::NULL_FRAME);
 
     // Check if we succeeded to release the null page frame.
     if result == 0 {
@@ -114,8 +111,8 @@ fn free_null_frame() -> bool {
 /// Attempts release an invalid page frame.
 fn free_invalid_frame() -> bool {
     // Attempt to release an invalid page frame.
-    for frame_addr in nanvix::KERNEL_BASE_ADDRESS..nanvix::USER_BASE_ADDRESS {
-        let result: u32 = kcall::frfree(frame_addr / nanvix::PAGE_SIZE);
+    for frame_addr in memory::KERNEL_BASE_ADDRESS..memory::USER_BASE_ADDRESS {
+        let result: u32 = memory::frfree(frame_addr / memory::PAGE_SIZE);
 
         // Check if we succeeded to release an invalid page frame.
         if result == 0 {
@@ -130,16 +127,16 @@ fn free_invalid_frame() -> bool {
 /// Attempts to release a page frame twice.
 fn double_free_frame() -> bool {
     // Attempt to allocate a page frame.
-    let frame: u32 = kcall::fralloc();
+    let frame: u32 = memory::fralloc();
 
     // Check if we failed to allocate a page frame.
-    if frame == nanvix::NULL_FRAME {
+    if frame == memory::NULL_FRAME {
         log!("failed to allocate a page frame");
         return false;
     }
 
     // Attempt to release the page frame.
-    let result: u32 = kcall::frfree(frame);
+    let result: u32 = memory::frfree(frame);
 
     // Check if we failed to release the page frame.
     if result != 0 {
@@ -148,7 +145,7 @@ fn double_free_frame() -> bool {
     }
 
     // Attempt to release the page frame again.
-    let result: u32 = kcall::frfree(frame);
+    let result: u32 = memory::frfree(frame);
 
     // Check if we succeeded to release the page frame again.
     if result == 0 {
@@ -162,16 +159,16 @@ fn double_free_frame() -> bool {
 /// Attempts to create and release a virtual memory space.
 fn create_remove_vmem() -> bool {
     // Attempt to create a virtual memory space.
-    let vmem: VirtualMemory = kcall::vmcreate();
+    let vmem: VirtualMemory = memory::vmcreate();
 
     // Check if we failed to create a virtual memory space.
-    if vmem == nanvix::NULL_VMEM {
+    if vmem == memory::NULL_VMEM {
         log!("failed to create a virtual memory space");
         return false;
     }
 
     // Attempt to remove the virtual memory space.
-    let result: u32 = kcall::vmremove(vmem);
+    let result: u32 = memory::vmremove(vmem);
 
     // Check if we failed to remove the virtual memory space.
     if result != 0 {
@@ -185,7 +182,7 @@ fn create_remove_vmem() -> bool {
 /// Attempts to remove the null virtual memory space.
 fn remove_null_vmem() -> bool {
     // Attempt to remove the null virtual memory space.
-    let result: u32 = kcall::vmremove(nanvix::NULL_VMEM);
+    let result: u32 = memory::vmremove(memory::NULL_VMEM);
 
     // Check if we succeeded to remove the null virtual memory space.
     if result == 0 {
@@ -199,25 +196,25 @@ fn remove_null_vmem() -> bool {
 /// Attempts to map and unmap a page frame to a virtual memory space.
 fn map_unmap_vmem() -> bool {
     // Attempt to create a virtual memory space.
-    let vmem: VirtualMemory = kcall::vmcreate();
+    let vmem: VirtualMemory = memory::vmcreate();
 
     // Check if we failed to create a virtual memory space.
-    if vmem == nanvix::NULL_VMEM {
+    if vmem == memory::NULL_VMEM {
         log!("failed to create a virtual memory space");
         return false;
     }
 
     // Attempt to allocate a page frame.
-    let frame: u32 = kcall::fralloc();
+    let frame: u32 = memory::fralloc();
 
     // Check if we failed to allocate a page frame.
-    if frame == nanvix::NULL_FRAME {
+    if frame == memory::NULL_FRAME {
         log!("failed to allocate a page frame");
         return false;
     }
 
     // Attempt to map the page frame to the virtual memory space.
-    let result: u32 = kcall::vmmap(vmem, USER_BASE_ADDRESS, frame);
+    let result: u32 = memory::vmmap(vmem, memory::USER_BASE_ADDRESS, frame);
 
     // Check if we failed to map the page frame to the virtual memory space.
     if result != 0 {
@@ -226,7 +223,7 @@ fn map_unmap_vmem() -> bool {
     }
 
     // Attempt to unmap the page frame from the virtual memory space.
-    let result: u32 = kcall::vmunmap(vmem, USER_BASE_ADDRESS);
+    let result: u32 = memory::vmunmap(vmem, memory::USER_BASE_ADDRESS);
 
     // Check if we failed to unmap the page frame from the virtual memory space.
     if result != frame {
@@ -235,7 +232,7 @@ fn map_unmap_vmem() -> bool {
     }
 
     // Attempt to remove the virtual memory space.
-    let result: u32 = kcall::vmremove(vmem);
+    let result: u32 = memory::vmremove(vmem);
 
     // Check if we failed to remove the virtual memory space.
     if result != 0 {
@@ -260,7 +257,7 @@ fn check_sizes() -> bool {
         log!("unexpected size for VirtualAddress");
         return false;
     }
-    if core::mem::size_of::<FrameNumber>() != 4 {
+    if core::mem::size_of::<memory::FrameNumber>() != 4 {
         log!("unexpected size for FrameNumber");
         return false;
     }
@@ -275,25 +272,25 @@ fn check_sizes() -> bool {
 /// Attempts to change access permissions on page.
 fn change_page_permissions() -> bool {
     // Attempt to create a virtual memory space.
-    let vmem: VirtualMemory = kcall::vmcreate();
+    let vmem: VirtualMemory = memory::vmcreate();
 
     // Check if we failed to create a virtual memory space.
-    if vmem == nanvix::NULL_VMEM {
+    if vmem == memory::NULL_VMEM {
         log!("failed to create a virtual memory space");
         return false;
     }
 
     // Attempt to allocate a page frame.
-    let frame: u32 = kcall::fralloc();
+    let frame: u32 = memory::fralloc();
 
     // Check if we failed to allocate a page frame.
-    if frame == nanvix::NULL_FRAME {
+    if frame == memory::NULL_FRAME {
         log!("failed to allocate a page frame");
         return false;
     }
 
     // Attempt to map the page frame to the virtual memory space.
-    let result: u32 = kcall::vmmap(vmem, USER_BASE_ADDRESS, frame);
+    let result: u32 = memory::vmmap(vmem, memory::USER_BASE_ADDRESS, frame);
 
     // Check if we failed to map the page frame to the virtual memory space.
     if result != 0 {
@@ -304,7 +301,8 @@ fn change_page_permissions() -> bool {
     // Get information on page.
     let mut pageinfo: PageInfo = PageInfo::default();
 
-    let result: u32 = kcall::vminfo(vmem, USER_BASE_ADDRESS, &mut pageinfo);
+    let result: u32 =
+        memory::vminfo(vmem, memory::USER_BASE_ADDRESS, &mut pageinfo);
 
     // Check if we failed to get information on page.
     if result != 0 {
@@ -315,8 +313,8 @@ fn change_page_permissions() -> bool {
     // Attempt to change access permissions on page.
     let mode: AccessMode = AccessMode::new(false, true, false);
     let request: VmCtrlRequest =
-        VmCtrlRequest::ChangePermissions(USER_BASE_ADDRESS, mode);
-    let result: u32 = kcall::vmctrl(vmem, request);
+        VmCtrlRequest::ChangePermissions(memory::USER_BASE_ADDRESS, mode);
+    let result: u32 = memory::vmctrl(vmem, request);
 
     // Check if we failed to change access permissions on page.
     if result != 0 {
@@ -327,7 +325,8 @@ fn change_page_permissions() -> bool {
     // Get information on page.
     let mut pageinfo: PageInfo = PageInfo::default();
 
-    let result: u32 = kcall::vminfo(vmem, USER_BASE_ADDRESS, &mut pageinfo);
+    let result: u32 =
+        memory::vminfo(vmem, memory::USER_BASE_ADDRESS, &mut pageinfo);
 
     // Check if we failed to get information on page.
     if result != 0 {
@@ -354,7 +353,7 @@ fn change_page_permissions() -> bool {
     }
 
     // Attempt to unmap the page frame from the virtual memory space.
-    let result: u32 = kcall::vmunmap(vmem, USER_BASE_ADDRESS);
+    let result: u32 = memory::vmunmap(vmem, memory::USER_BASE_ADDRESS);
 
     // Check if we failed to unmap the page frame from the virtual memory space.
     if result != frame {
@@ -363,7 +362,7 @@ fn change_page_permissions() -> bool {
     }
 
     // Attempt to remove the virtual memory space.
-    let result: u32 = kcall::vmremove(vmem);
+    let result: u32 = memory::vmremove(vmem);
 
     // Check if we failed to remove the virtual memory space.
     if result != 0 {

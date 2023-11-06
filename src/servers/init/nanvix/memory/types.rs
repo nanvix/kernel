@@ -4,11 +4,14 @@
  */
 
 //==============================================================================
-// Modules
+// Types
 //==============================================================================
 
-pub mod devices;
-pub mod kcall;
-pub mod memory;
-pub mod power;
-pub mod security;
+/// Virtual Memory
+pub type VirtualMemory = i32;
+
+/// Virtual address.
+pub type VirtualAddress = u32;
+
+/// Frame number.
+pub type FrameNumber = u32;
