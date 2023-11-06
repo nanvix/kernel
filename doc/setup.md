@@ -19,8 +19,8 @@ cd microkernel                                       # Switch to source tree.
 ## 2. Install Dependencies
 
 ```bash
-cat scripts/setup/dependencies.sh    # Inspect what is going to be installed.
-sudo -E ./scripts/setup/qemu.sh x86  # Install dependencies.
+cat scripts/setup/ubuntu.sh            # Inspect what is going to be installed.
+sudo -E ./scripts/setup/ubuntu.sh x86  # Install dependencies.
 ```
 
 ## 3. Build Toolchain
