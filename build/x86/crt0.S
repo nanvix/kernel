@@ -16,6 +16,7 @@
 .globl _do_start
 .globl memset
 .globl memcpy
+.globl memcmp
 
 /*============================================================================*
  * Text Section                                                               *
@@ -64,6 +65,27 @@ memcpy:
 	mov 16(%ebp), %ecx
 
 	rep movsb
+
+	pop %edi
+	pop %esi
+	pop %ebp
+	ret
+.section .text.memcmp
+memcmp:
+    push %ebp
+    mov %esp, %ebp
+	push %esi
+	push %edi
+
+    mov 8(%ebp), %esi
+    mov 12(%ebp), %edi
+    mov 16(%ebp), %ecx
+
+    repe cmpsb
+
+    seta %al
+    setb %ah
+    sub %ah, %al
 
 	pop %edi
 	pop %esi
