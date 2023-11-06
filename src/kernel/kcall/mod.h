@@ -158,16 +158,16 @@ extern frame_t kcall_vmunmap(vmem_t vmem, vaddr_t vaddr);
 /**
  * @brief Manipulates various parameters from a virtual memory space.
  *
- * @param vmem Handle to the target virtual memory space.
+ * @param vmem    Handle to the target virtual memory space.
  * @param request Request.
- * @param arg0 First argument.
- * @param arg1 Second argument.
+ * @param vaddr   Target virtual address.
+ * @param mode    Access permissions mode.
  *
  * @return Upon successful completion, zero is returned. Upon failure, a
  * negative number is returned instead.
  */
-extern int kcall_vmctrl(vmem_t vmem, unsigned request, unsigned arg0,
-                        unsigned arg1);
+extern int kcall_vmctrl(vmem_t vmem, unsigned request, vaddr_t vaddr,
+                        mode_t mode);
 
 /*============================================================================*/
 

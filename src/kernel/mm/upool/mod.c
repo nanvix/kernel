@@ -218,7 +218,7 @@ int upage_inval(vaddr_t vaddr)
 /**
  * @details Changes access permissions of a user page.
  */
-int upage_ctrl(struct pde *pgdir, vaddr_t vaddr, bool w, bool x)
+int upage_ctrl(struct pde *pgdir, vaddr_t vaddr, mode_t mode)
 {
     /* Invalid page directory. */
     if (pgdir == NULL) {
@@ -253,8 +253,22 @@ int upage_ctrl(struct pde *pgdir, vaddr_t vaddr, bool w, bool x)
         return (-1);
     }
 
-    pte_write_set(pte, w);
-    pte_exec_set(pte, x);
+    // Set access mode.
+    if (mode & S_IRUSR) {
+        pte_read_set(pte, 1);
+    } else {
+        pte_read_set(pte, 0);
+    }
+    if (mode & S_IWUSR) {
+        pte_write_set(pte, 1);
+    } else {
+        pte_write_set(pte, 0);
+    }
+    if (mode & S_IXUSR) {
+        pte_exec_set(pte, 1);
+    } else {
+        pte_exec_set(pte, 0);
+    }
 
     tlb_flush();
 

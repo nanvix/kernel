@@ -19,6 +19,7 @@
  *============================================================================*/
 
 #include <nanvix/kernel/hal.h>
+#include <nanvix/types.h>
 #include <stdbool.h>
 
 /*============================================================================*
@@ -46,13 +47,12 @@ extern int upage_inval(vaddr_t vaddr);
  *
  * @param pgdir Target page directory.
  * @param vaddr Target virtual address.
- * @param w     Write permission?
- * @param x     Execute permission?
+ * @param mode  Access mode permissions.
  *
  * @returns Upon successful completion, zero is returned. Upon failure, a
  * negative error code is returned instead.
  */
-extern int upage_ctrl(struct pde *pgdir, vaddr_t vaddr, bool w, bool x);
+extern int upage_ctrl(struct pde *pgdir, vaddr_t vaddr, mode_t mode);
 
 /**
  * @brief Maps a page frame into a page.

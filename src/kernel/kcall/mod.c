@@ -109,7 +109,7 @@ int do_kcall(word_t arg0, word_t arg1, word_t arg2, word_t arg3, word_t arg4,
             break;
         case NR_vmctrl:
             ret = kcall_vmctrl(
-                (vmem_t)arg0, (unsigned)arg1, (unsigned)arg2, (unsigned)arg3);
+                (vmem_t)arg0, (unsigned)arg1, (vaddr_t)arg2, (mode_t)arg3);
             break;
         default:
             // Copy kernel call parameters.

@@ -81,25 +81,23 @@ frame_t kcall_vmunmap(vmem_t vmem, vaddr_t vaddr)
 /**
  * @details Manipulates various parameters from a virtual memory space.
  */
-int kcall_vmctrl(vmem_t vmem, unsigned request, unsigned arg0, unsigned arg1)
+int kcall_vmctrl(vmem_t vmem, unsigned request, vaddr_t vaddr, mode_t mode)
 {
-    // Check for invalid virtual memory space.
-    if (vmem == VMEM_NULL) {
-        return (-1);
-    }
+    int ret = -1;
 
     // TODO: Check for permissions.
 
     // Parse request.
     switch (request) {
         case VMEM_CHMOD:
-            vmem_ctrl(vmem, arg0, arg1 & VMEM_WRITE, arg1 & VMEM_EXEC);
+            ret = vmem_ctrl(vmem, vaddr, mode);
             break;
 
         default:
+            kprintf("ERROR: invalid request (request=%x)", request);
             break;
     }
 
     // TODO: implement.
-    return (-1);
+    return (ret);
 }
