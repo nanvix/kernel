@@ -21,6 +21,9 @@ cd microkernel                                       # Switch to source tree.
 ```bash
 cat scripts/setup/ubuntu.sh            # Inspect what is going to be installed.
 sudo -E ./scripts/setup/ubuntu.sh x86  # Install dependencies.
+
+# Install Rust toolchain.
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
 ## 3. Build Toolchain
