@@ -19,8 +19,11 @@ cd microkernel                                       # Switch to source tree.
 ## 2. Install Dependencies
 
 ```bash
-cat scripts/setup/dependencies.sh    # Inspect what is going to be installed.
-sudo -E ./scripts/setup/qemu.sh x86  # Install dependencies.
+cat scripts/setup/ubuntu.sh            # Inspect what is going to be installed.
+sudo -E ./scripts/setup/ubuntu.sh x86  # Install dependencies.
+
+# Install Rust toolchain.
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
 ## 3. Build Toolchain
