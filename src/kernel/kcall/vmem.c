@@ -101,3 +101,21 @@ int kcall_vmctrl(vmem_t vmem, unsigned request, vaddr_t vaddr, mode_t mode)
     // TODO: implement.
     return (ret);
 }
+
+/**
+ * @details Gets information on a page.
+ */
+int kcall_vminfo(vmem_t vmem, vaddr_t vaddr, struct pageinfo *buf)
+{
+    // Check for invalid virtual address.
+    if ((vaddr < USER_BASE_VIRT) || (vaddr >= USER_END_VIRT)) {
+        return (-1);
+    }
+
+    // TODO: check if storage location is valid.
+
+    // Issue underlying operation.
+    int ret = vmem_info(vmem, vaddr, buf);
+
+    return (ret);
+}

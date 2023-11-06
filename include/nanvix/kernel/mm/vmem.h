@@ -76,6 +76,18 @@ extern int vmem_destroy(vmem_t vmem);
 extern int vmem_ctrl(vmem_t vmem, vaddr_t vaddr, mode_t mode);
 
 /**
+ * @brief Gets information on a user page.
+ *
+ * @param vmem  Target virtual memory space.
+ * @param vaddr Target virtual address.
+ * @param buf   Storage location for page information.
+ *
+ * @returns Upon successful completion, zero is returned. Upon failure, a
+ * negative error code is returned instead.
+ */
+extern int vmem_info(vmem_t vmem, vaddr_t vaddr, struct pageinfo *buf);
+
+/**
  * @brief Attaches a virtual address range to a virtual memory space.
  *
  * @param vmem Target virtual memory space.

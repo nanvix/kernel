@@ -226,6 +226,20 @@ int vmem_ctrl(vmem_t vmem, vaddr_t vaddr, mode_t mode)
 }
 
 /**
+ * @brief Gets information on a user page.
+ */
+int vmem_info(vmem_t vmem, vaddr_t vaddr, struct pageinfo *buf)
+{
+    // Check for valid virtual memory space.
+    if (!vmem_is_valid(vmem)) {
+        kprintf(MODULE_NAME " ERROR: invalid virtual memory space");
+        return (-1);
+    }
+
+    return (upage_info(vmem_table[vmem].pgdir, vaddr, buf));
+}
+
+/**
  * @details Attaches a virtual address range to a virtual memory space.
  */
 int vmem_attach(vmem_t vmem, vaddr_t addr, size_t size)

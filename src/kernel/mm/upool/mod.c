@@ -276,6 +276,56 @@ int upage_ctrl(struct pde *pgdir, vaddr_t vaddr, mode_t mode)
 }
 
 /*============================================================================*
+ * upage_info()                                                               *
+ *============================================================================*/
+
+/**
+ * @details Gets information on a user page.
+ */
+int upage_info(struct pde *pgdir, vaddr_t vaddr, struct pageinfo *buf)
+{
+    /* Invalid page directory. */
+    if (pgdir == NULL) {
+        kprintf(MODULE_NAME " ERROR: invalid page directory");
+        return (-1);
+    }
+
+    /* Bad virtual address. */
+    if (!mm_is_uaddr(vaddr)) {
+        kprintf(MODULE_NAME " ERROR: bad virtual address");
+        return (-1);
+    }
+
+    /* Misaligned target address. */
+    if (vaddr & (~PAGE_MASK)) {
+        kprintf(MODULE_NAME " ERROR: misaligned virtual address");
+        return (-1);
+    }
+
+    // Retrieve page directory entry of target page.
+    struct pde *pde = pde_get(pgdir, vaddr);
+    if (!pde_is_present(pde)) {
+        kprintf(MODULE_NAME " ERROR: page directory not present");
+        return (-1);
+    }
+
+    // Retrieve the page table entry of the target page.
+    struct pte *pgtab = (struct pte *)(kpool_frame_to_addr(pde_frame_get(pde)));
+    struct pte *pte = pte_get(pgtab, vaddr);
+    if (!pte_is_present(pte)) {
+        kprintf(MODULE_NAME " ERROR: page table not present");
+        return (-1);
+    }
+
+    buf->frame = pte_frame_get(pte);
+    buf->mode = pte_is_read(pte) ? S_IRUSR : 0;
+    buf->mode |= pte_is_write(pte) ? S_IWUSR : 0;
+    buf->mode |= pte_is_exec(pte) ? S_IXUSR : 0;
+
+    return (0);
+}
+
+/*============================================================================*
  * upage_map()                                                                *
  *============================================================================*/
 
@@ -601,5 +651,8 @@ int upage_link(struct pde *pgdir, vaddr_t vaddr1, vaddr_t vaddr2)
  */
 void upool_init(void)
 {
+    // Sanity check sizes.
+    KASSERT_SIZE(sizeof(struct pageinfo), __SIZEOF_PAGEINFO);
+
     kprintf("[kernel][mm] initializing the user page allocator");
 }
