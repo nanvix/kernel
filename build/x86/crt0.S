@@ -30,9 +30,9 @@ _do_start:
 1:  jmp 1b
 
 /*
- + 8 = Destination
- +12 = Value
- +16 = Count
+ *  +8 = Destination
+ * +12 = Value
+ * +16 = Count
 */
 .section .text.memset
 memset:
@@ -49,9 +49,9 @@ memset:
 	pop %ebp
 	ret
 /*
- + 8 = Destination
- +12 = Source
- +16 = Count
+ *  +8 = Destination
+ * +12 = Source
+ * +16 = Count
 */
 .section .text.memcpy
 memcpy:
@@ -70,6 +70,13 @@ memcpy:
 	pop %esi
 	pop %ebp
 	ret
+
+
+/*
+ *  +8 = Destination
+ * +12 = Source
+ * +16 = Count
+*/
 .section .text.memcmp
 memcmp:
     push %ebp
