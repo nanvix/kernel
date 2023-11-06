@@ -9,6 +9,14 @@
 
 use core::arch;
 
+use super::{
+    FrameNumber,
+    PageInfo,
+    VirtualAddress,
+    VirtualMemory,
+    VmCtrlRequest,
+};
+
 //==============================================================================
 // Enumerations
 //==============================================================================
@@ -28,6 +36,8 @@ enum KcallNumbers {
     VmemRemove = 11,
     VmemMap = 12,
     VmemUnmap = 13,
+    VmemControl = 14,
+    VmemInfo = 15,
 }
 
 //==============================================================================
@@ -320,10 +330,6 @@ pub fn frfree(frame: u32) -> u32 {
     unsafe { kcall1(KcallNumbers::FrameFree as u32, frame) }
 }
 
-pub type VirtualMemory = i32;
-pub type VirtualAddress = u32;
-pub type FrameNumber = u32;
-
 ///
 /// **Description**
 ///
@@ -397,4 +403,66 @@ pub fn vmmap(
 ///
 pub fn vmunmap(vmem: VirtualMemory, vaddr: VirtualAddress) -> u32 {
     unsafe { kcall2(KcallNumbers::VmemUnmap as u32, vmem as u32, vaddr) }
+}
+
+///
+/// **Description**
+///
+/// Manipulates various parameters from a virtual memory space.
+///
+/// **Parameters**
+///
+/// - `vmem` - Number of the target virtual memory space.
+/// - `request` - Request code.
+/// - `arg0` - First argument for the request.
+/// - `arg1` - Second argument for the request.
+///
+/// **Return**
+///
+/// On successful completion, zero is returned. On error, a negative
+/// error code is returned instead.
+///
+pub fn vmctrl(vmem: VirtualMemory, request: VmCtrlRequest) -> u32 {
+    unsafe {
+        match request {
+            VmCtrlRequest::ChangePermissions(address, mode) => kcall4(
+                KcallNumbers::VmemControl as u32,
+                vmem as u32,
+                request.into(),
+                address,
+                mode.into(),
+            ),
+        }
+    }
+}
+
+///
+/// **Description**
+///
+/// Gets information about a page frame.
+///
+/// **Parameters**
+///
+/// - `vmem` - Number of the target virtual memory space.
+/// - `vaddr` - Target virtual address.
+/// - `buf` - Buffer to store information about the page frame.
+///
+/// **Return**
+///
+/// On successful completion, zero is returned. On error, a negative
+/// error code is returned instead.
+///
+pub fn vminfo(
+    vmem: VirtualMemory,
+    vaddr: VirtualAddress,
+    buf: *mut PageInfo,
+) -> u32 {
+    unsafe {
+        kcall3(
+            KcallNumbers::VmemInfo as u32,
+            vmem as u32,
+            vaddr,
+            buf as u32,
+        )
+    }
 }

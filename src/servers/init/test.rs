@@ -10,10 +10,13 @@
 use crate::{
     nanvix::{
         self,
-        kcall::{
-            self,
-            VirtualMemory,
-        },
+        kcall,
+        AccessMode,
+        FrameNumber,
+        PageInfo,
+        VirtualAddress,
+        VirtualMemory,
+        VmCtrlRequest,
         USER_BASE_ADDRESS,
     },
     test,
@@ -243,6 +246,134 @@ fn map_unmap_vmem() -> bool {
     true
 }
 
+/// Checks if sizes are conformant.
+fn check_sizes() -> bool {
+    if core::mem::size_of::<AccessMode>() != 4 {
+        log!("unexpected size for AccessMode");
+        return false;
+    }
+    if core::mem::size_of::<VirtualMemory>() != 4 {
+        log!("unexpected size for VirtualMemory");
+        return false;
+    }
+    if core::mem::size_of::<VirtualAddress>() != 4 {
+        log!("unexpected size for VirtualAddress");
+        return false;
+    }
+    if core::mem::size_of::<FrameNumber>() != 4 {
+        log!("unexpected size for FrameNumber");
+        return false;
+    }
+    if core::mem::size_of::<PageInfo>() != 8 {
+        log!("unexpected size for PageInfo");
+        return false;
+    }
+
+    true
+}
+
+/// Attempts to change access permissions on page.
+fn change_page_permissions() -> bool {
+    // Attempt to create a virtual memory space.
+    let vmem: VirtualMemory = kcall::vmcreate();
+
+    // Check if we failed to create a virtual memory space.
+    if vmem == nanvix::NULL_VMEM {
+        log!("failed to create a virtual memory space");
+        return false;
+    }
+
+    // Attempt to allocate a page frame.
+    let frame: u32 = kcall::fralloc();
+
+    // Check if we failed to allocate a page frame.
+    if frame == nanvix::NULL_FRAME {
+        log!("failed to allocate a page frame");
+        return false;
+    }
+
+    // Attempt to map the page frame to the virtual memory space.
+    let result: u32 = kcall::vmmap(vmem, USER_BASE_ADDRESS, frame);
+
+    // Check if we failed to map the page frame to the virtual memory space.
+    if result != 0 {
+        log!("failed to map a page frame to a virtual memory space");
+        return false;
+    }
+
+    // Get information on page.
+    let mut pageinfo: PageInfo = PageInfo::default();
+
+    let result: u32 = kcall::vminfo(vmem, USER_BASE_ADDRESS, &mut pageinfo);
+
+    // Check if we failed to get information on page.
+    if result != 0 {
+        log!("failed to get information on page");
+        return false;
+    }
+
+    // Attempt to change access permissions on page.
+    let mode: AccessMode = AccessMode::new(false, true, false);
+    let request: VmCtrlRequest =
+        VmCtrlRequest::ChangePermissions(USER_BASE_ADDRESS, mode);
+    let result: u32 = kcall::vmctrl(vmem, request);
+
+    // Check if we failed to change access permissions on page.
+    if result != 0 {
+        log!("failed to change access permissions on page");
+        return false;
+    }
+
+    // Get information on page.
+    let mut pageinfo: PageInfo = PageInfo::default();
+
+    let result: u32 = kcall::vminfo(vmem, USER_BASE_ADDRESS, &mut pageinfo);
+
+    // Check if we failed to get information on page.
+    if result != 0 {
+        log!("failed to get information on page");
+        return false;
+    }
+
+    // Check if page has expected information.
+    if pageinfo.frame != frame {
+        log!("page has unexpected frame number");
+        return false;
+    }
+    if !pageinfo.mode.read() {
+        log!("page has unexpected read permission");
+        return false;
+    }
+    if !pageinfo.mode.write() {
+        log!("page has unexpected write permission");
+        return false;
+    }
+    if !pageinfo.mode.exec() {
+        log!("page has unexpected exec permission");
+        return false;
+    }
+
+    // Attempt to unmap the page frame from the virtual memory space.
+    let result: u32 = kcall::vmunmap(vmem, USER_BASE_ADDRESS);
+
+    // Check if we failed to unmap the page frame from the virtual memory space.
+    if result != frame {
+        log!("failed to unmap a page frame from a virtual memory space");
+        return false;
+    }
+
+    // Attempt to remove the virtual memory space.
+    let result: u32 = kcall::vmremove(vmem);
+
+    // Check if we failed to remove the virtual memory space.
+    if result != 0 {
+        log!("failed to remove a valid virtual memory space");
+        return false;
+    }
+
+    true
+}
+
 //==============================================================================
 // Public Standalone Functions
 //==============================================================================
@@ -265,4 +396,6 @@ pub fn test_kernel_calls() {
     test!(create_remove_vmem());
     test!(remove_null_vmem());
     test!(map_unmap_vmem());
+    test!(check_sizes());
+    test!(change_page_permissions());
 }
