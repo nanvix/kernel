@@ -16,6 +16,7 @@
 .globl _do_start
 .globl memset
 .globl memcpy
+.globl memcmp
 
 /*============================================================================*
  * Text Section                                                               *
@@ -29,9 +30,9 @@ _do_start:
 1:  jmp 1b
 
 /*
- + 8 = Destination
- +12 = Value
- +16 = Count
+ *  +8 = Destination
+ * +12 = Value
+ * +16 = Count
 */
 .section .text.memset
 memset:
@@ -48,9 +49,9 @@ memset:
 	pop %ebp
 	ret
 /*
- + 8 = Destination
- +12 = Source
- +16 = Count
+ *  +8 = Destination
+ * +12 = Source
+ * +16 = Count
 */
 .section .text.memcpy
 memcpy:
@@ -64,6 +65,34 @@ memcpy:
 	mov 16(%ebp), %ecx
 
 	rep movsb
+
+	pop %edi
+	pop %esi
+	pop %ebp
+	ret
+
+
+/*
+ *  +8 = Destination
+ * +12 = Source
+ * +16 = Count
+*/
+.section .text.memcmp
+memcmp:
+    push %ebp
+    mov %esp, %ebp
+	push %esi
+	push %edi
+
+    mov 8(%ebp), %esi
+    mov 12(%ebp), %edi
+    mov 16(%ebp), %ecx
+
+    repe cmpsb
+
+    seta %al
+    setb %ah
+    sub %ah, %al
 
 	pop %edi
 	pop %esi

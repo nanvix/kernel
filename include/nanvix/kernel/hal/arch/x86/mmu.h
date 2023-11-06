@@ -13,6 +13,9 @@
 #include <arch/x86.h>
 #include <nanvix/cc.h>
 #include <nanvix/libcore.h>
+#ifndef _ASM_FILE_
+#include <nanvix/kernel/lib.h>
+#endif /* !_ASM_FILE_ */
 
 /*============================================================================*
  * Functions                                                                  *
@@ -353,7 +356,11 @@ static inline int pte_read_set(struct pte *pte, int set)
         return (-1);
     }
 
-    UNUSED(set);
+    // Check if we are attempting to clear the read bit.
+    // This is not supported in x86.
+    if (!set) {
+        kprintf("WARN: cannot clear read bit of a page");
+    }
 
     return (0);
 }
@@ -425,7 +432,11 @@ static inline int pte_exec_set(struct pte *pte, int set)
         return (-1);
     }
 
-    UNUSED(set);
+    // Check if we are attempting to clear the exec bit.
+    // This is not supported in x86.
+    if (!set) {
+        kprintf("WARN: cannot clear exec bit of a page");
+    }
 
     return (0);
 }

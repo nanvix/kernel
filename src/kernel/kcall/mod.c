@@ -63,6 +63,8 @@ int do_kcall(word_t arg0, word_t arg1, word_t arg2, word_t arg3, word_t arg4,
 {
     int ret = -1;
 
+    KASSERT_SIZE_LE(sizeof(unsigned), sizeof(void *));
+
     switch (kcall_nr) {
         case NR_void0:
             ret = kcall_void0();
@@ -109,7 +111,11 @@ int do_kcall(word_t arg0, word_t arg1, word_t arg2, word_t arg3, word_t arg4,
             break;
         case NR_vmctrl:
             ret = kcall_vmctrl(
-                (vmem_t)arg0, (unsigned)arg1, (unsigned)arg2, (unsigned)arg3);
+                (vmem_t)arg0, (unsigned)arg1, (vaddr_t)arg2, (mode_t)arg3);
+            break;
+        case NR_vminfo:
+            ret = kcall_vminfo(
+                (vmem_t)arg0, (vaddr_t)arg1, (struct pageinfo *)arg2);
             break;
         default:
             // Copy kernel call parameters.

@@ -46,7 +46,8 @@
 #define NR_vmmap 12      /** kernel_vmmap()            */
 #define NR_vmunmap 13    /** kernel_vmunmap()          */
 #define NR_vmctrl 14     /** kernel_vmctrl()           */
-#define NR_last_kcall 15 /** NR_SYSCALLS definer       */
+#define NR_vminfo 15     /** kernel_vminfo()           */
+#define NR_last_kcall 16 /** NR_SYSCALLS definer       */
 #define NR__exit         /** kernel_exit()             */
 #define NR_thread_get_id /** kernel_thread_get_id()    */
 #define NR_thread_create /** kernel_thread_create()    */

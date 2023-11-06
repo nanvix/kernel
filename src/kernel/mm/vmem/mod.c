@@ -10,6 +10,7 @@
 #include "mod.h"
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/mm.h>
+#include <nanvix/types.h>
 #include <stdbool.h>
 
 /*============================================================================*
@@ -213,7 +214,7 @@ int vmem_destroy(vmem_t vmem)
 /**
  * @details Changes access permissions of a user page.
  */
-int vmem_ctrl(vmem_t vmem, vaddr_t vaddr, bool w, bool x)
+int vmem_ctrl(vmem_t vmem, vaddr_t vaddr, mode_t mode)
 {
     // Check for valid virtual memory space.
     if (!vmem_is_valid(vmem)) {
@@ -221,7 +222,21 @@ int vmem_ctrl(vmem_t vmem, vaddr_t vaddr, bool w, bool x)
         return (-1);
     }
 
-    return (upage_ctrl(vmem_table[vmem].pgdir, vaddr, w, x));
+    return (upage_ctrl(vmem_table[vmem].pgdir, vaddr, mode));
+}
+
+/**
+ * @brief Gets information on a user page.
+ */
+int vmem_info(vmem_t vmem, vaddr_t vaddr, struct pageinfo *buf)
+{
+    // Check for valid virtual memory space.
+    if (!vmem_is_valid(vmem)) {
+        kprintf(MODULE_NAME " ERROR: invalid virtual memory space");
+        return (-1);
+    }
+
+    return (upage_info(vmem_table[vmem].pgdir, vaddr, buf));
 }
 
 /**
