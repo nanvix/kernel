@@ -7,7 +7,7 @@
 // Imports
 //==============================================================================
 
-use crate::nanvix::{
+use nanvix::{
     kcall,
     memory::{
         self,
@@ -29,9 +29,9 @@ macro_rules! test {
     ($fn_name:ident($($arg:expr),*)) => {{
         match $fn_name($($arg),*) {
             true =>
-                log!("{} {}", "passed", stringify!($fn_name)),
+                nanvix::log!("{} {}", "passed", stringify!($fn_name)),
             false =>
-                log!("{} {}", "FAILED", stringify!($fn_name)),
+                nanvix::log!("{} {}", "FAILED", stringify!($fn_name)),
         }
     }};
 }
@@ -72,13 +72,13 @@ fn alloc_free_frame() -> bool {
 
     // Check if we failed to allocate a page frame.
     if frame == memory::NULL_FRAME {
-        log!("failed to allocate a page frame");
+        nanvix::log!("failed to allocate a page frame");
         return false;
     }
 
     // Check if the page frame lies on a valid range.
     if (frame * memory::PAGE_SIZE) < memory::USER_BASE_ADDRESS {
-        log!("succeded to allocate an invalid page frame");
+        nanvix::log!("succeded to allocate an invalid page frame");
         return false;
     }
 
@@ -87,7 +87,7 @@ fn alloc_free_frame() -> bool {
 
     // Check if we failed to release the page frame.
     if result != 0 {
-        log!("failed to release a valid page frame");
+        nanvix::log!("failed to release a valid page frame");
         return false;
     }
 
@@ -101,7 +101,7 @@ fn free_null_frame() -> bool {
 
     // Check if we succeeded to release the null page frame.
     if result == 0 {
-        log!("succeded to release null page frame");
+        nanvix::log!("succeded to release null page frame");
         return false;
     }
 
@@ -116,7 +116,7 @@ fn free_invalid_frame() -> bool {
 
         // Check if we succeeded to release an invalid page frame.
         if result == 0 {
-            log!("succeded to release an invalid page frame");
+            nanvix::log!("succeded to release an invalid page frame");
             return false;
         }
     }
@@ -131,7 +131,7 @@ fn double_free_frame() -> bool {
 
     // Check if we failed to allocate a page frame.
     if frame == memory::NULL_FRAME {
-        log!("failed to allocate a page frame");
+        nanvix::log!("failed to allocate a page frame");
         return false;
     }
 
@@ -140,7 +140,7 @@ fn double_free_frame() -> bool {
 
     // Check if we failed to release the page frame.
     if result != 0 {
-        log!("failed to release a valid page frame");
+        nanvix::log!("failed to release a valid page frame");
         return false;
     }
 
@@ -149,7 +149,7 @@ fn double_free_frame() -> bool {
 
     // Check if we succeeded to release the page frame again.
     if result == 0 {
-        log!("succeded to release a page frame twice");
+        nanvix::log!("succeded to release a page frame twice");
         return false;
     }
 
@@ -163,7 +163,7 @@ fn create_remove_vmem() -> bool {
 
     // Check if we failed to create a virtual memory space.
     if vmem == memory::NULL_VMEM {
-        log!("failed to create a virtual memory space");
+        nanvix::log!("failed to create a virtual memory space");
         return false;
     }
 
@@ -172,7 +172,7 @@ fn create_remove_vmem() -> bool {
 
     // Check if we failed to remove the virtual memory space.
     if result != 0 {
-        log!("failed to remove a valid virtual memory space");
+        nanvix::log!("failed to remove a valid virtual memory space");
         return false;
     }
 
@@ -186,7 +186,7 @@ fn remove_null_vmem() -> bool {
 
     // Check if we succeeded to remove the null virtual memory space.
     if result == 0 {
-        log!("succeded to remove null virtual memory space");
+        nanvix::log!("succeded to remove null virtual memory space");
         return false;
     }
 
@@ -200,7 +200,7 @@ fn map_unmap_vmem() -> bool {
 
     // Check if we failed to create a virtual memory space.
     if vmem == memory::NULL_VMEM {
-        log!("failed to create a virtual memory space");
+        nanvix::log!("failed to create a virtual memory space");
         return false;
     }
 
@@ -209,7 +209,7 @@ fn map_unmap_vmem() -> bool {
 
     // Check if we failed to allocate a page frame.
     if frame == memory::NULL_FRAME {
-        log!("failed to allocate a page frame");
+        nanvix::log!("failed to allocate a page frame");
         return false;
     }
 
@@ -218,7 +218,7 @@ fn map_unmap_vmem() -> bool {
 
     // Check if we failed to map the page frame to the virtual memory space.
     if result != 0 {
-        log!("failed to map a page frame to a virtual memory space");
+        nanvix::log!("failed to map a page frame to a virtual memory space");
         return false;
     }
 
@@ -227,7 +227,9 @@ fn map_unmap_vmem() -> bool {
 
     // Check if we failed to unmap the page frame from the virtual memory space.
     if result != frame {
-        log!("failed to unmap a page frame from a virtual memory space");
+        nanvix::log!(
+            "failed to unmap a page frame from a virtual memory space"
+        );
         return false;
     }
 
@@ -236,7 +238,7 @@ fn map_unmap_vmem() -> bool {
 
     // Check if we failed to remove the virtual memory space.
     if result != 0 {
-        log!("failed to remove a valid virtual memory space");
+        nanvix::log!("failed to remove a valid virtual memory space");
         return false;
     }
 
@@ -246,23 +248,23 @@ fn map_unmap_vmem() -> bool {
 /// Checks if sizes are conformant.
 fn check_sizes() -> bool {
     if core::mem::size_of::<AccessMode>() != 4 {
-        log!("unexpected size for AccessMode");
+        nanvix::log!("unexpected size for AccessMode");
         return false;
     }
     if core::mem::size_of::<VirtualMemory>() != 4 {
-        log!("unexpected size for VirtualMemory");
+        nanvix::log!("unexpected size for VirtualMemory");
         return false;
     }
     if core::mem::size_of::<VirtualAddress>() != 4 {
-        log!("unexpected size for VirtualAddress");
+        nanvix::log!("unexpected size for VirtualAddress");
         return false;
     }
     if core::mem::size_of::<memory::FrameNumber>() != 4 {
-        log!("unexpected size for FrameNumber");
+        nanvix::log!("unexpected size for FrameNumber");
         return false;
     }
     if core::mem::size_of::<PageInfo>() != 8 {
-        log!("unexpected size for PageInfo");
+        nanvix::log!("unexpected size for PageInfo");
         return false;
     }
 
@@ -276,7 +278,7 @@ fn change_page_permissions() -> bool {
 
     // Check if we failed to create a virtual memory space.
     if vmem == memory::NULL_VMEM {
-        log!("failed to create a virtual memory space");
+        nanvix::log!("failed to create a virtual memory space");
         return false;
     }
 
@@ -285,7 +287,7 @@ fn change_page_permissions() -> bool {
 
     // Check if we failed to allocate a page frame.
     if frame == memory::NULL_FRAME {
-        log!("failed to allocate a page frame");
+        nanvix::log!("failed to allocate a page frame");
         return false;
     }
 
@@ -294,7 +296,7 @@ fn change_page_permissions() -> bool {
 
     // Check if we failed to map the page frame to the virtual memory space.
     if result != 0 {
-        log!("failed to map a page frame to a virtual memory space");
+        nanvix::log!("failed to map a page frame to a virtual memory space");
         return false;
     }
 
@@ -306,7 +308,7 @@ fn change_page_permissions() -> bool {
 
     // Check if we failed to get information on page.
     if result != 0 {
-        log!("failed to get information on page");
+        nanvix::log!("failed to get information on page");
         return false;
     }
 
@@ -318,7 +320,7 @@ fn change_page_permissions() -> bool {
 
     // Check if we failed to change access permissions on page.
     if result != 0 {
-        log!("failed to change access permissions on page");
+        nanvix::log!("failed to change access permissions on page");
         return false;
     }
 
@@ -330,25 +332,25 @@ fn change_page_permissions() -> bool {
 
     // Check if we failed to get information on page.
     if result != 0 {
-        log!("failed to get information on page");
+        nanvix::log!("failed to get information on page");
         return false;
     }
 
     // Check if page has expected information.
     if pageinfo.frame != frame {
-        log!("page has unexpected frame number");
+        nanvix::log!("page has unexpected frame number");
         return false;
     }
     if !pageinfo.mode.read() {
-        log!("page has unexpected read permission");
+        nanvix::log!("page has unexpected read permission");
         return false;
     }
     if !pageinfo.mode.write() {
-        log!("page has unexpected write permission");
+        nanvix::log!("page has unexpected write permission");
         return false;
     }
     if !pageinfo.mode.exec() {
-        log!("page has unexpected exec permission");
+        nanvix::log!("page has unexpected exec permission");
         return false;
     }
 
@@ -357,7 +359,9 @@ fn change_page_permissions() -> bool {
 
     // Check if we failed to unmap the page frame from the virtual memory space.
     if result != frame {
-        log!("failed to unmap a page frame from a virtual memory space");
+        nanvix::log!(
+            "failed to unmap a page frame from a virtual memory space"
+        );
         return false;
     }
 
@@ -366,7 +370,7 @@ fn change_page_permissions() -> bool {
 
     // Check if we failed to remove the virtual memory space.
     if result != 0 {
-        log!("failed to remove a valid virtual memory space");
+        nanvix::log!("failed to remove a valid virtual memory space");
         return false;
     }
 

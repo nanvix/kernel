@@ -47,6 +47,7 @@ export IMAGE := nanvix.iso
 # Libraries
 export LIBCORE := libcore.a
 export LIBDEV := libdev.a
+export LIBNANVIX := libnanvix.a
 
 #===============================================================================
 # Toolchain
@@ -95,6 +96,9 @@ export LDFLAGS += -z noexecstack
 # Builds everything.
 all: check-format make-dirs
 	@$(MAKE) -C $(SOURCES_DIR) all
+
+libnanvix: check-format make-dirs
+	@$(MAKE) -C $(SOURCES_DIR)/libnanvix all
 
 # Performs local initialization.
 init:
