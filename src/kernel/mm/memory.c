@@ -167,11 +167,6 @@ static void book_kpool_memory(
 
 /**
  * @brief Prints information about memory layout.
- *
- * The memory_info() prints information about the virtual
- * memory layout.
- *
- * @author Davidson Francis
  */
 static void memory_info(struct phys_memory_region mem_layout_[VMEM_REGION])
 {
@@ -189,9 +184,9 @@ static void memory_info(struct phys_memory_region mem_layout_[VMEM_REGION])
             USER_BASE_VIRT,
             USER_END_VIRT);
     kprintf(MODULE_NAME
-            " INFO: memsize=%d MB kmem=%d KB kpool=%d KB umem=%d KB",
+            " INFO: memsize=%d MB kmem=%d KB kpool=%d MB umem=%d MB",
             MEMORY_SIZE / MB,
-            KMEM_SIZE / MB,
+            KMEM_SIZE / KB,
             KPOOL_SIZE / MB,
             UMEM_SIZE / MB);
 }
