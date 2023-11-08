@@ -14,6 +14,7 @@ SRC_C = $(wildcard hal/arch/*.c)      \
 		$(wildcard hal/*.c)           \
 		$(wildcard kcall/*.c)         \
 		$(wildcard lib/*.c)           \
+		$(wildcard log/*.c)           \
 		$(wildcard pm/*.c)            \
 		$(wildcard mm/frame/*.c)      \
 		$(wildcard mm/kpool/*.c)      \
