@@ -11,7 +11,7 @@
  */
 /**@{*/
 #define MEMORY_BASE 0x00000000     /** DRAM Base */
-#define MEMORY_END_PHYS 0x04000000 /** DRAM End  */
+#define MEMORY_END_PHYS 0x08000000 /** DRAM End  */
 /**@}*/
 
 /**
