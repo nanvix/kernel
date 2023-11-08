@@ -18,6 +18,9 @@ export LDFLAGS += --gc-sections
 # Cargo Options
 export CARGO_FLAGS += --target=$(BUILD_DIR)/$(TARGET)/target.json
 
+# Libraries
+export LIBS += $(LIBRARIES_DIR)/$(LIBCORE)
+
 export NAME := init
 export LIB := lib$(NAME).a
 export BIN := $(NAME).$(EXEC_FORMAT)

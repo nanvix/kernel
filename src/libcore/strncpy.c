@@ -35,3 +35,11 @@ char *__strncpy(char *s1, const char *s2, size_t n)
 
     return (s1);
 }
+
+/**
+ * @details This function is an internal version for __strncpy().
+ */
+char *strncpy(char *s1, const char *s2, size_t n)
+{
+    return (__strncpy(s1, s2, n));
+}

@@ -20,3 +20,11 @@ void *__memset(void *s, int c, size_t n)
 
     return (s);
 }
+
+/**
+ * @details This is an internal function for the __memset() function.
+ */
+void *memset(void *s, int c, size_t n)
+{
+    return (__memset(s, c, n));
+}

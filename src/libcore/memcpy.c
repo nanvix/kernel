@@ -62,3 +62,11 @@ void *__memcpy(void *s1, const void *s2, size_t n)
 
     return s1;
 }
+
+/**
+ * @details This function is an internal version for __memcpy().
+ */
+void *memcpy(void *s1, const void *s2, size_t n)
+{
+    return __memcpy(s1, s2, n);
+}
