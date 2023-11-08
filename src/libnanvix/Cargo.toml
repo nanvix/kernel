@@ -2,12 +2,9 @@
 # Licensed under the MIT License.
 
 [package]
-name = "init"
+name = "nanvix"
 version = "0.1.0"
 
 [lib]
-path = "main.rs"
-crate-type = ["staticlib"]
-
-[dependencies]
-nanvix = { path = "../../libnanvix" }
+path = "src/lib.rs"
+crate-type = ["lib"]

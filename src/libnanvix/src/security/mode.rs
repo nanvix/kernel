@@ -3,28 +3,19 @@
  * Licensed under the MIT License.
  */
 
-pub mod kcall;
-
-/// Base address for kernel memory.
-pub const KERNEL_BASE_ADDRESS: u32 = 0x00000000;
-
-/// Base address for user memory.
-pub const USER_BASE_ADDRESS: u32 = 0x00800000;
-
-/// Page size (in bytes).
-pub const PAGE_SIZE: u32 = 4096;
-
-/// Null page frame.
-pub const NULL_FRAME: u32 = u32::MAX;
-
-/// Null virtual memory space.
-pub const NULL_VMEM: i32 = i32::MIN;
+//==============================================================================
+// Structures
+//==============================================================================
 
 #[derive(Clone, Copy, Default)]
 #[repr(C)]
 pub struct AccessMode {
     mode: u32,
 }
+
+//==============================================================================
+// Associated Functions
+//==============================================================================
 
 impl AccessMode {
     pub fn new(read: bool, write: bool, exec: bool) -> Self {
@@ -58,6 +49,10 @@ impl AccessMode {
     }
 }
 
+//==============================================================================
+// Trait Implementations
+//==============================================================================
+
 impl Into<u32> for AccessMode {
     fn into(self) -> u32 {
         self.mode
@@ -73,30 +68,5 @@ impl core::fmt::Debug for AccessMode {
             if self.write() { "w" } else { "-" },
             if self.exec() { "x" } else { "-" }
         )
-    }
-}
-
-pub type VirtualMemory = i32;
-pub type VirtualAddress = u32;
-pub type FrameNumber = u32;
-
-#[derive(Clone, Debug, Default)]
-#[repr(C)]
-pub struct PageInfo {
-    pub frame: FrameNumber,
-    pub mode: AccessMode,
-}
-
-/// Requests for `vmctrl`.
-pub enum VmCtrlRequest {
-    /// Creates a virtual memory space.
-    ChangePermissions(VirtualAddress, AccessMode),
-}
-
-impl Into<u32> for VmCtrlRequest {
-    fn into(self) -> u32 {
-        match self {
-            VmCtrlRequest::ChangePermissions(_, _) => 0,
-        }
     }
 }

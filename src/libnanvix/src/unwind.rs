@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+use crate::log;
+
 #[panic_handler]
 #[allow(unused_variables)]
 pub fn panic_implementation(info: &::core::panic::PanicInfo) -> ! {

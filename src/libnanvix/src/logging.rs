@@ -7,8 +7,8 @@
 // Imports
 //==============================================================================
 
+use crate::devices;
 use core::fmt;
-use nanvix::kcall;
 
 //==============================================================================
 // Structures
@@ -56,7 +56,7 @@ impl ::core::ops::Drop for Logger {
 
 impl fmt::Write for Logger {
     fn write_str(&mut self, s: &str) -> fmt::Result {
-        kcall::write(0, s.as_ptr(), s.len());
+        devices::write(0, s.as_ptr(), s.len());
         Ok(())
     }
 }

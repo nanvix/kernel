@@ -20,3 +20,11 @@ size_t __strlen(const char *str)
 
     return (p - str - 1);
 }
+
+/**
+ * @details This is an internal function for the __strlen() function.
+ */
+size_t strlen(const char *str)
+{
+    return (__strlen(str));
+}
