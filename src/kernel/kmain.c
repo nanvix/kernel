@@ -57,32 +57,36 @@ extern byte_t kstack[PAGE_SIZE];
  *============================================================================*/
 
 /**
- * @brief Spawns init server.
+ * @brief Spawns servers.
  */
-static void spawn_init(void)
+static void spawn_servers(void)
 {
-    // Check if init was loaded.
-    if (kmod_count() == 0) {
+    const unsigned mod_count = kmod_count();
+
+    // Check if at least init was loaded.
+    if (mod_count == 0) {
         // It was not, thus panic because the whole system depends on it.
         kpanic("ERROR: missing init server");
     }
 
-    struct kmod kmod = {0};
+    for (unsigned i = 0; i < mod_count; i++) {
+        struct kmod kmod = {0};
 
-    // Assert shouldn't fail because we request details of a valid module.
-    KASSERT(kmod_get(&kmod, 0) == 0);
+        // Assert shouldn't fail because we request details of a valid module.
+        KASSERT(kmod_get(&kmod, i) == 0);
 
-    kprintf("INFO: loading module %s", kmod.cmdline);
+        kprintf("INFO: loading module %s", kmod.cmdline);
 
-    const vaddr_t start = kmod.start;
+        const vaddr_t start = kmod.start;
 
-    // Check if the module was loaded successfully.
-    if (start == 0) {
-        kpanic("ERROR: failed to load module %s", kmod.cmdline);
+        // Check if the module was loaded successfully.
+        if (start == 0) {
+            kpanic("ERROR: failed to load module %s", kmod.cmdline);
+        }
+
+        // Spawn server.
+        thread_create((void *(*)(void *))start, NULL);
     }
-
-    // Spawn init server.
-    thread_create((void *(*)(void *))start, NULL);
 }
 
 /**
@@ -125,10 +129,10 @@ noreturn void kmain(struct kargs *args)
     test_kpool();
     test_upool((struct pde *)vmem_pgdir_get(root_vmem));
 
-    // Spawn the init server. Note that although we create a new thread, we will
-    // not switch to it, because interrupts are disabled. This will save us from
-    // a race condition in the system call dispatcher module.
-    spawn_init();
+    // Spawn servers. Note that although we do create new threads, we will not
+    // switch to any of them, because interrupts are disabled. This will save us
+    // from a race condition in the system call dispatcher module.
+    spawn_servers();
 
     // Start handling system calls. Interrupts will be enabled as soon as we
     // block waiting for a kernel call to be issued.
