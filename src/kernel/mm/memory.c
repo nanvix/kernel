@@ -106,6 +106,15 @@ static void book_kmods_memory(void)
         kprintf(MODULE_NAME " INFO: booking address range for module %s",
                 kmod.cmdline);
 
+        // Ensure that physical addresses are within the expected range.
+        if (kmod.start < KMODS_BASE_PHYS || kmod.end > KMODS_END_PHYS) {
+            kpanic("kernel module %s is outside of expected range "
+                   "(kmod.start=%x, kmod.end=%x)",
+                   kmod.cmdline,
+                   kmod.start,
+                   kmod.end);
+        }
+
         // Assert should not fail because no page frame has been allocated.
         KASSERT(frame_book_range(kmod.start, kmod.end) == 0);
     }
