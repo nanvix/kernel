@@ -14,7 +14,7 @@ PAGE_SIZE = 0x1000;
 /*
  * Base Address
  */
-BASE_ADDR = 0x00800000;
+BASE_ADDR = 0x04000000;
 
 SECTIONS
 {

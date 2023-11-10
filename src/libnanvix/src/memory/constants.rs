@@ -11,7 +11,7 @@
 pub const KERNEL_BASE_ADDRESS: u32 = 0x00000000;
 
 /// Base address for user memory.
-pub const USER_BASE_ADDRESS: u32 = 0x00800000;
+pub const USER_BASE_ADDRESS: u32 = 0x04000000;
 
 /// Page size (in bytes).
 pub const PAGE_SIZE: u32 = 4096;
