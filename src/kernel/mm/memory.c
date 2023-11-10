@@ -20,8 +20,9 @@
  * @name Memory Regions Constants
  */
 /**@{*/
-#define VMEM_REGION 5              /** Memory Regions number. */
-#define ROOT_PGTAB_NUM VMEM_REGION /** Root page table size.  */
+#define VMEM_REGION 5 /** Memory Regions number. */
+#define ROOT_PGTAB_NUM                                                         \
+    (USER_BASE_PHYS / PGTAB_SIZE) /** Root page table size.  */
 /**@}*/
 
 /*============================================================================*
