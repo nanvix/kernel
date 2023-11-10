@@ -26,7 +26,7 @@
 /**
  * @brief Thread quantum.
  */
-#define KTHREAD_QUANTUM 1
+#define KTHREAD_QUANTUM 100
 
 /*============================================================================*
  * Private Variables                                                          *
