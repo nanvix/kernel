@@ -11,6 +11,7 @@
  *============================================================================*/
 
 #include <nanvix/kernel/hal.h>
+#include <nanvix/kernel/lib.h>
 
 /*============================================================================*
  * Constants                                                                  *
@@ -23,16 +24,24 @@
 #define KMEM_AREA 0 /** Kernel memory area. */
 #define UMEM_AREA 1 /** User memory area.   */
 /**@}*/
+
+/**
+ * @brief Size of kernel page pool.
+ */
+#define KPOOL_SIZE PGTAB_SIZE
+
 /**
  * @name Physical Memory Layout
  */
 /**@{*/
-#define KERNEL_BASE_PHYS MEMORY_BASE                    /** Kernel          */
-#define KERNEL_END_PHYS (KERNEL_BASE_PHYS + PGTAB_SIZE) /** Kernel End      */
-#define KPOOL_BASE_PHYS (KERNEL_END_PHYS)               /** Kernel  Pool    */
-#define KPOOL_END_PHYS (KPOOL_BASE_PHYS + PGTAB_SIZE)   /** Kernel Pool End */
-#define USER_BASE_PHYS KPOOL_END_PHYS                   /** User Base       */
-#define USER_END_PHYS MEMORY_END_PHYS                   /** User End        */
+#define KERNEL_BASE_PHYS (PADDR(&__KERNEL_START))     /** Kernel          */
+#define KERNEL_END_PHYS (PADDR(&__KERNEL_END))        /** Kernel End      */
+#define KMODS_BASE_PHYS (KERNEL_END_PHYS)             /** Modules         */
+#define KMODS_END_PHYS (KPOOL_BASE_PHYS)              /** Modules End     */
+#define KPOOL_BASE_PHYS (KPOOL_END_PHYS - PGTAB_SIZE) /** Kernel  Pool    */
+#define KPOOL_END_PHYS (USER_BASE_PHYS)               /** Kernel Pool End */
+#define USER_BASE_PHYS 0x04000000                     /** User Base       */
+#define USER_END_PHYS MEMORY_END_PHYS                 /** User End        */
 /**@}*/
 
 /**
@@ -51,11 +60,6 @@
  * @brief Kernel memory size (in bytes).
  */
 #define KMEM_SIZE (KERNEL_END_PHYS - KERNEL_BASE_PHYS)
-
-/**
- * @brief Kernel page pool size (in bytes).
- */
-#define KPOOL_SIZE (KPOOL_END_PHYS - KPOOL_BASE_PHYS)
 
 /**
  * @brief User memory size (in bytes).

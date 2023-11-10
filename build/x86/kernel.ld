@@ -20,6 +20,8 @@ SECTIONS
 {
 	. = BOOT_ADDR;
 
+	__KERNEL_START = .;
+
 	/* Bootstrap section. */
 	.bootstrap :
 	{
@@ -59,6 +61,10 @@ SECTIONS
 		*(.rodata*)
 		__RODATA_END = .;
 	}
+
+	. = ALIGN(PAGE_SIZE);
+
+	__KERNEL_END = .;
 
 	/* Discarded. */
 	/DISCARD/ :

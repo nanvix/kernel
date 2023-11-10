@@ -111,14 +111,13 @@ fn free_null_frame() -> bool {
 /// Attempts release an invalid page frame.
 fn free_invalid_frame() -> bool {
     // Attempt to release an invalid page frame.
-    for frame_addr in memory::KERNEL_BASE_ADDRESS..memory::USER_BASE_ADDRESS {
-        let result: u32 = memory::frfree(frame_addr / memory::PAGE_SIZE);
+    let frame_addr: u32 = memory::KERNEL_BASE_ADDRESS;
+    let result: u32 = memory::frfree(frame_addr / memory::PAGE_SIZE);
 
-        // Check if we succeeded to release an invalid page frame.
-        if result == 0 {
-            nanvix::log!("succeded to release an invalid page frame");
-            return false;
-        }
+    // Check if we succeeded to release an invalid page frame.
+    if result == 0 {
+        nanvix::log!("succeded to release an invalid page frame");
+        return false;
     }
 
     true

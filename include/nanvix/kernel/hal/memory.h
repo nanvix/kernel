@@ -13,6 +13,8 @@
  * @name Binary Sections
  */
 /**@{*/
+extern unsigned char __KERNEL_START;    /** Kernel Start          */
+extern unsigned char __KERNEL_END;      /** Kernel End            */
 extern unsigned char __BOOTSTRAP_START; /** Bootstrap Start       */
 extern unsigned char __BOOTSTRAP_END;   /** Bootstrap End         */
 extern unsigned char __TEXT_START;      /** Text Start            */

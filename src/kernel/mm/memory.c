@@ -106,6 +106,15 @@ static void book_kmods_memory(void)
         kprintf(MODULE_NAME " INFO: booking address range for module %s",
                 kmod.cmdline);
 
+        // Ensure that physical addresses are within the expected range.
+        if (kmod.start < KMODS_BASE_PHYS || kmod.end > KMODS_END_PHYS) {
+            kpanic("kernel module %s is outside of expected range "
+                   "(kmod.start=%x, kmod.end=%x)",
+                   kmod.cmdline,
+                   kmod.start,
+                   kmod.end);
+        }
+
         // Assert should not fail because no page frame has been allocated.
         KASSERT(frame_book_range(kmod.start, kmod.end) == 0);
     }
@@ -167,11 +176,6 @@ static void book_kpool_memory(
 
 /**
  * @brief Prints information about memory layout.
- *
- * The memory_info() prints information about the virtual
- * memory layout.
- *
- * @author Davidson Francis
  */
 static void memory_info(struct phys_memory_region mem_layout_[VMEM_REGION])
 {
@@ -189,26 +193,21 @@ static void memory_info(struct phys_memory_region mem_layout_[VMEM_REGION])
             USER_BASE_VIRT,
             USER_END_VIRT);
     kprintf(MODULE_NAME
-            " INFO: memsize=%d MB kmem=%d KB kpool=%d KB umem=%d KB",
+            " INFO: memsize=%d MB kmem=%d KB kpool=%d MB umem=%d MB",
             MEMORY_SIZE / MB,
-            KMEM_SIZE / MB,
+            KMEM_SIZE / KB,
             KPOOL_SIZE / MB,
             UMEM_SIZE / MB);
 }
 
 /**
- * @brief Asserts the memory alignment.
+ * @brief Checks if memory alignments are correct.
  *
- * Checks the memory alignment for regions that are aligned at page
- * boundaries and regions that must be aligned at page table
- * boundaries.
- *
- * @author Davidson Francis
+ * @param mem_layout_ target memory layout to check.
  */
-static void memory_check_align(
-    struct phys_memory_region mem_layout_[VMEM_REGION])
+static void memory_check_align(struct phys_memory_region mem_layout_[])
 {
-    /* These should be aligned at page boundaries. */
+    // Check if kernel memory is aligned at page boundaries.
     for (int i = 0; i < VMEM_REGION; i++) {
         if (mem_layout_[i].pbase & (PAGE_SIZE - 1)) {
             kpanic("%s base address misaligned (vbase=%x)",
@@ -222,10 +221,17 @@ static void memory_check_align(
         }
     }
 
+    // Check if kernel pool is aligned at page table boundaries.
+    if (KPOOL_BASE_VIRT & (PGTAB_SIZE - 1))
+        kpanic("kpool base address is missaligned (base=%x)", KPOOL_BASE_VIRT);
+    if (KPOOL_END_VIRT & (PGTAB_SIZE - 1))
+        kpanic("kpool end address is missaligned (end=%x)", KPOOL_END_VIRT);
+
+    // Check if user memory is aligned at page table boundaries.
     if (USER_BASE_VIRT & (PGTAB_SIZE - 1))
-        kpanic("user base address misaligned");
+        kpanic("user base address is missaligned (base=%x)", USER_BASE_VIRT);
     if (USER_END_VIRT & (PGTAB_SIZE - 1))
-        kpanic("user end address misaligned");
+        kpanic("user end address is missaligned (end=%x)", USER_END_VIRT);
 }
 
 /**
