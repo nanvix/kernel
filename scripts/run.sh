@@ -54,7 +54,7 @@ function run_qemu
 	local cmd=""
 
 	# Target configuration.
-	local MEMSIZE=128M # Memory Size
+	local MEMSIZE=256M # Memory Size
 
 	if [ $target == "i386" ]; then
 		machine="-machine pc"
