@@ -60,7 +60,7 @@ pub enum KcallNumbers {
 ///
 /// This function returns the value returned by the kernel call.
 ///
-#[inline]
+#[inline(never)]
 pub unsafe fn kcall0(kcall_nr: u32) -> u32 {
     let ret: u32;
     arch::asm!("int 0x80",
@@ -83,7 +83,7 @@ pub unsafe fn kcall0(kcall_nr: u32) -> u32 {
 ///
 /// This function returns the value returned by the kernel call.
 ///
-#[inline]
+#[inline(never)]
 pub unsafe fn kcall1(kcall_nr: u32, arg0: u32) -> u32 {
     let ret: u32;
     arch::asm!("int 0x80",
@@ -108,7 +108,7 @@ pub unsafe fn kcall1(kcall_nr: u32, arg0: u32) -> u32 {
 ///
 /// This function returns the value returned by the kernel call.
 ///
-#[inline]
+#[inline(never)]
 pub unsafe fn kcall2(kcall_nr: u32, arg0: u32, arg1: u32) -> u32 {
     let ret: u32;
     arch::asm!("int 0x80",
@@ -135,7 +135,7 @@ pub unsafe fn kcall2(kcall_nr: u32, arg0: u32, arg1: u32) -> u32 {
 ///
 /// This function returns the value returned by the kernel call.
 ///
-#[inline]
+#[inline(never)]
 pub unsafe fn kcall3(kcall_nr: u32, arg0: u32, arg1: u32, arg2: u32) -> u32 {
     let ret: u32;
     arch::asm!("int 0x80",
@@ -164,7 +164,7 @@ pub unsafe fn kcall3(kcall_nr: u32, arg0: u32, arg1: u32, arg2: u32) -> u32 {
 ///
 /// This function returns the value returned by the kernel call.
 ///
-#[inline]
+#[inline(never)]
 pub unsafe fn kcall4(
     kcall_nr: u32,
     arg0: u32,
