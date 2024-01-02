@@ -334,9 +334,6 @@ int upage_info(struct pde *pgdir, vaddr_t vaddr, struct pageinfo *buf)
  * not aligned at a page boundary, a page is already allocated at
  * address @p vaddr, or @p frame does not refer to a user page frame.
  *
- * @todo Check for bad page directory.
- * @todo Check for bad page frame.
- *
  * @bug Properly flush TLB in multicores.
  *
  * @author Pedro Henrique Penna
@@ -427,8 +424,6 @@ int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame, bool w, bool x)
  *
  * @note If the kernel is compiled with @p NANVIX_FAST_MEMORY option,
  * the kernel does not try to release underlying page tables.
- *
- * @todo Check for bad page directory.
  *
  * @bug Properly flush TLB in multicores.
  *

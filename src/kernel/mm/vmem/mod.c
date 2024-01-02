@@ -19,8 +19,6 @@
 
 /**
  * @brief Maximum number of virtual memory spaces.
- *
- * @todo Move this to a <config.h> header file.
  */
 #define VMEM_MAX 16
 

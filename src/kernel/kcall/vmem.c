@@ -74,7 +74,6 @@ frame_t kcall_vmunmap(vmem_t vmem, vaddr_t vaddr)
     // Issue underlying operation.
     frame_t frame = vmem_unmap(vmem, vaddr);
 
-    // TODO: implement.
     return (frame);
 }
 
@@ -98,7 +97,6 @@ int kcall_vmctrl(vmem_t vmem, unsigned request, vaddr_t vaddr, mode_t mode)
             break;
     }
 
-    // TODO: implement.
     return (ret);
 }
 
