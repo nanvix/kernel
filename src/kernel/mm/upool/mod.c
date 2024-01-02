@@ -192,7 +192,7 @@ static int pgtab_unmap(struct pde *pgdir, vaddr_t vaddr)
  *============================================================================*/
 
 /**
- * @todo Provide a detailed description for this function.
+ * @details Invalidates HW references to a user page.
  */
 int upage_inval(vaddr_t vaddr)
 {
@@ -577,7 +577,7 @@ int upage_free(struct pde *pgdir, vaddr_t vaddr)
  *============================================================================*/
 
 /**
- * @todo TODO: provide a detailed description for this function.
+ * @details Links two pages.
  */
 int upage_link(struct pde *pgdir, vaddr_t vaddr1, vaddr_t vaddr2)
 {
