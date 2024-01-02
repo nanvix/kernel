@@ -5,7 +5,7 @@
 
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/mm.h>
-#include <nanvix/kernel/pm/thread.h>
+#include <nanvix/kernel/pm/process.h>
 
 /**
  * @details Initializes the processor management subsystem.
@@ -13,5 +13,5 @@
 void pm_init(vmem_t root_vmem)
 {
     kprintf("[kernel] initializing processor management subsystem...");
-    thread_init(root_vmem);
+    process_init(root_vmem);
 }

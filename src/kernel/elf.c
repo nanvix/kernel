@@ -199,7 +199,7 @@ static vaddr_t do_elf32_load(const struct elf32_fhdr *elf, bool dry_run)
             // Check if we are running on dry mode.
             if (!dry_run) {
                 // We are not, thus load segment.
-                const struct thread *curr = thread_get_curr();
+                const struct process *curr = process_get_curr();
                 int result = vmem_map(
                     curr->vmem, vbase, pbase >> PAGE_SHIFT, PAGE_SIZE, w, x);
 

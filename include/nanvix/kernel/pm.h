@@ -12,8 +12,8 @@
 
 #include <nanvix/kernel/mm.h>
 #include <nanvix/kernel/pm/cond.h>
+#include <nanvix/kernel/pm/process.h>
 #include <nanvix/kernel/pm/semaphore.h>
-#include <nanvix/kernel/pm/thread.h>
 
 /*============================================================================*
  * Public Functions                                                           *

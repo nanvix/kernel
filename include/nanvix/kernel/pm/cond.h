@@ -12,8 +12,8 @@
  * @brief Condition variable.
  */
 struct condvar {
-    spinlock_t lock;      /**< Lock for sleeping queue. */
-    struct thread *queue; /**< Sleeping queue.          */
+    spinlock_t lock;       /**< Lock for sleeping queue. */
+    struct process *queue; /**< Sleeping queue.          */
 };
 
 /**
@@ -50,7 +50,7 @@ static inline void cond_init(struct condvar *cond)
 extern int cond_wait(struct condvar *cond, spinlock_t *lock);
 
 /**
- * @brief Unlocks all threads waiting on a condition variable.
+ * @brief Unlocks all processes waiting on a condition variable.
  *
  * @param cond Target condition variable.
  *
