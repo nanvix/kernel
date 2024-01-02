@@ -97,10 +97,8 @@ static struct pde *pgtab_map(struct pde *pgdir, vaddr_t vaddr)
 
     /*
      * Map kernel page.
-     *
-     * FIXME: in a multicore platform, we should
-     * flush the TLB of each affected core.
      */
+    // FIXME: https://github.com/nanvix/microkernel/issues/369
     frame = kpool_addr_to_frame(VADDR(pgtab));
     mmu_pgtab_map(pgdir, frame << PAGE_SHIFT, vaddr);
     KASSERT(pde_is_present(pde));
@@ -175,10 +173,8 @@ static int pgtab_unmap(struct pde *pgdir, vaddr_t vaddr)
     /*
      * Unmap page table before releasing the
      * kernel page, because we may fail bellow.
-     *
-     * FIXME: in a multicore platform, we should
-     * flush the TLB of each affected core.
      */
+    // FIXME: https://github.com/nanvix/microkernel/issues/368
     pde_present_set(pde, 0);
     tlb_flush();
 
@@ -196,7 +192,7 @@ static int pgtab_unmap(struct pde *pgdir, vaddr_t vaddr)
  *============================================================================*/
 
 /**
- * @todo Provide a detailed description for this function.
+ * @details Invalidates HW references to a user page.
  */
 int upage_inval(vaddr_t vaddr)
 {
@@ -338,9 +334,6 @@ int upage_info(struct pde *pgdir, vaddr_t vaddr, struct pageinfo *buf)
  * not aligned at a page boundary, a page is already allocated at
  * address @p vaddr, or @p frame does not refer to a user page frame.
  *
- * @todo Check for bad page directory.
- * @todo Check for bad page frame.
- *
  * @bug Properly flush TLB in multicores.
  *
  * @author Pedro Henrique Penna
@@ -357,7 +350,7 @@ int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame, bool w, bool x)
         return (-1);
     }
 
-    /* TODO: check for bad page directory. */
+    // FIXME: https://github.com/nanvix/microkernel/issues/369
 
     /* Bad virtual address. */
     if (!mm_is_uaddr(vaddr)) {
@@ -371,7 +364,7 @@ int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame, bool w, bool x)
         return (-1);
     }
 
-    /* TODO: check for bad page frame. */
+    // FIXME: https://github.com/nanvix/microkernel/issues/369
 
     /*
      * Retrieve page directory entry
@@ -404,10 +397,8 @@ int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame, bool w, bool x)
 
     /*
      * Map page.
-     *
-     * FIXME: in a multicore platform, we should
-     * flush the TLB of each affected core core.
      */
+    // FIXME: https://github.com/nanvix/microkernel/issues/368
     mmu_page_map(pgtab, frame << PAGE_SHIFT, vaddr, w, x);
     pte_user_set(pte, 1);
     KASSERT(pte_is_present(pte));
@@ -434,8 +425,6 @@ int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame, bool w, bool x)
  * @note If the kernel is compiled with @p NANVIX_FAST_MEMORY option,
  * the kernel does not try to release underlying page tables.
  *
- * @todo Check for bad page directory.
- *
  * @bug Properly flush TLB in multicores.
  *
  * @author Pedro Henrique Penna
@@ -451,7 +440,7 @@ frame_t upage_unmap(struct pde *pgdir, vaddr_t vaddr)
     if (pgdir == NULL)
         return (FRAME_NULL);
 
-    /* TODO: check for bad page directory. */
+    // FIXME: https://github.com/nanvix/microkernel/issues/370
 
     /* Bad virtual address. */
     if (!mm_is_uaddr(vaddr))
@@ -481,10 +470,8 @@ frame_t upage_unmap(struct pde *pgdir, vaddr_t vaddr)
 
     /*
      * Unmap page.
-     *
-     * FIXME: in a multicore platform, we should
-     * flush the TLB of each affected core core.
      */
+    // FIXME: https://github.com/nanvix/microkernel/issues/368
     frame = pte_frame_get(pte);
     pte_present_set(pte, 0);
 
@@ -590,7 +577,7 @@ int upage_free(struct pde *pgdir, vaddr_t vaddr)
  *============================================================================*/
 
 /**
- * @todo TODO: provide a detailed description for this function.
+ * @details Links two pages.
  */
 int upage_link(struct pde *pgdir, vaddr_t vaddr1, vaddr_t vaddr2)
 {
@@ -603,7 +590,7 @@ int upage_link(struct pde *pgdir, vaddr_t vaddr1, vaddr_t vaddr2)
     if (pgdir == NULL)
         return (-1);
 
-    /* TODO: check for bad page directory. */
+    // FIXME: https://github.com/nanvix/microkernel/issues/371
 
     /* Bad virtual address. */
     if (!mm_is_uaddr(vaddr2))

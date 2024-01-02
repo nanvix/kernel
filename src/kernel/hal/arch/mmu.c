@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /**
- * @todo TODO provide a detailed description for this function.
+ * @details Maps a page.
  */
 int mmu_page_map(struct pte *pgtab, paddr_t paddr, vaddr_t vaddr, int w, int x)
 {
@@ -35,9 +35,7 @@ int mmu_page_map(struct pte *pgtab, paddr_t paddr, vaddr_t vaddr, int w, int x)
 }
 
 /**
- * @todo TODO provide a detailed description for this function.
- *
- * @author Pedro Henrique Penna
+ * @details Maps a page table.
  */
 int mmu_pgtab_map(struct pde *pgdir, paddr_t paddr, vaddr_t vaddr)
 {

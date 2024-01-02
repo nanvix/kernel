@@ -13,7 +13,7 @@
 #define KBUFFER_SIZE 128
 
 /**
- * @todo Provide a detailed description for this function (TODO).
+ * @details Writes a formatted string on the kernels's output device.
  */
 void kprintf(const char *fmt, ...)
 {

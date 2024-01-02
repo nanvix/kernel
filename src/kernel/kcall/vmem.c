@@ -20,7 +20,7 @@
  */
 vmem_t kcall_vmcreate(void)
 {
-    // TODO: Check for permissions.
+    // TODO: https://github.com/nanvix/microkernel/issues/367
 
     // Create underlying virtual address space
     const vmem_t vmem = vmem_create();
@@ -33,7 +33,7 @@ vmem_t kcall_vmcreate(void)
  */
 int kcall_vmremove(vmem_t vmem)
 {
-    // TODO: Check for permissions.
+    // TODO: https://github.com/nanvix/microkernel/issues/367
 
     // Issue underlying operation.
     int ret = vmem_destroy(vmem);
@@ -46,7 +46,7 @@ int kcall_vmremove(vmem_t vmem)
  */
 int kcall_vmmap(vmem_t vmem, vaddr_t vaddr, frame_t frame)
 {
-    // TODO: Check for permissions.
+    // TODO: https://github.com/nanvix/microkernel/issues/367
 
     // Check for invalid page frame.
     if (((frame << PAGE_SHIFT) < USER_BASE_PHYS) ||
@@ -74,7 +74,6 @@ frame_t kcall_vmunmap(vmem_t vmem, vaddr_t vaddr)
     // Issue underlying operation.
     frame_t frame = vmem_unmap(vmem, vaddr);
 
-    // TODO: implement.
     return (frame);
 }
 
@@ -85,7 +84,7 @@ int kcall_vmctrl(vmem_t vmem, unsigned request, vaddr_t vaddr, mode_t mode)
 {
     int ret = -1;
 
-    // TODO: Check for permissions.
+    // TODO: https://github.com/nanvix/microkernel/issues/367
 
     // Parse request.
     switch (request) {
@@ -98,7 +97,6 @@ int kcall_vmctrl(vmem_t vmem, unsigned request, vaddr_t vaddr, mode_t mode)
             break;
     }
 
-    // TODO: implement.
     return (ret);
 }
 

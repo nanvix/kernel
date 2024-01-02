@@ -17,8 +17,6 @@
  * @param size   Size (in bytes) of the bitmap.
  *
  * @returns The number of bits that are set in the bitmap.
- *
- * @todo TODO: provide a detailed description for this function.
  */
 bitmap_t bitmap_nset(bitmap_t *bitmap, size_t size)
 {
@@ -62,8 +60,6 @@ bitmap_t bitmap_nset(bitmap_t *bitmap, size_t size)
  * @param size   Size (in bytes) of the bitmap.
  *
  * @returns The number of bits that are cleared in the bitmap.
- *
- * @todo TODO: provide a detailed description for this function.
  */
 bitmap_t bitmap_nclear(bitmap_t *bitmap, size_t size)
 {
@@ -120,8 +116,6 @@ bitmap_t bitmap_first_free(bitmap_t *bitmap, bitmap_t start, size_t size)
  * @param idx Index of the bitmap to be checked.
  *
  * @returns The value of the bit in the idx position.
- *
- * @todo TODO: provide a detailed description for this function.
  */
 bitmap_t bitmap_check_bit(bitmap_t *bitmap, bitmap_t idx)
 {

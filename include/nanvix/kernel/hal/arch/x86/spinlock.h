@@ -29,8 +29,6 @@ typedef uint32_t spinlock_t;
  * @brief Initializes a spinlock_t.
  *
  * @param lock Target spinlock_t.
- *
- * @todo Implement this function.
  */
 static inline void spinlock_init(spinlock_t *lock)
 {
@@ -46,8 +44,6 @@ static inline void spinlock_init(spinlock_t *lock)
  * @p lock is locked and zero is returned. Upon failure, non-zero
  * is returned instead, and the lock is not acquired by the
  * caller.
- *
- * @todo Implement this function.
  */
 static inline int spinlock_trylock(spinlock_t *lock)
 {
@@ -59,8 +55,6 @@ static inline int spinlock_trylock(spinlock_t *lock)
  * @brief Locks a spinlock_t.
  *
  * @param lock Target spinlock_t.
- *
- * @todo Implement this function.
  */
 static inline void spinlock_lock(spinlock_t *lock)
 {
@@ -74,8 +68,6 @@ static inline void spinlock_lock(spinlock_t *lock)
  * @brief Unlocks a spinlock_t.
  *
  * @param lock Target spinlock_t.
- *
- * @todo Implement this function.
  */
 static inline void spinlock_unlock(spinlock_t *lock)
 {

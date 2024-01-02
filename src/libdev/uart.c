@@ -409,7 +409,7 @@ int uart_init(uintptr_t addr, uint16_t baud)
     /* Enable data terminal ready, request to send, output 1 and output 2. */
     uart_write_mcr(UART_MCR_DTR | UART_MCR_RTS | UART_MCR_OUT1 | UART_MCR_OUT2);
 
-    /* TODO: Add a test here to check if the output serial line is faulty. */
+    // TODO: Add a test here to check if the output serial line is faulty.
 
     /* Device is now initialized. */
     initialized = true;

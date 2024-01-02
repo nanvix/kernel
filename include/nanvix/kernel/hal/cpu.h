@@ -18,12 +18,10 @@ extern void cpu_init(void);
 
 /**
  * @brief Disables interrupts.
- *
- * @todo Implement this function (TODO).
  */
 static inline void disable_interrupts(void)
 {
-    /* NOOP */
+    // TODO: https://github.com/nanvix/microkernel/issues/366
 }
 
 #endif /* !_ASM_FILE_ */

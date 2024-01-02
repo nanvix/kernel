@@ -46,8 +46,6 @@ struct phys_memory_region {
 
 /**
  * @brief Root page directory.
- *
- * @todo FIXME: make this variable private.
  */
 static struct pde root_pgdir[PGDIR_LENGTH] __attribute__((aligned(PAGE_SIZE)));
 

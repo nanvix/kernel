@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /**
- * @todo TODO provide a detailed description for this function.
+ * @details Dumps context information.
  */
 void context_dump(const struct context *ctx)
 {

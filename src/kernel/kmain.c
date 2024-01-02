@@ -19,7 +19,7 @@
 #include <stdint.h>
 #include <stdnoreturn.h>
 
-// TODO: place these on a header file.
+// TODO: place this on a header file.
 extern noreturn void handle_syscall(void);
 
 /*============================================================================*
