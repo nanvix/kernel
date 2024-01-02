@@ -146,11 +146,10 @@ struct pde {
  * @brief Loads changes in the TLB.
  *
  * @returns This function always returns zero.
- *
- * @todo We can improve this by using the invlpg instruction.
  */
 static inline int tlb_load(paddr_t pgdir)
 {
+    // TODO: We can improve this by using the invlpg instruction.
     __asm__ volatile("movl %0, %%eax\n"
                      "movl %%eax, %%cr3\n"
                      "movl %%cr0, %%eax\n"

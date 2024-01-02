@@ -97,10 +97,8 @@ static struct pde *pgtab_map(struct pde *pgdir, vaddr_t vaddr)
 
     /*
      * Map kernel page.
-     *
-     * FIXME: in a multicore platform, we should
-     * flush the TLB of each affected core.
      */
+    // FIXME: flush the TLB of each affected core.
     frame = kpool_addr_to_frame(VADDR(pgtab));
     mmu_pgtab_map(pgdir, frame << PAGE_SHIFT, vaddr);
     KASSERT(pde_is_present(pde));
@@ -175,10 +173,8 @@ static int pgtab_unmap(struct pde *pgdir, vaddr_t vaddr)
     /*
      * Unmap page table before releasing the
      * kernel page, because we may fail bellow.
-     *
-     * FIXME: in a multicore platform, we should
-     * flush the TLB of each affected core.
      */
+    // FIXME: flush the TLB of each affected core.
     pde_present_set(pde, 0);
     tlb_flush();
 
@@ -357,7 +353,7 @@ int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame, bool w, bool x)
         return (-1);
     }
 
-    /* TODO: check for bad page directory. */
+    // TODO: check for bad page directory.
 
     /* Bad virtual address. */
     if (!mm_is_uaddr(vaddr)) {
@@ -371,7 +367,7 @@ int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame, bool w, bool x)
         return (-1);
     }
 
-    /* TODO: check for bad page frame. */
+    // TODO: check for bad page frame.
 
     /*
      * Retrieve page directory entry
@@ -404,10 +400,8 @@ int upage_map(struct pde *pgdir, vaddr_t vaddr, frame_t frame, bool w, bool x)
 
     /*
      * Map page.
-     *
-     * FIXME: in a multicore platform, we should
-     * flush the TLB of each affected core core.
      */
+    // FIXME: flush the TLB of each affected core.
     mmu_page_map(pgtab, frame << PAGE_SHIFT, vaddr, w, x);
     pte_user_set(pte, 1);
     KASSERT(pte_is_present(pte));
@@ -451,7 +445,7 @@ frame_t upage_unmap(struct pde *pgdir, vaddr_t vaddr)
     if (pgdir == NULL)
         return (FRAME_NULL);
 
-    /* TODO: check for bad page directory. */
+    // TODO: check for bad page directory.
 
     /* Bad virtual address. */
     if (!mm_is_uaddr(vaddr))
@@ -481,10 +475,8 @@ frame_t upage_unmap(struct pde *pgdir, vaddr_t vaddr)
 
     /*
      * Unmap page.
-     *
-     * FIXME: in a multicore platform, we should
-     * flush the TLB of each affected core core.
      */
+    // FIXME: flush the TLB of each affected core.
     frame = pte_frame_get(pte);
     pte_present_set(pte, 0);
 
@@ -603,7 +595,7 @@ int upage_link(struct pde *pgdir, vaddr_t vaddr1, vaddr_t vaddr2)
     if (pgdir == NULL)
         return (-1);
 
-    /* TODO: check for bad page directory. */
+    // TODO: check for bad page directory.
 
     /* Bad virtual address. */
     if (!mm_is_uaddr(vaddr2))

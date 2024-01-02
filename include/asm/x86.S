@@ -32,10 +32,9 @@
 
 /*
  * Resets the stack.
- *
- * TODO: Make this macro generic on the kstack size.
  */
 .macro reset_stack
+    /* TODO: Make this macro generic on the kstack size. */
 
     movl $kstack, %esp
     addl $4092, %esp   /* Frame pointer. */

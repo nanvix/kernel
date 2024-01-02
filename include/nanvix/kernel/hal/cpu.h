@@ -18,12 +18,10 @@ extern void cpu_init(void);
 
 /**
  * @brief Disables interrupts.
- *
- * @todo Implement this function (TODO).
  */
 static inline void disable_interrupts(void)
 {
-    /* NOOP */
+    // TODO: Implement this function.
 }
 
 #endif /* !_ASM_FILE_ */
