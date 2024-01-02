@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-#ifndef NANVIX_KERNEL_PM_THREAD_H_
-#define NANVIX_KERNEL_PM_THREAD_H_
+#ifndef NANVIX_KERNEL_PM_PROCESS_H_
+#define NANVIX_KERNEL_PM_PROCESS_H_
 
 /*============================================================================*
  * Imports                                                                    *
@@ -19,13 +19,13 @@
  *============================================================================*/
 
 /**
- * @name Thread States
+ * @name Process States
  */
 /**@{*/
-#define THREAD_NOT_STARTED 0 /** Not Started */
-#define THREAD_READY 1       /** Started     */
-#define THREAD_RUNNING 2     /** Running     */
-#define THREAD_TERMINATED 5  /** Terminated  */
+#define PROCESS_NOT_STARTED 0 /** Not Started */
+#define PROCESS_READY 1       /** Started     */
+#define PROCESS_RUNNING 2     /** Running     */
+#define PROCESS_TERMINATED 5  /** Terminated  */
 /**@}*/
 
 /*============================================================================*
@@ -33,23 +33,23 @@
  *============================================================================*/
 
 /**
- * @brief Thread ID.
+ * @brief Process ID.
  */
-typedef int tid_t;
+typedef int pid_t;
 
 /*============================================================================*
  * Structures                                                                 *
  *============================================================================*/
 
 /**
- * @brief Thread.
+ * @brief Process.
  */
-struct thread {
+struct process {
     /**
      * @name Control variables.
      */
     /**@{*/
-    tid_t tid;    /** Thread ID. */
+    pid_t pid;    /** Process ID. */
     unsigned age; /** Age.       */
     short state;  /** State.     */
     /**@}*/
@@ -74,10 +74,10 @@ struct thread {
      * @name Scheduling variables.
      */
     /**@{*/
-    unsigned quantum;    /** Quantum.                */
-    struct context ctx;  /** Execution context.      */
-    byte_t *stack;       /** Stack.                  */
-    struct thread *next; /** Next thread in a queue. */
+    unsigned quantum;     /** Quantum.                */
+    struct context ctx;   /** Execution context.      */
+    byte_t *stack;        /** Stack.                  */
+    struct process *next; /** Next process in a queue. */
     /**@}*/
 };
 
@@ -86,56 +86,56 @@ struct thread {
  *============================================================================*/
 
 /**
- * @brief Gets the currently running thread.
+ * @brief Gets the currently running process.
  *
- * The thread_get() function returns a pointer to the thread
- * that is running in the underlying core.
+ * The process_get() function returns a pointer to the process that is running
+ * in the underlying core.
  *
- * @returns A pointer to the thread that is running in the
+ * @returns A pointer to the process that is running in the
  * underlying core.
  */
-extern struct thread *thread_get_curr(void);
+extern struct process *process_get_curr(void);
 
 /**
- * @brief Creates a new thread.
+ * @brief Creates a new process.
  *
  * @param start Start routine.
  * @param arg   Argument passed to the start routine.
  *
- * @returns Upon successful completion, the ID of the newly created thread is
+ * @returns Upon successful completion, the ID of the newly created process is
  * returned. Upon failure, a negative number is returned instead.
  */
-extern tid_t thread_create(void *(*start)(void *), void *arg);
+extern pid_t process_create(void *(*start)(void *), void *arg);
 
 /**
- * @brief Yields the calling thread.
+ * @brief Yields the calling process.
  */
-extern void thread_yield(void);
+extern void process_yield(void);
 
 /**
- * @brief Terminates the calling thread.
+ * @brief Terminates the calling process.
  */
-extern noreturn void thread_exit(void);
+extern noreturn void process_exit(void);
 
 /**
- * @brief Initializes the thread system.
+ * @brief Initializes the process system.
  *
  * @param root_vmem Root virtual memory space.
  */
-extern void thread_init(vmem_t root_vmem);
+extern void process_init(vmem_t root_vmem);
 
 /**
- * @brief Atomically puts the calling thread to sleep.
+ * @brief Atomically puts the calling process to sleep.
  *
  * @param lock  Spinlock to release and acquire.
  */
-extern void thread_sleep(spinlock_t *lock);
+extern void process_sleep(spinlock_t *lock);
 
 /**
- * @brief Wakes up a thread.
+ * @brief Wakes up a process.
  *
- * @param t Target thread.
+ * @param t Target process.
  */
-extern void thread_wakeup(struct thread *t);
+extern void process_wakeup(struct process *t);
 
-#endif /* NANVIX_KERNEL_PM_THREAD_H_ */
+#endif /* NANVIX_KERNEL_PM_PROCESS_H_ */

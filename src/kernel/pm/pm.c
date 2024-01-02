@@ -13,5 +13,5 @@
 void pm_init(vmem_t root_vmem)
 {
     kprintf("[kernel] initializing processor management subsystem...");
-    thread_init(root_vmem);
+    process_init(root_vmem);
 }

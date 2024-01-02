@@ -19,55 +19,55 @@
  *============================================================================*/
 
 /**
- * @brief Maximum number of kernel threads.
+ * @brief Maximum number of processes.
  */
-#define KTHREAD_MAX 16
+#define PROCESS_MAX 16
 
 /**
- * @brief Thread quantum.
+ * @brief Process quantum.
  */
-#define KTHREAD_QUANTUM 100
+#define PROCESS_QUANTUM 100
 
 /*============================================================================*
  * Private Variables                                                          *
  *============================================================================*/
 
 /**
- * @brief Thread table.
+ * @brief Process table.
  */
-static struct thread threads[KTHREAD_MAX];
+static struct process processes[PROCESS_MAX];
 
 /**
- * @brief Running thread.
+ * @brief Running process.
  */
-static struct thread *running = NULL;
+static struct process *running = NULL;
 
 /**
- * @brief Kernel thread.
+ * @brief Kernel process.
  */
-static struct thread *kernel = &threads[0];
+static struct process *kernel = &processes[0];
 
 /*============================================================================*
  * Private Functions                                                          *
  *============================================================================*/
 
 /**
- * @brief Low-level routine for bootstrapping a new thread.
+ * @brief Low-level routine for bootstrapping a new process.
  */
-extern void __do_thread_setup(void);
+extern void __do_process_setup(void);
 
 /**
- * @brief Releases all resources that are used by a thread.
+ * @brief Releases all resources that are used by a process.
  *
- * @param thread Target thread.
+ * @param process Target process.
  */
-static void thread_free(struct thread *thread)
+static void process_free(struct process *process)
 {
-    thread->tid = 0;
-    thread->state = THREAD_NOT_STARTED;
-    thread->arg = NULL;
-    thread->start = NULL;
-    kpage_put(thread->stack);
+    process->pid = 0;
+    process->state = PROCESS_NOT_STARTED;
+    process->arg = NULL;
+    process->start = NULL;
+    kpage_put(process->stack);
 }
 
 /**
@@ -75,8 +75,8 @@ static void thread_free(struct thread *thread)
  */
 static void do_timer(void)
 {
-    if (running->quantum++ >= KTHREAD_QUANTUM) {
-        thread_yield();
+    if (running->quantum++ >= PROCESS_QUANTUM) {
+        process_yield();
     }
 }
 
@@ -87,18 +87,18 @@ static void do_timer(void)
 extern vaddr_t elf32_load(const struct elf32_fhdr *elf);
 
 /**
- * @details This function returns a pointer to the thread
- * that is running in the underlying core.
+ * @details This function returns a pointer to the process that is running in
+ * the underlying core.
  */
-struct thread *thread_get_curr(void)
+struct process *process_get_curr(void)
 {
     return (running);
 }
 
 /**
- * @brief Bootstraps a new thread.
+ * @brief Bootstraps a new process.
  */
-void do_thread_setup(void)
+void do_process_setup(void)
 {
     const vaddr_t user_fn_addr =
         elf32_load((struct elf32_fhdr *)((vaddr_t)running->start));
@@ -110,23 +110,23 @@ void do_thread_setup(void)
 }
 
 /**
- * @details Creates a new thread.
+ * @details Creates a new process.
  */
-tid_t thread_create(void *(*start)(void *), void *arg)
+pid_t process_create(void *(*start)(void *), void *arg)
 {
-    static tid_t next_tid = 0;
-    struct thread *thread = NULL;
+    static pid_t next_pid = 0;
+    struct process *process = NULL;
 
-    // Find a thread control block that is not in use.
-    for (int i = 0; i < KTHREAD_MAX; i++) {
-        if (threads[i].state == THREAD_NOT_STARTED) {
-            thread = &threads[i];
+    // Find a process control block that is not in use.
+    for (int i = 0; i < PROCESS_MAX; i++) {
+        if (processes[i].state == PROCESS_NOT_STARTED) {
+            process = &processes[i];
             break;
         }
     }
 
-    // No thread available.
-    if (thread == NULL) {
+    // No process available.
+    if (process == NULL) {
         goto error0;
     }
 
@@ -142,26 +142,26 @@ tid_t thread_create(void *(*start)(void *), void *arg)
         goto error1;
     }
 
-    // Initializes thread control block.
-    thread->tid = ++next_tid;
-    thread->age = 1;
-    thread->state = THREAD_READY;
-    thread->arg = arg;
-    thread->start = start;
-    thread->stack = kstack;
-    thread->vmem = vmem;
+    // Initializes process control block.
+    process->pid = ++next_pid;
+    process->age = 1;
+    process->state = PROCESS_READY;
+    process->arg = arg;
+    process->start = start;
+    process->stack = kstack;
+    process->vmem = vmem;
 
     const void *ksp = interrupt_forge_stack((void *)(USER_END_VIRT),
-                                            thread->stack,
+                                            process->stack,
                                             (void (*)(void))USER_BASE_VIRT,
-                                            __do_thread_setup);
+                                            __do_process_setup);
 
-    context_create(&thread->ctx,
-                   vmem_pgdir_get(thread->vmem),
-                   (const void *)((vaddr_t)thread->stack + PAGE_SIZE),
+    context_create(&process->ctx,
+                   vmem_pgdir_get(process->vmem),
+                   (const void *)((vaddr_t)process->stack + PAGE_SIZE),
                    ksp);
 
-    return (thread->tid);
+    return (process->pid);
 
 error1:
     vmem_destroy(vmem);
@@ -172,19 +172,19 @@ error0:
 /**
  * @details Yields the CPU.
  */
-void thread_yield(void)
+void process_yield(void)
 {
     running->age = 0;
-    running->state = THREAD_READY;
+    running->state = PROCESS_READY;
 
-    struct thread *prev = running;
-    struct thread *next = prev;
+    struct process *prev = running;
+    struct process *next = prev;
 
-    /* Selects the next thread to run. */
-    for (int i = 0; i < KTHREAD_MAX; i++) {
-        if (threads[i].state == THREAD_READY) {
-            if (threads[i].age++ >= next->age) {
-                next = &threads[i];
+    /* Selects the next process to run. */
+    for (int i = 0; i < PROCESS_MAX; i++) {
+        if (processes[i].state == PROCESS_READY) {
+            if (processes[i].age++ >= next->age) {
+                next = &processes[i];
             }
         }
     }
@@ -192,63 +192,62 @@ void thread_yield(void)
     running = next;
     running->age = 0;
     running->quantum = 0;
-    running->state = THREAD_RUNNING;
+    running->state = PROCESS_RUNNING;
 
     __context_switch(&prev->ctx, &next->ctx);
 }
 
 /**
- * @brief Terminates the calling thread.
+ * @brief Terminates the calling process.
  */
-noreturn void thread_exit(void)
+noreturn void process_exit(void)
 {
-    running->state = THREAD_TERMINATED;
-    thread_free(running);
-    thread_yield();
+    running->state = PROCESS_TERMINATED;
+    process_free(running);
+    process_yield();
     UNREACHABLE();
 }
 
 /**
- * @details This function atomically puts the calling thread to
- * sleep.  Before sleeping, the spinlock pointed to by @p lock is
- * released.  The calling thread resumes its execution when another
- * thread invokes thread_wakeup() on it. When the thread wakes up, the
- * spinlock @p lock is re-acquired.
+ * @details This function atomically puts the calling process to sleep. Before
+ * sleeping, the spinlock pointed to by @p lock is released.  The calling
+ * process resumes its execution when another process invokes process_wakeup()
+ * on it. When the process wakes up, the spinlock @p lock is re-acquired.
  */
-void thread_sleep(spinlock_t *lock)
+void process_sleep(spinlock_t *lock)
 {
     spinlock_unlock(lock);
-    thread_yield();
+    process_yield();
     spinlock_lock(lock);
 }
 /**
- * @details This function wakes up the thread pointed to by @p thread.
+ * @details This function wakes up the process pointed to by @p process.
  */
-void thread_wakeup(struct thread *t)
+void process_wakeup(struct process *t)
 {
-    t->state = THREAD_READY;
+    t->state = PROCESS_READY;
 }
 
 /**
- * @details Initializes the thread system.
+ * @details Initializes the process system.
  */
-void thread_init(vmem_t root_vmem)
+void process_init(vmem_t root_vmem)
 {
-    kprintf("[kernel][pm] initializing thread system...");
+    kprintf("[kernel][pm] initializing process system...");
 
-    // Initializes the table of threads.
-    for (int i = 0; i < KTHREAD_MAX; i++) {
-        threads[i].age = 0;
-        threads[i].state = THREAD_NOT_STARTED;
-        threads[i].arg = NULL;
-        threads[i].start = NULL;
+    // Initializes the table of processes.
+    for (int i = 0; i < PROCESS_MAX; i++) {
+        processes[i].age = 0;
+        processes[i].state = PROCESS_NOT_STARTED;
+        processes[i].arg = NULL;
+        processes[i].start = NULL;
     }
 
     // Initialize.
     kernel->vmem = (vmem_t)root_vmem;
-    kernel->state = THREAD_RUNNING;
+    kernel->state = PROCESS_RUNNING;
 
-    running = &threads[0];
+    running = &processes[0];
 
     interrupt_register(INTERRUPT_TIMER, do_timer);
 }

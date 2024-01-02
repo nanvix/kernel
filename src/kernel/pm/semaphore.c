@@ -19,9 +19,9 @@
 /**
  * @details This function performs a down operation in the semaphore pointed to
  * by @p sem. It atomically checks the current value of @p sem. If it is greater
- * than one, it decrements the semaphore counter by one and the calling thread
- * continue its execution, flow as usual.  Otherwise, the calling thread sleeps
- * until another thread performs a call to semaphore_up() on this semaphore.
+ * than one, it decrements the semaphore counter by one and the calling process
+ * continue its execution, flow as usual.  Otherwise, the calling process sleeps
+ * until another process performs a call to semaphore_up() on this semaphore.
  *
  * @see SEMAPHORE_INIT(), semaphore_up()
  */
@@ -47,7 +47,7 @@ void semaphore_down(struct semaphore *sem)
 /**
  * @details This function performs an up operation in a semaphore pointed to by
  * @p sem. It atomically increments the current value of @p and wakes up all
- * threads that were sleeping in this semaphore, waiting for a semaphore_up()
+ * processes that were sleeping in this semaphore, waiting for a semaphore_up()
  * operation.
  *
  * @see SEMAPHORE_INIT(), semaphore_down()

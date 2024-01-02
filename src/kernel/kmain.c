@@ -85,7 +85,7 @@ static void spawn_servers(void)
         }
 
         // Spawn server.
-        thread_create((void *(*)(void *))start, NULL);
+        process_create((void *(*)(void *))start, NULL);
     }
 }
 
@@ -129,7 +129,7 @@ noreturn void kmain(struct kargs *args)
     test_kpool();
     test_upool((struct pde *)vmem_pgdir_get(root_vmem));
 
-    // Spawn servers. Note that although we do create new threads, we will not
+    // Spawn servers. Note that although we do create new processes, we will not
     // switch to any of them, because interrupts are disabled. This will save us
     // from a race condition in the system call dispatcher module.
     spawn_servers();

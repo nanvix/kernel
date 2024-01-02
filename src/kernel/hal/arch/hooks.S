@@ -16,7 +16,7 @@
 .extern do_exception
 .extern do_kcall
 .extern do_interrupt
-.extern do_thread_setup
+.extern do_process_setup
 .extern tss
 
 /*============================================================================*
@@ -70,7 +70,7 @@
 
 /* Other */
 .globl __context_switch
-.globl __do_thread_setup
+.globl __do_process_setup
 .globl __leave_kernel
 
 /*============================================================================*
@@ -191,7 +191,7 @@ _do_hwint 15
  *----------------------------------------------------------------------------*/
 
 /*
- * Saves the execution context of the calling thread.
+ * Saves the execution context of the calling process.
  */
 __context_switch:
     movl 4(%esp), %eax
@@ -238,8 +238,8 @@ __context_switch:
 /*
  * Leaves the kernel.
  */
-__do_thread_setup:
-    call do_thread_setup
+__do_process_setup:
+    call do_process_setup
 
     /*
      * Restore data segment registers.
