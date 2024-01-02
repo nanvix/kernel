@@ -19,7 +19,7 @@
  */
 frame_t kcall_fralloc(void)
 {
-    // TODO: Check permissions.
+    // TODO: https://github.com/nanvix/microkernel/issues/367
 
     KASSERT_SIZE_LE(sizeof(frame_t), sizeof(word_t));
 
@@ -31,7 +31,7 @@ frame_t kcall_fralloc(void)
  */
 int kcall_frfree(frame_t frame)
 {
-    // TODO: Check permissions.
+    // TODO: https://github.com/nanvix/microkernel/issues/367
 
     // Check if the target frame number is invalid.
     if (frame < (USER_BASE_PHYS >> PAGE_SHIFT)) {

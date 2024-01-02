@@ -21,7 +21,7 @@ extern void cpu_init(void);
  */
 static inline void disable_interrupts(void)
 {
-    // TODO: Implement this function.
+    // TODO: https://github.com/nanvix/microkernel/issues/366
 }
 
 #endif /* !_ASM_FILE_ */
