@@ -150,13 +150,13 @@ pid_t process_create(const void *image)
     // Create a virtual memory space.
     vmem_t vmem = vmem_create();
     if (vmem == VMEM_NULL) {
-        goto error0;
+        goto error1;
     }
 
     // Create a stack.
     void *kstack = kpage_get(true);
     if (kstack == NULL) {
-        goto error1;
+        goto error2;
     }
 
     // Initializes process control block.
@@ -179,8 +179,10 @@ pid_t process_create(const void *image)
 
     return (process->pid);
 
-error1:
+error2:
     vmem_destroy(vmem);
+error1:
+    process_free(process);
 error0:
     return (-1);
 }
@@ -218,7 +220,6 @@ void process_yield(void)
  */
 noreturn void process_exit(void)
 {
-    // TODO: change process state.
     running->state = PROCESS_TERMINATED;
     process_free(running);
     process_yield();
