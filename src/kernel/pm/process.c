@@ -95,7 +95,7 @@ static void process_free(struct process *process)
     process->pid = 0;
     process->state = PROCESS_NOT_STARTED;
     process->arg = NULL;
-    process->start = NULL;
+    process->image = NULL;
     kpage_put(process->stack);
 }
 
@@ -127,8 +127,7 @@ struct process *process_get_curr(void)
  */
 void do_process_setup(void)
 {
-    const vaddr_t user_fn_addr =
-        elf32_load((struct elf32_fhdr *)((vaddr_t)running->start));
+    const vaddr_t user_fn_addr = elf32_load(running->image);
     KASSERT(user_fn_addr == USER_BASE_VIRT);
 
     vaddr_t user_stack_addr = USER_END_VIRT - PAGE_SIZE;
@@ -139,7 +138,7 @@ void do_process_setup(void)
 /**
  * @details Creates a new process.
  */
-pid_t process_create(void *(*start)(void *), void *arg)
+pid_t process_create(const void *image, void *arg)
 {
     static pid_t next_pid = 0;
     struct process *process = NULL;
@@ -166,7 +165,7 @@ pid_t process_create(void *(*start)(void *), void *arg)
     process->age = 1;
     process->state = PROCESS_READY;
     process->arg = arg;
-    process->start = start;
+    process->image = image;
     process->stack = kstack;
     process->vmem = vmem;
 
@@ -260,7 +259,7 @@ void process_init(vmem_t root_vmem)
         processes[i].age = 0;
         processes[i].state = PROCESS_NOT_STARTED;
         processes[i].arg = NULL;
-        processes[i].start = NULL;
+        processes[i].image = NULL;
     }
 
     // Initialize.

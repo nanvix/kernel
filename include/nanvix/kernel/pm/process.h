@@ -65,9 +65,9 @@ struct process {
      * @name Arguments and functions.
      */
     /**@{*/
-    void *arg;              /** Argument.         */
-    void *(*start)(void *); /** Starting routine. */
-    void *retval;           /** Return value.     */
+    void *arg;         /** Argument.      */
+    const void *image; /** Binary image . */
+    void *retval;      /** Return value.  */
     /**@}*/
 
     /**
@@ -99,13 +99,13 @@ extern struct process *process_get_curr(void);
 /**
  * @brief Creates a new process.
  *
- * @param start Start routine.
+ * @param image Binary image.
  * @param arg   Argument passed to the start routine.
  *
  * @returns Upon successful completion, the ID of the newly created process is
  * returned. Upon failure, a negative number is returned instead.
  */
-extern pid_t process_create(void *(*start)(void *), void *arg);
+extern pid_t process_create(const void *image, void *arg);
 
 /**
  * @brief Yields the calling process.

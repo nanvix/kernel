@@ -77,15 +77,15 @@ static void spawn_servers(void)
 
         kprintf("INFO: loading module %s", kmod.cmdline);
 
-        const vaddr_t start = kmod.start;
+        const void *image = (void *)(kmod.start);
 
         // Check if the module was loaded successfully.
-        if (start == 0) {
+        if (image == NULL) {
             kpanic("ERROR: failed to load module %s", kmod.cmdline);
         }
 
         // Spawn server.
-        process_create((void *(*)(void *))start, NULL);
+        process_create(image, NULL);
     }
 }
 
