@@ -95,7 +95,7 @@ static void process_free(struct process *process)
     process->pid = 0;
     process->state = PROCESS_NOT_STARTED;
     process->image = NULL;
-    kpage_put(process->stack);
+    KASSERT(kpage_put(process->stack) == 0);
 }
 
 /**
