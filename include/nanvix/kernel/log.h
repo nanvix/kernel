@@ -47,6 +47,6 @@ extern int __log(const char *file, const char *funcname, unsigned level, ...);
  *
  * @param level The log message level e.g. `INFO`.
  */
-#define log(level, ...) do_log(__FILE__, __func__, level, __VA_ARGS__)
+#define log(level, ...) __log(__FILE__, __func__, level, __VA_ARGS__)
 
 #endif /* NANVIX_KERNEL_LOG_H_ */
