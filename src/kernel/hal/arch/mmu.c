@@ -44,12 +44,17 @@ int mmu_page_map(struct pte *pgtab, paddr_t paddr, vaddr_t vaddr, int w, int x)
  */
 int mmu_pgtab_map(struct pde *pgdir, paddr_t paddr, vaddr_t vaddr)
 {
-    /* Invalid page directory. */
+    // Check for invalid page directory.
     if (UNLIKELY(pgdir == NULL)) {
         return (-1);
     }
 
     const int idx = pde_idx_get(vaddr);
+
+    // Check for busy page directory entry.
+    if (pgdir[idx].present) {
+        return (-1);
+    }
 
     pgdir[idx].writable = 1;
     pgdir[idx].present = 1;
