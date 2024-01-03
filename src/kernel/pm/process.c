@@ -167,11 +167,13 @@ pid_t process_create(const void *image)
     process->stack = kstack;
     process->vmem = vmem;
 
+    // FIXME: assert if the following command will succeed.
     const void *ksp = interrupt_forge_stack((void *)(USER_END_VIRT),
                                             process->stack,
                                             (void (*)(void))USER_BASE_VIRT,
                                             __do_process_setup);
 
+    // FIXME: assert if the following command will succeed.
     context_create(&process->ctx,
                    vmem_pgdir_get(process->vmem),
                    (const void *)((vaddr_t)process->stack + PAGE_SIZE),
