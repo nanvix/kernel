@@ -316,7 +316,7 @@ static void memory_map(struct phys_memory_region mem_layout_[VMEM_REGION])
                 kpanic("kernel modules overlaps with user memory");
             }
 
-            mmu_page_map(root_pgtabs[root_pgtab_num], j, k, w, x);
+            KASSERT(!mmu_page_map(root_pgtabs[root_pgtab_num], j, k, w, x));
         }
 
         /*
