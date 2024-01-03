@@ -58,16 +58,8 @@ struct process {
      * @name Memory Information
      */
     /**@{*/
-    vmem_t vmem;
-    /**@}*/
-
-    /**
-     * @name Arguments and functions.
-     */
-    /**@{*/
-    void *arg;         /** Argument.      */
-    const void *image; /** Binary image . */
-    void *retval;      /** Return value.  */
+    vmem_t vmem;       /** Virtuam memory map. */
+    const void *image; /** Binary image.       */
     /**@}*/
 
     /**
@@ -100,12 +92,11 @@ extern struct process *process_get_curr(void);
  * @brief Creates a new process.
  *
  * @param image Binary image.
- * @param arg   Argument passed to the start routine.
  *
  * @returns Upon successful completion, the ID of the newly created process is
  * returned. Upon failure, a negative number is returned instead.
  */
-extern pid_t process_create(const void *image, void *arg);
+extern pid_t process_create(const void *image);
 
 /**
  * @brief Yields the calling process.

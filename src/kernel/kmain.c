@@ -85,7 +85,7 @@ static void spawn_servers(void)
         }
 
         // Spawn server.
-        process_create(image, NULL);
+        process_create(image);
     }
 }
 

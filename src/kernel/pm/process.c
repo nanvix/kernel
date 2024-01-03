@@ -94,7 +94,6 @@ static void process_free(struct process *process)
 {
     process->pid = 0;
     process->state = PROCESS_NOT_STARTED;
-    process->arg = NULL;
     process->image = NULL;
     kpage_put(process->stack);
 }
@@ -138,7 +137,7 @@ void do_process_setup(void)
 /**
  * @details Creates a new process.
  */
-pid_t process_create(const void *image, void *arg)
+pid_t process_create(const void *image)
 {
     static pid_t next_pid = 0;
     struct process *process = NULL;
@@ -164,7 +163,6 @@ pid_t process_create(const void *image, void *arg)
     process->pid = ++next_pid;
     process->age = 1;
     process->state = PROCESS_READY;
-    process->arg = arg;
     process->image = image;
     process->stack = kstack;
     process->vmem = vmem;
@@ -258,7 +256,6 @@ void process_init(vmem_t root_vmem)
     for (int i = 0; i < PROCESS_MAX; i++) {
         processes[i].age = 0;
         processes[i].state = PROCESS_NOT_STARTED;
-        processes[i].arg = NULL;
         processes[i].image = NULL;
     }
 
