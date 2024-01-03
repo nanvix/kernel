@@ -149,10 +149,12 @@ vmem_t vmem_create(void)
         goto error1;
     }
 
-    // Link all pages from source page directory to new page directory.
+    // Link all kernel pages from source page directory to new page directory.
     for (int i = 0; i < PGDIR_LENGTH; i++) {
         const struct pde *src_pgdir = vmem_table[src_vmem].pgdir;
         if (pde_is_present(&src_pgdir[i])) {
+            // Ensure that this is a kernel address.
+            KASSERT(mm_is_kaddr(VADDR(i) << PGTAB_SHIFT));
             __memcpy(&new_pgdir[i], &src_pgdir[i], sizeof(struct pde));
         }
     }
