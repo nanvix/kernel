@@ -20,12 +20,17 @@ int mmu_page_map(struct pte *pgtab, paddr_t paddr, vaddr_t vaddr, int w, int x)
 {
     UNUSED(x);
 
-    /* Invalid page table. */
+    // Check for invalid page table.
     if (UNLIKELY(pgtab == NULL)) {
         return (-1);
     }
 
     const int idx = pte_idx_get(vaddr);
+
+    // Check for busy page table entry.
+    if (pgtab[idx].present) {
+        return (-1);
+    }
 
     pgtab[idx].present = 1;
     pgtab[idx].writable = (w) ? 1 : 0;
