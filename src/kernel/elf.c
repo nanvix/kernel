@@ -217,12 +217,7 @@ static vaddr_t do_elf32_load(const struct elf32_fhdr *elf, bool dry_run)
  *============================================================================*/
 
 /**
- * @brief Loads an ELF 32 executable.
- *
- * @param elf Target ELF file.
- *
- * @returns Upon successful completion, the entry point of the ELF file is
- * returned. On failure, zero is returned instead.
+ * @details Loads an ELF 32 executable.
  */
 vaddr_t elf32_load(const struct elf32_fhdr *elf)
 {

@@ -11,6 +11,7 @@ use nanvix::{
     kcall,
     memory::{
         self,
+        FrameNumber,
         PageInfo,
         VirtualAddress,
         VirtualMemory,
@@ -31,7 +32,7 @@ macro_rules! test {
             true =>
                 nanvix::log!("{} {}", "passed", stringify!($fn_name)),
             false =>
-                nanvix::log!("{} {}", "FAILED", stringify!($fn_name)),
+                panic!("{} {}", "FAILED", stringify!($fn_name)),
         }
     }};
 }
@@ -204,7 +205,7 @@ fn map_unmap_vmem() -> bool {
     }
 
     // Attempt to allocate a page frame.
-    let frame: u32 = memory::fralloc();
+    let frame: FrameNumber = memory::fralloc();
 
     // Check if we failed to allocate a page frame.
     if frame == memory::NULL_FRAME {
@@ -213,6 +214,7 @@ fn map_unmap_vmem() -> bool {
     }
 
     // Attempt to map the page frame to the virtual memory space.
+    nanvix::log!("vmmap vmem={:?} frame=0x{:x?}", vmem, frame);
     let result: u32 = memory::vmmap(vmem, memory::USER_BASE_ADDRESS, frame);
 
     // Check if we failed to map the page frame to the virtual memory space.
@@ -222,12 +224,18 @@ fn map_unmap_vmem() -> bool {
     }
 
     // Attempt to unmap the page frame from the virtual memory space.
+    // nanvix::log!(
+    //     "vmunmap vmem={:?} frame=0x{:x?}",
+    //     vmem,
+    //     memory::USER_BASE_ADDRESS
+    // );
     let result: u32 = memory::vmunmap(vmem, memory::USER_BASE_ADDRESS);
 
     // Check if we failed to unmap the page frame from the virtual memory space.
     if result != frame {
         nanvix::log!(
-            "failed to unmap a page frame from a virtual memory space"
+            "failed to unmap a page frame from a virtual memory space {:?}",
+            frame
         );
         return false;
     }

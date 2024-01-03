@@ -26,7 +26,7 @@ use nanvix::power;
 
 #[no_mangle]
 pub fn main() {
+    nanvix::log!("Running test server...");
     test::test_kernel_calls();
-
     power::shutdown();
 }

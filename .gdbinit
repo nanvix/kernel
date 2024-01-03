@@ -5,6 +5,8 @@ layout split
 target remote tcp::1234
 file bin/nanvix.elf
 symbol-file bin/nanvix.elf
+add-symbol-file bin/init.elf
+add-symbol-file bin/test.elf
 handle SIGSEGV nostop noprint nopass
 set confirm off
 focus cmd

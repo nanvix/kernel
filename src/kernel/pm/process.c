@@ -14,6 +14,16 @@
 #include <nanvix/kernel/pm.h>
 #include <stdnoreturn.h>
 
+/**
+ * @brief Loads an ELF 32 executable.
+ *
+ * @param elf Target ELF file.
+ *
+ * @returns Upon successful completion, the entry point of the ELF file is
+ * returned. On failure, zero is returned instead.
+ */
+extern vaddr_t elf32_load(const struct elf32_fhdr *elf);
+
 /*============================================================================*
  * Constants                                                                  *
  *============================================================================*/
@@ -83,8 +93,6 @@ static void do_timer(void)
 /*============================================================================*
  * Public Functions                                                           *
  *============================================================================*/
-
-extern vaddr_t elf32_load(const struct elf32_fhdr *elf);
 
 /**
  * @details This function returns a pointer to the process that is running in
