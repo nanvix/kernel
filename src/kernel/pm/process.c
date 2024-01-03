@@ -67,6 +67,25 @@ static struct process *kernel = &processes[0];
 extern void __do_process_setup(void);
 
 /**
+ * @brief Allocates an entry in the process table.
+ *
+ * @returns Upon successful completion, a pointer to the allocated entry in the
+ * process table is returned. Upon failure, NULL is returned instead.
+ */
+static struct process *process_alloc(void)
+{
+    // Find a process control block that is not in use.
+    for (int i = 0; i < PROCESS_MAX; i++) {
+        if (processes[i].state == PROCESS_NOT_STARTED) {
+            processes[i].state = PROCESS_STARTED;
+            return (&processes[i]);
+        }
+    }
+
+    return (NULL);
+}
+
+/**
  * @brief Releases all resources that are used by a process.
  *
  * @param process Target process.
@@ -75,9 +94,8 @@ static void process_free(struct process *process)
 {
     process->pid = 0;
     process->state = PROCESS_NOT_STARTED;
-    process->arg = NULL;
-    process->start = NULL;
-    kpage_put(process->stack);
+    process->image = NULL;
+    KASSERT(kpage_put(process->stack) == 0);
 }
 
 /**
@@ -108,8 +126,7 @@ struct process *process_get_curr(void)
  */
 void do_process_setup(void)
 {
-    const vaddr_t user_fn_addr =
-        elf32_load((struct elf32_fhdr *)((vaddr_t)running->start));
+    const vaddr_t user_fn_addr = elf32_load(running->image);
     KASSERT(user_fn_addr == USER_BASE_VIRT);
 
     vaddr_t user_stack_addr = USER_END_VIRT - PAGE_SIZE;
@@ -120,50 +137,43 @@ void do_process_setup(void)
 /**
  * @details Creates a new process.
  */
-pid_t process_create(void *(*start)(void *), void *arg)
+pid_t process_create(const void *image)
 {
     static pid_t next_pid = 0;
     struct process *process = NULL;
 
     // Find a process control block that is not in use.
-    for (int i = 0; i < PROCESS_MAX; i++) {
-        if (processes[i].state == PROCESS_NOT_STARTED) {
-            process = &processes[i];
-            break;
-        }
-    }
-
-    // No process available.
-    if (process == NULL) {
+    if ((process = process_alloc()) == NULL) {
         goto error0;
     }
 
     // Create a virtual memory space.
     vmem_t vmem = vmem_create();
     if (vmem == VMEM_NULL) {
-        goto error0;
+        goto error1;
     }
 
     // Create a stack.
     void *kstack = kpage_get(true);
     if (kstack == NULL) {
-        goto error1;
+        goto error2;
     }
 
     // Initializes process control block.
     process->pid = ++next_pid;
     process->age = 1;
     process->state = PROCESS_READY;
-    process->arg = arg;
-    process->start = start;
+    process->image = image;
     process->stack = kstack;
     process->vmem = vmem;
 
+    // FIXME: assert if the following command will succeed.
     const void *ksp = interrupt_forge_stack((void *)(USER_END_VIRT),
                                             process->stack,
                                             (void (*)(void))USER_BASE_VIRT,
                                             __do_process_setup);
 
+    // FIXME: assert if the following command will succeed.
     context_create(&process->ctx,
                    vmem_pgdir_get(process->vmem),
                    (const void *)((vaddr_t)process->stack + PAGE_SIZE),
@@ -171,8 +181,10 @@ pid_t process_create(void *(*start)(void *), void *arg)
 
     return (process->pid);
 
-error1:
+error2:
     vmem_destroy(vmem);
+error1:
+    process_free(process);
 error0:
     return (-1);
 }
@@ -247,8 +259,7 @@ void process_init(vmem_t root_vmem)
     for (int i = 0; i < PROCESS_MAX; i++) {
         processes[i].age = 0;
         processes[i].state = PROCESS_NOT_STARTED;
-        processes[i].arg = NULL;
-        processes[i].start = NULL;
+        processes[i].image = NULL;
     }
 
     // Initialize.
