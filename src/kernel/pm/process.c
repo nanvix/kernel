@@ -77,7 +77,7 @@ static struct process *process_alloc(void)
     // Find a process control block that is not in use.
     for (int i = 0; i < PROCESS_MAX; i++) {
         if (processes[i].state == PROCESS_NOT_STARTED) {
-            // TODO: change process state.
+            processes[i].state = PROCESS_STARTED;
             return (&processes[i]);
         }
     }

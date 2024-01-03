@@ -23,9 +23,10 @@
  */
 /**@{*/
 #define PROCESS_NOT_STARTED 0 /** Not Started */
-#define PROCESS_READY 1       /** Started     */
-#define PROCESS_RUNNING 2     /** Running     */
-#define PROCESS_TERMINATED 5  /** Terminated  */
+#define PROCESS_STARTED 1     /** Started     */
+#define PROCESS_READY 2       /** Ready       */
+#define PROCESS_RUNNING 3     /** Running     */
+#define PROCESS_TERMINATED 4  /** Terminated  */
 /**@}*/
 
 /*============================================================================*
