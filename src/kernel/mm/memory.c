@@ -285,6 +285,7 @@ static void memory_map(struct phys_memory_region mem_layout_[VMEM_REGION])
                       ALIGN(pbase, PGTAB_SIZE));
     }
 
+    // Identity map kernel modules, so we can easily load them later.
     for (unsigned i = 0; i < kmod_count(); i++) {
         struct kmod kmod = {0};
 
@@ -298,17 +299,18 @@ static void memory_map(struct phys_memory_region mem_layout_[VMEM_REGION])
         paddr_t pend = TRUNCATE(kmod.end, PAGE_SIZE);
         int w = false;
         int x = false;
-        int root_pgtab_num = pbase >> PGTAB_SHIFT;
-
-        // We expect that kernel modules resides
-        // in kernel memory. Panic if it does not.
-        if (root_pgtab_num >= ROOT_PGTAB_NUM) {
-            kpanic("kernel modules do not reside in kernel memory");
-        }
 
         /* Map underlying pages. */
         for (paddr_t j = pbase, k = pbase; k < pend;
              j += PAGE_SIZE, k += PAGE_SIZE) {
+
+            int root_pgtab_num = j >> PGTAB_SHIFT;
+
+            // We expect that kernel modules resides
+            // in kernel memory. Panic if it does not.
+            if (root_pgtab_num >= ROOT_PGTAB_NUM) {
+                kpanic("kernel modules do not reside in kernel memory");
+            }
 
             // We assume that kernel modules do not
             // overlap with user memory. Panic if it does.
@@ -317,17 +319,17 @@ static void memory_map(struct phys_memory_region mem_layout_[VMEM_REGION])
             }
 
             KASSERT(!mmu_page_map(root_pgtabs[root_pgtab_num], j, k, w, x));
-        }
 
-        /*
-         * Map underlying page table.
-         *
-         * It is important to note that there are no problems to
-         * map multiple times the same page table.
-         */
-        mmu_pgtab_map(root_pgdir,
-                      PADDR(root_pgtabs[root_pgtab_num]),
-                      ALIGN(pbase, PGTAB_SIZE));
+            /*
+             * Map underlying page table.
+             *
+             * It is important to note that there are no problems to
+             * map multiple times the same page table.
+             */
+            mmu_pgtab_map(root_pgdir,
+                          PADDR(root_pgtabs[root_pgtab_num]),
+                          ALIGN(pbase, PGTAB_SIZE));
+        }
     }
 
     /* Load virtual address space and enable MMU. */
