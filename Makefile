@@ -64,7 +64,7 @@ export CFLAGS += -std=c17
 export CFLAGS += -Wall -Wextra -Werror
 export CFLAGS += -Winit-self -Wswitch-default -Wfloat-equal -Wno-pointer-arith
 export CFLAGS += -Wundef -Wshadow -Wuninitialized -Wlogical-op
-export CFLAGS += -Wvla -Wredundant-decls -Wno-error=switch-default
+export CFLAGS += -Wvla -Wredundant-decls
 export CFLAGS += -pedantic-errors
 export CFLAGS += -Wstack-usage=4096
 export CFLAGS += -I $(INCLUDE_DIR)
