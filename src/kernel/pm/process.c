@@ -67,6 +67,25 @@ static struct process *kernel = &processes[0];
 extern void __do_process_setup(void);
 
 /**
+ * @brief Allocates an entry in the process table.
+ *
+ * @returns Upon successful completion, a pointer to the allocated entry in the
+ * process table is returned. Upon failure, NULL is returned instead.
+ */
+static struct process *process_alloc(void)
+{
+    // Find a process control block that is not in use.
+    for (int i = 0; i < PROCESS_MAX; i++) {
+        if (processes[i].state == PROCESS_NOT_STARTED) {
+            // TODO: change process state.
+            return (&processes[i]);
+        }
+    }
+
+    return (NULL);
+}
+
+/**
  * @brief Releases all resources that are used by a process.
  *
  * @param process Target process.
@@ -126,15 +145,7 @@ pid_t process_create(void *(*start)(void *), void *arg)
     struct process *process = NULL;
 
     // Find a process control block that is not in use.
-    for (int i = 0; i < PROCESS_MAX; i++) {
-        if (processes[i].state == PROCESS_NOT_STARTED) {
-            process = &processes[i];
-            break;
-        }
-    }
-
-    // No process available.
-    if (process == NULL) {
+    if ((process = process_alloc()) == NULL) {
         goto error0;
     }
 
@@ -210,6 +221,7 @@ void process_yield(void)
  */
 noreturn void process_exit(void)
 {
+    // TODO: change process state.
     running->state = PROCESS_TERMINATED;
     process_free(running);
     process_yield();
