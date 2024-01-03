@@ -46,9 +46,7 @@ static inline int mm_is_uaddr(vaddr_t vaddr)
  */
 static inline int mm_is_kaddr(vaddr_t vaddr)
 {
-    return ((vaddr < (KERNEL_BASE_VIRT + KMEM_SIZE)) ||
-            ((vaddr >= KPOOL_BASE_VIRT) &&
-             (vaddr < (KPOOL_BASE_VIRT + KPOOL_SIZE))));
+    return (!mm_is_uaddr(vaddr));
 }
 
 /**
