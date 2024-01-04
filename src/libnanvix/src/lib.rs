@@ -18,6 +18,7 @@ pub mod devices;
 pub mod kcall;
 pub mod memory;
 pub mod misc;
+pub mod pm;
 pub mod power;
 pub mod security;
 
