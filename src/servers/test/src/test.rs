@@ -266,6 +266,10 @@ fn check_sizes() -> bool {
         nanvix::log!("unexpected size for VirtualAddress");
         return false;
     }
+    if core::mem::size_of::<memory::PhysicalAddress>() != 4 {
+        nanvix::log!("unexpected size for PhysicalAddress");
+        return false;
+    }
     if core::mem::size_of::<memory::FrameNumber>() != 4 {
         nanvix::log!("unexpected size for FrameNumber");
         return false;
