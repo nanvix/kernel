@@ -12,6 +12,7 @@
 
 #include <nanvix/kernel/kmod.h>
 #include <nanvix/kernel/mm.h>
+#include <nanvix/kernel/pm.h>
 #include <stddef.h>
 #include <stdnoreturn.h>
 
@@ -192,6 +193,17 @@ extern int kcall_vminfo(vmem_t vmem, vaddr_t vaddr, struct pageinfo *buf);
  * a negative number is returned instead.
  */
 extern int kcall_kmod_get(struct kmod *kmod, unsigned index);
+
+/**
+ * @brief Spawns a new process.
+ *
+ * @param image Image of the process.
+ *
+ * @returns Upon successful completion, the PID of the spawned process
+ * is returned. Upon failure, a negative error code is returned
+ * instead.
+ */
+extern pid_t kcall_spawn(void *image);
 
 /*============================================================================*/
 
