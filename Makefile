@@ -97,9 +97,6 @@ export LDFLAGS += -z noexecstack
 all: check-format make-dirs
 	@$(MAKE) -C $(SOURCES_DIR) all
 
-libnanvix: check-format make-dirs
-	@$(MAKE) -C $(SOURCES_DIR)/libnanvix all
-
 # Performs local initialization.
 init:
 	@git config --local core.hooksPath .githooks
