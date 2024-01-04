@@ -4,17 +4,8 @@
  */
 
 //==============================================================================
-// Types
+// Constants
 //==============================================================================
 
-/// Virtual Memory
-pub type VirtualMemory = i32;
-
-/// Virtual address.
-pub type VirtualAddress = u32;
-
-/// Physical address.
-pub type PhysicalAddress = u32;
-
-/// Frame number.
-pub type FrameNumber = u32;
+/// Maximum length of a kernel module command line.
+pub const KMOD_CMDLINE_MAX: usize = 64;

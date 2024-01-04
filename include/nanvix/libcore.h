@@ -29,6 +29,19 @@ extern int __div(int a, int b);
  *============================================================================*/
 
 /**
+ * @brief Compares bytes in memory.
+ *
+ * @param s1 Pointer to object 1.
+ * @param s2 Pointer to object 2.
+ * @param n  Number of bytes to compare.
+ *
+ * @returns An integer greater than, equal to or less than 0, if the object
+ * pointed to by @p s1 is greater than, equal to or less than the object pointed
+ * to by @p s2 respectively.
+ */
+extern int __memcmp(const void *s1, const void *s2, size_t n);
+
+/**
  * @brief Copy bytes in memory.
  *
  * @param s1 Target memory area.

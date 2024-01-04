@@ -17,6 +17,7 @@ use nanvix::{
         VirtualMemory,
         VmCtrlRequest,
     },
+    misc,
     security::AccessMode,
 };
 
@@ -266,12 +267,20 @@ fn check_sizes() -> bool {
         nanvix::log!("unexpected size for VirtualAddress");
         return false;
     }
+    if core::mem::size_of::<memory::PhysicalAddress>() != 4 {
+        nanvix::log!("unexpected size for PhysicalAddress");
+        return false;
+    }
     if core::mem::size_of::<memory::FrameNumber>() != 4 {
         nanvix::log!("unexpected size for FrameNumber");
         return false;
     }
     if core::mem::size_of::<PageInfo>() != 8 {
         nanvix::log!("unexpected size for PageInfo");
+        return false;
+    }
+    if core::mem::size_of::<misc::KernelModule>() != 72 {
+        nanvix::log!("unexpected size for KernelModule");
         return false;
     }
 
@@ -384,6 +393,36 @@ fn change_page_permissions() -> bool {
     true
 }
 
+/// Attempts to retrieve information of a valid kernel module.
+fn get_kmod_info() -> bool {
+    // Attempt to get information of a kernel module.
+    let mut kmod: misc::KernelModule = misc::KernelModule::default();
+    let result: i32 = misc::kmod_get(&mut kmod, 0);
+
+    // Check if we failed to get information of a kernel module.
+    if result != 0 {
+        nanvix::log!("failed to get information of a kernel module");
+        return false;
+    }
+
+    true
+}
+
+/// Attempts to retrieve information of an invalid kernel module.
+fn get_invalid_kmod_info() -> bool {
+    // Attempt to get information of a kernel module.
+    let mut kmod: misc::KernelModule = misc::KernelModule::default();
+    let result: i32 = misc::kmod_get(&mut kmod, u32::MAX);
+
+    // Check if we succeeded to get information of a kernel module.
+    if result == 0 {
+        nanvix::log!("succeded to get information of an invalid kernel module");
+        return false;
+    }
+
+    true
+}
+
 //==============================================================================
 // Public Standalone Functions
 //==============================================================================
@@ -408,4 +447,6 @@ pub fn test_kernel_calls() {
     test!(map_unmap_vmem());
     test!(check_sizes());
     test!(change_page_permissions());
+    test!(get_kmod_info());
+    test!(get_invalid_kmod_info());
 }

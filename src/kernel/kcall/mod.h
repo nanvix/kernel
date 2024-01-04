@@ -10,7 +10,9 @@
  * Imports                                                                    *
  *============================================================================*/
 
+#include <nanvix/kernel/kmod.h>
 #include <nanvix/kernel/mm.h>
+#include <nanvix/kernel/pm.h>
 #include <stddef.h>
 #include <stdnoreturn.h>
 
@@ -180,6 +182,28 @@ extern int kcall_vmctrl(vmem_t vmem, unsigned request, vaddr_t vaddr,
  * negative number is returned instead.
  */
 extern int kcall_vminfo(vmem_t vmem, vaddr_t vaddr, struct pageinfo *buf);
+
+/**
+ * @brief Gets information on a kernel module.
+ *
+ * @param kmod Storage location for kernel module information.
+ * @param index Index of target kernel module.
+ *
+ * @returns Upon successful completion, zero is returned. Upon failure,
+ * a negative number is returned instead.
+ */
+extern int kcall_kmod_get(struct kmod *kmod, unsigned index);
+
+/**
+ * @brief Spawns a new process.
+ *
+ * @param image Image of the process.
+ *
+ * @returns Upon successful completion, the PID of the spawned process
+ * is returned. Upon failure, a negative error code is returned
+ * instead.
+ */
+extern pid_t kcall_spawn(void *image);
 
 /*============================================================================*/
 

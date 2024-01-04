@@ -10,6 +10,7 @@
 #include "mod.h"
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/kcall.h>
+#include <nanvix/kernel/kmod.h>
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/pm.h>
 #include <stdnoreturn.h>
@@ -116,6 +117,12 @@ int do_kcall(word_t arg0, word_t arg1, word_t arg2, word_t arg3, word_t arg4,
         case NR_vminfo:
             ret = kcall_vminfo(
                 (vmem_t)arg0, (vaddr_t)arg1, (struct pageinfo *)arg2);
+            break;
+        case NR_kmod_get:
+            ret = kcall_kmod_get((struct kmod *)arg0, (unsigned)arg1);
+            break;
+        case NR_spawn:
+            ret = kcall_spawn((void *)arg0);
             break;
         default:
             // Copy kernel call parameters.
