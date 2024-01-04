@@ -21,14 +21,20 @@ all-libdev:
 clean-libdev:
 	@$(MAKE) -C libdev clean
 
+all-libnanvix: all-libcore
+	@$(MAKE) -C libnanvix all
+
+clean-libnanvix: clean-libcore
+	@$(MAKE) -C libnanvix clean
+
 all-kernel: all-libcore all-libdev
 	@$(MAKE) -C kernel all
 
 clean-kernel: clean-libcore clean-libdev
 	@$(MAKE) -C kernel clean
 
-all-servers: all-libcore
+all-servers: all-libnanvix
 	@$(MAKE) -C servers all
 
-clean-servers: clean-libcore
+clean-servers: clean-libnanvix
 	@$(MAKE) -C servers clean
