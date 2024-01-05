@@ -144,6 +144,17 @@ extern void kputs(const char *str);
 #define TRUNCATE(x, a) (((x) + ((a)-1)) & ~((a)-1))
 
 /**
+ * @brief Asserts if a number is within a range.
+ *
+ * @param x Number.
+ * @param a Start of range.
+ * @param b End of range.
+ *
+ * @returns Non-zero if @p x is within [a, b) and zero otherwise.
+ */
+#define WITHIN(x, a, b) (((x) >= (a)) && ((x) < (b)))
+
+/**
  * @brief HAL assert.
  *
  * The kassert() function asserts if @p expr evaluates to non-zero. If
