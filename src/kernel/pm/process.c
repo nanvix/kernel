@@ -30,11 +30,6 @@ extern vaddr_t elf32_load(const struct elf32_fhdr *elf);
  *============================================================================*/
 
 /**
- * @brief Maximum number of processes.
- */
-#define PROCESS_MAX 16
-
-/**
  * @brief Process quantum.
  */
 #define PROCESS_QUANTUM 100

@@ -19,6 +19,11 @@
  *============================================================================*/
 
 /**
+ * @brief Maximum number of processes.
+ */
+#define PROCESS_MAX 16
+
+/**
  * @name Process States
  */
 /**@{*/
