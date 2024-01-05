@@ -79,6 +79,16 @@ struct process {
  *============================================================================*/
 
 /**
+ * @brief Checks whether a process is valid or not.
+ *
+ * @param pid PID of target process.
+ *
+ * @returns Upon successful completion, zero is returned. Upon failure, a
+ * negative error code is returned instead.
+ */
+extern int process_is_valid(pid_t pid);
+
+/**
  * @brief Gets the currently running process.
  *
  * The process_get() function returns a pointer to the process that is running

@@ -8,6 +8,7 @@
  *============================================================================*/
 
 #include <elf.h>
+#include <nanvix/errno.h>
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/mm.h>
@@ -111,6 +112,24 @@ static void do_timer(void)
 /*============================================================================*
  * Public Functions                                                           *
  *============================================================================*/
+
+/**
+ * @details Checks if a PID refers to a valid process.
+ */
+int process_is_valid(pid_t pid)
+{
+    // Check if PID is invalid.
+    if (!WITHIN(pid, 0, PROCESS_MAX)) {
+        return (-EINVAL);
+    }
+
+    // Check if process is not started.
+    if (processes[pid].state == PROCESS_NOT_STARTED) {
+        return (-EINVAL);
+    }
+
+    return (0);
+}
 
 /**
  * @details This function returns a pointer to the process that is running in
