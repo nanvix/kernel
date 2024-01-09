@@ -243,17 +243,15 @@ noreturn void process_exit(void)
 }
 
 /**
- * @details This function atomically puts the calling process to sleep. Before
- * sleeping, the spinlock pointed to by @p lock is released.  The calling
+ * @details This function puts the calling process to sleep.  The calling
  * process resumes its execution when another process invokes process_wakeup()
- * on it. When the process wakes up, the spinlock @p lock is re-acquired.
+ * on it.
  */
-void process_sleep(spinlock_t *lock)
+void process_sleep(void)
 {
-    spinlock_unlock(lock);
     process_yield();
-    spinlock_lock(lock);
 }
+
 /**
  * @details This function wakes up the process pointed to by @p process.
  */

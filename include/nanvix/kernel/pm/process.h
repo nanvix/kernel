@@ -132,11 +132,9 @@ extern noreturn void process_exit(void);
 extern void process_init(vmem_t root_vmem);
 
 /**
- * @brief Atomically puts the calling process to sleep.
- *
- * @param lock  Spinlock to release and acquire.
+ * @brief Puts the calling process to sleep.
  */
-extern void process_sleep(spinlock_t *lock);
+extern void process_sleep(void);
 
 /**
  * @brief Wakes up a process.

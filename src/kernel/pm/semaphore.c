@@ -29,19 +29,15 @@ void semaphore_down(struct semaphore *sem)
 {
     KASSERT(sem != NULL);
 
-    spinlock_lock(&sem->lock);
-
     while (true) {
         if (sem->count > 0) {
             break;
         }
 
-        cond_wait(&sem->cond, &sem->lock);
+        cond_wait(&sem->cond);
     }
 
     sem->count--;
-
-    spinlock_unlock(&sem->lock);
 }
 
 /**
@@ -56,8 +52,6 @@ void semaphore_up(struct semaphore *sem)
 {
     KASSERT(sem != NULL);
 
-    spinlock_lock(&sem->lock);
     sem->count++;
     cond_broadcast(&sem->cond);
-    spinlock_unlock(&sem->lock);
 }

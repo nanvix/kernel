@@ -12,19 +12,17 @@
  * @brief Condition variable.
  */
 struct condvar {
-    spinlock_t lock;       /**< Lock for sleeping queue. */
-    struct process *queue; /**< Sleeping queue.          */
+    struct process *queue; /** Sleeping queue. */
 };
 
 /**
  * @brief Static initializer for condition variables.
  *
- * The @p COND_INITIALIZER macro statically initiallizes a
- * conditional variable.
+ * The @p COND_INITIALIZER macro statically initializes a conditional variable.
  */
 #define COND_INITIALIZER                                                       \
     {                                                                          \
-        .lock = SPINLOCK_UNLOCKED, .queue = NULL                               \
+        .queue = NULL                                                          \
     }
 
 /**
@@ -34,7 +32,6 @@ struct condvar {
  */
 static inline void cond_init(struct condvar *cond)
 {
-    spinlock_init(&cond->lock);
     cond->queue = NULL;
 }
 
@@ -42,12 +39,11 @@ static inline void cond_init(struct condvar *cond)
  * @brief Waits on a condition variable.
  *
  * @param cond Target condition variable.
- * @param lock Target spinlock to acquire.
  *
  * @returns Upon successful completion zero is returned. Upon
  * failure, a negative error code is returned instead.
  */
-extern int cond_wait(struct condvar *cond, spinlock_t *lock);
+extern int cond_wait(struct condvar *cond);
 
 /**
  * @brief Unlocks all processes waiting on a condition variable.
