@@ -16,7 +16,7 @@ function setup_qemu
 {
     local TARGET="$1-softmmu"
     local PREFIX=$2/toolchain/qemu
-    local VERSION=8.0.0
+    local VERSION=8.1.0
 
     pushd $PWD
 
