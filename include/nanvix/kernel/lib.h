@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2011-2023 The Maintainers of Nanvix.
+ * Copyright(c) 2011-2024 The Maintainers of Nanvix.
  * Licensed under the MIT License.
  */
 
@@ -142,6 +142,17 @@ extern void kputs(const char *str);
  * @returns A truncated value.
  */
 #define TRUNCATE(x, a) (((x) + ((a)-1)) & ~((a)-1))
+
+/**
+ * @brief Asserts if a number is within a range.
+ *
+ * @param x Number.
+ * @param a Start of range.
+ * @param b End of range.
+ *
+ * @returns Non-zero if @p x is within [a, b) and zero otherwise.
+ */
+#define WITHIN(x, a, b) (((x) >= (a)) && ((x) < (b)))
 
 /**
  * @brief HAL assert.

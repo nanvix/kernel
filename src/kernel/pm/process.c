@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2011-2023 The Maintainers of Nanvix.
+ * Copyright(c) 2011-2024 The Maintainers of Nanvix.
  * Licensed under the MIT License.
  */
 
@@ -8,6 +8,7 @@
  *============================================================================*/
 
 #include <elf.h>
+#include <nanvix/errno.h>
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/mm.h>
@@ -27,11 +28,6 @@ extern vaddr_t elf32_load(const struct elf32_fhdr *elf);
 /*============================================================================*
  * Constants                                                                  *
  *============================================================================*/
-
-/**
- * @brief Maximum number of processes.
- */
-#define PROCESS_MAX 16
 
 /**
  * @brief Process quantum.
@@ -111,6 +107,24 @@ static void do_timer(void)
 /*============================================================================*
  * Public Functions                                                           *
  *============================================================================*/
+
+/**
+ * @details Checks if a PID refers to a valid process.
+ */
+int process_is_valid(pid_t pid)
+{
+    // Check if PID is invalid.
+    if (!WITHIN(pid, 0, PROCESS_MAX)) {
+        return (-EINVAL);
+    }
+
+    // Check if process is not started.
+    if (processes[pid].state == PROCESS_NOT_STARTED) {
+        return (-EINVAL);
+    }
+
+    return (0);
+}
 
 /**
  * @details This function returns a pointer to the process that is running in
@@ -229,17 +243,15 @@ noreturn void process_exit(void)
 }
 
 /**
- * @details This function atomically puts the calling process to sleep. Before
- * sleeping, the spinlock pointed to by @p lock is released.  The calling
+ * @details This function puts the calling process to sleep.  The calling
  * process resumes its execution when another process invokes process_wakeup()
- * on it. When the process wakes up, the spinlock @p lock is re-acquired.
+ * on it.
  */
-void process_sleep(spinlock_t *lock)
+void process_sleep(void)
 {
-    spinlock_unlock(lock);
     process_yield();
-    spinlock_lock(lock);
 }
+
 /**
  * @details This function wakes up the process pointed to by @p process.
  */

@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2011-2023 The Maintainers of Nanvix.
+ * Copyright(c) 2011-2024 The Maintainers of Nanvix.
  * Licensed under the MIT License.
  */
 
@@ -17,6 +17,11 @@
 /*============================================================================*
  * Constants                                                                  *
  *============================================================================*/
+
+/**
+ * @brief Maximum number of processes.
+ */
+#define PROCESS_MAX 16
 
 /**
  * @name Process States
@@ -79,6 +84,16 @@ struct process {
  *============================================================================*/
 
 /**
+ * @brief Checks whether a process is valid or not.
+ *
+ * @param pid PID of target process.
+ *
+ * @returns Upon successful completion, zero is returned. Upon failure, a
+ * negative error code is returned instead.
+ */
+extern int process_is_valid(pid_t pid);
+
+/**
  * @brief Gets the currently running process.
  *
  * The process_get() function returns a pointer to the process that is running
@@ -117,11 +132,9 @@ extern noreturn void process_exit(void);
 extern void process_init(vmem_t root_vmem);
 
 /**
- * @brief Atomically puts the calling process to sleep.
- *
- * @param lock  Spinlock to release and acquire.
+ * @brief Puts the calling process to sleep.
  */
-extern void process_sleep(spinlock_t *lock);
+extern void process_sleep(void);
 
 /**
  * @brief Wakes up a process.

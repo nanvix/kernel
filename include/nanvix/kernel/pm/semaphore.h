@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2011-2023 The Maintainers of Nanvix.
+ * Copyright(c) 2011-2024 The Maintainers of Nanvix.
  * Licensed under the MIT License.
  */
 
@@ -15,7 +15,6 @@
  */
 struct semaphore {
     int count;           /** Semaphore counter.  */
-    spinlock_t lock;     /** Semaphore lock.     */
     struct condvar cond; /** Condition variable. */
 };
 
@@ -30,7 +29,7 @@ struct semaphore {
  */
 #define SEMAPHORE_INITIALIZER(x)                                               \
     {                                                                          \
-        .count = (x), .lock = SPINLOCK_UNLOCKED, .cond = COND_INITIALIZER,     \
+        .count = (x), .cond = COND_INITIALIZER,                                \
     }
 
 /**
@@ -49,7 +48,6 @@ static inline void semaphore_init(struct semaphore *sem, int x)
     KASSERT(sem != NULL);
 
     sem->count = x;
-    spinlock_init(&sem->lock);
     cond_init(&sem->cond);
 }
 

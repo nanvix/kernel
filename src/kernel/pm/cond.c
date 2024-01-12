@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2011-2023 The Maintainers of Nanvix.
+ * Copyright(c) 2011-2024 The Maintainers of Nanvix.
  * Licensed under the MIT License.
  */
 
@@ -18,26 +18,22 @@
 /**
  * @details This function causes the calling process to block, until the
  * condition variable pointed to by @p cond is signaled and the calling process
- * is chosen to run. If @p lock is unlocked before the calling process blocks,
- * and when it wakes up the lock is re-acquired.
+ * is chosen to run.
  *
  * @see cond_broadcast()
  */
-int cond_wait(struct condvar *cond, spinlock_t *lock)
+int cond_wait(struct condvar *cond)
 {
     KASSERT(cond != NULL);
-    KASSERT(lock != NULL);
 
     struct process *curr_process = process_get_curr();
 
     /* Enqueue calling process. */
-    spinlock_lock(&cond->lock);
     curr_process->next = cond->queue;
     cond->queue = curr_process;
-    spinlock_unlock(&cond->lock);
 
     /* Put the calling process to sleep. */
-    process_sleep(lock);
+    process_sleep();
 
     return (0);
 }
@@ -52,15 +48,11 @@ int cond_broadcast(struct condvar *cond)
 {
     KASSERT(cond != NULL);
 
-    spinlock_lock(&cond->lock);
-
     /* Wakeup all processes. */
     while (UNLIKELY(cond->queue != NULL)) {
         process_wakeup(cond->queue);
         cond->queue = cond->queue->next;
     }
-
-    spinlock_unlock(&cond->lock);
 
     return (0);
 }
