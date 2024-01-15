@@ -10,6 +10,7 @@
 #include <elf.h>
 #include <nanvix/cc.h>
 #include <nanvix/kernel/hal.h>
+#include <nanvix/kernel/ipc/mailbox.h>
 #include <nanvix/kernel/kargs.h>
 #include <nanvix/kernel/kmod.h>
 #include <nanvix/kernel/lib.h>
@@ -120,6 +121,9 @@ noreturn void kmain(struct kargs *args)
     hal_init();
     vmem_t root_vmem = mm_init();
     pm_init(root_vmem);
+
+    // Initialize IPC modules.
+    mailbox_init();
 
     test_frame();
     test_kpool();
