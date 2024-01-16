@@ -241,6 +241,37 @@ extern int kcall_semop(int id, int op);
  */
 extern int kcall_semctl(int id, int cmd, int val);
 
+/**
+ * @brief Gets the ID of the calling thread.
+ *
+ * @returns The ID of the calling thread is returned.
+ */
+extern tid_t kcall_thread_get_id(void);
+
+/**
+ * @brief Creates a new thread.
+ *
+ * @param pid PID of the target process.
+ *
+ * @returns Upon successful completion, the ID of the newly created
+ * thread is returned. Upon failure, a negative error code is
+ * returned instead.
+ */
+extern tid_t kcall_thread_create(pid_t pid);
+
+/**
+ * @brief Exits the calling thread.
+ */
+extern noreturn void kcall_thread_exit(void);
+
+/**
+ * @brief Yields the processor to another thread.
+ *
+ * @returns Upon successful completion, zero is returned. Upon failure,
+ * a negative error code is returned instead.
+ */
+extern noreturn void kcall_thread_yield(void);
+
 /*============================================================================*/
 
 #endif /* KERNEL_KCALL_MOD_H_ */

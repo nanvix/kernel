@@ -11,6 +11,7 @@
 #include <nanvix/errno.h>
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/lib.h>
+#include <nanvix/kernel/log.h>
 #include <nanvix/kernel/mm.h>
 #include <nanvix/kernel/pm.h>
 #include <stdnoreturn.h>
@@ -44,14 +45,9 @@ extern vaddr_t elf32_load(const struct elf32_fhdr *elf);
 static struct process processes[PROCESS_MAX];
 
 /**
- * @brief Running process.
- */
-static struct process *running = NULL;
-
-/**
  * @brief Kernel process.
  */
-static struct process *kernel = &processes[0];
+static struct process *kernel = &processes[KERNEL_PROCESS];
 
 /*============================================================================*
  * Private Functions                                                          *
@@ -72,8 +68,8 @@ static struct process *process_alloc(void)
 {
     // Find a process control block that is not in use.
     for (int i = 0; i < PROCESS_MAX; i++) {
-        if (processes[i].state == PROCESS_NOT_STARTED) {
-            processes[i].state = PROCESS_STARTED;
+        if (!processes[i].active) {
+            processes[i].active = true;
             return (&processes[i]);
         }
     }
@@ -88,20 +84,11 @@ static struct process *process_alloc(void)
  */
 static void process_free(struct process *process)
 {
+    KASSERT(process != kernel);
     process->pid = 0;
-    process->state = PROCESS_NOT_STARTED;
+    process->active = false;
     process->image = NULL;
-    KASSERT(kpage_put(process->stack) == 0);
-}
-
-/**
- * @brief Handles a timer interrupt.
- */
-static void do_timer(void)
-{
-    if (running->quantum++ >= PROCESS_QUANTUM) {
-        process_yield();
-    }
+    thread_free_all(process->pid);
 }
 
 /*============================================================================*
@@ -118,12 +105,31 @@ int process_is_valid(pid_t pid)
         return (-EINVAL);
     }
 
-    // Check if process is not started.
-    if (processes[pid].state == PROCESS_NOT_STARTED) {
+    // Check if process is not active.
+    if (!processes[pid].active) {
         return (-EINVAL);
     }
 
     return (0);
+}
+
+/**
+ * @details This function returns a pointer to the process control block of the
+ * process whose ID is equal to @p pid.
+ */
+struct process *process_get(pid_t pid)
+{
+    // Check if PID is invalid.
+    if (!WITHIN(pid, 0, PROCESS_MAX)) {
+        return (NULL);
+    }
+
+    // Check if process is not active.
+    if (!processes[pid].active) {
+        return (NULL);
+    }
+
+    return (&processes[pid]);
 }
 
 /**
@@ -132,7 +138,8 @@ int process_is_valid(pid_t pid)
  */
 struct process *process_get_curr(void)
 {
-    return (running);
+    // Should this be checked before accessing?
+    return &processes[thread_get_pid(thread_get_curr())];
 }
 
 /**
@@ -140,6 +147,7 @@ struct process *process_get_curr(void)
  */
 void do_process_setup(void)
 {
+    struct process *running = process_get_curr();
     const vaddr_t user_fn_addr = elf32_load(running->image);
     KASSERT(user_fn_addr == USER_BASE_VIRT);
 
@@ -167,31 +175,28 @@ pid_t process_create(const void *image)
         goto error1;
     }
 
-    // Create a stack.
-    void *kstack = kpage_get(true);
-    if (kstack == NULL) {
+    // Initializes process control block.
+    process->pid = ++next_pid;
+    process->image = image;
+    process->vmem = vmem;
+
+    // Creates a thread.
+    if ((process->tid = thread_create(process->pid, true)) < 0) {
         goto error2;
     }
 
-    // Initializes process control block.
-    process->pid = ++next_pid;
-    process->age = 1;
-    process->state = PROCESS_READY;
-    process->image = image;
-    process->stack = kstack;
-    process->vmem = vmem;
-
-    // FIXME: assert if the following command will succeed.
     const void *ksp = interrupt_forge_stack((void *)(USER_END_VIRT),
-                                            process->stack,
+                                            thread_get_stack(process->tid),
                                             (void (*)(void))USER_BASE_VIRT,
                                             __do_process_setup);
+    KASSERT(ksp != NULL);
 
-    // FIXME: assert if the following command will succeed.
-    context_create(&process->ctx,
-                   vmem_pgdir_get(process->vmem),
-                   (const void *)((vaddr_t)process->stack + PAGE_SIZE),
-                   ksp);
+    KASSERT(
+        context_create(
+            thread_get_ctx(process->tid),
+            vmem_pgdir_get(process->vmem),
+            (const void *)((vaddr_t)thread_get_stack(process->tid) + PAGE_SIZE),
+            ksp) == 0);
 
     return (process->pid);
 
@@ -204,62 +209,32 @@ error0:
 }
 
 /**
- * @details Yields the CPU.
- */
-void process_yield(void)
-{
-    running->age = 0;
-    running->state = PROCESS_READY;
-
-    struct process *prev = running;
-    struct process *next = prev;
-
-    /* Selects the next process to run. */
-    for (int i = 0; i < PROCESS_MAX; i++) {
-        if (processes[i].state == PROCESS_READY) {
-            if (processes[i].age++ >= next->age) {
-                next = &processes[i];
-            }
-        }
-    }
-
-    running = next;
-    running->age = 0;
-    running->quantum = 0;
-    running->state = PROCESS_RUNNING;
-
-    __context_switch(&prev->ctx, &next->ctx);
-}
-
-/**
  * @brief Terminates the calling process.
  */
 noreturn void process_exit(void)
 {
-    KASSERT(running != kernel);
-    running->state = PROCESS_TERMINATED;
+    struct process *running = process_get_curr();
     process_free(running);
-    running = kernel;
-    process_yield();
+    thread_yield();
     UNREACHABLE();
 }
 
 /**
  * @details This function puts the calling process to sleep.  The calling
- * process resumes its execution when another process invokes process_wakeup()
+ * process resumes its execution when another process invokes `process_wakeup()`
  * on it.
  */
 void process_sleep(void)
 {
-    process_yield();
+    thread_sleep_all();
 }
 
 /**
  * @details This function wakes up the process pointed to by @p process.
  */
-void process_wakeup(struct process *t)
+void process_wakeup(struct process *p)
 {
-    t->state = PROCESS_READY;
+    thread_wakeup_all(p->pid);
 }
 
 /**
@@ -267,20 +242,16 @@ void process_wakeup(struct process *t)
  */
 void process_init(vmem_t root_vmem)
 {
-    kprintf("[kernel][pm] initializing process system...");
+    log(INFO, "initializing process system...");
 
     // Initializes the table of processes.
     for (int i = 0; i < PROCESS_MAX; i++) {
-        processes[i].age = 0;
-        processes[i].state = PROCESS_NOT_STARTED;
+        processes[i].active = false;
         processes[i].image = NULL;
     }
 
     // Initialize.
     kernel->vmem = (vmem_t)root_vmem;
-    kernel->state = PROCESS_RUNNING;
-
-    running = &processes[0];
-
-    interrupt_register(INTERRUPT_TIMER, do_timer);
+    kernel->active = true;
+    thread_init();
 }
