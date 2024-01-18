@@ -44,6 +44,9 @@ pub enum KcallNumbers {
     VmemInfo = 15,
     KmodGet = 16,
     Spawn = 17,
+    Semget = 18,
+    Semop = 19,
+    Semctl = 20,
 }
 
 //==============================================================================
