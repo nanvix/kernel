@@ -14,6 +14,7 @@ SRC_C = $(wildcard hal/arch/*.c)      \
 		$(wildcard hal/*.c)           \
 		$(wildcard ipc/mailbox/*.c)   \
 		$(wildcard kcall/*.c)         \
+		$(wildcard kcall/sem/*.c)     \
 		$(wildcard lib/*.c)           \
 		$(wildcard log/*.c)           \
 		$(wildcard pm/*.c)            \
