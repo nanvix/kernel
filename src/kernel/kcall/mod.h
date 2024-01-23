@@ -232,7 +232,9 @@ extern int kcall_semop(int id, int op);
  *
  * @param id Semaphore Identifier.
  *
- * @param op Operation.
+ * @param cmd Command.
+ *
+ * @param val Value.
  *
  * @returns Upon successful, zero code or semaphore value. Upon Failure,
  * a negative error code is returned instead.
