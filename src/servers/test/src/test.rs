@@ -424,8 +424,7 @@ fn get_invalid_kmod_info() -> bool {
     true
 }
 
-/* Test if Semaphore kernel calls is working. */
-/**@}*/
+/// Test if Semaphore Get kernel call is working.
 fn test_semget_call() -> bool {
     let key: u32 = 1;
     let result: i32 = pm::semget(key);
@@ -436,6 +435,7 @@ fn test_semget_call() -> bool {
     true
 }
 
+/// Test if Semaphore Handler kernel call is working.
 fn test_semop_call() -> bool {
     let id: u32 = 1;
     let op: u32 = 1;
@@ -446,6 +446,8 @@ fn test_semop_call() -> bool {
 
     true
 }
+
+/// Test if Semaphore Controler kernel call is working.
 fn test_semctl_call() -> bool {
     let id: u32 = 1;
     let cmd: u32 = 1;
@@ -457,7 +459,6 @@ fn test_semctl_call() -> bool {
 
     true
 }
-/**@}*/
 
 //==============================================================================
 // Public Standalone Functions
