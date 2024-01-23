@@ -236,8 +236,10 @@ void process_yield(void)
  */
 noreturn void process_exit(void)
 {
+    KASSERT(running != kernel);
     running->state = PROCESS_TERMINATED;
     process_free(running);
+    running = kernel;
     process_yield();
     UNREACHABLE();
 }
