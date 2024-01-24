@@ -49,7 +49,10 @@
 #define NR_vminfo 15      /** kernel_vminfo()           */
 #define NR_kmod_get 16    /** kernel_kmod_get()         */
 #define NR_spawn 17       /** kernel_spawn()            */
-#define NR_last_kcall 18  /** NR_SYSCALLS definer       */
+#define NR_semget 18      /** kernel_semget()           */
+#define NR_semop 19       /** kernel_semop()            */
+#define NR_semctl 20      /** kernel_semctl()           */
+#define NR_last_kcall 21  /** NR_SYSCALLS definer       */
 #define NR__exit          /** kernel_exit()             */
 #define NR_process_get_id /** kernel_process_get_id()   */
 #define NR_process_create /** kernel_process_create()   */

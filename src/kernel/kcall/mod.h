@@ -205,6 +205,42 @@ extern int kcall_kmod_get(struct kmod *kmod, unsigned index);
  */
 extern pid_t kcall_spawn(void *image);
 
+/**
+ * @brief Get a semaphore.
+ *
+ * @param key Key for allow semaphore access.
+ *
+ * @returns Upon successful, Semaphore ID. Upon Failure, a negative
+ * error code is returned instead.
+ */
+extern int kcall_semget(unsigned key);
+
+/**
+ * @brief Verify if process can operate in semaphore (id), and operate (op):
+ *
+ * @param id Semaphore Identifier.
+ *
+ * @param op Operation.
+ *
+ * @returns Upon successful, zero code. Upon Failure, a negative
+ * error code is returned instead.
+ */
+extern int kcall_semop(int id, int op);
+
+/**
+ * @brief Verify if process can control the semaphore (id), and exec (cmd).
+ *
+ * @param id Semaphore Identifier.
+ *
+ * @param cmd Command.
+ *
+ * @param val Value.
+ *
+ * @returns Upon successful, zero code or semaphore value. Upon Failure,
+ * a negative error code is returned instead.
+ */
+extern int kcall_semctl(int id, int cmd, int val);
+
 /*============================================================================*/
 
 #endif /* KERNEL_KCALL_MOD_H_ */

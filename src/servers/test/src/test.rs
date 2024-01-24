@@ -18,6 +18,7 @@ use nanvix::{
         VmCtrlRequest,
     },
     misc,
+    pm,
     security::AccessMode,
 };
 
@@ -423,6 +424,42 @@ fn get_invalid_kmod_info() -> bool {
     true
 }
 
+/// Test if Semaphore Get kernel call is working.
+fn test_semget_call() -> bool {
+    let key: u32 = 1;
+    let result: i32 = pm::semget(key);
+    if result != 1 {
+        return false;
+    }
+
+    true
+}
+
+/// Test if Semaphore Handler kernel call is working.
+fn test_semop_call() -> bool {
+    let id: u32 = 1;
+    let op: u32 = 1;
+    let result: i32 = pm::semop(id, op);
+    if result != 2 {
+        return false;
+    }
+
+    true
+}
+
+/// Test if Semaphore Controler kernel call is working.
+fn test_semctl_call() -> bool {
+    let id: u32 = 1;
+    let cmd: u32 = 1;
+    let val: u32 = 1;
+    let result: i32 = pm::semctl(id, cmd, val);
+    if result != 3 {
+        return false;
+    }
+
+    true
+}
+
 //==============================================================================
 // Public Standalone Functions
 //==============================================================================
@@ -449,4 +486,7 @@ pub fn test_kernel_calls() {
     test!(change_page_permissions());
     test!(get_kmod_info());
     test!(get_invalid_kmod_info());
+    test!(test_semget_call());
+    test!(test_semop_call());
+    test!(test_semctl_call());
 }

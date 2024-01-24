@@ -124,6 +124,15 @@ int do_kcall(word_t arg0, word_t arg1, word_t arg2, word_t arg3, word_t arg4,
         case NR_spawn:
             ret = kcall_spawn((void *)arg0);
             break;
+        case NR_semget:
+            ret = kcall_semget((unsigned)arg0);
+            break;
+        case NR_semop:
+            ret = kcall_semop((int)arg0, (int)arg1);
+            break;
+        case NR_semctl:
+            ret = kcall_semctl((int)arg0, (int)arg1, (int)arg2);
+            break;
         default:
             // Copy kernel call parameters.
             scoreboard.kcall_nr = kcall_nr;
