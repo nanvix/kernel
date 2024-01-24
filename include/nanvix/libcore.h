@@ -87,6 +87,19 @@ extern size_t __strlen(const char *str);
  */
 extern char *__strncpy(char *s1, const char *s2, size_t n);
 
+/**
+ * @brief Compares part of two strings.
+ *
+ * @param s1 Pointer to first string.
+ * @param s2 Pointer to second string.
+ * @param n  Number of characters to consider.
+ *
+ * @returns An integer greater than, equal to or less than 0, if the possibly
+ * null-terminated array pointed to by @p s1 is greater than, equal to or less
+ * than the possibly null-terminated array pointed to by @p s2 respectively.
+ */
+extern int __strncmp(const char *s1, const char *s2, size_t n);
+
 /*============================================================================*
  * String Formatting                                                          *
  *============================================================================*/
