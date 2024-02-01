@@ -11,11 +11,30 @@
 #include <nanvix/kernel/pm/cond.h>
 
 /**
+ * @brief Maximum Number of semaphores in the system.
+ */
+#define SEMAPHORE_MAX 128
+
+/**
+ * @brief Active semaphore?
+ */
+#define SEMAPHORE_ACTIVE 1
+
+/**
+ * @brief Inative semaphore?
+ */
+#define SEMAPHORE_INACTIVE 0
+
+/**
  * @brief Semaphore
  */
 struct semaphore {
-    int count;           /** Semaphore counter.  */
-    struct condvar cond; /** Condition variable. */
+    int count;                    /** Semaphore counter.  */
+    struct condvar cond;          /** Condition variable. */
+    int state;                    /** Semaphore state     */
+    pid_t proc_owner;             /** Owner process.      */
+    pid_t proc_user[PROCESS_MAX]; /** Users process.      */
+    unsigned key;                 /** Semphore key.       */
 };
 
 /**
@@ -50,6 +69,49 @@ static inline void semaphore_init(struct semaphore *sem, int x)
     sem->count = x;
     cond_init(&sem->cond);
 }
+
+/**
+ * @brief Set process as semaphore user.
+ *
+ * @param semid Semaphore id.
+ *
+ * @return (0) if successful , (-1) otherwise.
+ */
+extern int semaphore_get(int semid);
+
+/**
+ * @brief Initialize semaphore structure.
+ *
+ * @param key Semaphore key.
+ *
+ * @return (0) if successful , (-1) otherwise.
+ */
+extern int semaphore_create(unsigned key);
+
+/**
+ * @brief Delete or drop semaphore.
+ *
+ * @param semid Semaphore id.
+ *
+ * @return (0) if successful , (-1) otherwise.
+ */
+extern int semaphore_delete(int semid);
+
+/*
+ * @brief Initialize semaphores table.
+ */
+extern void semtable_init(void);
+
+/*
+ * @brief Initialize control variables.
+ *
+ * @param semid Semaphore id.
+ *
+ * @param count Semaphore counter.
+ *
+ * @return 0 if successful, -1 otherwise.
+ */
+extern int semaphore_set(int semid, int count);
 
 /**
  * @brief Performs a down operation in a semaphore.
