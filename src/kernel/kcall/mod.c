@@ -133,6 +133,18 @@ int do_kcall(word_t arg0, word_t arg1, word_t arg2, word_t arg3, word_t arg4,
         case NR_semctl:
             ret = kcall_semctl((int)arg0, (int)arg1, (int)arg2);
             break;
+        case NR_thread_get_id:
+            ret = kcall_thread_get_id();
+            break;
+        case NR_thread_create:
+            ret = kcall_thread_create((pid_t)arg0);
+            break;
+        case NR_thread_exit:
+            kcall_thread_exit();
+            break;
+        case NR_thread_yield:
+            kcall_thread_yield();
+            break;
         default:
             // Copy kernel call parameters.
             scoreboard.kcall_nr = kcall_nr;

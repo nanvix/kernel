@@ -24,24 +24,9 @@
 #define PROCESS_MAX 16
 
 /**
- * @name Process States
+ * @brief Kernel process ID.
  */
-/**@{*/
-#define PROCESS_NOT_STARTED 0 /** Not Started */
-#define PROCESS_STARTED 1     /** Started     */
-#define PROCESS_READY 2       /** Ready       */
-#define PROCESS_RUNNING 3     /** Running     */
-#define PROCESS_TERMINATED 4  /** Terminated  */
-/**@}*/
-
-/*============================================================================*
- * Types                                                                      *
- *============================================================================*/
-
-/**
- * @brief Process ID.
- */
-typedef int pid_t;
+#define KERNEL_PROCESS 0
 
 /*============================================================================*
  * Structures                                                                 *
@@ -55,9 +40,9 @@ struct process {
      * @name Control variables.
      */
     /**@{*/
-    pid_t pid;    /** Process ID. */
-    unsigned age; /** Age.       */
-    short state;  /** State.     */
+    pid_t pid;   /** Process ID.     */
+    tid_t tid;   /** Main Thread ID. */
+    bool active; /** Active?         */
     /**@}*/
 
     /**
@@ -72,9 +57,6 @@ struct process {
      * @name Scheduling variables.
      */
     /**@{*/
-    unsigned quantum;     /** Quantum.                */
-    struct context ctx;   /** Execution context.      */
-    byte_t *stack;        /** Stack.                  */
     struct process *next; /** Next process in a queue. */
     /**@}*/
 };
@@ -139,8 +121,8 @@ extern void process_sleep(void);
 /**
  * @brief Wakes up a process.
  *
- * @param t Target process.
+ * @param p Target process.
  */
-extern void process_wakeup(struct process *t);
+extern void process_wakeup(struct process *p);
 
 #endif /* NANVIX_KERNEL_PM_PROCESS_H_ */

@@ -46,4 +46,14 @@
  */
 typedef uint32_t mode_t;
 
+/**
+ * @brief Process ID.
+ */
+typedef int pid_t;
+
+/**
+ * @brief Thread ID.
+ */
+typedef int tid_t;
+
 #endif /* !NANVIX_TYPES_H_ */
