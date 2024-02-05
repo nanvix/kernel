@@ -19,6 +19,7 @@ use nanvix::{
     },
     misc,
     pm,
+    ipc,
     security::AccessMode,
 };
 
@@ -436,6 +437,16 @@ fn test_semget_call() -> bool {
     true
 }
 
+// Test systemcall for ipc module
+fn test_mailbox_tag() -> bool {
+    let mbxid: i32 = 58; // 58 is the ENOTSUP error code
+    if mbxid != ipc::mailbox_tag(mbxid){
+        return false;
+    }
+
+    true
+}
+
 /// Test if Semaphore Handler kernel call is working.
 fn test_semop_call() -> bool {
     let id: u32 = 1;
@@ -490,4 +501,5 @@ pub fn test_kernel_calls() {
     test!(test_semget_call());
     test!(test_semop_call());
     test!(test_semctl_call());
+    test!(test_mailbox_tag());
 }

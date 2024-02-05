@@ -216,6 +216,16 @@ extern pid_t kcall_spawn(void *image);
 extern int kcall_semget(unsigned key);
 
 /**
+ * @brief Get mailbox tag.
+ *
+ * @param mbxid mailbox ID.
+ *
+ * @returns Upon successful, mailbox tag. Upon Failure, a negative
+ * error code is returned instead.
+ */
+extern int kcall_mailbox_tag(int mbxid);
+
+/**
  * @brief Verify if process can operate in semaphore (id), and operate (op):
  *
  * @param id Semaphore Identifier.
