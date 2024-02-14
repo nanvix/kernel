@@ -84,7 +84,7 @@ extern int semaphore_get(int semid);
  *
  * @param key Semaphore key.
  *
- * @return (0) if successful , (-1) otherwise.
+ * @return (0) if successful , (-1) otherwise, (semid) if key already exist.
  */
 extern int semaphore_create(unsigned key);
 
