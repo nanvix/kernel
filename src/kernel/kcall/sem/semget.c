@@ -20,8 +20,28 @@
  */
 int kcall_semget(unsigned key)
 {
-    // TODO: https://github.com/nanvix/microkernel/issues/388
+    int semid = -1;
+    int ret = semaphore_create(key);
 
-    // Return to test syscall.
-    return (key);
+    // Try create a semaphore.
+    switch (ret) {
+        case 0:
+            return (0);
+        case -1:
+            return (-1);
+        default:
+            semid = ret;
+            break;
+    }
+
+    // Try get semaphore.
+    ret = semaphore_get(semid);
+    switch (ret) {
+        case 0:
+            return (0);
+        default:
+            return (-1);
+    }
+
+    return (-1);
 }
