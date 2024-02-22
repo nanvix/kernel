@@ -428,7 +428,8 @@ fn get_invalid_kmod_info() -> bool {
 fn test_semget_call() -> bool {
     let key: u32 = 1;
     let result: i32 = pm::semget(key);
-    if result != 1 {
+
+    if result == -1 {
         return false;
     }
 

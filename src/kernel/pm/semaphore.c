@@ -181,13 +181,14 @@ int semaphore_get(int semid)
  *
  * @param key Semaphore key.
  *
- * @return (0) if successful , (-1) otherwise.
+ * @return (0) if successful , (-1) otherwise, (semid) if key already exist.
  */
 int semaphore_create(unsigned key)
 {
     // Check if key already exist
-    if (key_check(key) != -1) {
-        return (-1);
+    int key_semid = key_check(key);
+    if (key_semid != -1) {
+        return (key_semid);
     }
 
     // Found SEMAPHORE_INACTIVE semaphores
