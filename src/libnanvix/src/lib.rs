@@ -20,6 +20,7 @@ pub mod memory;
 pub mod misc;
 pub mod pm;
 pub mod power;
+pub mod ipc;
 pub mod security;
 
 #[macro_export]

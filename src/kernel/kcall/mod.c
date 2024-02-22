@@ -145,6 +145,9 @@ int do_kcall(word_t arg0, word_t arg1, word_t arg2, word_t arg3, word_t arg4,
         case NR_thread_yield:
             kcall_thread_yield();
             break;
+        case NR_mailbox_tag:
+            ret = kcall_mailbox_tag((int)arg0);
+            break;
         default:
             // Copy kernel call parameters.
             scoreboard.kcall_nr = kcall_nr;
