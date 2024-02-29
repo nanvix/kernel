@@ -11,6 +11,7 @@
  *============================================================================*/
 
 #include <nanvix/kernel/hal.h>
+#include <nanvix/kernel/lib.h>
 #include <nanvix/types.h>
 
 /*============================================================================*
@@ -48,7 +49,13 @@ struct thread {
     short state;        /** State.                  */
     unsigned quantum;   /** Quantum.                */
     struct context ctx; /** Execution context.      */
-    byte_t *stack;      /** Stack.                  */
+    byte_t *kstack;     /** Kernel Stack.           */
+    byte_t *ustack;     /** User Stack.             */
+    void *(*start)();   /** Start routine.          */
+    void *args;         /** Arguments.              */
+    void *retval;       /** Return value.           */
+    bool detached;      /** Detached.               */
+    bitmap_t waitmap;   /** Wait bitmap.            */
 };
 
 /*============================================================================*
@@ -63,13 +70,21 @@ extern void thread_init(void);
 /**
  * @brief Creates a new thread.
  *
- * @param pid  ID of the target process.
- * @param root Root thread?
+ * @param p A pointer to the target process.
+ * @param start Start routine.
+ * @param args Arguments.
+ * @param caller Thread caller function.
+ *
+ * @note This function has two different behaviors. If called from
+ * `process_create()`, it creates the root process thread, thus parameters
+ * `args` and `caller` must be NULL. If called from `kcall_thread_create()`, it
+ * creates a new thread for the calling process.
  *
  * @returns Upon successful completion, the ID of the created thread is
  * returned. Upon failure, a negative error code is returned instead.
  */
-extern tid_t thread_create(pid_t pid, bool root);
+extern tid_t thread_create(struct process *p, void *(*start)(), void *args,
+                           void (*caller)(void));
 
 /**
  * @brief Releases the target thread entry.
@@ -121,16 +136,6 @@ extern tid_t thread_get_curr(void);
 extern pid_t thread_get_pid(tid_t tid);
 
 /**
- * @brief Gets the stack of the target thread.
- *
- * @param tid ID of the target thread.
- *
- * @returns Upon successful completion, a pointer to the stack of the target
- * thread is returned. Upon failure, NULL is returned instead.
- */
-extern byte_t *thread_get_stack(tid_t tid);
-
-/**
  * @brief Yields the processor to another thread.
  */
 extern void thread_yield(void);
@@ -168,6 +173,27 @@ extern int thread_wakeup_all(pid_t pid);
 /**
  * @brief Exits the calling thread.
  */
-extern void thread_exit(void);
+extern void thread_exit(void *retval);
+
+/**
+ * @brief Waits for the target thread to terminate.
+ *
+ * @param tid ID of the target thread.
+ * @param retval Location to store the return value of the target thread.
+ *
+ * @returns Upon successful completion, zero is returned.
+ * Upon failure, a negative number is returned instead.
+ */
+extern int thread_join(tid_t tid, void **retval);
+
+/**
+ * @brief Detaches the target thread.
+ *
+ * @param tid ID of the target thread.
+ *
+ * @returns Upon successful completion, zero is returned.
+ * Upon failure, a negative number is returned instead.
+ */
+extern int thread_detach(tid_t tid);
 
 #endif /* NANVIX_KERNEL_PM_THREAD_H_ */

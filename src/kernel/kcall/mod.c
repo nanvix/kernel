@@ -137,16 +137,23 @@ int do_kcall(word_t arg0, word_t arg1, word_t arg2, word_t arg3, word_t arg4,
             ret = kcall_thread_get_id();
             break;
         case NR_thread_create:
-            ret = kcall_thread_create((pid_t)arg0);
+            ret = kcall_thread_create(
+                (void (*)())arg0, (void *)arg1, (void (*)(void))arg2);
             break;
         case NR_thread_exit:
-            kcall_thread_exit();
+            kcall_thread_exit((void *)arg0);
             break;
         case NR_thread_yield:
             kcall_thread_yield();
             break;
         case NR_mailbox_tag:
             ret = kcall_mailbox_tag((int)arg0);
+            break;
+        case NR_thread_join:
+            ret = kcall_thread_join((tid_t)arg0, (void **)arg1);
+            break;
+        case NR_thread_detach:
+            ret = kcall_thread_detach((tid_t)arg0);
             break;
         default:
             // Copy kernel call parameters.

@@ -54,11 +54,6 @@ static struct process *kernel = &processes[KERNEL_PROCESS];
  *============================================================================*/
 
 /**
- * @brief Low-level routine for bootstrapping a new process.
- */
-extern void __do_process_setup(void);
-
-/**
  * @brief Allocates an entry in the process table.
  *
  * @returns Upon successful completion, a pointer to the allocated entry in the
@@ -129,7 +124,14 @@ struct process *process_get(pid_t pid)
         return (NULL);
     }
 
-    return (&processes[pid]);
+    // Find process.
+    for (int i = 0; i < PROCESS_MAX; i++) {
+        if (processes[i].pid == pid) {
+            return (&processes[i]);
+        }
+    }
+
+    return (NULL);
 }
 
 /**
@@ -138,8 +140,7 @@ struct process *process_get(pid_t pid)
  */
 struct process *process_get_curr(void)
 {
-    // Should this be checked before accessing?
-    return &processes[thread_get_pid(thread_get_curr())];
+    return (process_get(thread_get_pid(thread_get_curr())));
 }
 
 /**
@@ -179,24 +180,13 @@ pid_t process_create(const void *image)
     process->pid = ++next_pid;
     process->image = image;
     process->vmem = vmem;
+    process->ustackmap = 0;
 
     // Creates a thread.
-    if ((process->tid = thread_create(process->pid, true)) < 0) {
+    if ((process->tid = thread_create(
+             process, (void *(*)())USER_BASE_VIRT, NULL, NULL)) < 0) {
         goto error2;
     }
-
-    const void *ksp = interrupt_forge_stack((void *)(USER_END_VIRT),
-                                            thread_get_stack(process->tid),
-                                            (void (*)(void))USER_BASE_VIRT,
-                                            __do_process_setup);
-    KASSERT(ksp != NULL);
-
-    KASSERT(
-        context_create(
-            thread_get_ctx(process->tid),
-            vmem_pgdir_get(process->vmem),
-            (const void *)((vaddr_t)thread_get_stack(process->tid) + PAGE_SIZE),
-            ksp) == 0);
 
     return (process->pid);
 

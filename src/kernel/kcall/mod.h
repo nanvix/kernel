@@ -261,18 +261,23 @@ extern tid_t kcall_thread_get_id(void);
 /**
  * @brief Creates a new thread.
  *
- * @param pid PID of the target process.
+ * @param start Start routine.
+ * @param args Arguments.
+ *@param caller Thread caller function.
  *
  * @returns Upon successful completion, the ID of the newly created
  * thread is returned. Upon failure, a negative error code is
  * returned instead.
  */
-extern tid_t kcall_thread_create(pid_t pid);
+extern tid_t kcall_thread_create(void (*start)(void *), void *args,
+                                 void (*caller)());
 
 /**
  * @brief Exits the calling thread.
+ *
+ * @param retval Return value.
  */
-extern noreturn void kcall_thread_exit(void);
+extern noreturn void kcall_thread_exit(void *retval);
 
 /**
  * @brief Yields the processor to another thread.
@@ -281,6 +286,27 @@ extern noreturn void kcall_thread_exit(void);
  * a negative error code is returned instead.
  */
 extern noreturn void kcall_thread_yield(void);
+
+/**
+ * @brief Waits for the target thread to terminate.
+ *
+ * @param tid ID of the target thread.
+ * @param retval Location to store the return value of the target thread.
+ *
+ * @returns Upon successful completion, zero is returned. Upon failure, a
+ * negative error code is returned instead.
+ */
+extern int kcall_thread_join(tid_t tid, void **retval);
+
+/**
+ * @brief Detaches the target thread.
+ *
+ * @param tid ID of the target thread.
+ *
+ * @returns Upon successful completion, zero is returned. Upon failure, a
+ * negative error code is returned instead.
+ */
+extern int kcall_thread_detach(tid_t tid);
 
 /*============================================================================*/
 

@@ -18,10 +18,18 @@ use nanvix::{
         VmCtrlRequest,
     },
     misc,
-    pm,
     ipc,
+    pm::{
+        self,
+        Tid,
+    },
     security::AccessMode,
 };
+
+const THREAD_ARG_VAL: u32 = 0xdab;
+const THREAD_RET_VAL: u32 = 0x86;
+
+use core::ffi;
 
 ///
 /// **Description**
@@ -472,6 +480,61 @@ fn test_semctl_call() -> bool {
     true
 }
 
+fn test_thread_getid() -> bool {
+    let result: Tid = pm::thread_getid();
+    if result < 0 {
+        return false;
+    }
+
+    true
+}
+
+fn thread_multijoin_test(arg: *mut ffi::c_void) -> *mut ffi::c_void {
+    let mut retval: *mut ffi::c_void = core::ptr::null_mut();
+    let tid = pm::thread_getid();
+    pm::thread_detach(tid);
+    pm::thread_join(arg as Tid, &mut retval);
+    unsafe {
+        if (retval as u32) == THREAD_RET_VAL {
+            nanvix::log!("Tid {} succeeded to retrive thread return value", tid);
+        } else {
+            nanvix::log!("Tid {} failed to retrive thread return value", tid);
+        
+        }
+    }
+    core::ptr::null_mut()
+}
+
+fn thread_func_test(arg: *mut ffi::c_void) -> *mut ffi::c_void {
+    let tid = pm::thread_getid();
+    pm::thread_create(thread_multijoin_test, pm::thread_getid() as *mut ffi::c_void);
+    if (arg as u32) == THREAD_ARG_VAL {
+        nanvix::log!("Tid {} succeeded to retrive thread argument", tid);
+    } else {
+        nanvix::log!("Tid {} failed to retrive stack argument", tid);
+    }
+    THREAD_RET_VAL as *mut ffi::c_void
+}
+
+fn test_thread_create() -> bool {
+    let tid: Tid = pm::thread_create(thread_func_test, THREAD_ARG_VAL as *mut ffi::c_void);
+    if tid < 0 {
+        return false;
+    }
+
+    let mut retval: *mut ffi::c_void = core::ptr::null_mut();
+    pm::thread_join(tid, &mut retval);
+    unsafe {
+        if (retval as u32) == THREAD_RET_VAL {
+            nanvix::log!("Tid {} succeeded to retrive thread return value", pm::thread_getid());
+        } else {
+            nanvix::log!("Tid {} failed to retrive thread return value", pm::thread_getid());
+        }
+    }
+
+    true
+}
+
 //==============================================================================
 // Public Standalone Functions
 //==============================================================================
@@ -502,4 +565,6 @@ pub fn test_kernel_calls() {
     test!(test_semop_call());
     test!(test_semctl_call());
     test!(test_mailbox_tag());
+    test!(test_thread_getid());
+    test!(test_thread_create());
 }

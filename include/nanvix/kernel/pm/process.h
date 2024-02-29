@@ -11,6 +11,7 @@
  *============================================================================*/
 
 #include <nanvix/kernel/hal.h>
+#include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/mm.h>
 #include <stdnoreturn.h>
 
@@ -49,8 +50,9 @@ struct process {
      * @name Memory Information
      */
     /**@{*/
-    vmem_t vmem;       /** Virtuam memory map. */
-    const void *image; /** Binary image.       */
+    vmem_t vmem;        /** Virtuam memory map. */
+    const void *image;  /** Binary image.       */
+    bitmap_t ustackmap; /** User stack map.     */
     /**@}*/
 
     /**
@@ -85,6 +87,16 @@ extern int process_is_valid(pid_t pid);
  * underlying core.
  */
 extern struct process *process_get_curr(void);
+
+/**
+ * @brief Gets the process control block of a process.
+ *
+ * @param pid ID of the target process.
+ *
+ * @returns Upon successful completion, a pointer to the process control block
+ * of the target process is returned. Upon failure, NULL is returned instead.
+ */
+extern struct process *process_get(pid_t pid);
 
 /**
  * @brief Creates a new process.

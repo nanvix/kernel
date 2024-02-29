@@ -8,7 +8,8 @@
  *============================================================================*/
 
 #include <nanvix/errno.h>
-#include <nanvix/kernel/mm/kpool.h>
+#include <nanvix/kernel/log.h>
+#include <nanvix/kernel/mm.h>
 #include <nanvix/kernel/pm/process.h>
 #include <nanvix/kernel/pm/thread.h>
 #include <stdnoreturn.h>
@@ -42,6 +43,20 @@ static struct thread threads[THREADS_MAX];
 static struct thread *running = &threads[KERNEL_THREAD];
 
 /*============================================================================*
+ * Extern Declarations                                                        *
+ *============================================================================*/
+
+/**
+ * @brief Low-level routine for bootstrapping a new user-created thread.
+ */
+extern void __start_uthread(void);
+
+/**
+ * @brief Low-level routine for bootstrapping a new process.
+ */
+extern void __do_process_setup(void);
+
+/*============================================================================*
  * Private Functions                                                          *
  *============================================================================*/
 
@@ -72,6 +87,31 @@ static void do_timer(void)
     }
 }
 
+/**
+ * @brief Releases the memory used by a thread.
+ *
+ * @param t Target thread.
+ */
+static void thread_free_memory(struct thread *t)
+{
+    KASSERT(t != NULL);
+
+    if (kpool_is_kpage(VADDR(t->kstack))) {
+        KASSERT(kpage_put(t->kstack) == 0);
+    } else if (t->ustack != NULL) {
+        struct process *p = process_get(t->pid);
+
+        KASSERT(upage_free((struct pde *)vmem_pgdir_get(p->vmem),
+                           (vaddr_t)t->ustack) == 0);
+
+        int pos = ((USER_END_VIRT - (word_t)t->ustack) / PAGE_SIZE) - 1;
+        bitmap_clear(p->ustackmap, pos);
+    }
+
+    t->kstack = NULL;
+    t->ustack = NULL;
+}
+
 /*============================================================================*
  * Public Functions                                                           *
  *============================================================================*/
@@ -91,7 +131,8 @@ void thread_init(void)
     threads[KERNEL_THREAD].quantum = 0;
     threads[KERNEL_THREAD].pid = KERNEL_PROCESS;
     threads[KERNEL_THREAD].age = 1;
-    threads[KERNEL_THREAD].stack = NULL;
+    threads[KERNEL_THREAD].kstack = NULL;
+    threads[KERNEL_THREAD].ustack = NULL;
 
     interrupt_register(INTERRUPT_TIMER, do_timer);
 }
@@ -99,39 +140,86 @@ void thread_init(void)
 /**
  * @details Creates a new thread.
  */
-tid_t thread_create(pid_t pid, bool root)
+tid_t thread_create(struct process *p, void *(*start)(), void *args,
+                    void (*caller)(void))
 {
     tid_t tid;
-    if ((tid = thread_alloc()) < 0) {
+    struct thread *t;
+
+    if ((p == NULL) || (process_is_valid(p->pid) != 0) || (start == NULL) ||
+        (tid = thread_alloc()) < 0) {
         goto error0;
     }
 
-    threads[tid].tid = tid;
-    threads[tid].pid = pid;
-    threads[tid].age = 1;
-    threads[tid].state = THREAD_READY;
-    threads[tid].quantum = 0;
-    // TODO: Alloc user stack.
-    threads[tid].stack = NULL;
+    // Initializes basic TBC info.
+    t = &threads[tid];
+    t->tid = tid;
+    t->pid = p->pid;
+    t->age = 1;
+    t->state = THREAD_READY;
+    t->quantum = 0;
+    t->start = start;
+    t->args = args;
+    t->retval = NULL;
+    t->waitmap = 0;
 
-    if (!root) {
-        return tid;
-    }
-
+    // Allocates thread's kernel stack.
     void *kstack = kpage_get(true);
     if (kstack == NULL) {
         goto error1;
     }
+    t->kstack = kstack;
 
-    threads[tid].stack = kstack;
+    // Checks if the owner process has memory avaible for a new thread.
+    bitmap_t fbit = bitmap_first_free(&p->ustackmap, 0, sizeof(bitmap_t));
+    if (fbit >= THREADS_MAX) {
+        goto error2;
+    }
+
+    // Calculates the user stack base address.
+    bitmap_set(&p->ustackmap, fbit);
+    vaddr_t ubp = (vaddr_t)(USER_END_VIRT - ((fbit + 1) * PAGE_SIZE));
+    t->ustack = (byte_t *)ubp;
+
+    void *ksp = NULL;
+    if ((word_t)t->start == USER_BASE_VIRT) {
+        // Forges root thread.
+        ksp = interrupt_forge_stack((t->ustack + PAGE_SIZE),
+                                    t->kstack,
+                                    (void (*)(void))t->start,
+                                    __do_process_setup);
+    } else {
+        // Sets up user-created stack.
+        if (upage_alloc(
+                (struct pde *)vmem_pgdir_get(p->vmem), ubp, true, false) < 0) {
+            goto error3;
+        }
+
+        void *usp = uthread_forge_stack(t->ustack, t->args, start);
+        KASSERT(usp != NULL);
+        ksp = interrupt_forge_stack(usp, t->kstack, caller, __start_uthread);
+    }
+    KASSERT(ksp != NULL);
+
+    // Creates initial thread context.
+    KASSERT(context_create(&t->ctx,
+                           vmem_pgdir_get(p->vmem),
+                           (const void *)(t->kstack + PAGE_SIZE),
+                           ksp) == 0);
 
     return tid;
 
+error3:
+    bitmap_clear(p->ustackmap, fbit);
+error2:
+    kpage_put(kstack);
 error1:
-    threads[tid].pid = -1;
-    threads[tid].state = THREAD_AVAILABLE;
+    t->pid = -1;
+    t->state = THREAD_AVAILABLE;
+    t->start = NULL;
+    t->args = NULL;
 error0:
-    return -1;
+    return (-1);
 }
 
 /**
@@ -142,11 +230,19 @@ int thread_free(tid_t tid)
     if (tid <= KERNEL_THREAD || tid >= THREADS_MAX) {
         return (-EINVAL);
     }
+    struct thread *t = &threads[tid];
 
-    KASSERT(kpage_put(threads[tid].stack) == 0);
-    threads[tid].pid = -1;
-    threads[tid].stack = NULL;
-    threads[tid].state = THREAD_AVAILABLE;
+    thread_free_memory(t);
+
+    t->pid = -1;
+    t->tid = -1;
+    t->start = NULL;
+    t->args = NULL;
+    t->retval = NULL;
+    t->age = -1;
+    t->quantum = -1;
+    t->state = THREAD_AVAILABLE;
+    t->waitmap = 0;
 
     return (0);
 }
@@ -199,18 +295,6 @@ pid_t thread_get_pid(tid_t tid)
     }
 
     return (threads[tid].pid);
-}
-
-/**
- * @details Gets the stack of the target thread.
- */
-byte_t *thread_get_stack(tid_t tid)
-{
-    if (tid < KERNEL_THREAD || tid >= THREADS_MAX) {
-        return (NULL);
-    }
-
-    return (threads[tid].stack);
 }
 
 /**
@@ -306,9 +390,84 @@ int thread_wakeup_all(pid_t pid)
 /**
  * @details This function terminates the calling thread.
  */
-noreturn void thread_exit(void)
+noreturn void thread_exit(void *retval)
 {
-    thread_free(running->tid);
+    running->retval = retval;
+    running->state = THREAD_TERMINATED;
+    if (running->detached) {
+        thread_free(running->tid);
+    } else {
+        thread_free_memory(running);
+        for (int i = 0; i < THREADS_MAX; i++) {
+            if (bitmap_check_bit(&running->waitmap, threads[i].tid)) {
+                threads[i].state = THREAD_READY;
+                bitmap_clear(&running->waitmap, threads[i].tid);
+            }
+        }
+    }
     thread_yield();
     UNREACHABLE();
+}
+
+/**
+ * @details This function waits for the target thread to terminate.
+ */
+int thread_join(tid_t tid, void **retval)
+{
+    if (tid <= KERNEL_THREAD || tid >= THREADS_MAX) {
+        return (-EINVAL);
+    }
+
+    if (threads[tid].state == THREAD_AVAILABLE) {
+        return (-EAGAIN);
+    }
+
+    if (tid == running->tid || threads[tid].pid != running->pid) {
+        return (-EINVAL);
+    }
+
+    if (threads[tid].detached) {
+        return (-EINVAL);
+    }
+
+    if (threads[tid].state != THREAD_TERMINATED) {
+        running->state = THREAD_WAITING;
+        bitmap_set(&threads[tid].waitmap, running->tid);
+        thread_yield();
+    }
+
+    if (retval != NULL) {
+        *retval = threads[tid].retval;
+        // Only the first thread to join can get the return value.
+        threads[tid].retval = NULL;
+    }
+
+    thread_free(tid);
+
+    return (0);
+}
+
+/**
+ * @details This function detaches the target thread.
+ */
+int thread_detach(tid_t tid)
+{
+    if (tid <= KERNEL_THREAD || tid >= THREADS_MAX) {
+        return (-EINVAL);
+    }
+
+    if (threads[tid].state == THREAD_AVAILABLE) {
+        return (-EAGAIN);
+    }
+
+    if (threads[tid].pid != running->pid) {
+        return (-EINVAL);
+    }
+
+    threads[tid].detached = true;
+    if (threads[tid].state == THREAD_TERMINATED) {
+        thread_free(tid);
+    }
+
+    return (0);
 }
