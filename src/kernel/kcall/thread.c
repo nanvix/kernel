@@ -18,33 +18,28 @@
 /**
  * @details Creates a new thread.
  */
-tid_t kcall_thread_create(pid_t pid)
+tid_t kcall_thread_create(void *(*start)(), void *args, void (*caller)())
 {
-    // Check if pid is valid.
-    if (!WITHIN(pid, 0, PROCESS_MAX)) {
-        return (-EINVAL);
-    }
-
-    // Spawn thread.
-    return (thread_create(pid, false));
+    KASSERT((word_t)start > USER_BASE_VIRT && (word_t)start < USER_END_VIRT);
+    KASSERT((word_t)caller > USER_BASE_VIRT && (word_t)caller < USER_END_VIRT);
+    return (thread_create(process_get_curr(), start, args, caller));
 }
 
 /**
  * @details Exits the calling thread.
  */
-noreturn void kcall_thread_exit(void)
+noreturn void kcall_thread_exit(void *retval)
 {
-    thread_exit();
+    thread_exit(retval);
     UNREACHABLE();
 }
 
 /**
  * @details Yields the calling thread.
  */
-noreturn void kcall_thread_yield(void)
+void kcall_thread_yield(void)
 {
     thread_yield();
-    UNREACHABLE();
 }
 
 /**
@@ -53,4 +48,20 @@ noreturn void kcall_thread_yield(void)
 tid_t kcall_thread_get_id(void)
 {
     return (thread_get_curr());
+}
+
+/**
+ * @details Waits for a thread to terminate.
+ */
+int kcall_thread_join(tid_t tid, void **retval)
+{
+    return (thread_join(tid, retval));
+}
+
+/**
+ * @details Detaches a thread.
+ */
+int kcall_thread_detach(tid_t tid)
+{
+    return (thread_detach(tid));
 }

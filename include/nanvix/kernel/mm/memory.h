@@ -54,6 +54,8 @@
 #define KPOOL_END_VIRT KPOOL_END_PHYS     /** Kernel Pool End      */
 #define USER_BASE_VIRT USER_BASE_PHYS     /** User Base            */
 #define USER_END_VIRT USER_END_PHYS       /** User End             */
+#define USER_STACK_LIMIT                                                       \
+    (USER_END_VIRT - (PAGE_SIZE << 4)) /** User Stack Limit */
 /**@}*/
 
 /**

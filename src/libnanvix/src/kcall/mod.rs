@@ -47,7 +47,13 @@ pub enum KcallNumbers {
     Semget = 18,
     Semop = 19,
     Semctl = 20,
+    ThreadGet = 21,
+    ThreadCreate = 22,
+    ThreadExit = 23,
+    ThreadYield = 24,
     Boxtag = 25,
+    ThreadJoin = 26,
+    ThreadDetach = 27,
 }
 
 //==============================================================================

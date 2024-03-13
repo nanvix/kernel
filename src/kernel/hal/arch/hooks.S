@@ -72,6 +72,7 @@
 .globl __context_switch
 .globl __do_process_setup
 .globl __leave_kernel
+.globl __start_uthread
 
 /*============================================================================*
  * Text Section                                                               *
@@ -241,6 +242,7 @@ __context_switch:
 __do_process_setup:
     call do_process_setup
 
+__start_uthread:
     /*
      * Restore data segment registers.
      */

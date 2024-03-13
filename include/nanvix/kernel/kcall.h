@@ -57,7 +57,9 @@
 #define NR_thread_exit 23   /** kernel_thread_exit()      */
 #define NR_thread_yield 24  /** kernel_thread_yield()     */
 #define NR_mailbox_tag 25   /** kernel_mailbox_tag        */
-#define NR_last_kcall 26    /** NR_SYSCALLS definer       */
+#define NR_thread_join 26   /** kernel_thread_join()      */
+#define NR_thread_detach 27 /** kernel_thread_detach()    */
+#define NR_last_kcall 28    /** NR_SYSCALLS definer       */
 #define NR__exit            /** kernel_exit()             */
 #define NR_process_get_id   /** kernel_process_get_id()   */
 #define NR_process_create   /** kernel_process_create()   */

@@ -27,6 +27,7 @@
 #include <nanvix/kernel/hal/mmu.h>
 #include <nanvix/kernel/hal/stdout.h>
 #include <nanvix/kernel/hal/timer.h>
+#include <nanvix/kernel/hal/uthread.h>
 #if defined(__TARGET_HAS_TLB_HW) && (__TARGET_HAS_TLB_HW == 0)
 #include <nanvix/kernel/hal/tlb.h>
 #endif /* __TARGET_HAS_TLB_HW == 0 */
