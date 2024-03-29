@@ -12,6 +12,25 @@
 #include <nanvix/kernel/pm/semaphore.h>
 
 /*============================================================================*
+ * Constants                                                                  *
+ *============================================================================*/
+
+/**
+ * @brief Command Semaphore Get Value
+ */
+#define SEMAPHORE_GETVALUE 0
+
+/**
+ * @brief Command Semaphore Set Value
+ */
+#define SEMAPHORE_SETVALUE 1
+
+/**
+ * @brief Command Semaphore Delete
+ */
+#define SEMAPHORE_DELETE 2
+
+/*============================================================================*
  * Public Functions                                                           *
  *============================================================================*/
 
@@ -20,8 +39,33 @@
  */
 int kcall_semctl(int id, int cmd, int val)
 {
-    // TODO: https://github.com/nanvix/microkernel/issues/391
+    int ret = -1;
 
-    // Return to test syscall.
-    return (id + cmd + val);
+    switch (cmd) {
+        case SEMAPHORE_GETVALUE:
+            ret = semaphore_getcount(id);
+            if (ret < 0) {
+                // Semaphore inactive or didn't get.
+                ret == -1 ? (ret = -ENOENT) : (ret = -EACCES);
+            }
+            return (ret);
+        case SEMAPHORE_SETVALUE:
+            ret = semaphore_set(id, val);
+            if (ret < 0) {
+                // Semaphore inactive or didn't get.
+                ret == -1 ? (ret = -ENOENT) : (ret = -EACCES);
+            }
+            return (ret);
+        case SEMAPHORE_DELETE:
+            ret = semaphore_delete(id);
+            if (ret < 0) {
+                // Semaphore inactive or didn't get.
+                ret == -1 ? (ret = -ENOENT) : (ret = -EACCES);
+            }
+            return (ret);
+        default:
+            return (-EBADMSG);
+    }
+
+    return (-EBADMSG);
 }

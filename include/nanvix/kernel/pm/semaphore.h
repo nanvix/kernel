@@ -6,6 +6,7 @@
 #ifndef NANVIX_KERNEL_PM_SEMAPHORE_H_
 #define NANVIX_KERNEL_PM_SEMAPHORE_H_
 
+#include <nanvix/errno.h>
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/pm/cond.h>
@@ -75,7 +76,7 @@ static inline void semaphore_init(struct semaphore *sem, int x)
  *
  * @param semid Semaphore id.
  *
- * @return (0) if successful , (-1) otherwise.
+ * @return (semid) if successful , (-1) otherwise.
  */
 extern int semaphore_get(int semid);
 
@@ -84,7 +85,7 @@ extern int semaphore_get(int semid);
  *
  * @param key Semaphore key.
  *
- * @return (0) if successful , (-1) otherwise, (semid) if key already exist.
+ * @return (-2) if key already exist, (semid) if successful, (-1) otherwise.
  */
 extern int semaphore_create(unsigned key);
 
@@ -93,7 +94,8 @@ extern int semaphore_create(unsigned key);
  *
  * @param semid Semaphore id.
  *
- * @return (0) if successful , (-1) otherwise.
+ * @return (0) if successful , (-1) if semaphore inactive, (-2) if
+ * not allowed.
  */
 extern int semaphore_delete(int semid);
 
@@ -109,9 +111,28 @@ extern void semtable_init(void);
  *
  * @param count Semaphore counter.
  *
- * @return 0 if successful, -1 otherwise.
+ * @return (0) if successful , (-1) if semaphore inactive, (-2) if
+ * not allowed.
  */
 extern int semaphore_set(int semid, int count);
+
+/*
+ * @brief Return semaphore id.
+ *
+ * @p key Key associated with the semaphore.
+ *
+ * @return Semaphore id if key associated exist, -1 otherwise.
+ */
+extern int semaphore_getid(int key);
+
+/*
+ * @brief Return value of semaphore count.
+ *
+ * @p semid Semaphore id.
+ *
+ * @return -2 (Semaphore count) if successful , (-1) otherwise.
+ */
+extern int semaphore_getcount(int semid);
 
 /**
  * @brief Performs a down operation in a semaphore.
