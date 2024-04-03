@@ -47,7 +47,12 @@ pub enum KcallNumbers {
     Semget = 18,
     Semop = 19,
     Semctl = 20,
-    Boxtag = 25,
+    Mbxcreate = 25,
+    Mbxopen = 26,
+    Mbxunlink = 27,
+    Mbxclose = 28,
+    Mbxwrite = 29,
+    Mbxread = 30,
 }
 
 //==============================================================================

@@ -20,12 +20,50 @@
  *============================================================================*/
 
 /**
- * @details Gets mailbox tag.
+ * @brief Creates a mailbox.
  */
-int kcall_mailbox_tag(int mbxid)
+int kcall_do_mailbox_create(const int owner, const int tag)
 {
-    UNUSED(mbxid);
-    // TODO: https://github.com/nanvix/microkernel/issues/400
-    // Return to test syscall.
-    return (ENOTSUP);
+    return do_mailbox_create(owner, tag);
+}
+
+/**
+ * @brief Opens an existing mailbox.
+ */
+int kcall_do_mailbox_open(const int owner, const int tag)
+{
+    return do_mailbox_open(owner, tag);
+}
+
+/**
+ * @brief Removes a mailbox.
+ */
+int kcall_do_mailbox_unlink(const int ombxid)
+{
+    return do_mailbox_unlink(ombxid);
+}
+
+/**
+ * @brief Closes a mailbox.
+ */
+int kcall_do_mailbox_close(const int ombxid)
+{
+    return do_mailbox_close(ombxid);
+}
+
+/**
+ * @brief Writes a message to a mailbox.
+ */
+int kcall_do_mailbox_write(const int ombxid, const void *buffer,
+                           const size_t sz)
+{
+    return do_mailbox_write(ombxid, buffer, sz);
+}
+
+/**
+ * @brief Reads a message from a mailbox.
+ */
+int kcall_do_mailbox_read(const int ombxid, void *buffer, const size_t sz)
+{
+    return do_mailbox_read(ombxid, buffer, sz);
 }
