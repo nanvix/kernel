@@ -224,7 +224,7 @@ extern int kcall_semget(unsigned key);
  * @returns Upon successful completion, the ID of the target mailbox is
  * returned. Upon failure, a negative error code is returned instead.
  */
-extern int kcall_do_mailbox_create(const pid_t, const int);
+extern int kcall_do_mailbox_create(const pid_t owner, const int tag);
 
 /**
  * @brief Opens an existing mailbox.
@@ -235,7 +235,7 @@ extern int kcall_do_mailbox_create(const pid_t, const int);
  * @returns Upon successful completion, the ID of the target mailbox is
  * returned. Upon failure, a negative error code is returned instead.
  */
-extern int kcall_do_mailbox_open(const pid_t, const int);
+extern int kcall_do_mailbox_open(const pid_t owner, const int tag);
 
 /**
  * @brief Removes a mailbox.
@@ -245,7 +245,7 @@ extern int kcall_do_mailbox_open(const pid_t, const int);
  * @returns Upon successful completion, zero is returned. Upon failure, a
  * negative error code is returned instead.
  */
-extern int kcall_do_mailbox_unlink(const int);
+extern int kcall_do_mailbox_unlink(const int ombxid);
 
 /**
  * @brief Closes a mailbox.
@@ -255,7 +255,7 @@ extern int kcall_do_mailbox_unlink(const int);
  * @returns Upon successful completion, zero is returned. Upon failure, a
  * negative error code is returned instead.
  */
-extern int kcall_do_mailbox_close(const int);
+extern int kcall_do_mailbox_close(const int ombxid);
 
 /**
  * @brief Writes a message to a mailbox.
@@ -267,7 +267,8 @@ extern int kcall_do_mailbox_close(const int);
  * @returns Upon successful completion, zero is returned. Upon failure, a
  * negative error code is returned instead.
  */
-extern int kcall_do_mailbox_write(const int, const void *, const size_t);
+extern int kcall_do_mailbox_write(const int ombxid, const void *buffer,
+                                  const size_t sz);
 
 /**
  * @brief Reads a message from a mailbox.
@@ -279,7 +280,8 @@ extern int kcall_do_mailbox_write(const int, const void *, const size_t);
  * @returns Upon successful completion, zero is returned. Upon failure, a
  * negative error code is returned instead.
  */
-extern int kcall_do_mailbox_read(const int, void *, const size_t);
+extern int kcall_do_mailbox_read(const int ombxid, void *buffer,
+                                 const size_t sz);
 
 /**
  * @brief Verify if process can operate in semaphore (id), and operate (op):
