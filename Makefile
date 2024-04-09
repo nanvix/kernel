@@ -110,14 +110,22 @@ make-dirs: init
 clean:
 	@$(MAKE) -C $(SOURCES_DIR) clean
 
-# Check formatting.
-check-format:
-	$(shell find include src -type f \( -name "*.c" -o -name "*.h" \) -print0 | xargs -0 clang-format --sort-includes --dry-run -Werror)
-	@exit $(.SHELLSTATUS)
-
 # Builds Doxygen documentation.
 doxygen:
 	doxygen doc/kernel.doxygen
+
+
+#===============================================================================
+# Check
+#===============================================================================
+
+# Check code style formatting.
+check-format: check-fmt-c
+
+# Check code style formatting for C.
+check-fmt-c:
+	$(shell find include src -type f \( -name "*.c" -o -name "*.h" \) -print0 | xargs -0 clang-format --sort-includes --dry-run -Werror)
+	@exit $(.SHELLSTATUS)
 
 #===============================================================================
 # Run and Debug Rules

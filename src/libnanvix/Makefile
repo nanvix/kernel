@@ -13,8 +13,12 @@ export CARGO_FLAGS += --target=$(BUILD_DIR)/$(TARGET)/target.json
 #===============================================================================
 
 # Builds library.
-all:
+all: check-fmt
 	$(CARGO) build $(CARGO_FLAGS)
+
+# Check code style formatting for Rust.
+check-fmt:
+	$(CARGO) fmt --all -- --check
 
 # Cleans build objects.
 clean:

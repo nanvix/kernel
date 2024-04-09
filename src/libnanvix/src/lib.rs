@@ -15,12 +15,12 @@ pub mod logging;
 mod unwind;
 
 pub mod devices;
+pub mod ipc;
 pub mod kcall;
 pub mod memory;
 pub mod misc;
 pub mod pm;
 pub mod power;
-pub mod ipc;
 pub mod security;
 
 #[macro_export]
