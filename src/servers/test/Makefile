@@ -30,7 +30,7 @@ export BIN := $(NAME).$(EXEC_FORMAT)
 #===============================================================================
 
 # Builds binary file.
-all: $(OBJ) $(LIB)
+all: check-fmt $(OBJ) $(LIB)
 ifeq ($(VERBOSE), no)
 	@echo [CC] $(BINARIES_DIR)/$(BIN)
 	@$(LD) $(LDFLAGS) -o $(BINARIES_DIR)/$(BIN) $(OBJ) $(LIB) $(LIBS)
@@ -40,6 +40,10 @@ else
 	$(LD) $(LDFLAGS) -o $(BINARIES_DIR)/$(BIN) $(OBJ) $(LIB) $(LIBS)
 	rm -rf $(LIB)
 endif
+
+# Check code style formatting for Rust.
+check-fmt:
+	$(CARGO) fmt --all -- --check
 
 # Cleans build objects.
 clean:
