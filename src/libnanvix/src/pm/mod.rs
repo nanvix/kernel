@@ -24,13 +24,10 @@ pub use core::ffi;
 // Imports
 //==============================================================================
 
-use crate::{
-    kcall::{
-        kcall1,
-        KcallNumbers,
-    },
+use crate::kcall::{
+    kcall1,
+    KcallNumbers,
 };
-use crate::log;
 
 //==============================================================================
 // Private Standalone Functions
@@ -40,7 +37,10 @@ use crate::log;
 ///
 /// Executes the return of a user-created thread.
 ///
-pub(crate) fn thread_caller(start: fn (*mut ffi::c_void) -> *mut ffi::c_void, arg: *mut ffi::c_void) -> ! {
+pub(crate) fn thread_caller(
+    start: fn(*mut ffi::c_void) -> *mut ffi::c_void,
+    arg: *mut ffi::c_void,
+) -> ! {
     let ret = start(arg);
     unsafe { kcall1(KcallNumbers::ThreadExit as u32, ret as u32) };
     loop {}
