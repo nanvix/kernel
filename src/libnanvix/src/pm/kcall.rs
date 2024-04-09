@@ -96,31 +96,36 @@ pub fn semop(id: u32, op: u32) -> i32 {
 /// Upon GETVALUE, semaphore value.
 ///
 pub fn semctl(id: u32, cmd: u32, val: u32) -> i32 {
-    unsafe { kcall3(KcallNumbers::Semctl as u32, id as u32, cmd as u32, val as u32) as i32 }
-}
-
-///
-/// **Description**
-/// 
-/// Returns the ID of the calling thread.
-/// 
-/// **Return**
-/// 
-/// The ID of the calling thread is returned.
-/// 
-pub fn thread_getid() -> Tid {
-    unsafe { 
-        kcall0(KcallNumbers::ThreadGet as u32) as Tid
+    unsafe {
+        kcall3(
+            KcallNumbers::Semctl as u32,
+            id as u32,
+            cmd as u32,
+            val as u32,
+        ) as i32
     }
 }
 
 ///
 /// **Description**
-/// 
+///
+/// Returns the ID of the calling thread.
+///
+/// **Return**
+///
+/// The ID of the calling thread is returned.
+///
+pub fn thread_getid() -> Tid {
+    unsafe { kcall0(KcallNumbers::ThreadGet as u32) as Tid }
+}
+
+///
+/// **Description**
+///
 /// Exits the calling thread.
-/// 
+///
 pub fn thread_exit() -> ! {
-    unsafe { 
+    unsafe {
         kcall0(KcallNumbers::ThreadExit as u32);
     }
     // Unreachable
@@ -129,9 +134,9 @@ pub fn thread_exit() -> ! {
 
 ///
 /// **Description**
-/// 
+///
 /// Yields the CPU to another thread.
-/// 
+///
 pub fn thread_yield() -> () {
     unsafe {
         kcall0(KcallNumbers::ThreadYield as u32);
@@ -153,9 +158,17 @@ pub fn thread_yield() -> () {
 /// Upon successful completion, the ID of the spawned thread is returned.
 /// Upon failure, a negative error code is returned instead.
 ///
-pub fn thread_create(func: fn(*mut ffi::c_void) -> *mut ffi::c_void, arg: *mut ffi::c_void) -> Tid {
-    unsafe { 
-        kcall3(KcallNumbers::ThreadCreate as u32, func as u32, arg as u32, thread_caller as u32) as Tid
+pub fn thread_create(
+    func: fn(*mut ffi::c_void) -> *mut ffi::c_void,
+    arg: *mut ffi::c_void,
+) -> Tid {
+    unsafe {
+        kcall3(
+            KcallNumbers::ThreadCreate as u32,
+            func as u32,
+            arg as u32,
+            thread_caller as u32,
+        ) as Tid
     }
 }
 
@@ -175,8 +188,9 @@ pub fn thread_create(func: fn(*mut ffi::c_void) -> *mut ffi::c_void, arg: *mut f
 /// Upon failure, a negative error code is returned instead.
 ///
 pub fn thread_join(tid: Tid, retval: *mut *mut ffi::c_void) -> i32 {
-    unsafe { 
-        kcall2(KcallNumbers::ThreadJoin as u32, tid as u32, retval as u32) as i32
+    unsafe {
+        kcall2(KcallNumbers::ThreadJoin as u32, tid as u32, retval as u32)
+            as i32
     }
 }
 
@@ -191,11 +205,9 @@ pub fn thread_join(tid: Tid, retval: *mut *mut ffi::c_void) -> i32 {
 ///
 /// **Return**
 ///
-/// Upon successful completion, the ID of the spawned thread is returned.   
+/// Upon successful completion, the ID of the spawned thread is returned.
 /// Upon failure, a negative error code is returned instead.
 ///
 pub fn thread_detach(tid: Tid) -> i32 {
-    unsafe { 
-        kcall1(KcallNumbers::ThreadDetach as u32, tid as u32) as i32
-    }
+    unsafe { kcall1(KcallNumbers::ThreadDetach as u32, tid as u32) as i32 }
 }
