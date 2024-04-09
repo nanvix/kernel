@@ -8,6 +8,7 @@
 //==============================================================================
 
 use nanvix::{
+    ipc,
     kcall,
     memory::{
         self,
@@ -18,7 +19,6 @@ use nanvix::{
         VmCtrlRequest,
     },
     misc,
-    ipc,
     pm::{
         self,
         Tid,
@@ -448,7 +448,7 @@ fn test_semget_call() -> bool {
 // Test systemcall for ipc module
 fn test_mailbox_tag() -> bool {
     let mbxid: i32 = 58; // 58 is the ENOTSUP error code
-    if mbxid != ipc::mailbox_tag(mbxid){
+    if mbxid != ipc::mailbox_tag(mbxid) {
         return false;
     }
 
@@ -527,10 +527,12 @@ fn thread_multijoin_test(arg: *mut ffi::c_void) -> *mut ffi::c_void {
     pm::thread_join(arg as Tid, &mut retval);
     unsafe {
         if (retval as u32) == THREAD_RET_VAL {
-            nanvix::log!("Tid {} succeeded to retrive thread return value", tid);
+            nanvix::log!(
+                "Tid {} succeeded to retrive thread return value",
+                tid
+            );
         } else {
             nanvix::log!("Tid {} failed to retrive thread return value", tid);
-        
         }
     }
     core::ptr::null_mut()
@@ -538,7 +540,10 @@ fn thread_multijoin_test(arg: *mut ffi::c_void) -> *mut ffi::c_void {
 
 fn thread_func_test(arg: *mut ffi::c_void) -> *mut ffi::c_void {
     let tid = pm::thread_getid();
-    pm::thread_create(thread_multijoin_test, pm::thread_getid() as *mut ffi::c_void);
+    pm::thread_create(
+        thread_multijoin_test,
+        pm::thread_getid() as *mut ffi::c_void,
+    );
     if (arg as u32) == THREAD_ARG_VAL {
         nanvix::log!("Tid {} succeeded to retrive thread argument", tid);
     } else {
@@ -548,7 +553,8 @@ fn thread_func_test(arg: *mut ffi::c_void) -> *mut ffi::c_void {
 }
 
 fn test_thread_create() -> bool {
-    let tid: Tid = pm::thread_create(thread_func_test, THREAD_ARG_VAL as *mut ffi::c_void);
+    let tid: Tid =
+        pm::thread_create(thread_func_test, THREAD_ARG_VAL as *mut ffi::c_void);
     if tid < 0 {
         return false;
     }
@@ -557,9 +563,15 @@ fn test_thread_create() -> bool {
     pm::thread_join(tid, &mut retval);
     unsafe {
         if (retval as u32) == THREAD_RET_VAL {
-            nanvix::log!("Tid {} succeeded to retrive thread return value", pm::thread_getid());
+            nanvix::log!(
+                "Tid {} succeeded to retrive thread return value",
+                pm::thread_getid()
+            );
         } else {
-            nanvix::log!("Tid {} failed to retrive thread return value", pm::thread_getid());
+            nanvix::log!(
+                "Tid {} failed to retrive thread return value",
+                pm::thread_getid()
+            );
         }
     }
 
