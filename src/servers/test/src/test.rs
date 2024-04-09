@@ -525,15 +525,10 @@ fn thread_multijoin_test(arg: *mut ffi::c_void) -> *mut ffi::c_void {
     let tid = pm::thread_getid();
     pm::thread_detach(tid);
     pm::thread_join(arg as Tid, &mut retval);
-    unsafe {
-        if (retval as u32) == THREAD_RET_VAL {
-            nanvix::log!(
-                "Tid {} succeeded to retrive thread return value",
-                tid
-            );
-        } else {
-            nanvix::log!("Tid {} failed to retrive thread return value", tid);
-        }
+    if (retval as u32) == THREAD_RET_VAL {
+        nanvix::log!("Tid {} succeeded to retrive thread return value", tid);
+    } else {
+        nanvix::log!("Tid {} failed to retrive thread return value", tid);
     }
     core::ptr::null_mut()
 }
@@ -561,18 +556,16 @@ fn test_thread_create() -> bool {
 
     let mut retval: *mut ffi::c_void = core::ptr::null_mut();
     pm::thread_join(tid, &mut retval);
-    unsafe {
-        if (retval as u32) == THREAD_RET_VAL {
-            nanvix::log!(
-                "Tid {} succeeded to retrive thread return value",
-                pm::thread_getid()
-            );
-        } else {
-            nanvix::log!(
-                "Tid {} failed to retrive thread return value",
-                pm::thread_getid()
-            );
-        }
+    if (retval as u32) == THREAD_RET_VAL {
+        nanvix::log!(
+            "Tid {} succeeded to retrive thread return value",
+            pm::thread_getid()
+        );
+    } else {
+        nanvix::log!(
+            "Tid {} failed to retrive thread return value",
+            pm::thread_getid()
+        );
     }
 
     true
