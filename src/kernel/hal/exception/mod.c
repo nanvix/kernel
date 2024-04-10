@@ -9,6 +9,7 @@
 
 #include "mod.h"
 #include <nanvix/cc.h>
+#include <nanvix/errno.h>
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/lib.h>
 #include <stdnoreturn.h>
@@ -47,22 +48,23 @@ int exception_register(int excpnum, exception_handler_t handler)
     // Check for invalid exception number.
     if ((excpnum < 0) || (excpnum >= EXCEPTIONS_NUM)) {
         kprintf(MODULE_NAME " ERROR: invalid exception number %d", excpnum);
-        return (-1);
+        return (-EINVAL);
     }
 
     // Check for invalid exception handler.
     if (handler == NULL) {
         kprintf(MODULE_NAME " ERROR: invalid exception handler %x", handler);
-        return (-1);
+        return (-EINVAL);
     }
 
     // Check if we are overwriting a handler.
     if (exceptions[excpnum].handler != default_handler) {
         if (exceptions[excpnum].handler != NULL) {
-            // We are, thus issue a warning.
+            // We are, thus issue a warning and fail.
             kprintf(MODULE_NAME " WARNING: overwriting handler %x for %s",
                     exceptions[excpnum].handler,
                     exceptions[excpnum].name);
+            return (-EBUSY);
         }
     }
 
@@ -86,13 +88,13 @@ int exception_unregister(int excpnum)
     // Check for invalid exception number.
     if ((excpnum < 0) || (excpnum >= EXCEPTIONS_NUM)) {
         kprintf(MODULE_NAME " ERROR: invalid exception number %d", excpnum);
-        return (-1);
+        return (-EINVAL);
     }
 
     // Check if there is a handler registered.
     if (exceptions[excpnum].handler == default_handler) {
         kprintf(MODULE_NAME " ERROR: no handler for exception %d", excpnum);
-        return (-1);
+        return (-ENOENT);
     }
 
     exceptions[excpnum].handler = default_handler;
