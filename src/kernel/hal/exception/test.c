@@ -27,7 +27,7 @@ static void dummy_handler(const struct exception *excp,
 }
 
 /**
- * @brief Set and Unset and Exception Handler
+ * @brief Attempt to register and unregister an exception handler.
  */
 static void test_exception_set_unset_handler(void)
 {
@@ -36,7 +36,7 @@ static void test_exception_set_unset_handler(void)
 }
 
 /**
- * Fault Injection Test: Set a Handler for an Invalid Exception
+ * @brief Attempt to register a handler for an invalid exception.
  */
 static void test_exception_register_inval(void)
 {
@@ -45,7 +45,7 @@ static void test_exception_register_inval(void)
 }
 
 /**
- * Fault Injection Test: Unset a Handler for an Invalid Exception
+ * @brief Attempt to unregister a handler for an invalid exception.
  */
 static void test_exception_unregister_inval(void)
 {
@@ -54,7 +54,7 @@ static void test_exception_unregister_inval(void)
 }
 
 /**
- * Fault Injection Test: Unset a Handler for a Bad Exception
+ * @brief Attempt to unregister a handler for a bad exception.
  */
 static void test_exception_unregister_bad(void)
 {
