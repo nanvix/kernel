@@ -16,12 +16,16 @@
  * Constants                                                                  *
  *============================================================================*/
 
-/* Log message levels */
-#define DEBUG 0 /** Debug level.       */
-#define ERROR 1 /** Error level.       */
+/**
+ * @brief Log Message Levels
+ */
+/**@{*/
+#define TRACE 0 /** Trace level.       */
+#define DEBUG 1 /** Debug level.       */
 #define INFO 2  /** Information level. */
-#define TRACE 3 /** Trace level.       */
-#define WARN 4  /** Warning level.     */
+#define WARN 3  /** Warning level.     */
+#define ERROR 4 /** Error level.       */
+/**@}*/
 
 /*============================================================================*
  * Functions                                                                  *
@@ -46,7 +50,34 @@ extern int __log(const char *file, const char *funcname, unsigned level, ...);
  * @brief Prints a custom log message to the standard output.
  *
  * @param level The log message level e.g. `INFO`.
+ *
+ * @deprecated use `trace()`, `debug`, `info()`, `warn()` and `error()` instead.
  */
 #define log(level, ...) __log(__FILE__, __func__, level, __VA_ARGS__)
+
+/**
+ * @brief Prints a debug-level message on the standard output device.
+ */
+#define trace(...) log(TRACE, __VA_ARGS__)
+
+/**
+ * @brief Prints a debug-level message on the standard output device.
+ */
+#define debug(...) log(DEBUG, __VA_ARGS__)
+
+/**
+ * @brief Prints an information-level message on the standard output device.
+ */
+#define info(...) log(INFO, __VA_ARGS__)
+
+/**
+ * @brief Prints a warning-level message on the standard output device.
+ */
+#define warn(...) log(WARN, __VA_ARGS__)
+
+/**
+ * @brief Prints an error-level message on the standard output device.
+ */
+#define error(...) log(ERROR, __VA_ARGS__)
 
 #endif /* NANVIX_KERNEL_LOG_H_ */
