@@ -60,6 +60,16 @@ static void test_exception_unregister_bad(void)
     KASSERT(exception_unregister(EXCEPTION_PAGE_FAULT) == -1);
 }
 
+/**
+ * @brief Attempt to overwrite an exception handler.
+ */
+static void test_exception_overwrite_handler(void)
+{
+    KASSERT(exception_register(EXCEPTION_PAGE_FAULT, dummy_handler) == 0);
+    KASSERT(exception_register(EXCEPTION_PAGE_FAULT, dummy_handler) == -1);
+    KASSERT(exception_unregister(EXCEPTION_PAGE_FAULT) == 0);
+}
+
 /*============================================================================*
  * Private Variables                                                          *
  *============================================================================*/
@@ -80,6 +90,7 @@ static struct test exception_tests[] = {
     {test_exception_register_inval, "set handler for invalid exception  "},
     {test_exception_unregister_inval, "unset handler for invalid exception"},
     {test_exception_unregister_bad, "unset handler for bad exception    "},
+    {test_exception_overwrite_handler, "overwrite exception handler"},
     {NULL, NULL},
 };
 

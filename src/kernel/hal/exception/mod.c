@@ -59,10 +59,11 @@ int exception_register(int excpnum, exception_handler_t handler)
     // Check if we are overwriting a handler.
     if (exceptions[excpnum].handler != default_handler) {
         if (exceptions[excpnum].handler != NULL) {
-            // We are, thus issue a warning.
+            // We are, thus issue a warning and fail.
             kprintf(MODULE_NAME " WARNING: overwriting handler %x for %s",
                     exceptions[excpnum].handler,
                     exceptions[excpnum].name);
+            return (-1);
         }
     }
 
