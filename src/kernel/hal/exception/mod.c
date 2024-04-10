@@ -12,6 +12,7 @@
 #include <nanvix/errno.h>
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/lib.h>
+#include <nanvix/kernel/log.h>
 #include <stdnoreturn.h>
 
 /*============================================================================*
@@ -47,13 +48,13 @@ int exception_register(int excpnum, exception_handler_t handler)
 {
     // Check for invalid exception number.
     if ((excpnum < 0) || (excpnum >= EXCEPTIONS_NUM)) {
-        kprintf(MODULE_NAME " ERROR: invalid exception number %d", excpnum);
+        error("invalid exception number %d", excpnum);
         return (-EINVAL);
     }
 
     // Check for invalid exception handler.
     if (handler == NULL) {
-        kprintf(MODULE_NAME " ERROR: invalid exception handler %x", handler);
+        error("invalid exception handler %x", handler);
         return (-EINVAL);
     }
 
@@ -61,18 +62,18 @@ int exception_register(int excpnum, exception_handler_t handler)
     if (exceptions[excpnum].handler != default_handler) {
         if (exceptions[excpnum].handler != NULL) {
             // We are, thus issue a warning and fail.
-            kprintf(MODULE_NAME " WARNING: overwriting handler %x for %s",
-                    exceptions[excpnum].handler,
-                    exceptions[excpnum].name);
+            warn("overwriting handler %x for %s",
+                 exceptions[excpnum].handler,
+                 exceptions[excpnum].name);
             return (-EBUSY);
         }
     }
 
     exceptions[excpnum].handler = handler;
 
-    kprintf(MODULE_NAME " INFO: exception handler %x registered for %s",
-            exceptions[excpnum].handler,
-            exceptions[excpnum].name);
+    info("exception handler %x registered for %s",
+         exceptions[excpnum].handler,
+         exceptions[excpnum].name);
 
     return (0);
 }
@@ -87,13 +88,13 @@ int exception_unregister(int excpnum)
 {
     // Check for invalid exception number.
     if ((excpnum < 0) || (excpnum >= EXCEPTIONS_NUM)) {
-        kprintf(MODULE_NAME " ERROR: invalid exception number %d", excpnum);
+        error("invalid exception number %d", excpnum);
         return (-EINVAL);
     }
 
     // Check if there is a handler registered.
     if (exceptions[excpnum].handler == default_handler) {
-        kprintf(MODULE_NAME " ERROR: no handler for exception %d", excpnum);
+        error("no handler for exception %d", excpnum);
         return (-ENOENT);
     }
 
