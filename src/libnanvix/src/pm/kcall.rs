@@ -44,6 +44,25 @@ pub fn spawn(image: *const ffi::c_void) -> i32 {
 ///
 /// **Description**
 ///
+/// Gets various information about the calling process.
+///
+/// **Parameters**
+///
+/// - `buffer` - Buffer to store the information about the calling process.
+///
+/// **Return**
+///
+/// On successful completion, zero is returned and information about the calling
+/// process is stored in the buffer pointed to by `buf`. On error, a negative
+/// error code is returned instead.
+///
+pub fn pinfo(buffer: *mut ProcessInfo) -> i32 {
+    unsafe { kcall1(KcallNumbers::ProcessInfo as u32, buffer as u32) as i32 }
+}
+
+///
+/// **Description**
+///
 /// If key already exist, associate current process at semaphore, else, create a semaphore with the key.
 ///
 /// **Parameters**

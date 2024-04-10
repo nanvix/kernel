@@ -54,6 +54,7 @@ pub enum KcallNumbers {
     Boxtag = 25,
     ThreadJoin = 26,
     ThreadDetach = 27,
+    ProcessInfo = 28,
 }
 
 //==============================================================================

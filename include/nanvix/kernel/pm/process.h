@@ -63,6 +63,20 @@ struct process {
     /**@}*/
 };
 
+/**
+ * @brief Size of @p process_info structure.
+ */
+#define __SIZEOF_PROCESS_INFO 12
+
+/**
+ * @brief Process information.
+ */
+struct process_info {
+    pid_t pid;   /** Process ID.         */
+    tid_t tid;   /** Main Thread ID.     */
+    vmem_t vmem; /** Virtual memory map. */
+};
+
 /*============================================================================*
  * Functions                                                                  *
  *============================================================================*/

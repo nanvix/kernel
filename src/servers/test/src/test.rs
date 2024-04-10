@@ -21,6 +21,7 @@ use nanvix::{
     misc,
     pm::{
         self,
+        ProcessInfo,
         Tid,
     },
     security::AccessMode,
@@ -75,6 +76,35 @@ fn issue_void3_kcall() -> bool {
 /// Issues a void4 kernel call.
 fn issue_void4_kcall() -> bool {
     kcall::void4(1, 2, 3, 4) == 10
+}
+
+/// Attempts to get information on the calling process.
+fn get_process_info() -> bool {
+    // Attempt to get information on the calling process.
+    let mut pinfo: ProcessInfo = ProcessInfo::default();
+    let result: i32 = pm::pinfo(&mut pinfo);
+
+    // Check if we failed to get information on the calling process.
+    if result != 0 {
+        nanvix::log!("failed to get information on the calling process");
+        return false;
+    }
+
+    // Assert process information.
+    if pinfo.pid == 1 {
+        nanvix::log!("unexpected PID");
+        return false;
+    }
+    if pinfo.tid == 1 {
+        nanvix::log!("unexpected TID");
+        return false;
+    }
+    if pinfo.vmem == 1 {
+        nanvix::log!("unexpected virtual memory space");
+        return false;
+    }
+
+    true
 }
 
 /// Attempts to allocate and release page frame.
@@ -291,6 +321,11 @@ fn check_sizes() -> bool {
     }
     if core::mem::size_of::<misc::KernelModule>() != 72 {
         nanvix::log!("unexpected size for KernelModule");
+        return false;
+    }
+
+    if core::mem::size_of::<ProcessInfo>() != 12 {
+        nanvix::log!("unexpected size for ProcessInfo");
         return false;
     }
 
@@ -586,6 +621,7 @@ pub fn test_kernel_calls() {
     test!(issue_void2_kcall());
     test!(issue_void3_kcall());
     test!(issue_void4_kcall());
+    test!(get_process_info());
     test!(alloc_free_frame());
     test!(free_null_frame());
     test!(free_invalid_frame());

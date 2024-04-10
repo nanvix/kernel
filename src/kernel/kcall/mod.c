@@ -124,6 +124,9 @@ int do_kcall(word_t arg0, word_t arg1, word_t arg2, word_t arg3, word_t arg4,
         case NR_spawn:
             ret = kcall_spawn((void *)arg0);
             break;
+        case NR_pinfo:
+            ret = kcall_pinfo((struct process_info *)arg0);
+            break;
         case NR_semget:
             ret = kcall_semget((unsigned)arg0);
             break;
