@@ -234,6 +234,9 @@ void process_init(vmem_t root_vmem)
 {
     log(INFO, "initializing process system...");
 
+    // Sanity check sizes.
+    KASSERT_SIZE(sizeof(struct process_info), __SIZEOF_PROCESS_INFO);
+
     // Initializes the table of processes.
     for (int i = 0; i < PROCESS_MAX; i++) {
         processes[i].active = false;
