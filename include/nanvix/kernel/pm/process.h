@@ -50,7 +50,7 @@ struct process {
      * @name Memory Information
      */
     /**@{*/
-    vmem_t vmem;        /** Virtuam memory map. */
+    vmem_t vmem;        /** Virtual memory map. */
     const void *image;  /** Binary image.       */
     bitmap_t ustackmap; /** User stack map.     */
     /**@}*/
