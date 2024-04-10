@@ -16,12 +16,16 @@
  * Constants                                                                  *
  *============================================================================*/
 
-/* Log message levels */
-#define DEBUG 0 /** Debug level.       */
-#define ERROR 1 /** Error level.       */
+/**
+ * @brief Log Message Levels
+ */
+/**@{*/
+#define TRACE 0 /** Trace level.       */
+#define DEBUG 1 /** Debug level.       */
 #define INFO 2  /** Information level. */
-#define TRACE 3 /** Trace level.       */
-#define WARN 4  /** Warning level.     */
+#define WARN 3  /** Warning level.     */
+#define ERROR 4 /** Error level.       */
+/**@}*/
 
 /*============================================================================*
  * Functions                                                                  *

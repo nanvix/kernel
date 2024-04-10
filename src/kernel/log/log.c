@@ -35,7 +35,7 @@
  * @brief Message levels.
  */
 static const char *MSG_LEVEL[LOG_LEVEL_MAX] = {
-    "[DEBUG]", "[ERROR]", "[INFO]", "[TRACE]", "[WARN]"};
+    "[TRACE]", "[DEBUG]", "[INFO]", "[WARN]", "[ERROR]"};
 
 /*============================================================================*
  * Private Variables                                                          *
