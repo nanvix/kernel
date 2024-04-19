@@ -47,6 +47,11 @@
 typedef uint32_t mode_t;
 
 /**
+ * @brief User group ID.
+ */
+typedef int gid_t;
+
+/**
  * @brief Process ID.
  */
 typedef int pid_t;
