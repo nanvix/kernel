@@ -12,6 +12,14 @@
 #include <nanvix/kernel/pm/semaphore.h>
 
 /*============================================================================*
+ * Constants                                                                  *
+ *============================================================================*/
+
+#define SEMAPHORE_UP 0
+#define SEMAPHORE_DOWN 1
+#define SEMAPHORE_TRYLOCK 2
+
+/*============================================================================*
  * Public Functions                                                           *
  *============================================================================*/
 
@@ -20,8 +28,16 @@
  */
 int kcall_semop(int id, int op)
 {
-    // TODO: https://github.com/nanvix/microkernel/issues/392
+    switch (op) {
+        case SEMAPHORE_UP:
+            return semaphore_up(id);
+        case SEMAPHORE_DOWN:
+            return semaphore_down(id);
+        case SEMAPHORE_TRYLOCK:
+            return semaphore_trylock(id);
+        default:
+            return (-ENOENT);
+    }
 
-    // Return to test syscall.
-    return (id + op);
+    return (-EBADMSG);
 }
