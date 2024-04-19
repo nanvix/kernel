@@ -56,4 +56,9 @@ typedef int pid_t;
  */
 typedef int tid_t;
 
+/**
+ * @brief User ID.
+ */
+typedef int uid_t;
+
 #endif /* !NANVIX_TYPES_H_ */
