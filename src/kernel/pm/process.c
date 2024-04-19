@@ -14,6 +14,7 @@
 #include <nanvix/kernel/log.h>
 #include <nanvix/kernel/mm.h>
 #include <nanvix/kernel/pm.h>
+#include <nanvix/kernel/pm/semaphore.h>
 #include <stdnoreturn.h>
 
 /**
@@ -236,6 +237,9 @@ void process_wakeup(struct process *p)
     thread_wakeup_all(p->pid);
 }
 
+int kernel_semaphore;
+int user_semaphore;
+
 /**
  * @details Initializes the process system.
  */
@@ -257,4 +261,11 @@ void process_init(vmem_t root_vmem)
     kernel->vmem = (vmem_t)root_vmem;
     kernel->active = true;
     thread_init();
+
+    // Initialize semaphore table.
+    semtable_init();
+
+    // Initialize Kernel's semaphores.
+    kernel_semaphore = semaphore_create(0);
+    user_semaphore = semaphore_create(1);
 }
