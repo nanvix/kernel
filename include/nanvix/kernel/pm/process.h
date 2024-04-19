@@ -12,17 +12,13 @@
 
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/lib.h>
+#include <nanvix/kernel/limits.h>
 #include <nanvix/kernel/mm.h>
 #include <stdnoreturn.h>
 
 /*============================================================================*
  * Constants                                                                  *
  *============================================================================*/
-
-/**
- * @brief Maximum number of processes.
- */
-#define PROCESS_MAX 16
 
 /**
  * @brief Kernel process ID.
