@@ -7,6 +7,7 @@
  * Imports                                                                   *
  *============================================================================*/
 
+#include "mod.h"
 #include <nanvix/errno.h>
 #include <nanvix/kernel/limits.h>
 #include <nanvix/kernel/log.h>
@@ -438,6 +439,9 @@ int iam_init(void)
     root->suid = 0;
     root->sgid = 0;
     ROOT = root;
+
+    // Run unit tests.
+    iam_test();
 
     return (0);
 }
