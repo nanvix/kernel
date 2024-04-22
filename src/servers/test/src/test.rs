@@ -462,6 +462,57 @@ fn test_semctl_call() -> bool {
     true
 }
 
+/// Test creation of a mailbox
+fn do_mailbox_create_happy_path_testing() -> bool {
+    let owner: u32 = 2;
+    let mut tag: u32 = 1;
+    let mut ombxid: i32;
+    
+    for i in 0..ipc::MAILBOX_OPEN_MAX{
+        ombxid = ipc::do_mailbox_create(owner, tag);
+        tag+=1;
+        if ombxid as u32 != i {
+            return false;
+        }
+    }
+    true
+}
+
+/// Test opening of a mailbox
+fn do_mailbox_open_happy_path_testing() -> bool {
+    let owner: u32 = 2;
+    let mut tag: u32 = 1;
+    let mut ombxid: i32;
+    
+    for i in 0..ipc::MAILBOX_OPEN_MAX{
+        ombxid = ipc::do_mailbox_open(owner, tag);
+        tag+=1;
+        if ombxid as u32 != i {
+            return false;
+        }
+    }
+    true
+}
+
+/// Test unlinking/removing mailboxes
+fn do_mailbox_unlink_happy_path_testing() -> bool {
+    for i in 0..ipc::MAILBOX_OPEN_MAX{
+        if ipc::do_mailbox_unlink(i) != 0{
+            return false;
+        }
+    }
+    true
+}
+
+/// Test closing mailboxes
+fn do_mailbox_close_happy_path_testing() -> bool {
+    for i in 0..ipc::MAILBOX_OPEN_MAX{
+        if ipc::do_mailbox_close(i) != 0{
+            return false;
+        }
+    }
+    true
+}
 //==============================================================================
 // Public Standalone Functions
 //==============================================================================
@@ -491,4 +542,9 @@ pub fn test_kernel_calls() {
     test!(test_semget_call());
     test!(test_semop_call());
     test!(test_semctl_call());
+    test!(do_mailbox_create_happy_path_testing());
+    test!(do_mailbox_open_happy_path_testing());
+    test!(do_mailbox_close_happy_path_testing());
+    test!(do_mailbox_create_happy_path_testing());
+    test!(do_mailbox_unlink_happy_path_testing());
 }

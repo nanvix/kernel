@@ -104,7 +104,7 @@ static int omailboxes_alloc(const int mbxid)
 int omailboxes_lookup(const int ombxid)
 {
     // Ensure that the ID of the target open mailbox is valid.
-    if (WITHIN(ombxid, 0, MAILBOX_OPEN_MAX)) {
+    if (!WITHIN(ombxid, 0, MAILBOX_OPEN_MAX)) {
         log(ERROR, "invalid ID of open mailbox (ombxid=%d)", ombxid);
         return (-EINVAL);
     }
@@ -187,7 +187,7 @@ int omailboxes_release(const int ombxid, const bool unlink)
     if (unlink) {
         // Check if the calling process is the owner of the target mailbox.
         if (mailbox_owner(mbxid) != mypid) {
-            log(ERROR, "permission deined (ombxid=%d, pid=%d)", ombxid, mypid);
+            log(ERROR, "permission denied (ombxid=%d, pid=%d)", ombxid, mypid);
             return (-EPERM);
         }
     }
