@@ -104,7 +104,7 @@ static int omailboxes_alloc(const int mbxid)
 int omailboxes_lookup(const int ombxid)
 {
     // Ensure that the ID of the target open mailbox is valid.
-    if (WITHIN(ombxid, 0, MAILBOX_OPEN_MAX)) {
+    if (!WITHIN(ombxid, 0, MAILBOX_OPEN_MAX)) {
         log(ERROR, "invalid ID of open mailbox (ombxid=%d)", ombxid);
         return (-EINVAL);
     }
