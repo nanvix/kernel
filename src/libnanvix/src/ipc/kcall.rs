@@ -33,10 +33,10 @@ pub fn do_mailbox_close(ombxid : u32) -> i32 {
     unsafe { kcall::kcall1(KcallNumbers::Mbxclose as u32, ombxid) as i32}
 }
 
-pub fn do_mailbox_write(ombxid : u32, buffer : u32, sz : u64) -> i32 {
+pub fn do_mailbox_write(ombxid : u32, buffer : *const u32, sz : u64) -> i32 {
     unsafe { kcall::kcall3(KcallNumbers::Mbxwrite as u32, ombxid, buffer as u32, sz as u32) as i32}
 }
 
-pub fn do_mailbox_read(ombxid : u32, buffer : u32, sz : u64) -> i32 {
+pub fn do_mailbox_read(ombxid : u32, buffer : *const u32, sz : u64) -> i32 {
     unsafe { kcall::kcall3(KcallNumbers::Mbxread as u32, ombxid, buffer as u32, sz as u32) as i32}
 }

@@ -462,57 +462,108 @@ fn test_semctl_call() -> bool {
     true
 }
 
-/// Test creation of a mailbox
-fn do_mailbox_create_happy_path_testing() -> bool {
+/// Test creation and unlinking of a mailbox
+fn do_mailbox_create_unlink_happy_path_testing() -> bool {
     let owner: u32 = 2;
     let mut tag: u32 = 1;
     let mut ombxid: i32;
     
+    //Opening mailbox
     for i in 0..ipc::MAILBOX_OPEN_MAX{
         ombxid = ipc::do_mailbox_create(owner, tag);
         tag+=1;
         if ombxid as u32 != i {
+            nanvix::log!("Failed to create mailbox!");
+            return false;
+        }
+    }
+
+    //unlinking mailbox
+    for i in 0..ipc::MAILBOX_OPEN_MAX{
+        if ipc::do_mailbox_unlink(i) != 0{
+            nanvix::log!("Failed to unlink mailbox!");
             return false;
         }
     }
     true
 }
 
-/// Test opening of a mailbox
-fn do_mailbox_open_happy_path_testing() -> bool {
+/// Test opening and closing of a mailbox
+fn do_mailbox_open_close_happy_path_testing() -> bool {
     let owner: u32 = 2;
     let mut tag: u32 = 1;
     let mut ombxid: i32;
+
+    //Opening mailbox
+    for i in 0..ipc::MAILBOX_OPEN_MAX{
+        ombxid = ipc::do_mailbox_create(owner, tag);
+        tag+=1;
+        if ombxid as u32 != i {
+            nanvix::log!("Failed to create mailbox!");
+            return false;
+        }
+    }
     
+    tag = 1;
+    //Opening mailbox
     for i in 0..ipc::MAILBOX_OPEN_MAX{
         ombxid = ipc::do_mailbox_open(owner, tag);
         tag+=1;
         if ombxid as u32 != i {
+            nanvix::log!("Failed to open mailbox!");
             return false;
         }
     }
-    true
-}
 
-/// Test unlinking/removing mailboxes
-fn do_mailbox_unlink_happy_path_testing() -> bool {
-    for i in 0..ipc::MAILBOX_OPEN_MAX{
-        if ipc::do_mailbox_unlink(i) != 0{
-            return false;
-        }
-    }
-    true
-}
-
-/// Test closing mailboxes
-fn do_mailbox_close_happy_path_testing() -> bool {
+    //Closing mailbox
     for i in 0..ipc::MAILBOX_OPEN_MAX{
         if ipc::do_mailbox_close(i) != 0{
+            nanvix::log!("Failed to close mailbox!");
             return false;
         }
     }
+
     true
 }
+
+/// Test writing and reading to/from mailboxes
+fn do_mailbox_write_read_happy_path_testing() -> bool {
+    let owner: u32 = 2;
+    let mut tag: u32 = 1;
+    let msg: [u32; 16] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+    let mut msg_buffer = &msg as *const u32;
+    let mut ombxid: i32;
+
+    //Writing
+    for _ in 0..ipc::MAILBOX_OPEN_MAX{
+        ombxid = ipc::do_mailbox_create(owner, tag);
+        if ombxid < 0{
+            nanvix::log!("Failed to create mailbox!");
+            return false;
+        }
+        else if ipc::do_mailbox_write(ombxid as u32, msg_buffer, 4) != 0 {
+            nanvix::log!("Failed to write to mailbox!");
+            return false;
+        }
+        unsafe {
+            msg_buffer = msg_buffer.offset(1);
+        }
+        tag+=1;
+    }
+
+    //Reading
+    let reader_msg: u32 = 0;
+    let reader_msg_buffer: *const u32 = &reader_msg;
+    for ombxid in (0..ipc::MAILBOX_OPEN_MAX).rev() {
+        if ipc::do_mailbox_read(ombxid as u32, reader_msg_buffer, 4) != 0{
+            nanvix::log!("Failed to read from mailbox!");
+            return false;
+        }
+    }
+
+    true
+}
+
 //==============================================================================
 // Public Standalone Functions
 //==============================================================================
@@ -542,9 +593,7 @@ pub fn test_kernel_calls() {
     test!(test_semget_call());
     test!(test_semop_call());
     test!(test_semctl_call());
-    test!(do_mailbox_create_happy_path_testing());
-    test!(do_mailbox_open_happy_path_testing());
-    test!(do_mailbox_close_happy_path_testing());
-    test!(do_mailbox_create_happy_path_testing());
-    test!(do_mailbox_unlink_happy_path_testing());
+    test!(do_mailbox_open_close_happy_path_testing());
+    test!(do_mailbox_create_unlink_happy_path_testing());
+    test!(do_mailbox_write_read_happy_path_testing());
 }

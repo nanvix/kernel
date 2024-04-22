@@ -91,7 +91,7 @@ extern void omailbox_init(void);
  * @param owner PID of the processing owning the target mailbox.
  * @param tag Tag of the target mailbox.
  *
- * @returns Upon successful completion, the ID of the target mailbox is
+ * @returns Upon successful completion, the ID of the target open mailbox is
  * returned. Upon failure, a negative error code is returned instead.
  */
 int do_mailbox_create(const pid_t owner, const int tag)
