@@ -132,6 +132,8 @@ static int semaphore_drop(int semid)
  */
 int semaphore_set(int semid, int count)
 {
+    struct semaphore *sem = NULL;
+
     // Verify if semaphore is SEMAPHORE_ACTIVE.
     if (!is_semaphore_SEMAPHORE_ACTIVE(semid)) {
         return (-ENOENT);
@@ -142,7 +144,16 @@ int semaphore_set(int semid, int count)
         return (-EACCES);
     }
 
-    semaphore_init(&semtable[semid], count);
+    sem = &semtable[semid];
+
+    KASSERT(count >= 0);
+    KASSERT(sem != NULL);
+
+    // Initialize semaphore counter.
+    sem->count = count;
+
+    // Initialize semaphore conditional variable.
+    cond_init(&sem->cond);
 
     return 0;
 }

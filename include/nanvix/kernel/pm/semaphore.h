@@ -73,25 +73,6 @@ struct semaphore {
  *============================================================================*/
 
 /**
- * @brief Initializes a semaphore.
- *
- * The semaphore_init() function dynamically initializes the
- * fields of the semaphore pointed to by @p sem. The initial value
- * of the semaphore is set to @p x in the initialization.
- *
- * @p sem Semaphore structure.
- * @param x   Initial semaphore value.
- */
-static inline void semaphore_init(struct semaphore *sem, int x)
-{
-    KASSERT(x >= 0);
-    KASSERT(sem != NULL);
-
-    sem->count = x;
-    cond_init(&sem->cond);
-}
-
-/**
  * @brief Set process as semaphore user.
  *
  * @param semid Semaphore id.
