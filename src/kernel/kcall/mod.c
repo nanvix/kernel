@@ -127,6 +127,30 @@ int do_kcall(word_t arg0, word_t arg1, word_t arg2, word_t arg3, word_t arg4,
         case NR_pinfo:
             ret = kcall_pinfo((struct process_info *)arg0);
             break;
+        case NR_getuid:
+            ret = kcall_getuid();
+            break;
+        case NR_geteuid:
+            ret = kcall_geteuid();
+            break;
+        case NR_getgid:
+            ret = kcall_getgid();
+            break;
+        case NR_getegid:
+            ret = kcall_getegid();
+            break;
+        case NR_setuid:
+            ret = kcall_setuid((uid_t)arg0);
+            break;
+        case NR_seteuid:
+            ret = kcall_seteuid((uid_t)arg0);
+            break;
+        case NR_setgid:
+            ret = kcall_setgid((gid_t)arg0);
+            break;
+        case NR_setegid:
+            ret = kcall_setegid((gid_t)arg0);
+            break;
         case NR_semget:
             ret = kcall_semget((unsigned)arg0);
             break;
