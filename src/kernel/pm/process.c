@@ -176,8 +176,15 @@ pid_t process_create(const void *image)
         goto error1;
     }
 
+    // Allocate a new identity.
+    struct identity *id = identity_new(kernel->id);
+    if (id == NULL) {
+        goto error2;
+    }
+
     // Initializes process control block.
     process->pid = ++next_pid;
+    process->id = id;
     process->image = image;
     process->vmem = vmem;
     process->ustackmap = 0;
@@ -185,11 +192,13 @@ pid_t process_create(const void *image)
     // Creates a thread.
     if ((process->tid = thread_create(
              process, (void *(*)())USER_BASE_VIRT, NULL, NULL)) < 0) {
-        goto error2;
+        goto error3;
     }
 
     return (process->pid);
 
+error3:
+    KASSERT(identity_drop(id) == 0);
 error2:
     vmem_destroy(vmem);
 error1:
@@ -244,6 +253,7 @@ void process_init(vmem_t root_vmem)
     }
 
     // Initialize.
+    kernel->id = (struct identity *)identity_root();
     kernel->vmem = (vmem_t)root_vmem;
     kernel->active = true;
     thread_init();

@@ -11,6 +11,7 @@
  *============================================================================*/
 
 #include <nanvix/kernel/hal.h>
+#include <nanvix/kernel/iam.h>
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/limits.h>
 #include <nanvix/kernel/mm.h>
@@ -37,9 +38,10 @@ struct process {
      * @name Control variables.
      */
     /**@{*/
-    pid_t pid;   /** Process ID.     */
-    tid_t tid;   /** Main Thread ID. */
-    bool active; /** Active?         */
+    pid_t pid;           /** Process ID.     */
+    tid_t tid;           /** Main Thread ID. */
+    bool active;         /** Active?         */
+    struct identity *id; /** Identity.       */
     /**@}*/
 
     /**
