@@ -35,6 +35,24 @@
 #define SEMAPHORE_INACTIVE 0
 
 /*============================================================================*
+ * Public Variables                                                           *
+ *============================================================================*/
+
+/**
+ * @brief Kernel's semaphore.
+ *
+ * @details Control acesse in Syscall dispatcher.
+ */
+extern int kernel_semaphore;
+
+/**
+ * @brief Kernel's semaphore.
+ *
+ * @details Control acesse in Syscall dispatcher.
+ */
+extern int user_semaphore;
+
+/*============================================================================*
  * Structures                                                                 *
  *============================================================================*/
 
@@ -49,16 +67,6 @@ struct semaphore {
     pid_t proc_user[PROCESS_MAX]; /** Users process.      */
     unsigned key;                 /** Semphore key.       */
 };
-
-/*============================================================================*
- * Public Variables                                                           *
- *============================================================================*/
-
-/**
- * @brief Kernel's semaphore
- */
-extern int kernel_semaphore;
-extern int user_semaphore;
 
 /*============================================================================*
  * Functions                                                                  *

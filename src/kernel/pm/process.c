@@ -37,6 +37,20 @@ extern vaddr_t elf32_load(const struct elf32_fhdr *elf);
 #define PROCESS_QUANTUM 100
 
 /*============================================================================*
+ * Public Variables                                                           *
+ *============================================================================*/
+
+/**
+ * @brief Kernel's semaphore.
+ */
+int kernel_semaphore = -EINVAL;
+
+/**
+ * @brief Kernel's semaphore.
+ */
+int user_semaphore = -EINVAL;
+
+/*============================================================================*
  * Private Variables                                                          *
  *============================================================================*/
 
@@ -236,9 +250,6 @@ void process_wakeup(struct process *p)
 {
     thread_wakeup_all(p->pid);
 }
-
-int kernel_semaphore;
-int user_semaphore;
 
 /**
  * @details Initializes the process system.
