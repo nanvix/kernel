@@ -11,18 +11,15 @@
  *============================================================================*/
 
 #include <nanvix/kernel/hal.h>
+#include <nanvix/kernel/iam.h>
 #include <nanvix/kernel/lib.h>
+#include <nanvix/kernel/limits.h>
 #include <nanvix/kernel/mm.h>
 #include <stdnoreturn.h>
 
 /*============================================================================*
  * Constants                                                                  *
  *============================================================================*/
-
-/**
- * @brief Maximum number of processes.
- */
-#define PROCESS_MAX 16
 
 /**
  * @brief Kernel process ID.
@@ -41,9 +38,10 @@ struct process {
      * @name Control variables.
      */
     /**@{*/
-    pid_t pid;   /** Process ID.     */
-    tid_t tid;   /** Main Thread ID. */
-    bool active; /** Active?         */
+    pid_t pid;           /** Process ID.     */
+    tid_t tid;           /** Main Thread ID. */
+    bool active;         /** Active?         */
+    struct identity *id; /** Identity.       */
     /**@}*/
 
     /**

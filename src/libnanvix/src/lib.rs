@@ -15,6 +15,7 @@ pub mod logging;
 mod unwind;
 
 pub mod devices;
+pub mod iam;
 pub mod ipc;
 pub mod kcall;
 pub mod memory;

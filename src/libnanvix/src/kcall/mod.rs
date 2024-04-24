@@ -55,6 +55,14 @@ pub enum KcallNumbers {
     ThreadJoin = 26,
     ThreadDetach = 27,
     ProcessInfo = 28,
+    GetUserID = 29,
+    GetEffectiveUserID = 30,
+    GetUserGroupID = 31,
+    GetEffectiveUserGroupID = 32,
+    SetUserID = 33,
+    SetEffectiveUserID = 34,
+    SetUserGroupID = 35,
+    SetEffectiveUserGroupID = 36,
 }
 
 //==============================================================================

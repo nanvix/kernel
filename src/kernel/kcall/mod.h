@@ -13,6 +13,7 @@
 #include <nanvix/kernel/kmod.h>
 #include <nanvix/kernel/mm.h>
 #include <nanvix/kernel/pm.h>
+#include <nanvix/types.h>
 #include <stddef.h>
 #include <stdnoreturn.h>
 
@@ -214,6 +215,77 @@ extern pid_t kcall_spawn(void *image);
  * a negative error code is returned instead.
  */
 extern int kcall_pinfo(struct process_info *buf);
+
+/**
+ * @brief Gets the real user ID of the calling process.
+ *
+ * @return The real user ID stored in the identity pointed to by @p id is
+ * returned.
+ */
+extern uid_t kcall_getuid(void);
+
+/**
+ * @brief Gets the effective user ID of the calling process.
+ *
+ * @return The effective user ID stored in the identity pointed to by @p id is
+ * returned.
+ */
+extern uid_t kcall_geteuid(void);
+
+/**
+ * @brief Gets the user group ID of the calling process.
+ *
+ * @return The user group ID stored in the identity pointed to by @p id is
+ * returned.
+ */
+extern gid_t kcall_getgid(void);
+
+/**
+ * @brief Gets the effective user group ID of the calling process.
+ *
+ * @return The effective user group ID stored in the identity pointed to by @p
+ * id is returned.
+ */
+extern gid_t kcall_getegid(void);
+
+/**
+ * @brief Sets the real user ID of the calling process.
+ *
+ * @param uid User ID.
+ *
+ * @return On successful completion, zero is returned. On error, a negative
+ * error code is returned instead.
+ */
+extern int kcall_setuid(uid_t uid);
+
+/**
+ * @brief Sets the effective user ID of the calling process.
+ *
+ * @param euid Effective user ID.
+ *
+ * @return On successful completion, zero is returned. On error, a negative
+ * error code is returned instead.
+ */
+extern int kcall_seteuid(uid_t euid);
+
+/**
+ * @brief Sets the user group ID of the calling process.
+ *
+ * @param gid user group ID.
+ *
+ * @return On successful completion, zero is returned. On error, a negative
+ */
+extern int kcall_setgid(gid_t gid);
+
+/**
+ * @brief Sets the effective user group ID of the calling process.
+ *
+ * @param egid Effective user group ID.
+ *
+ * @return On successful completion, zero is returned. On error, a negative
+ * error code is returned instead.
+ */
+extern int kcall_setegid(gid_t egid);
 
 /**
  * @brief Get a semaphore.

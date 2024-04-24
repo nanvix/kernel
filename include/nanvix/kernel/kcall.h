@@ -60,7 +60,15 @@
 #define NR_thread_join 26   /** kernel_thread_join()      */
 #define NR_thread_detach 27 /** kernel_thread_detach()    */
 #define NR_pinfo 28         /** kernel_pinfo()            */
-#define NR_last_kcall 29    /** NR_SYSCALLS definer       */
+#define NR_getuid 29        /** kernel_getuid()           */
+#define NR_geteuid 30       /** kernel_geteuid()          */
+#define NR_getgid 31        /** kernel_getgid()           */
+#define NR_getegid 32       /** kernel_getegid()          */
+#define NR_setuid 33        /** kernel_setuid()           */
+#define NR_seteuid 34       /** kernel_seteuid()          */
+#define NR_setgid 35        /** kernel_setgid()           */
+#define NR_setegid 36       /** kernel_setegid()          */
+#define NR_last_kcall 37    /** NR_SYSCALLS definer       */
 #define NR__exit            /** kernel_exit()             */
 #define NR_process_get_id   /** kernel_process_get_id()   */
 #define NR_process_create   /** kernel_process_create()   */

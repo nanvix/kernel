@@ -47,6 +47,11 @@
 typedef uint32_t mode_t;
 
 /**
+ * @brief User group ID.
+ */
+typedef int gid_t;
+
+/**
  * @brief Process ID.
  */
 typedef int pid_t;
@@ -55,5 +60,12 @@ typedef int pid_t;
  * @brief Thread ID.
  */
 typedef int tid_t;
+
+/**
+ * @brief User ID.
+ */
+typedef int uid_t;
+
+/*============================================================================*/
 
 #endif /* !NANVIX_TYPES_H_ */
