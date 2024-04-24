@@ -273,10 +273,15 @@ void process_init(vmem_t root_vmem)
     kernel->active = true;
     thread_init();
 
-    // Initialize semaphore table.
+    // Initializes semaphore table.
     semtable_init();
 
-    // Initialize Kernel's semaphores.
+    /**
+     * @details Initialize Kernel's semaphores.
+     */
     kernel_semaphore = semaphore_create(0);
+    KASSERT(kernel_semaphore >= 0);
+
     user_semaphore = semaphore_create(1);
+    KASSERT(user_semaphore >= 0);
 }
