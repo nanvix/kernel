@@ -34,6 +34,36 @@
  */
 #define SEMAPHORE_INACTIVE 0
 
+/**
+ * @brief Semaphore operation UP.
+ */
+#define SEMAPHORE_UP 0
+
+/**
+ * @brief Semaphore operation DOWN.
+ */
+#define SEMAPHORE_DOWN 1
+
+/**
+ * @brief Semaphore operation DOWN without lock.
+ */
+#define SEMAPHORE_TRYLOCK 2
+
+/**
+ * @brief Command Semaphore Get Value
+ */
+#define SEMAPHORE_GETVALUE 0
+
+/**
+ * @brief Command Semaphore Set Value
+ */
+#define SEMAPHORE_SETVALUE 1
+
+/**
+ * @brief Command Semaphore Delete
+ */
+#define SEMAPHORE_DELETE 2
+
 /*============================================================================*
  * Public Variables                                                           *
  *============================================================================*/

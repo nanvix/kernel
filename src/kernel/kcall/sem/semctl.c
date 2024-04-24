@@ -12,25 +12,6 @@
 #include <nanvix/kernel/pm/semaphore.h>
 
 /*============================================================================*
- * Constants                                                                  *
- *============================================================================*/
-
-/**
- * @brief Command Semaphore Get Value
- */
-#define SEMAPHORE_GETVALUE 0
-
-/**
- * @brief Command Semaphore Set Value
- */
-#define SEMAPHORE_SETVALUE 1
-
-/**
- * @brief Command Semaphore Delete
- */
-#define SEMAPHORE_DELETE 2
-
-/*============================================================================*
  * Public Functions                                                           *
  *============================================================================*/
 
