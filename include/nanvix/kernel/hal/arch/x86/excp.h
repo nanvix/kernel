@@ -7,6 +7,7 @@
 #define NANVIX_KERNEL_HAL_ARCH_X86_EXCP_H_
 
 #include <arch/x86.h>
+#include <nanvix/cc.h>
 
 /*============================================================================*
  * Constants                                                                  *
@@ -46,5 +47,25 @@ struct exception {
 } __attribute__((packed));
 
 #endif /* _ASM_FILE_ */
+
+/*============================================================================*
+ * Functions                                                                  *
+ *============================================================================*/
+
+#ifndef _ASM_FILE_
+
+/**
+ * @brief Gets the address of a page fault.
+ *
+ * @returns The linear address that incurred a page fault.
+ */
+static inline word_t get_page_fault_addr(void)
+{
+    return (x86_read_cr2());
+}
+
+#endif /* _ASM_FILE_ */
+
+/*============================================================================*/
 
 #endif /* NANVIX_KERNEL_HAL_ARCH_X86_CTX_H_ */
