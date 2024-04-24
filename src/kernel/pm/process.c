@@ -281,7 +281,9 @@ void process_init(vmem_t root_vmem)
      */
     kernel_semaphore = semaphore_create(0);
     KASSERT(kernel_semaphore >= 0);
+    KASSERT(semaphore_set(kernel_semaphore, 0) >= 0);
 
     user_semaphore = semaphore_create(1);
     KASSERT(user_semaphore >= 0);
+    KASSERT(semaphore_set(user_semaphore, 0) >= 0);
 }
