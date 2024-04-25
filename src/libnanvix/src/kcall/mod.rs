@@ -63,6 +63,9 @@ pub enum KcallNumbers {
     SetEffectiveUserID = 34,
     SetUserGroupID = 35,
     SetEffectiveUserGroupID = 36,
+    ExcpCtrl = 37,
+    ExcpWait = 38,
+    ExcpResume = 39,
 }
 
 //==============================================================================
