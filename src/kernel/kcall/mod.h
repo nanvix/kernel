@@ -10,6 +10,7 @@
  * Imports                                                                    *
  *============================================================================*/
 
+#include <nanvix/kernel/excp.h>
 #include <nanvix/kernel/kmod.h>
 #include <nanvix/kernel/mm.h>
 #include <nanvix/kernel/pm.h>
@@ -389,6 +390,37 @@ extern int kcall_thread_join(tid_t tid, void **retval);
  * negative error code is returned instead.
  */
 extern int kcall_thread_detach(tid_t tid);
+
+/**
+ * @brief Controls which action to take when an exception happens.
+ *
+ * @param excpnum Exception number
+ * @param action Action to take.
+ *
+ * @return Upon successful completion zero is returned. Upon failure a negative
+ * error code is returned instead.
+ */
+extern int kcall_excpctrl(int excpnum, int action);
+
+/**
+ * @brief Resumes the execution of a faulting process.
+ *
+ * @param excpnum Exception number
+ *
+ * @return Upon successful completion zero is returned. Upon failure a negative
+ * error code is returned instead.
+ */
+extern int kcall_excpresume(int excpnum);
+
+/**
+ * @brief Waits for an exception to happen.
+ *
+ * @param info Exception information.
+ *
+ * @return Upon successful completion zero is returned. Upon failure a negative
+ * error code is returned instead.
+ */
+extern int kcall_excpwait(struct excpinfo *info);
 
 /*============================================================================*/
 
