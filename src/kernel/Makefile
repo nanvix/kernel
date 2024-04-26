@@ -6,7 +6,8 @@
 #===============================================================================
 
 # C Source Files
-SRC_C = $(wildcard hal/arch/*.c)      \
+SRC_C = $(wildcard excp/*.c)          \
+		$(wildcard hal/arch/*.c)      \
 		$(wildcard hal/exception/*.c) \
 		$(wildcard hal/interrupt/*.c) \
 		$(wildcard hal/mmap/*.c)      \

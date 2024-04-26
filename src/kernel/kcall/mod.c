@@ -182,6 +182,15 @@ int do_kcall(word_t arg0, word_t arg1, word_t arg2, word_t arg3, word_t arg4,
         case NR_thread_detach:
             ret = kcall_thread_detach((tid_t)arg0);
             break;
+        case NR_excpctrl:
+            ret = kcall_excpctrl((int)arg0, (int)arg1);
+            break;
+        case NR_excpwait:
+            ret = kcall_excpwait((struct excpinfo *)arg0);
+            break;
+        case NR_excpresume:
+            ret = kcall_excpresume((int)arg0);
+            break;
         default:
             // Copy kernel call parameters.
             scoreboard.kcall_nr = kcall_nr;

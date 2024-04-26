@@ -6,6 +6,13 @@
 #ifndef _ARCH_X86_REGS_H_
 #define _ARCH_X86_REGS_H_
 
+#include <arch/x86/cpu/types.h>
+#include <nanvix/cc.h>
+
+/*============================================================================*
+ * Constants                                                                  *
+ *============================================================================*/
+
 /**
  * @name Extended Flags Register
  */
@@ -26,5 +33,27 @@
 #define EFLAGS_NT (1 << 14)    /** Nested Task           */
 #define EFLAGS_RF (1 << 16)    /** Resume Flag           */
 /**@}*/
+
+/*============================================================================*
+ * Functions                                                                  *
+ *============================================================================*/
+
+#ifndef _ASM_FILE_
+
+/**
+ * @brief Reads the contents of the CR2 register.
+ */
+static inline word_t x86_read_cr2(void)
+{
+    word_t value = 0;
+
+    asm volatile("mov %%cr2, %0" : "=r"(value));
+
+    return (value);
+}
+
+#endif /* _ASM_FILE */
+
+/*============================================================================*/
 
 #endif /* _ARCH_X86_REGS_H_ */

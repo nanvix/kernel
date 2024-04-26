@@ -9,6 +9,7 @@
 
 #include <elf.h>
 #include <nanvix/cc.h>
+#include <nanvix/kernel/excp.h>
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/iam.h>
 #include <nanvix/kernel/ipc/mailbox.h>
@@ -130,6 +131,8 @@ noreturn void kmain(struct kargs *args)
     test_frame();
     test_kpool();
     test_upool((struct pde *)vmem_pgdir_get(root_vmem));
+
+    excp_init();
 
     // Spawn init server. Note that although we do create new processes, we will
     // not switch to it, because interrupts are disabled. This will save us from

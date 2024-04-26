@@ -68,7 +68,10 @@
 #define NR_seteuid 34       /** kernel_seteuid()          */
 #define NR_setgid 35        /** kernel_setgid()           */
 #define NR_setegid 36       /** kernel_setegid()          */
-#define NR_last_kcall 37    /** NR_SYSCALLS definer       */
+#define NR_excpctrl 37      /** kernel_excpctrl()         */
+#define NR_excpwait 38      /** kernel_excpwait()         */
+#define NR_excpresume 39    /** kernel_excpresume()       */
+#define NR_last_kcall 40    /** NR_SYSCALLS definer       */
 #define NR__exit            /** kernel_exit()             */
 #define NR_process_get_id   /** kernel_process_get_id()   */
 #define NR_process_create   /** kernel_process_create()   */
