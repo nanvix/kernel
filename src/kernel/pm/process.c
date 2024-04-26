@@ -14,6 +14,7 @@
 #include <nanvix/kernel/log.h>
 #include <nanvix/kernel/mm.h>
 #include <nanvix/kernel/pm.h>
+#include <nanvix/kernel/pm/semaphore.h>
 #include <stdnoreturn.h>
 
 /**
@@ -34,6 +35,20 @@ extern vaddr_t elf32_load(const struct elf32_fhdr *elf);
  * @brief Process quantum.
  */
 #define PROCESS_QUANTUM 100
+
+/*============================================================================*
+ * Public Variables                                                           *
+ *============================================================================*/
+
+/**
+ * @brief Kernel's semaphore.
+ */
+int kernel_semaphore = -EINVAL;
+
+/**
+ * @brief Kernel's semaphore.
+ */
+int user_semaphore = -EINVAL;
 
 /*============================================================================*
  * Private Variables                                                          *
@@ -257,4 +272,18 @@ void process_init(vmem_t root_vmem)
     kernel->vmem = (vmem_t)root_vmem;
     kernel->active = true;
     thread_init();
+
+    // Initializes semaphore table.
+    semtable_init();
+
+    /**
+     * @details Initialize Kernel's semaphores.
+     */
+    kernel_semaphore = semaphore_create(0);
+    KASSERT(kernel_semaphore >= 0);
+    KASSERT(semaphore_set(kernel_semaphore, 0) >= 0);
+
+    user_semaphore = semaphore_create(1);
+    KASSERT(user_semaphore >= 0);
+    KASSERT(semaphore_set(user_semaphore, 0) >= 0);
 }

@@ -7,6 +7,7 @@
  * Imports                                                                    *
  *============================================================================*/
 
+#include <nanvix/errno.h>
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/log.h>
@@ -126,22 +127,33 @@ static int semaphore_drop(int semid)
  *
  * @param count Semaphore counter.
  *
- * @return (0) if successful , (-1) if semaphore inactive, (-2) if
- * not allowed.
+ * @return Upon successful completion, zero is returned. Upon failure, a
+ * negative error code is returned instead.
  */
 int semaphore_set(int semid, int count)
 {
+    struct semaphore *sem = NULL;
+
     // Verify if semaphore is SEMAPHORE_ACTIVE.
     if (!is_semaphore_SEMAPHORE_ACTIVE(semid)) {
-        return (-1);
+        return (-ENOENT);
     }
 
     // Verify if semaphore is get.
     if (!is_semaphore_get(semid)) {
-        return (-2);
+        return (-EACCES);
     }
 
-    semaphore_init(&semtable[semid], count);
+    sem = &semtable[semid];
+
+    KASSERT(count >= 0);
+    KASSERT(sem != NULL);
+
+    // Initialize semaphore counter.
+    sem->count = count;
+
+    // Initialize semaphore conditional variable.
+    cond_init(&sem->cond);
 
     return 0;
 }
@@ -151,13 +163,14 @@ int semaphore_set(int semid, int count)
  *
  * @param semid Semaphore id.
  *
- * @return (semid) if successful , (-1) otherwise.
+ * @return Upon successful completion, (semid) is returned. Upon failure, a
+ * negative error code is returned instead.
  */
 int semaphore_get(int semid)
 {
     // Verify if semaphore is SEMAPHORE_ACTIVE.
     if (!is_semaphore_SEMAPHORE_ACTIVE(semid)) {
-        return (-1);
+        return (-ENOENT);
     }
 
     // Verify if semaphore already was get.
@@ -174,7 +187,7 @@ int semaphore_get(int semid)
         }
     }
 
-    return (-1);
+    return (-ENOBUFS);
 }
 
 /**
@@ -182,14 +195,15 @@ int semaphore_get(int semid)
  *
  * @param key Semaphore key.
  *
- * @return (-2) if key already exist, (semid) if successful, (-1) otherwise.
+ * @return Upon successful completion, (semid) is returned. Upon failure, a
+ * negative error code is returned instead.
  */
 int semaphore_create(unsigned key)
 {
     // Check if key already exist
     int key_semid = key_check(key);
     if (key_semid != -1) {
-        return (-2);
+        return (-EEXIST);
     }
 
     // Found SEMAPHORE_INACTIVE semaphores
@@ -205,7 +219,7 @@ int semaphore_create(unsigned key)
         }
     }
 
-    return (-1);
+    return (-ENOBUFS);
 }
 
 /**
@@ -213,32 +227,34 @@ int semaphore_create(unsigned key)
  *
  * @param semid Semaphore id.
  *
- * @return (0) if successful , (-1) if semaphore inactive, (-2) if
- * not allowed.
+ * @return Upon successful completion, zero is returned. Upon failure, a
+ * negative error code is returned instead.
  */
 int semaphore_delete(int semid)
 {
     // Verify if semaphore is SEMAPHORE_ACTIVE.
     if (!is_semaphore_SEMAPHORE_ACTIVE(semid)) {
-        return (-1);
+        return (-ENOENT);
     }
 
     // Verify if semaphore is get.
     if (!is_semaphore_get(semid)) {
-        return (-2);
+        return (-EACCES);
     }
 
     struct process *currproc = process_get_curr();
 
-    // If currproc is owner delete semaphore, else, drop semaphore.
+    // If currproc is owner, delete semaphore, else, drop semaphore.
     if (semtable[semid].proc_owner == currproc->pid) {
         semtable[semid].state = SEMAPHORE_INACTIVE;
         return (0);
-    } else {
-        return semaphore_drop(semid);
     }
 
-    return (-1);
+    if (semaphore_drop(semid)) {
+        return (0);
+    }
+
+    return (-EBADMSG);
 }
 
 /*
@@ -246,19 +262,19 @@ int semaphore_delete(int semid)
  *
  * @p semid Semaphore id.
  *
- * @return (Semaphore count) if successful , (-1) if semaphore inactive, (-2) if
- * not allowed.
+ * @return Upon successful completion, Semaphore Count is returned. Upon
+ * failure, a negative error code is returned instead.
  */
 int semaphore_getcount(int semid)
 {
     // Verify if semaphore is SEMAPHORE_ACTIVE.
     if (!is_semaphore_SEMAPHORE_ACTIVE(semid)) {
-        return (-1);
+        return (-ENOENT);
     }
 
     // Verify if semaphore is get.
     if (!is_semaphore_get(semid)) {
-        return (-2);
+        return (-EACCES);
     }
 
     return (semtable[semid].count);
@@ -269,11 +285,17 @@ int semaphore_getcount(int semid)
  *
  * @p key Key associated with the semaphore.
  *
- * @return Semaphore id if key associated exist, -1 otherwise.
+ * @return Upon successful completion, (semid) is returned. Upon failure, a
+ * negative error code is returned instead.
  */
 int semaphore_getid(int key)
 {
-    return (key_check(key));
+    int semid = key_check(key);
+
+    if (semid != -1) {
+        return (semid);
+    }
+    return (-ENOENT);
 }
 
 /*
@@ -297,40 +319,90 @@ void semtable_init(void)
 
 /**
  * @details This function performs a down operation in the semaphore pointed to
- * by @p sem. It atomically checks the current value of @p sem. If it is greater
+ * by @p id. It atomically checks the current value of @p id. If it is greater
  * than one, it decrements the semaphore counter by one and the calling process
  * continue its execution, flow as usual.  Otherwise, the calling process sleeps
  * until another process performs a call to semaphore_up() on this semaphore.
  *
- * @see SEMAPHORE_INIT(), semaphore_up()
+ * @return Upon successful completion, zero is returned. Upon failure, a
+ * negative error code is returned instead.
  */
-void semaphore_down(struct semaphore *sem)
+int semaphore_down(int semid)
 {
-    KASSERT(sem != NULL);
+    // Verify if semaphore is SEMAPHORE_ACTIVE.
+    if (!is_semaphore_SEMAPHORE_ACTIVE(semid)) {
+        return (-ENOENT);
+    }
+
+    // Verify if semaphore is get.
+    if (!is_semaphore_get(semid)) {
+        return (-EACCES);
+    }
 
     while (true) {
-        if (sem->count > 0) {
+        if (semtable[semid].count > 0) {
             break;
         }
 
-        cond_wait(&sem->cond);
+        cond_wait(&semtable[semid].cond);
     }
 
-    sem->count--;
+    semtable[semid].count--;
+
+    return (0);
 }
 
 /**
  * @details This function performs an up operation in a semaphore pointed to by
- * @p sem. It atomically increments the current value of @p and wakes up all
+ * @p id. It atomically increments the current value of @p and wakes up all
  * processes that were sleeping in this semaphore, waiting for a semaphore_up()
  * operation.
  *
- * @see SEMAPHORE_INIT(), semaphore_down()
+ * @return Upon successful completion, zero is returned. Upon failure, a
+ * negative error code is returned instead.
  */
-void semaphore_up(struct semaphore *sem)
+int semaphore_up(int semid)
 {
-    KASSERT(sem != NULL);
+    // Verify if semaphore is SEMAPHORE_ACTIVE.
+    if (!is_semaphore_SEMAPHORE_ACTIVE(semid)) {
+        return (-ENOENT);
+    }
 
-    sem->count++;
-    cond_broadcast(&sem->cond);
+    // Verify if semaphore is get.
+    if (!is_semaphore_get(semid)) {
+        return (-EACCES);
+    }
+
+    semtable[semid].count++;
+    cond_broadcast(&semtable[semid].cond);
+
+    return (0);
+}
+
+/**
+ * @details Is the same as semaphore_down, but the syscall return a error value,
+ * if the semaphore @p count is 0, instead of blocking current process.
+ *
+ * @return Upon successful completion, zero is returned. Upon failure, a
+ * negative error code is returned instead.
+ */
+int semaphore_trylock(int semid)
+{
+    // Verify if semaphore is SEMAPHORE_ACTIVE.
+    if (!is_semaphore_SEMAPHORE_ACTIVE(semid)) {
+        return (-ENOENT);
+    }
+
+    // Verify if semaphore is get.
+    if (!is_semaphore_get(semid)) {
+        return (-EACCES);
+    }
+
+    if (semtable[semid].count == 0) {
+        return (-EADDRINUSE);
+    }
+
+    semtable[semid].count--;
+
+    return (0);
 }

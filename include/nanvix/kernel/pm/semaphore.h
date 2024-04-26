@@ -6,10 +6,18 @@
 #ifndef NANVIX_KERNEL_PM_SEMAPHORE_H_
 #define NANVIX_KERNEL_PM_SEMAPHORE_H_
 
+/*============================================================================*
+ * Imports                                                                    *
+ *============================================================================*/
+
 #include <nanvix/errno.h>
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/pm/cond.h>
+
+/*============================================================================*
+ * Constants                                                                  *
+ *============================================================================*/
 
 /**
  * @brief Maximum Number of semaphores in the system.
@@ -27,7 +35,59 @@
 #define SEMAPHORE_INACTIVE 0
 
 /**
- * @brief Semaphore
+ * @brief Semaphore operation UP.
+ */
+#define SEMAPHORE_UP 0
+
+/**
+ * @brief Semaphore operation DOWN.
+ */
+#define SEMAPHORE_DOWN 1
+
+/**
+ * @brief Semaphore operation DOWN without lock.
+ */
+#define SEMAPHORE_TRYLOCK 2
+
+/**
+ * @brief Command Semaphore Get Value
+ */
+#define SEMAPHORE_GETVALUE 0
+
+/**
+ * @brief Command Semaphore Set Value
+ */
+#define SEMAPHORE_SETVALUE 1
+
+/**
+ * @brief Command Semaphore Delete
+ */
+#define SEMAPHORE_DELETE 2
+
+/*============================================================================*
+ * Public Variables                                                           *
+ *============================================================================*/
+
+/**
+ * @brief Kernel's semaphore.
+ *
+ * @details Control acesse in Syscall dispatcher.
+ */
+extern int kernel_semaphore;
+
+/**
+ * @brief Kernel's semaphore.
+ *
+ * @details Control acesse in Syscall dispatcher.
+ */
+extern int user_semaphore;
+
+/*============================================================================*
+ * Structures                                                                 *
+ *============================================================================*/
+
+/**
+ * @brief Semaphore.
  */
 struct semaphore {
     int count;                    /** Semaphore counter.  */
@@ -38,45 +98,17 @@ struct semaphore {
     unsigned key;                 /** Semphore key.       */
 };
 
-/**
- * @brief Static initializer for semaphores.
- *
- * The @p SEMAPHORE_INIT macro statically initializes the fields of
- * a semaphore. The initial value of the semaphore is set to @p x
- * in the initialization.
- *
- * @param x Initial value for semaphore.
- */
-#define SEMAPHORE_INITIALIZER(x)                                               \
-    {                                                                          \
-        .count = (x), .cond = COND_INITIALIZER,                                \
-    }
-
-/**
- * @brief Initializes a semaphore.
- *
- * The semaphore_init() function dynamically initializes the
- * fields of the semaphore pointed to by @p sem. The initial value
- * of the semaphore is set to @p x in the initialization.
- *
- * @param sem Target semaphore.
- * @param x   Initial semaphore value.
- */
-static inline void semaphore_init(struct semaphore *sem, int x)
-{
-    KASSERT(x >= 0);
-    KASSERT(sem != NULL);
-
-    sem->count = x;
-    cond_init(&sem->cond);
-}
+/*============================================================================*
+ * Functions                                                                  *
+ *============================================================================*/
 
 /**
  * @brief Set process as semaphore user.
  *
  * @param semid Semaphore id.
  *
- * @return (semid) if successful , (-1) otherwise.
+ * @return Upon successful completion, (semid) is returned. Upon failure, a
+ * negative error code is returned instead.
  */
 extern int semaphore_get(int semid);
 
@@ -85,7 +117,8 @@ extern int semaphore_get(int semid);
  *
  * @param key Semaphore key.
  *
- * @return (-2) if key already exist, (semid) if successful, (-1) otherwise.
+ * @return Upon successful completion, (semid) is returned. Upon failure, a
+ * negative error code is returned instead.
  */
 extern int semaphore_create(unsigned key);
 
@@ -94,8 +127,8 @@ extern int semaphore_create(unsigned key);
  *
  * @param semid Semaphore id.
  *
- * @return (0) if successful , (-1) if semaphore inactive, (-2) if
- * not allowed.
+ * @return Upon successful completion, zero is returned. Upon failure, a
+ * negative error code is returned instead.
  */
 extern int semaphore_delete(int semid);
 
@@ -111,8 +144,8 @@ extern void semtable_init(void);
  *
  * @param count Semaphore counter.
  *
- * @return (0) if successful , (-1) if semaphore inactive, (-2) if
- * not allowed.
+ * @return Upon successful completion, zero is returned. Upon failure, a
+ * negative error code is returned instead.
  */
 extern int semaphore_set(int semid, int count);
 
@@ -121,7 +154,8 @@ extern int semaphore_set(int semid, int count);
  *
  * @p key Key associated with the semaphore.
  *
- * @return Semaphore id if key associated exist, -1 otherwise.
+ * @return Upon successful completion, (semid) is returned. Upon failure, a
+ * negative error code is returned instead.
  */
 extern int semaphore_getid(int key);
 
@@ -130,22 +164,31 @@ extern int semaphore_getid(int key);
  *
  * @p semid Semaphore id.
  *
- * @return -2 (Semaphore count) if successful , (-1) otherwise.
+ * @return Upon successful completion, Semaphore Count is returned. Upon
+ * failure, a negative error code is returned instead.
  */
 extern int semaphore_getcount(int semid);
 
 /**
  * @brief Performs a down operation in a semaphore.
  *
- * @param sem Target semaphore.
+ * @p semid Semaphore id.
  */
-extern void semaphore_down(struct semaphore *sem);
+extern int semaphore_down(int semid);
 
 /**
  * @brief Performs an up operation in a semaphore.
  *
- * @param sem target semaphore.
+ * @p semid Semaphore id.
  */
-extern void semaphore_up(struct semaphore *sem);
+extern int semaphore_up(int semid);
+
+/**
+ * @brief Performs a down operation in a semaphore, but
+ * no lock.
+ *
+ * @p semid Semaphore id.
+ */
+extern int semaphore_trylock(int semid);
 
 #endif /* NANVIX_KERNEL_PM_SEMAPHORE_H_ */

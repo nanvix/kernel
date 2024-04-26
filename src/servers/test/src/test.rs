@@ -468,18 +468,6 @@ fn get_invalid_kmod_info() -> bool {
     true
 }
 
-/// Test if Semaphore Get kernel call is working.
-fn test_semget_call() -> bool {
-    let key: u32 = 1;
-    let result: i32 = pm::semget(key);
-
-    if result == -1 {
-        return false;
-    }
-
-    true
-}
-
 // Test systemcall for ipc module
 fn test_mailbox_tag() -> bool {
     let mbxid: i32 = 58; // 58 is the ENOTSUP error code
@@ -490,12 +478,12 @@ fn test_mailbox_tag() -> bool {
     true
 }
 
-/// Test if Semaphore Handler kernel call is working.
-fn test_semop_call() -> bool {
-    let id: u32 = 1;
-    let op: u32 = 1;
-    let result: i32 = pm::semop(id, op);
-    if result != 2 {
+/// Test if Semaphore Get kernel call is working.
+fn test_semget_call() -> bool {
+    let key: u32 = 2012;
+    let semid: i32 = pm::semget(key);
+
+    if semid == -1 {
         return false;
     }
 
@@ -505,42 +493,74 @@ fn test_semop_call() -> bool {
 /// Test if Semaphore Controler kernel call is working.
 fn test_semctl_call() -> bool {
     let key: u32 = 2012;
-    let id: i32 = pm::semget(key);
+    let semid: i32 = pm::semget(key);
 
-    if id == -1 {
+    if semid == -1 {
         return false;
     }
 
     let val: u32 = 1;
 
-    // Test command 1 Set count id.
-    {
-        let cmd: u32 = 1;
-        let result: i32 = pm::semctl(id as u32, cmd, val);
+    let setcountid: u32 = 1;
+    let result: i32 = pm::semctl(semid as u32, setcountid, val);
 
-        if result == -1 {
-            return false;
-        }
+    if result == -1 {
+        return false;
     }
 
     // Test command 0 Get count id.
-    {
-        let cmd: u32 = 0;
-        let result: i32 = pm::semctl(id as u32, cmd, val);
+    let getcountid: u32 = 0;
+    let result: i32 = pm::semctl(semid as u32, getcountid, val);
 
-        if result as u32 != val {
-            return false;
-        }
+    if result as u32 != val {
+        return false;
     }
 
     // Test command 2 Delete Semaphore.
-    {
-        let cmd: u32 = 2;
-        let result: i32 = pm::semctl(id as u32, cmd, val);
+    let deletesem: u32 = 2;
+    let result: i32 = pm::semctl(semid as u32, deletesem, val);
 
-        if result == -1 {
-            return false;
-        }
+    if result == -1 {
+        return false;
+    }
+
+    true
+}
+
+/// Test if Semaphore Handler kernel call is working.
+fn test_semop_call() -> bool {
+    // Get semaphore and set a count value.
+    let setcountid: u32 = 1;
+    let key: u32 = 2012;
+    let semid: i32 = pm::semget(key);
+    let result = pm::semctl(semid as u32, setcountid, 0);
+
+    if result != 0 {
+        return false;
+    }
+
+    // Constants.
+    let semaphore_up: u32 = 0;
+    let semaphore_down: u32 = 1;
+    let semaphore_trylock: u32 = 2;
+
+    // Semaphore Up
+    let result: i32 = pm::semop(semid as u32, semaphore_up);
+    if result != 0 {
+        return false;
+    }
+
+    // Semaphore Down
+    let result: i32 = pm::semop(semid as u32, semaphore_down);
+    if result != 0 {
+        return false;
+    }
+
+    // Semaphore Trylock
+    let eaddrinuse = 3;
+    let result: i32 = pm::semop(semid as u32, semaphore_trylock);
+    if result != (-eaddrinuse) {
+        return false;
     }
 
     true
@@ -634,8 +654,8 @@ pub fn test_kernel_calls() {
     test!(get_kmod_info());
     test!(get_invalid_kmod_info());
     test!(test_semget_call());
-    test!(test_semop_call());
     test!(test_semctl_call());
+    test!(test_semop_call());
     test!(test_mailbox_tag());
     test!(test_thread_getid());
     test!(test_thread_create());

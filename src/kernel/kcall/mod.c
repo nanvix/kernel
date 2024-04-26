@@ -13,14 +13,12 @@
 #include <nanvix/kernel/kmod.h>
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/pm.h>
+#include <nanvix/kernel/pm/semaphore.h>
 #include <stdnoreturn.h>
 
 /*============================================================================*
  * Private Variables                                                          *
  *============================================================================*/
-
-static struct semaphore kernel_semahore = SEMAPHORE_INITIALIZER(0);
-static struct semaphore user_semaphore = SEMAPHORE_INITIALIZER(0);
 
 static volatile struct {
     word_t kcall_nr; /** Kernel call number.             */
@@ -40,9 +38,9 @@ noreturn void handle_syscall(void)
 {
 
     while (true) {
-        semaphore_down(&kernel_semahore);
+        semaphore_down(kernel_semaphore);
 
-        semaphore_up(&user_semaphore);
+        semaphore_up(user_semaphore);
     }
 }
 
@@ -200,8 +198,8 @@ int do_kcall(word_t arg0, word_t arg1, word_t arg2, word_t arg3, word_t arg4,
             scoreboard.arg3 = arg3;
             scoreboard.arg4 = arg4;
 
-            semaphore_up(&kernel_semahore);
-            semaphore_down(&user_semaphore);
+            semaphore_up(kernel_semaphore);
+            semaphore_down(user_semaphore);
             break;
     };
 

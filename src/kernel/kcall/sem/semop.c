@@ -20,8 +20,16 @@
  */
 int kcall_semop(int id, int op)
 {
-    // TODO: https://github.com/nanvix/microkernel/issues/392
+    switch (op) {
+        case SEMAPHORE_UP:
+            return semaphore_up(id);
+        case SEMAPHORE_DOWN:
+            return semaphore_down(id);
+        case SEMAPHORE_TRYLOCK:
+            return semaphore_trylock(id);
+        default:
+            return (-ENOENT);
+    }
 
-    // Return to test syscall.
-    return (id + op);
+    return (-EBADMSG);
 }
