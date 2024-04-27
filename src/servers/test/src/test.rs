@@ -82,7 +82,7 @@ fn issue_void4_kcall() -> bool {
 fn get_process_info() -> bool {
     // Attempt to get information on the calling process.
     let mut pinfo: ProcessInfo = ProcessInfo::default();
-    let result: i32 = pm::pinfo(&mut pinfo);
+    let result: i32 = pm::pinfo(pm::PID_SELF, &mut pinfo);
 
     // Check if we failed to get information on the calling process.
     if result != 0 {
@@ -101,6 +101,58 @@ fn get_process_info() -> bool {
     }
     if pinfo.vmem == 1 {
         nanvix::log!("unexpected virtual memory space");
+        return false;
+    }
+
+    true
+}
+
+/// Attempts to get information on an invalid process.
+fn get_process_info_invalid_pid() -> bool {
+    // Attempt to get information on an invalid process.
+    let mut pinfo: ProcessInfo = ProcessInfo::default();
+    let result: i32 = pm::pinfo(i32::MAX, &mut pinfo);
+
+    // Check if we have succeeded.
+    if result == 0 {
+        // We should have failed.
+        nanvix::log!("succeded to get information on an invalid process");
+        return false;
+    }
+
+    true
+}
+
+/// Attempts to get information on an invalid process, but with an invalid buffer.
+fn get_process_info_invalid_buf() -> bool {
+    // Attempt to get information on an valid process, but with an invalid buffer.
+    let result: i32 = pm::pinfo(pm::PID_SELF, core::ptr::null_mut());
+
+    // Check if we have succeeded.
+    if result == 0 {
+        // We should have failed.
+        nanvix::log!(
+            "succeded to get information on a valid process with an invalid \
+             buffer"
+        );
+        return false;
+    }
+
+    true
+}
+
+/// Attempts to get information on an invalid process, but with a bad buffer.
+fn get_process_info_bad_buf() -> bool {
+    // Attempt to get information on an valid process, but with a bad buffer.
+    let pinfo: *mut ProcessInfo = 0x02000000 as *mut ProcessInfo;
+    let result: i32 = pm::pinfo(pm::PID_SELF, pinfo);
+
+    // Check if we have succeeded.
+    if result == 0 {
+        // We should have failed.
+        nanvix::log!(
+            "succeded to get information on a valid process with a bad buffer"
+        );
         return false;
     }
 
@@ -642,6 +694,9 @@ pub fn test_kernel_calls() {
     test!(issue_void3_kcall());
     test!(issue_void4_kcall());
     test!(get_process_info());
+    test!(get_process_info_invalid_pid());
+    test!(get_process_info_invalid_buf());
+    test!(get_process_info_bad_buf());
     test!(alloc_free_frame());
     test!(free_null_frame());
     test!(free_invalid_frame());

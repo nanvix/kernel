@@ -28,6 +28,11 @@
 #define VMEM_EXEC (1 << 2)  /** Execute permission. */
 
 /**
+ * @brief Special PID for a process to refer to itself.
+ */
+#define PID_SELF (-1)
+
+/**
  * @name System Call Numbers
  */
 /**@{*/

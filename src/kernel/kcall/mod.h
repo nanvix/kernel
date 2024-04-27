@@ -208,14 +208,15 @@ extern int kcall_kmod_get(struct kmod *kmod, unsigned index);
 extern pid_t kcall_spawn(void *image);
 
 /**
- * @brief Gets various information about the calling process.
+ * @brief Gets various information about a process.
  *
+ * @param pid ID of the target process.
  * @param buf Storage location for process information.
  *
  * @returns Upon successful completion, zero is returned. Upon failure,
  * a negative error code is returned instead.
  */
-extern int kcall_pinfo(struct process_info *buf);
+extern int kcall_pinfo(pid_t pid, struct process_info *buf);
 
 /**
  * @brief Gets the real user ID of the calling process.
