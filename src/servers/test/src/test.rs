@@ -82,7 +82,7 @@ fn issue_void4_kcall() -> bool {
 fn get_process_info() -> bool {
     // Attempt to get information on the calling process.
     let mut pinfo: ProcessInfo = ProcessInfo::default();
-    let result: i32 = pm::pinfo(&mut pinfo);
+    let result: i32 = pm::pinfo(pm::PID_SELF, &mut pinfo);
 
     // Check if we failed to get information on the calling process.
     if result != 0 {

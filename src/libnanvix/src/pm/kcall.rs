@@ -44,10 +44,11 @@ pub fn spawn(image: *const ffi::c_void) -> i32 {
 ///
 /// **Description**
 ///
-/// Gets various information about the calling process.
+/// Gets various information about a process.
 ///
 /// **Parameters**
 ///
+/// - `pid` - PID of the target process.
 /// - `buffer` - Buffer to store the information about the calling process.
 ///
 /// **Return**
@@ -56,8 +57,11 @@ pub fn spawn(image: *const ffi::c_void) -> i32 {
 /// process is stored in the buffer pointed to by `buf`. On error, a negative
 /// error code is returned instead.
 ///
-pub fn pinfo(buffer: *mut ProcessInfo) -> i32 {
-    unsafe { kcall1(KcallNumbers::ProcessInfo as u32, buffer as u32) as i32 }
+pub fn pinfo(pid: i32, buffer: *mut ProcessInfo) -> i32 {
+    unsafe {
+        kcall2(KcallNumbers::ProcessInfo as u32, pid as u32, buffer as u32)
+            as i32
+    }
 }
 
 ///
