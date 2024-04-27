@@ -104,6 +104,7 @@ impl Into<u32> for ExcpAction {
 #[repr(C)]
 #[derive(Clone, Copy, Default)]
 pub struct ExcpInfo {
+    pub pid: u32,
     pub num: u32,
     pub addr: u32,
     pub pc: u32,
