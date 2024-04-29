@@ -468,7 +468,7 @@ fn do_mailbox_create_unlink_happy_path_testing() -> bool {
     let mut tag: u32 = 1;
     let mut ombxid: i32;
     
-    //Opening mailbox
+    //Creating mailboxes
     for i in 0..ipc::MAILBOX_OPEN_MAX{
         ombxid = ipc::do_mailbox_create(owner, tag);
         tag+=1;
@@ -478,7 +478,7 @@ fn do_mailbox_create_unlink_happy_path_testing() -> bool {
         }
     }
 
-    //unlinking mailbox
+    //unlinking mailboxes
     for i in 0..ipc::MAILBOX_OPEN_MAX{
         if ipc::do_mailbox_unlink(i) != 0{
             nanvix::log!("Failed to unlink mailbox!");
@@ -494,7 +494,7 @@ fn do_mailbox_open_close_happy_path_testing() -> bool {
     let mut tag: u32 = 1;
     let mut ombxid: i32;
 
-    //Opening mailbox
+    //Creating mailboxes
     for i in 0..ipc::MAILBOX_OPEN_MAX{
         ombxid = ipc::do_mailbox_create(owner, tag);
         tag+=1;
@@ -505,7 +505,7 @@ fn do_mailbox_open_close_happy_path_testing() -> bool {
     }
     
     tag = 1;
-    //Opening mailbox
+    //Opening mailboxes
     for i in 0..ipc::MAILBOX_OPEN_MAX{
         ombxid = ipc::do_mailbox_open(owner, tag);
         tag+=1;
@@ -515,7 +515,7 @@ fn do_mailbox_open_close_happy_path_testing() -> bool {
         }
     }
 
-    //Closing mailbox
+    //Closing mailboxes
     for i in 0..ipc::MAILBOX_OPEN_MAX{
         if ipc::do_mailbox_close(i) != 0{
             nanvix::log!("Failed to close mailbox!");
@@ -561,7 +561,182 @@ fn do_mailbox_write_read_happy_path_testing() -> bool {
         }
     }
 
+    //unlinking mailboxes
+    for i in 0..ipc::MAILBOX_OPEN_MAX{
+        if ipc::do_mailbox_unlink(i) != 0{
+            nanvix::log!("Failed to unlink mailbox!");
+            return false;
+        }
+    }
+
     true
+}
+
+//Fault injection testing
+fn do_mailbox_create_open_invalid_owner() -> bool {
+    let mut owner: u32 = 2;
+    let tag: u32 = 1;
+    let ombxid: i32 = ipc::do_mailbox_create(owner, tag);
+
+    //Creating mailbox
+    if  ombxid < 0 {
+        nanvix::log!("Failed to create mailbox!");
+        return false;
+    }
+
+    owner = 20; //invalid owner 
+    //Opening mailbox
+    //it is supposed to fail since it was created a mailbox with owner = 17
+    if (ipc::do_mailbox_open(owner, tag)) < 0 {
+        nanvix::log!("Failed to open mailbox!");
+
+        if  ipc::do_mailbox_unlink(ombxid as u32) != 0 {
+            nanvix::log!("Failed to remove mailbox!");
+            return false;
+        }
+        return true;
+    }
+
+    false
+}
+
+//Fault injection testing
+fn do_mailbox_write_invalid_pointer() -> bool {
+    let owner: u32 = 2;
+    let tag: u32 = 1;
+    let msg: [u32; 16] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+    let mut msg_buffer = &msg as *const u32;
+    let ombxid: u32 = ipc::do_mailbox_create(owner, tag) as u32;
+
+    msg_buffer = 0xFBADBEEF	as *const u32;
+    //it is supposed to fail since we altered the msg_buffer pointer previously
+    if  ipc::do_mailbox_write(ombxid, msg_buffer, 4) < 0 {
+        nanvix::log!("Failed to write to a mailbox!");
+
+        if  ipc::do_mailbox_unlink(ombxid) != 0 {
+            nanvix::log!("Failed to remove mailbox!");
+            return false;
+        }
+        return true;
+    }
+
+    nanvix::log!("Error: Memory Violation in Writing Operation!");
+    false
+}
+
+//Fault injection testing
+fn do_mailbox_read_invalid_pointer() -> bool {
+    let owner: u32 = 2;
+    let tag: u32 = 1;
+    let msg: [u32; 16] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+    let mut msg_buffer = &msg as *const u32;
+    let ombxid: u32 = ipc::do_mailbox_create(owner, tag) as u32;
+
+    if  ipc::do_mailbox_write(ombxid, msg_buffer, 4) < 0 {
+        nanvix::log!("Failed to write to a mailbox!");
+        return true;
+    }
+
+    msg_buffer = 0xFBADBEEF	as *const u32;
+    //it is supposed to fail since we altered the msg_buffer pointer previously
+    if  ipc::do_mailbox_read(ombxid, msg_buffer, 4) < 0 {
+        nanvix::log!("Failed to read from a mailbox!");
+
+        if  ipc::do_mailbox_unlink(ombxid) != 0 {
+            nanvix::log!("Failed to remove mailbox!");
+            return false;
+        }
+        return true;
+    }
+
+    nanvix::log!("Error: Memory Violation in Reading Operation!");
+    false
+}
+
+//Fault injection testing
+fn do_mailbox_write_invalid_size() -> bool {
+    let owner: u32 = 2;
+    let tag: u32 = 1;
+    let msg: [u32; 2] = [1, 2];
+    let msg_buffer = &msg as *const u32;
+    let sz: i32 = 65;
+    let ombxid: u32 = ipc::do_mailbox_create(owner, tag) as u32;
+
+    //it is supposed to fail since the parameter size will be wrong
+    // correct: sz = 8 bytes
+    if  ipc::do_mailbox_write(ombxid, msg_buffer, sz as u64) < 0 {
+        nanvix::log!("Failed to write to a mailbox!");
+
+        if  ipc::do_mailbox_unlink(ombxid) != 0 {
+            nanvix::log!("Failed to remove mailbox!");
+            return false;
+        }
+        return true;
+    }
+
+    nanvix::log!("Error: Memory Violation in Writing Operation!");
+    false
+}
+
+//Fault injection testing
+fn do_mailbox_write_wrong_size() -> bool {
+    let owner: u32 = 2;
+    let tag: u32 = 1;
+    let msg: [u32; 2] = [1, 2];
+    let msg_buffer = &msg as *const u32;
+    let sz: i32 = 16;
+    let ombxid: u32 = ipc::do_mailbox_create(owner, tag) as u32;
+
+    //it is supposed to fail since the parameter size will be wrong
+    // correct: sz = 8 bytes
+    if  ipc::do_mailbox_write(ombxid, msg_buffer, sz as u64) < 0 {
+        nanvix::log!("Failed to write to a mailbox!");
+
+        if  ipc::do_mailbox_unlink(ombxid) != 0 {
+            nanvix::log!("Failed to remove mailbox!");
+            return false;
+        }
+        return true;
+    }
+
+    nanvix::log!("Error: Memory Violation in Writing Operation!");
+    false
+}
+
+//Fault injection testing
+fn do_mailbox_read_wrong_size() -> bool {
+    let owner: u32 = 2;
+    let tag: u32 = 1;
+    let msg: [u32; 2] = [1, 2];
+    let msg_buffer = &msg as *const u32;
+    let mut sz: i32 = 8;
+    let ombxid: u32 = ipc::do_mailbox_create(owner, tag) as u32;
+
+    if  ipc::do_mailbox_write(ombxid, msg_buffer, sz as u64) < 0 {
+        nanvix::log!("Failed to write to a mailbox!");
+
+        if  ipc::do_mailbox_unlink(ombxid) != 0 {
+            nanvix::log!("Failed to remove mailbox!");
+            return false;
+        }
+        return true;
+    }
+
+    sz = 16;
+    //it is supposed to fail since the parameter size will be wrong
+    // correct: sz = 8 bytes
+    if  ipc::do_mailbox_write(ombxid, msg_buffer, sz as u64) < 0 {
+        nanvix::log!("Failed to read from a mailbox!");
+
+        if  ipc::do_mailbox_unlink(ombxid) != 0 {
+            nanvix::log!("Failed to remove mailbox!");
+            return false;
+        }
+        return true;
+    }
+
+    nanvix::log!("Error: Memory Violation in Reading Operation!");
+    false
 }
 
 //==============================================================================
@@ -596,4 +771,10 @@ pub fn test_kernel_calls() {
     test!(do_mailbox_open_close_happy_path_testing());
     test!(do_mailbox_create_unlink_happy_path_testing());
     test!(do_mailbox_write_read_happy_path_testing());
+    test!(do_mailbox_create_open_invalid_owner());
+    test!(do_mailbox_write_invalid_pointer());
+    test!(do_mailbox_read_invalid_pointer());
+    test!(do_mailbox_write_invalid_size());
+    test!(do_mailbox_write_wrong_size());
+    test!(do_mailbox_read_wrong_size());
 }

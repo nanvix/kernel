@@ -150,6 +150,7 @@ int omailboxes_get(const pid_t owner, const int tag, const bool create)
 
         // Add the mailbox to the table of open mailboxes. If we fail, rollback.
         const int ombxid = omailboxes_alloc(mbxid);
+
         if (ombxid < 0) {
             // The assertion should not fail, because we have previously
             // checked all conditions that would cause it to fail.
