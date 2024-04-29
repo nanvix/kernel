@@ -586,7 +586,7 @@ fn do_mailbox_create_open_invalid_owner() -> bool {
 
     owner = 20; //invalid owner 
     //Opening mailbox
-    //it is supposed to fail since it was created a mailbox with owner = 17
+    //it is supposed to fail since it was created a mailbox with owner = 2
     if (ipc::do_mailbox_open(owner, tag)) < 0 {
         nanvix::log!("Failed to open mailbox!");
 
@@ -605,12 +605,11 @@ fn do_mailbox_write_invalid_pointer() -> bool {
     let owner: u32 = 2;
     let tag: u32 = 1;
     let msg: [u32; 16] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
-    let mut msg_buffer = &msg as *const u32;
+    let msg_buffer = 0xFBADBEEF	as *const u32;
     let ombxid: u32 = ipc::do_mailbox_create(owner, tag) as u32;
 
-    msg_buffer = 0xFBADBEEF	as *const u32;
-    //it is supposed to fail since we altered the msg_buffer pointer previously
-    if  ipc::do_mailbox_write(ombxid, msg_buffer, 4) < 0 {
+    //it is supposed to fail since we are assigning an invalid pointer to the msg_buffer
+    if  ipc::do_mailbox_write(ombxid, msg_buffer, core::mem::size_of_val(&msg) as u64) < 0 {
         nanvix::log!("Failed to write to a mailbox!");
 
         if  ipc::do_mailbox_unlink(ombxid) != 0 {
@@ -632,14 +631,14 @@ fn do_mailbox_read_invalid_pointer() -> bool {
     let mut msg_buffer = &msg as *const u32;
     let ombxid: u32 = ipc::do_mailbox_create(owner, tag) as u32;
 
-    if  ipc::do_mailbox_write(ombxid, msg_buffer, 4) < 0 {
+    if  ipc::do_mailbox_write(ombxid, msg_buffer, core::mem::size_of_val(&msg) as u64) < 0 {
         nanvix::log!("Failed to write to a mailbox!");
         return true;
     }
 
     msg_buffer = 0xFBADBEEF	as *const u32;
     //it is supposed to fail since we altered the msg_buffer pointer previously
-    if  ipc::do_mailbox_read(ombxid, msg_buffer, 4) < 0 {
+    if  ipc::do_mailbox_read(ombxid, msg_buffer, core::mem::size_of_val(&msg) as u64) < 0 {
         nanvix::log!("Failed to read from a mailbox!");
 
         if  ipc::do_mailbox_unlink(ombxid) != 0 {
@@ -659,10 +658,10 @@ fn do_mailbox_write_invalid_size() -> bool {
     let tag: u32 = 1;
     let msg: [u32; 2] = [1, 2];
     let msg_buffer = &msg as *const u32;
-    let sz: i32 = 65;
+    let sz: u32 = ipc::MAILBOX_MESSAGE_SIZE + 1;
     let ombxid: u32 = ipc::do_mailbox_create(owner, tag) as u32;
 
-    //it is supposed to fail since the parameter size will be wrong
+    //it is supposed to fail since the parameter size will be greater than the MAXIMUM message size
     // correct: sz = 8 bytes
     if  ipc::do_mailbox_write(ombxid, msg_buffer, sz as u64) < 0 {
         nanvix::log!("Failed to write to a mailbox!");
@@ -684,10 +683,11 @@ fn do_mailbox_write_wrong_size() -> bool {
     let tag: u32 = 1;
     let msg: [u32; 2] = [1, 2];
     let msg_buffer = &msg as *const u32;
-    let sz: i32 = 16;
+    let mut sz: usize = core::mem::size_of_val(&msg);
     let ombxid: u32 = ipc::do_mailbox_create(owner, tag) as u32;
 
-    //it is supposed to fail since the parameter size will be wrong
+    sz = sz*2; // change to the size
+    //it is supposed to fail since the parameter size was changed to be greater than the actual buffer size
     // correct: sz = 8 bytes
     if  ipc::do_mailbox_write(ombxid, msg_buffer, sz as u64) < 0 {
         nanvix::log!("Failed to write to a mailbox!");
@@ -709,7 +709,7 @@ fn do_mailbox_read_wrong_size() -> bool {
     let tag: u32 = 1;
     let msg: [u32; 2] = [1, 2];
     let msg_buffer = &msg as *const u32;
-    let mut sz: i32 = 8;
+    let mut sz: usize = core::mem::size_of_val(&msg);
     let ombxid: u32 = ipc::do_mailbox_create(owner, tag) as u32;
 
     if  ipc::do_mailbox_write(ombxid, msg_buffer, sz as u64) < 0 {
@@ -722,8 +722,8 @@ fn do_mailbox_read_wrong_size() -> bool {
         return true;
     }
 
-    sz = 16;
-    //it is supposed to fail since the parameter size will be wrong
+    sz = sz*2; // change to the size
+    //it is supposed to fail since the parameter size was changed to be greater than the actual buffer size
     // correct: sz = 8 bytes
     if  ipc::do_mailbox_write(ombxid, msg_buffer, sz as u64) < 0 {
         nanvix::log!("Failed to read from a mailbox!");
