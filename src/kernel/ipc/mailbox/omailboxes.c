@@ -187,7 +187,7 @@ int omailboxes_release(const int ombxid, const bool unlink)
     if (unlink) {
         // Check if the calling process is the owner of the target mailbox.
         if (mailbox_owner(mbxid) != mypid) {
-            log(ERROR, "permission deined (ombxid=%d, pid=%d)", ombxid, mypid);
+            log(ERROR, "permission denied (ombxid=%d, pid=%d)", ombxid, mypid);
             return (-EPERM);
         }
     }

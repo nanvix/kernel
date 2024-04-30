@@ -86,13 +86,7 @@ extern void omailbox_init(void);
  *============================================================================*/
 
 /**
- * @brief Creates a mailbox.
- *
- * @param owner PID of the processing owning the target mailbox.
- * @param tag Tag of the target mailbox.
- *
- * @returns Upon successful completion, the ID of the target mailbox is
- * returned. Upon failure, a negative error code is returned instead.
+ * @details Creates a mailbox.
  */
 int do_mailbox_create(const pid_t owner, const int tag)
 {
@@ -100,13 +94,7 @@ int do_mailbox_create(const pid_t owner, const int tag)
 }
 
 /**
- * @brief Opens an existing mailbox.
- *
- * @param owner PID of the processing owning the target mailbox.
- * @param tag Tag of the target mailbox.
- *
- * @returns Upon successful completion, the ID of the target mailbox is
- * returned. Upon failure, a negative error code is returned instead.
+ * @details Opens an existing mailbox.
  */
 int do_mailbox_open(const pid_t owner, const int tag)
 {
@@ -114,12 +102,7 @@ int do_mailbox_open(const pid_t owner, const int tag)
 }
 
 /**
- * @brief Removes a mailbox.
- *
- * @param ombxid ID of the target mailbox.
- *
- * @returns Upon successful completion, zero is returned. Upon failure, a
- * negative error code is returned instead.
+ * @details Removes a mailbox.
  */
 int do_mailbox_unlink(const int ombxid)
 {
@@ -127,12 +110,7 @@ int do_mailbox_unlink(const int ombxid)
 }
 
 /**
- * @brief Closes a mailbox.
- *
- * @param ombxid ID of the target mailbox.
- *
- * @returns Upon successful completion, zero is returned. Upon failure, a
- * negative error code is returned instead.
+ * @details Closes a mailbox.
  */
 int do_mailbox_close(const int ombxid)
 {
@@ -140,14 +118,7 @@ int do_mailbox_close(const int ombxid)
 }
 
 /**
- * @brief Writes a message to a mailbox.
- *
- * @param ombxid ID of the target mailbox.
- * @param buffer Buffer where the data should be read from.
- * @param sz Number of bytes to write.
- *
- * @returns Upon successful completion, zero is returned. Upon failure, a
- * negative error code is returned instead.
+ * @details Writes a message to a mailbox.
  */
 int do_mailbox_write(const int ombxid, const void *buffer, const size_t sz)
 {
@@ -181,14 +152,7 @@ int do_mailbox_write(const int ombxid, const void *buffer, const size_t sz)
 }
 
 /**
- * @brief Reads a message from a mailbox.
- *
- * @param ombxid ID of the target mailbox.
- * @param buffer Buffer where the data should be written to.
- * @param sz Number of bytes to read.
- *
- * @returns Upon successful completion, zero is returned. Upon failure, a
- * negative error code is returned instead.
+ * @details Reads a message from a mailbox.
  */
 int do_mailbox_read(const int ombxid, void *buffer, const size_t sz)
 {

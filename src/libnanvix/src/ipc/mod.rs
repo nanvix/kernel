@@ -4,29 +4,17 @@
  */
 
 //==============================================================================
-// Imports
+// Modules
 //==============================================================================
 
-use crate::kcall::{
-    self,
-    KcallNumbers,
+mod constants;
+mod kcall;
+
+//==============================================================================
+// Exports
+//==============================================================================
+
+pub use self::{
+    constants::*,
+    kcall::*,
 };
-
-///
-/// **Description**
-///
-/// Get mailbox tag.
-///
-/// **Parameters**
-///
-/// - `image` - Image of the target process.
-///
-/// **Return**
-///
-/// Upon successful completion, the mailbox tag is returned.
-/// Upon failure, a negative error code is returned instead.
-///
-
-pub fn mailbox_tag(mbxid: i32) -> i32 {
-    unsafe { kcall::kcall1(KcallNumbers::Boxtag as u32, mbxid as u32) as i32 }
-}
