@@ -78,29 +78,6 @@
 #define NR_excpresume 39    /** kcall_excpresume()       */
 #define NR_last_kcall 40    /** NR_SYSCALLS definer       */
 #define NR__exit            /** kcall_exit()             */
-#define NR_process_get_id   /** kcall_process_get_id()   */
-#define NR_process_create   /** kcall_process_create()   */
-#define NR_process_exit     /** kcall_process_exit()     */
-#define NR_process_join     /** kcall_process_join()     */
-#define NR_process_yield    /** kcall_process_yield()    */
-#define NR_sleep            /** kcall_sleep()            */
-#define NR_wakeup           /** kcall_wakeup()           */
-#define NR_sigctl           /** kcall_sigctl()           */
-#define NR_alarm            /** kcall_alarm()            */
-#define NR_sigsend          /** kcall_sigsend()          */
-#define NR_sigwait          /** kcall_sigwait()          */
-#define NR_sigreturn        /** kcall_sigreturn()        */
-#define NR_clock            /** kcall_clock()            */
-#define NR_stats            /** kcall_stats()            */
-#define NR_upage_alloc      /** kcall_upage_alloc()      */
-#define NR_upage_free       /** kcall_upage_free()       */
-#define NR_upage_map        /** kcall_upage_map()        */
-#define NR_upage_link       /** kcall_upage_link()       */
-#define NR_upage_unlink     /** kcall_upage_unlink()     */
-#define NR_upage_unmap      /** kcall_upage_unmap()      */
-#define NR_excp_ctrl        /** kcall_excp_ctrl()        */
-#define NR_excp_pause       /** kcall_excp_pause()       */
-#define NR_excp_resume      /** kcall_excp_resume()      */
 /**@}*/
 
 #endif /* NANVIX_KERNEL_KCALL_H_ */
