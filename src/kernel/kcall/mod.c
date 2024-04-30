@@ -152,6 +152,26 @@ int do_kcall(word_t arg0, word_t arg1, word_t arg2, word_t arg3, word_t arg4,
         case NR_semget:
             ret = kcall_semget((unsigned)arg0);
             break;
+        case NR_do_mailbox_create:
+            ret = kcall_mailbox_create((const pid_t)arg0, (const int)arg1);
+            break;
+        case NR_do_mailbox_open:
+            ret = kcall_mailbox_open((const pid_t)arg0, (const int)arg1);
+            break;
+        case NR_do_mailbox_unlink:
+            ret = kcall_mailbox_unlink((const int)arg0);
+            break;
+        case NR_do_mailbox_close:
+            ret = kcall_mailbox_close((const int)arg0);
+            break;
+        case NR_do_mailbox_write:
+            ret = kcall_mailbox_write(
+                (const int)arg0, (const void *)arg1, (const size_t)arg2);
+            break;
+        case NR_do_mailbox_read:
+            ret = kcall_mailbox_read(
+                (const int)arg0, (void *)arg1, (const size_t)arg2);
+            break;
         case NR_semop:
             ret = kcall_semop((int)arg0, (int)arg1);
             break;
