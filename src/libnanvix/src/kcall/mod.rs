@@ -65,6 +65,12 @@ pub enum KcallNumbers {
     ExcpCtrl = 36,
     ExcpWait = 37,
     ExcpResume = 38,
+    MailboxCreate = 39,
+    MailboxOpen = 40,
+    MailboxUnlink = 41,
+    MailboxClose = 42,
+    MailboxWrite = 43,
+    Mailboxread = 44,
 }
 
 //==============================================================================
