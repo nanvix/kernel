@@ -61,23 +61,21 @@
 #define NR_thread_create 22 /** kcall_thread_create()    */
 #define NR_thread_exit 23   /** kcall_thread_exit()      */
 #define NR_thread_yield 24  /** kcall_thread_yield()     */
-#define NR_mailbox_tag 25   /** kcall_mailbox_tag        */
-#define NR_thread_join 26   /** kcall_thread_join()      */
-#define NR_thread_detach 27 /** kcall_thread_detach()    */
-#define NR_pinfo 28         /** kcall_pinfo()            */
-#define NR_getuid 29        /** kcall_getuid()           */
-#define NR_geteuid 30       /** kcall_geteuid()          */
-#define NR_getgid 31        /** kcall_getgid()           */
-#define NR_getegid 32       /** kcall_getegid()          */
-#define NR_setuid 33        /** kcall_setuid()           */
-#define NR_seteuid 34       /** kcall_seteuid()          */
-#define NR_setgid 35        /** kcall_setgid()           */
-#define NR_setegid 36       /** kcall_setegid()          */
-#define NR_excpctrl 37      /** kcall_excpctrl()         */
-#define NR_excpwait 38      /** kcall_excpwait()         */
-#define NR_excpresume 39    /** kcall_excpresume()       */
-#define NR_last_kcall 40    /** NR_SYSCALLS definer       */
-#define NR__exit            /** kcall_exit()             */
+#define NR_thread_join 25   /** kcall_thread_join()      */
+#define NR_thread_detach 26 /** kcall_thread_detach()    */
+#define NR_pinfo 27         /** kcall_pinfo()            */
+#define NR_getuid 28        /** kcall_getuid()           */
+#define NR_geteuid 29       /** kcall_geteuid()          */
+#define NR_getgid 30        /** kcall_getgid()           */
+#define NR_getegid 31       /** kcall_getegid()          */
+#define NR_setuid 32        /** kcall_setuid()           */
+#define NR_seteuid 33       /** kcall_seteuid()          */
+#define NR_setgid 34        /** kcall_setgid()           */
+#define NR_setegid 35       /** kcall_setegid()          */
+#define NR_excpctrl 36      /** kcall_excpctrl()         */
+#define NR_excpwait 37      /** kcall_excpwait()         */
+#define NR_excpresume 38    /** kcall_excpresume()       */
+#define NR_last_kcall 39    /** NR_SYSCALLS definer      */
 /**@}*/
 
 #endif /* NANVIX_KERNEL_KCALL_H_ */

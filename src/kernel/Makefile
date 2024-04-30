@@ -16,7 +16,6 @@ SRC_C = $(wildcard excp/*.c)          \
 		$(wildcard iam/*.c)           \
 		$(wildcard ipc/mailbox/*.c)   \
 		$(wildcard kcall/*.c)         \
-		$(wildcard kcall/ipc/*.c)     \
 		$(wildcard kcall/sem/*.c)     \
 		$(wildcard lib/*.c)           \
 		$(wildcard log/*.c)           \

@@ -8,7 +8,6 @@
 //==============================================================================
 
 use nanvix::{
-    ipc,
     kcall,
     memory::{
         self,
@@ -520,16 +519,6 @@ fn get_invalid_kmod_info() -> bool {
     true
 }
 
-// Test systemcall for ipc module
-fn test_mailbox_tag() -> bool {
-    let mbxid: i32 = 58; // 58 is the ENOTSUP error code
-    if mbxid != ipc::mailbox_tag(mbxid) {
-        return false;
-    }
-
-    true
-}
-
 /// Test if Semaphore Get kernel call is working.
 fn test_semget_call() -> bool {
     let key: u32 = 2012;
@@ -711,7 +700,6 @@ pub fn test_kernel_calls() {
     test!(test_semget_call());
     test!(test_semctl_call());
     test!(test_semop_call());
-    test!(test_mailbox_tag());
     test!(test_thread_getid());
     test!(test_thread_create());
 }
