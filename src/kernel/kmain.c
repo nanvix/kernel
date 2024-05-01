@@ -101,6 +101,18 @@ static void clear_bss(void)
  *============================================================================*/
 
 /**
+ * @brief Asserts various kernel types.
+ */
+static void assert_kernel_types(void)
+{
+    KASSERT_SIZE(sizeof(mode_t), 4);
+    KASSERT_SIZE(sizeof(gid_t), 4);
+    KASSERT_SIZE(sizeof(pid_t), 4);
+    KASSERT_SIZE(sizeof(tid_t), 4);
+    KASSERT_SIZE(sizeof(uid_t), 4);
+}
+
+/**
  * @brief Kernel main function.
  *
  * @param args Kernel arguments.
@@ -112,6 +124,8 @@ noreturn void kmain(struct kargs *args)
     // Clear BSS before doing anything else, to ensure a
     // deterministic starting state for uninitialized data structures.
     clear_bss();
+
+    ((void)assert_kernel_types());
 
     stdout_init();
     klib_init(stdout_write, disable_interrupts);
