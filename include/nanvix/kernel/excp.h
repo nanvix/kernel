@@ -7,6 +7,7 @@
 #define NANVIX_KERNEL_EXCP_H_
 
 #include <nanvix/kernel/hal.h>
+#include <nanvix/types.h>
 
 /*============================================================================*
  * Constants                                                                  *
@@ -27,12 +28,13 @@
 /**
  * @brief Size of exception information structure.
  */
-#define __SIZEOF_EXCPINFO 12
+#define __SIZEOF_EXCPINFO 16
 
 /**
  * @brief Exception information.
  */
 struct excpinfo {
+    pid_t pid;    /** Process ID.       */
     int num;      /** Exception number. */
     vaddr_t addr; /** Faulting address. */
     vaddr_t pc;   /** Program counter. */

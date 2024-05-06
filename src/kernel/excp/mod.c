@@ -238,6 +238,7 @@ static void kernel_exception_handler(const struct exception *excp,
     }
 
     const struct excpinfo info = {
+        .pid = process_get_curr()->pid,
         .num = excpnum,
         .addr = get_page_fault_addr(),
         .pc = excp->instruction,
