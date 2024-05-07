@@ -109,7 +109,7 @@ void timer_init(unsigned freq)
 
     // Send control byte: adjust frequency divisor.
     kprintf(MODULE_NAME " setting frequency to %d Hz", freq);
-    output8(PIT_CTRL, 0x36);
+    output8(PIT_CTRL, PIT_SEL0 | PIT_ACC_LOHI | PIT_MODE_WAVE | PIT_BINARY);
 
     // Send data byte: divisor_low and divisor_high.
     output8(PIT_DATA, (uint8_t)(freq_divisor & 0xff));
