@@ -9,6 +9,7 @@
 
 #include <stdarg.h>
 #include <stddef.h>
+#include <stdint.h>
 
 /*============================================================================*
  * Math                                                                       *
@@ -23,6 +24,16 @@
  * @returns The result of @p a divided by @p b.
  */
 extern int __div(int a, int b);
+
+/**
+ * @brief Performs a 64-bit unsigned integer division.
+ *
+ * @param n Dividend.
+ * @param d Divisor.
+ *
+ * @return The quotient of the division.
+ */
+extern uint64_t __udivdi3(uint64_t n, uint64_t d);
 
 /*============================================================================*
  * Memory Manipulation                                                        *
