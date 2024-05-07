@@ -64,6 +64,7 @@ function run_qemu
 	  		$machine
 			-serial stdio
 			-display none
+			-cpu pentium2
 			-m $MEMSIZE
 			-mem-prealloc"
 
