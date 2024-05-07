@@ -32,6 +32,9 @@ void cpu_init(void)
     KASSERT_SIZE(sizeof(word_t), WORD_SIZE);
     KASSERT_SIZE(sizeof(dword_t), DWORD_SIZE);
 
+    // Ensure that CPU support required features.
+    KASSERT(__has_cpuid());
+
     gdt_init();
     const unsigned kernel_cs = gdt_kernel_cs();
     const unsigned hwint_off = idt_init(kernel_cs);

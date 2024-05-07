@@ -115,6 +115,13 @@ static inline uint32_t input32(uint16_t port)
     return (ret);
 }
 
+/**
+ * @brief Checks if the CPU has the CPUID instruction.
+ *
+ * @return True if the CPU has the CPUID instruction, and false otherwise.
+ */
+extern bool __has_cpuid(void);
+
 #endif /* !_ASM_FILE_ */
 
 #endif /* ARCH_X86_H */
