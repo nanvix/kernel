@@ -7,6 +7,7 @@
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/kmod.h>
 #include <nanvix/kernel/lib.h>
+#include <nanvix/kernel/log.h>
 
 /*============================================================================*
  * Structures                                                                 *
@@ -79,6 +80,30 @@ static int mboot_parse_mmap(struct mboot_tag *tag)
 }
 
 /**
+ * @brief Parses multiboot ACPI tag.
+ *
+ * @param tag Target ACPI tag.
+ *
+ * @return Upon successful completion, zero is returned. Upon failure, a
+ * negative number is returned instead.
+ */
+static int mboot_parse_acpi(struct mboot_tag *tag)
+{
+    int ret = 0;
+    extern int acpi_info_parse(const void *);
+
+    struct mboot_tag_acpi *mboot_tag_acpi = (struct mboot_tag_acpi *)tag;
+
+    info("found acpi tag (size=%d, rsdp=%x)",
+         mboot_tag_acpi->size,
+         mboot_tag_acpi->rsdp);
+
+    ret |= acpi_info_parse((void *)mboot_tag_acpi->rsdp);
+
+    return (ret);
+}
+
+/**
  * @details Parses multiboot information.
  *
  * @param magic Magic number passed in by boot loader.
@@ -126,6 +151,12 @@ static int mboot_parse(unsigned magic, unsigned long addr)
             } break;
             case MBOOT_TAG_TYPE_FRAMEBUFFER: {
                 // TODO: Parse framebuffer.
+            } break;
+            case MBOOT_TAG_TYPE_ACPI_OLD: {
+                ret |= mboot_parse_acpi(tag);
+            } break;
+            case MBOOT_TAG_TYPE_ACPI_NEW: {
+                ret |= mboot_parse_acpi(tag);
             } break;
             default:
                 break;
