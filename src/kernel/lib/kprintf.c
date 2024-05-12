@@ -3,23 +3,26 @@
  * Licensed under the MIT License.
  */
 
+/*============================================================================*
+ * Imports                                                                    *
+ *============================================================================*/
+
 #include <nanvix/kernel/lib.h>
 #include <nanvix/libcore.h>
 #include <stdarg.h>
 
-/**
- * @brief Buffer size (in bytes).
- */
-#define KBUFFER_SIZE 128
+/*============================================================================*
+ * Public Functions                                                           *
+ *============================================================================*/
 
 /**
  * @details Writes a formatted string on the kernels's output device.
  */
 void kprintf(const char *fmt, ...)
 {
-    size_t len;                    /* String length.                  */
-    va_list args;                  /* Variable arguments list.        */
-    char buffer[KBUFFER_SIZE + 2]; /* Temporary buffer (+2 for \n\0). */
+    size_t len = 0;                      /* String length.                  */
+    va_list args = {0};                  /* Variable arguments list.        */
+    char buffer[KBUFFER_SIZE + 2] = {0}; /* Temporary buffer (+2 for \n\0). */
 
     /* Convert to raw string. */
     va_start(args, fmt);

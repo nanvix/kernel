@@ -68,6 +68,11 @@ extern bitmap_t bitmap_check_bit(bitmap_t *, bitmap_t);
  *============================================================================*/
 
 /**
+ * @brief Buffer size (in bytes) for formatted messages.
+ */
+#define KBUFFER_SIZE 128
+
+/**
  * @brief Panics the kernel.
  *
  * @param fmt Panic message.

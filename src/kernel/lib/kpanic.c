@@ -3,16 +3,19 @@
  * Licensed under the MIT License.
  */
 
+/*============================================================================*
+ * Imports                                                                    *
+ *============================================================================*/
+
 #include <nanvix/cc.h>
 #include <nanvix/kernel/lib.h>
 #include <nanvix/libcore.h>
 #include <stdarg.h>
 #include <stdnoreturn.h>
 
-/**
- * @brief Buffer size (in bytes).
- */
-#define KBUFFER_SIZE 128
+/*============================================================================*
+ * Public Functions                                                           *
+ *============================================================================*/
 
 /**
  * @details The kpanic() function writes the formatted message pointed to by @p
@@ -22,9 +25,9 @@
  */
 noreturn void kpanic(const char *fmt, ...)
 {
-    size_t len = 0;                /* String length.                  */
-    va_list args;                  /* Variable arguments list.        */
-    char buffer[KBUFFER_SIZE + 2]; /* Temporary buffer (+2 for \n\0). */
+    size_t len = 0;                      /* String length.                  */
+    va_list args = {0};                  /* Variable arguments list.        */
+    char buffer[KBUFFER_SIZE + 2] = {0}; /* Temporary buffer (+2 for \n\0). */
     const char *panic_str = "PANIC: ";
     const size_t panic_str_len = __strlen(panic_str);
 
