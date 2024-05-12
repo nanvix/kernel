@@ -12,7 +12,7 @@ export RUSTC := $(HOME)/.cargo/bin/rustc
 export CFLAGS += -D__x86__
 
 # Compiler Options
-export CFLAGS += -nostdlib -ffreestanding -march=pentium2
+export CFLAGS += -nostdlib -ffreestanding -march=pentium2 -Wstack-usage=4096
 
 # Linker Options
 export LDFLAGS += -nostdlib --entry=_do_start
