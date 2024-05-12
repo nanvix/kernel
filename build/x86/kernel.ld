@@ -21,6 +21,7 @@ SECTIONS
 	. = BOOT_ADDR;
 
 	__KERNEL_START = .;
+	__TEXT_START = .;
 
 	/* Bootstrap section. */
 	.bootstrap :
@@ -33,10 +34,10 @@ SECTIONS
 	/* Text section. */
 	.text : ALIGN(PAGE_SIZE)
 	{
-		__TEXT_START = .;
 		*(.text*)
-		__TEXT_END = .;
 	}
+
+	__TEXT_END = .;
 
 	/* Initialized data section. */
 	.data : ALIGN(PAGE_SIZE)
