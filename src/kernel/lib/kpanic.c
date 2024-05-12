@@ -10,11 +10,6 @@
 #include <stdnoreturn.h>
 
 /**
- * @brief Buffer size (in bytes).
- */
-#define KBUFFER_SIZE 128
-
-/**
  * @details The kpanic() function writes the formatted message pointed to by @p
  * fmt to the standard output device and panics the kernel. In panic mode, all
  * interrupts are disabled in the underlying core, and execution loops

@@ -8,11 +8,6 @@
 #include <stdarg.h>
 
 /**
- * @brief Buffer size (in bytes).
- */
-#define KBUFFER_SIZE 128
-
-/**
  * @details Writes a formatted string on the kernels's output device.
  */
 void kprintf(const char *fmt, ...)

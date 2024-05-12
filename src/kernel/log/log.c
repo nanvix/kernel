@@ -22,11 +22,6 @@
 #define LOG_LEVEL_MAX 5
 
 /**
- * @brief Buffer size (in bytes).
- */
-#define LOG_BUFFER_SIZE 128
-
-/**
  * @brief Log module scope.
  */
 #define LOG_MODULE_SCOPE "[kernel]"
@@ -44,7 +39,7 @@ static const char *MSG_LEVEL[LOG_LEVEL_MAX] = {
 /**
  * @brief Message buffer.
  */
-static char buffer[LOG_BUFFER_SIZE + 1];
+static char buffer[KBUFFER_SIZE + 1];
 
 /*============================================================================*
  * Private Functions                                                          *
@@ -62,11 +57,11 @@ static char buffer[LOG_BUFFER_SIZE + 1];
  */
 static size_t chkbuf(size_t buf_pos, size_t ins_size)
 {
-    if (buf_pos > LOG_BUFFER_SIZE) {
-        buffer[LOG_BUFFER_SIZE] = '\0';
+    if (buf_pos > KBUFFER_SIZE) {
+        buffer[KBUFFER_SIZE] = '\0';
         kputs(buffer);
         buf_pos = 0;
-    } else if (buf_pos + ins_size > LOG_BUFFER_SIZE) {
+    } else if (buf_pos + ins_size > KBUFFER_SIZE) {
         buffer[buf_pos] = '\0';
         kputs(buffer);
         buf_pos = 0;
@@ -158,7 +153,7 @@ int __log(const char *file, const char *funcname, unsigned level, ...)
     // Print message into the buffer.
     const char *fmt_str = va_arg(args, char *);
     i = chkbuf(i, __strlen(fmt_str));
-    i += __vsnprintf(buffer + i, LOG_BUFFER_SIZE - (i + 1), fmt_str, args);
+    i += __vsnprintf(buffer + i, KBUFFER_SIZE - (i + 1), fmt_str, args);
 
     // Terminate string.
     buffer[++i] = '\n';
