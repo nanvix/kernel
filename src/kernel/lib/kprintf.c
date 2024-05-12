@@ -3,9 +3,17 @@
  * Licensed under the MIT License.
  */
 
+/*============================================================================*
+ * Imports                                                                    *
+ *============================================================================*/
+
 #include <nanvix/kernel/lib.h>
 #include <nanvix/libcore.h>
 #include <stdarg.h>
+
+/*============================================================================*
+ * Public Functions                                                           *
+ *============================================================================*/
 
 /**
  * @details Writes a formatted string on the kernels's output device.

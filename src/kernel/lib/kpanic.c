@@ -3,11 +3,19 @@
  * Licensed under the MIT License.
  */
 
+/*============================================================================*
+ * Imports                                                                    *
+ *============================================================================*/
+
 #include <nanvix/cc.h>
 #include <nanvix/kernel/lib.h>
 #include <nanvix/libcore.h>
 #include <stdarg.h>
 #include <stdnoreturn.h>
+
+/*============================================================================*
+ * Public Functions                                                           *
+ *============================================================================*/
 
 /**
  * @details The kpanic() function writes the formatted message pointed to by @p
