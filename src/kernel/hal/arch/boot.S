@@ -59,6 +59,20 @@ mboot_header_end:
 .align 4
 _do_start:
 
+    /*
+     * Fill BSS section with zeros.
+     * We cannot do this later, becase the stack is in the BSS.
+     * We preserve values of EAX and EBX, as they store boot information.
+     */
+    movl %eax, %edx          /* Save value of EAX.                 */
+    movl $__BSS_START, %edi  /* Start address of BSS section.      */
+    movl $__BSS_END, %ecx    /* End address of BSS section.        */
+    subl %edi, %ecx          /* Calculate the size of BSS section. */
+    xorl %eax, %eax          /* Zero out EAX.                      */
+    cld                      /* Increment EDI register.            */
+    rep stosb                /* Fill BSS section with zeros.       */
+    movl %edx, %eax          /* Restore EAX register.              */
+
     /* Reset stack. */
     reset_stack
 

@@ -88,14 +88,6 @@ static void spawn_init(void)
     process_create(image);
 }
 
-/**
- * @brief Clears the BSS section.
- */
-static void clear_bss(void)
-{
-    __memset(&__BSS_START, 0, &__BSS_END - &__BSS_START);
-}
-
 /*============================================================================*
  * Public Functions                                                           *
  *============================================================================*/
@@ -121,10 +113,6 @@ static void assert_kernel_types(void)
  */
 noreturn void kmain(struct kargs *args)
 {
-    // Clear BSS before doing anything else, to ensure a
-    // deterministic starting state for uninitialized data structures.
-    clear_bss();
-
     ((void)assert_kernel_types());
 
     stdout_init();
