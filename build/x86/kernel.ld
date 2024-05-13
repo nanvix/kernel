@@ -14,7 +14,7 @@ PAGE_SIZE = 0x1000;
 /*
  * Boot Address
  */
-BOOT_ADDR = 0x100000;
+BOOT_ADDR = 0x8000;
 
 SECTIONS
 {
