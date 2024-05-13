@@ -11,6 +11,7 @@
 #include <dev/uart.h>
 #include <nanvix/cc.h>
 #ifndef _ASM_FILE_
+#include <stdbool.h>
 #include <stdint.h>
 #endif /* !_ASM_FILE_ */
 
