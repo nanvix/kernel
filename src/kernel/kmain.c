@@ -53,7 +53,7 @@ extern void test_upool(struct pde *pgdir);
  *
  * @note This is defined in assembly code.
  */
-extern byte_t kstack[PAGE_SIZE];
+byte_t volatile kstack[PAGE_SIZE] __attribute__((aligned(PAGE_SIZE)));
 
 /*============================================================================*
  * Private Functions                                                          *
