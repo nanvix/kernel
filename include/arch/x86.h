@@ -117,6 +117,22 @@ static inline uint32_t input32(uint16_t port)
 }
 
 /**
+ * @brief Enables all hardware interrupts.
+ */
+static inline void interrupts_enable(void)
+{
+    asm("sti");
+}
+
+/**
+ * @brief Disables all hardware interrupts.
+ */
+static inline void interrupts_disable(void)
+{
+    asm("cli");
+}
+
+/**
  * @brief Reads the value of the Time Stamp Counter (TSC).
  *
  * @return The value of the Time Stamp Counter (TSC).

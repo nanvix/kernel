@@ -13,9 +13,9 @@
 #include <arch/x86/cpu/idt.h>
 #include <arch/x86/cpu/int.h>
 #include <arch/x86/cpu/irq.h>
-#include <arch/x86/cpu/lpic.h>
 #include <arch/x86/cpu/madt.h>
 #include <arch/x86/cpu/msr.h>
+#include <arch/x86/cpu/pic.h>
 #include <arch/x86/cpu/regs.h>
 #include <arch/x86/cpu/tss.h>
 #include <arch/x86/cpu/types.h>

@@ -75,22 +75,6 @@ static inline int interrupts_set_level(int newlevel)
  *============================================================================*/
 
 /**
- * @details Disables all hardware interrupts.
- */
-void interrupts_disable(void)
-{
-    lpic_disable();
-}
-
-/**
- * @details Enables all hardware interrupts.
- */
-void interrupts_enable(void)
-{
-    lpic_enable();
-}
-
-/**
  * @details This function dispatches a hardware interrupt to the a
  * previously-registered handler function. If no handler function was
  * registered for the interrupt, this function returns immediately.

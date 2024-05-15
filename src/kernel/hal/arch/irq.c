@@ -21,7 +21,7 @@
  * @note We perform static initialization, as this is required to be initialized
  * in early startup stages of the kernel.
  */
-static int irqs[LPIC_NUM_IRQS] = {
+static int irqs[PIC_NUM_IRQS] = {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 
 /*============================================================================*
@@ -34,7 +34,7 @@ static int irqs[LPIC_NUM_IRQS] = {
 int irq_remap(int irq_logical, int irq_physical_new)
 {
     // Check if the logical IRQ is valid.
-    if ((irq_logical < 0) || (irq_logical >= LPIC_NUM_IRQS)) {
+    if ((irq_logical < 0) || (irq_logical >= PIC_NUM_IRQS)) {
         error("invalid logical IRQ number (irq=%d)", irq_physical_new);
         return (-EINVAL);
     }
@@ -55,7 +55,7 @@ int irq_remap(int irq_logical, int irq_physical_new)
 int irq_lookup(int irq_logical)
 {
     // Check if logical the IRQ is valid.
-    if ((irq_logical < 0) || (irq_logical >= LPIC_NUM_IRQS)) {
+    if ((irq_logical < 0) || (irq_logical >= PIC_NUM_IRQS)) {
         error("invalid logical IRQ number (irq=%d)", irq_logical);
         return (-EINVAL);
     }
