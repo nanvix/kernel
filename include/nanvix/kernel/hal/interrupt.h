@@ -81,16 +81,6 @@ extern int interrupt_register(int num, interrupt_handler_t handler);
 extern int interrupt_unregister(int num);
 
 /**
- * @brief Disables all hardware interrupts.
- */
-extern void interrupts_disable(void);
-
-/**
- * @brief Enables all hardware interrupts.
- */
-extern void interrupts_enable(void);
-
-/**
  * @brief Setups hardware interrupts.
  */
 extern void interrupts_init(void);

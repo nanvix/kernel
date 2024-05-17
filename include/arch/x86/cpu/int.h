@@ -18,7 +18,7 @@
  * Imports                                                                    *
  *============================================================================*/
 
-#include <arch/x86/cpu/lpic.h>
+#include <arch/x86/cpu/pic.h>
 
 /*============================================================================*
  * Constants                                                                  *
@@ -27,7 +27,7 @@
 /**
  * @brief Number of interrupts.
  */
-#define INTERRUPTS_NUM LPIC_NUM_IRQS
+#define INTERRUPTS_NUM PIC_NUM_IRQS
 
 /**
  * @name Hardware Interrupts for the IBM PC Target

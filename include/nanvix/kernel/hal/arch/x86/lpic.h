@@ -28,12 +28,12 @@
  * @name Interrupt Levels
  */
 /**@{*/
-#define IRQLVL_5 5 /** Level 0: all hardware interrupts disabled. */
-#define IRQLVL_4 4 /** Level 1: timer interrupts enabled.         */
-#define IRQLVL_3 3 /** Level 2: disk interrupts enabled.          */
-#define IRQLVL_2 2 /** Level 3: network interrupts enabled        */
-#define IRQLVL_1 1 /** Level 4: terminal interrupts enabled.      */
-#define IRQLVL_0 0 /** Level 5: all hardware interrupts enabled.  */
+#define IRQLVL_5 5 /** Level 5: all hardware interrupts disabled. */
+#define IRQLVL_4 4 /** Level 4: timer interrupts enabled.         */
+#define IRQLVL_3 3 /** Level 3: disk interrupts enabled.          */
+#define IRQLVL_2 2 /** Level 2: network interrupts enabled        */
+#define IRQLVL_1 1 /** Level 1: terminal interrupts enabled.      */
+#define IRQLVL_0 0 /** Level 0: all hardware interrupts enabled.  */
 /**@}*/
 
 /*============================================================================*
@@ -99,16 +99,6 @@ extern int lpic_next(void);
  * @param irq Number of the target interrupt request line.
  */
 extern void lpic_ack(int irq);
-
-/**
- * @brief Enables hardware interrupts.
- */
-extern void lpic_enable(void);
-
-/**
- * @brief Disables hardware interrupts.
- */
-extern void lpic_disable(void);
 
 #endif /* !_ASM_FILE */
 
