@@ -10,6 +10,7 @@
 #include "mod.h"
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/lib.h>
+#include <nanvix/kernel/log.h>
 #include <stddef.h>
 
 /*============================================================================*
@@ -70,13 +71,13 @@ static int mmap_register(paddr_t base, size_t size, enum mmap_entry_type type)
 {
     // Check for invalid size.
     if (size == 0) {
-        kprintf(MODULE_NAME "ERROR: invalid size (size=%d)", size);
+        error("invalid size (size=%d)", size);
         return (-1);
     }
 
     // Check if too many regions are already registered.
     if (mmap.num_entries >= MMAP_MAX_ENTRIES) {
-        kprintf(MODULE_NAME "ERROR: too many regions registered");
+        error("too many regions registered");
         return (-1);
     }
 
@@ -84,22 +85,27 @@ static int mmap_register(paddr_t base, size_t size, enum mmap_entry_type type)
     for (unsigned i = 0; i < mmap.num_entries; i++) {
         if ((base >= mmap.entries[i].base) &&
             (base < (mmap.entries[i].base + mmap.entries[i].size))) {
-            kprintf(MODULE_NAME "ERROR: new region would overlap with another "
-                                "one (base=%x, size=%d)",
-                    base,
-                    size);
+            error("new region would overlap with another "
+                  "one (base=%x, size=%d)",
+                  base,
+                  size);
             return (-1);
         }
 
         if (((base + size) > mmap.entries[i].base) &&
             ((base + size) <= (mmap.entries[i].base + mmap.entries[i].size))) {
-            kprintf(MODULE_NAME "ERROR: new region would overlap with "
-                                "another one (base=%x, size=%d)",
-                    base,
-                    size);
+            error("new region would overlap with "
+                  "another one (base=%x, size=%d)",
+                  base,
+                  size);
             return (-1);
         }
     }
+
+    info("registering region (base=%x, size=%d, type=%s)",
+         base,
+         size,
+         mmap_entry_type_str(type));
 
     // Register memory region.
     mmap.entries[mmap.num_entries].base = (paddr_t)base;
