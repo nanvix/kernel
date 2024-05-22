@@ -8,6 +8,7 @@
  *============================================================================*/
 
 #include <nanvix/kernel/hal.h>
+#include <nanvix/kernel/lib.h>
 
 /*============================================================================*
  * Public Functions                                                           *
@@ -67,4 +68,10 @@ void lpic_ack(int irq)
 void lpic_init(unsigned hwint_off)
 {
     pic_init(hwint_off);
+
+    // Initialize I/O APIC.
+    // TODO: Support configurations without I/O APICs.
+    struct madt_ioapic_info info = {0};
+    KASSERT(madt_ioapic_get_info(&info) == 0);
+    KASSERT(ioapic_init(info.id, info.addr, info.gsi) == 0);
 }
