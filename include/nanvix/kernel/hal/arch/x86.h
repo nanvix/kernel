@@ -11,6 +11,7 @@
 #include <nanvix/kernel/hal/arch/x86/excp.h>
 #include <nanvix/kernel/hal/arch/x86/gdt.h>
 #include <nanvix/kernel/hal/arch/x86/idt.h>
+#include <nanvix/kernel/hal/arch/x86/ioapic.h>
 #include <nanvix/kernel/hal/arch/x86/lpic.h>
 #include <nanvix/kernel/hal/arch/x86/memory.h>
 #include <nanvix/kernel/hal/arch/x86/mmu.h>
