@@ -7,6 +7,7 @@
  * Imports                                                                    *
  *============================================================================*/
 
+#include <nanvix/errno.h>
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/lib.h>
 #include <nanvix/kernel/log.h>
@@ -152,6 +153,18 @@ struct madt_entry_processor_local_x2apic {
 };
 
 /*============================================================================*
+ * Private Variables                                                          *
+ *============================================================================*/
+
+/**
+ * @brief I/O APIC information.
+ */
+static struct {
+    bool is_present;              /* Is I/O APIC present?  */
+    struct madt_ioapic_info info; /* I/O APIC information. */
+} ioapic = {false, {0}};
+
+/*============================================================================*
  * Private Functions                                                          *
  *============================================================================*/
 
@@ -200,13 +213,22 @@ static void madt_entry_io_apic_parse(struct madt_entry_io_apic *io_apic)
 {
     KASSERT(io_apic != NULL);
 
-    log(INFO,
-        "IO APIC ID[%d], "
-        "IO APIC Address[%x], "
-        "Global System Interrupt Base[%d]",
-        io_apic->io_apic_id,
-        io_apic->io_apic_addr,
-        io_apic->global_system_interrupt_base);
+    info("found ioapic (id=%d, addr=%x, gsi=%d)",
+         io_apic->io_apic_id,
+         io_apic->io_apic_addr,
+         io_apic->global_system_interrupt_base);
+
+    // Check if multiple I/O APICs are present.
+    if (ioapic.is_present) {
+        // TODO: support multiple I/O APICs.
+        kpanic("multiple ioapics are not supported");
+    }
+
+    // Save I/O APIC information.
+    ioapic.is_present = true;
+    ioapic.info.id = io_apic->io_apic_id;
+    ioapic.info.addr = io_apic->io_apic_addr;
+    ioapic.info.gsi = io_apic->global_system_interrupt_base;
 }
 
 /**
@@ -232,6 +254,33 @@ static void madt_interrupt_source_override_parse(
 /*============================================================================*
  * Public Functions                                                           *
  *============================================================================*/
+
+/**
+ * @details Retrieve information on I/O APIC.
+ */
+int madt_ioapic_get_info(struct madt_ioapic_info *info)
+{
+    KASSERT(info != NULL);
+
+    // Check for invalid storage location.
+    if (info == NULL) {
+        error("invalid storage location for ioapic information");
+        return (-EINVAL);
+    }
+
+    // Check if I/O APIC is present.
+    if (!ioapic.is_present) {
+        error("ioapic is not present");
+        return (-ENOENT);
+    }
+
+    // Copy I/O APIC information.
+    info->id = ioapic.info.id;
+    info->addr = ioapic.info.addr;
+    info->gsi = ioapic.info.gsi;
+
+    return (0);
+}
 
 /**
  * @details Parses the MADT table.

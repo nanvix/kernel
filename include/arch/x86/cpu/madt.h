@@ -34,6 +34,15 @@
  */
 struct madt_t;
 
+/**
+ * @brief I/O APIC information.
+ */
+struct madt_ioapic_info {
+    uint8_t id;    /* I/O APIC ID              */
+    uint32_t addr; /** I/O APIC Address        */
+    uint32_t gsi;  /** Global System Interrupt */
+};
+
 #endif /* !_ASM_FILE_ */
 
 /*============================================================================*
@@ -51,6 +60,16 @@ struct madt_t;
  * negative error code is returned instead.
  */
 extern int parse_madt(const struct madt_t *madt);
+
+/**
+ * @brief Retrieves information on I/O APIC.
+ *
+ * @param info Storage location for I/O APIC information.
+ *
+ * @returns Upon successful completion, 0 is returned. Upon failure, a negative
+ * error code is returned instead.
+ */
+extern int madt_ioapic_get_info(struct madt_ioapic_info *info);
 
 #endif /* !_ASM_FILE_ */
 
