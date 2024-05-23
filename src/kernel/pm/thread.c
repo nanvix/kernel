@@ -130,6 +130,7 @@ void thread_init(void)
     threads[KERNEL_THREAD].state = THREAD_RUNNING;
     threads[KERNEL_THREAD].quantum = 0;
     threads[KERNEL_THREAD].pid = KERNEL_PROCESS;
+    threads[KERNEL_THREAD].tid = KERNEL_THREAD;
     threads[KERNEL_THREAD].age = 1;
     threads[KERNEL_THREAD].kstack = NULL;
     threads[KERNEL_THREAD].ustack = NULL;
@@ -399,7 +400,9 @@ noreturn void thread_exit(void *retval)
     } else {
         thread_free_memory(running);
         for (int i = 0; i < THREADS_MAX; i++) {
-            if (bitmap_check_bit(&running->waitmap, threads[i].tid)) {
+            if (threads[i].state != THREAD_AVAILABLE &&
+                bitmap_check_bit(&running->waitmap, threads[i].tid)) {
+
                 threads[i].state = THREAD_READY;
                 bitmap_clear(&running->waitmap, threads[i].tid);
             }
