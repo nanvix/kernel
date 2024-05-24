@@ -243,12 +243,13 @@ static void madt_interrupt_source_override_parse(
 
     uint8_t src = source_override->irq_source;
     uint32_t mapped = source_override->global_system_interrupt;
-    log(INFO,
-        "Bus Source[%d], IRQ Source[%d], "
-        "Global System Interrupt[%d]",
-        source_override->bus_source,
-        src,
-        mapped);
+    info("irq override (bus=%d, irq=%d, gsi=%d)",
+         source_override->bus_source,
+         src,
+         mapped);
+
+    // Remap IRQ.
+    KASSERT(irq_remap(src, mapped) >= 0);
 }
 
 /*============================================================================*

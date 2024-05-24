@@ -29,7 +29,7 @@
  * logical IRQ number returned. Upon failure, a negative error code is returned
  * instead.
  */
-extern int irq_lookup(int irq_logical);
+extern int irq_lookup(uint8_t irq_logical);
 
 /**
  * @brief Remaps an IRQ.
@@ -41,7 +41,7 @@ extern int irq_lookup(int irq_logical);
  * mapped to the logical IRQ number is returned.  Upon failure, a negative error
  * code is returned instead.
  */
-extern int irq_remap(int irq_logical, int irq_physical_new);
+extern int irq_remap(uint8_t irq_logical, uint8_t irq_physical_new);
 
 #endif /* !_ASM_FILE_ */
 
