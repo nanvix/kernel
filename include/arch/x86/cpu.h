@@ -19,5 +19,6 @@
 #include <arch/x86/cpu/regs.h>
 #include <arch/x86/cpu/tss.h>
 #include <arch/x86/cpu/types.h>
+#include <arch/x86/cpu/xapic.h>
 
 #endif /* ARCH_X86_CPU_H_ */
