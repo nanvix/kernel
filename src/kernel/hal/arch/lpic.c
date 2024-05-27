@@ -9,6 +9,7 @@
 
 #include <nanvix/kernel/hal.h>
 #include <nanvix/kernel/lib.h>
+#include <nanvix/kernel/log.h>
 
 /*============================================================================*
  * Public Functions                                                           *
@@ -74,4 +75,13 @@ void lpic_init(unsigned hwint_off)
     struct madt_ioapic_info info = {0};
     KASSERT(madt_ioapic_get_info(&info) == 0);
     KASSERT(ioapic_init(info.id, info.addr, info.gsi) == 0);
+
+    if (is_x2apic_supported()) {
+        // TODO: Support x2APIC.
+        kpanic("x2apic detected, but it is not supported");
+    } else if (is_apic_supported()) {
+        info("xapic detected");
+    } else {
+        info("no apic detected");
+    }
 }
