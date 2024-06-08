@@ -23,5 +23,6 @@ apt-get install -y   \
     mtools           \
     ninja-build      \
     pkg-config       \
+    python3-venv     \
     texinfo          \
     xorriso          \
