@@ -1,4 +1,4 @@
-# Copyright(c) 2011-2024 The Maintainers of Nanvix.
+# Copyright(c) The Maintainers of Nanvix.
 # Licensed under the MIT License.
 
 #===============================================================================
@@ -21,22 +21,18 @@ export TIMEOUT ?= 10
 # Directories
 #===============================================================================
 
-export ROOT_DIR      := $(CURDIR)
-export BINARIES_DIR  := $(ROOT_DIR)/bin
-export LIBRARIES_DIR := $(ROOT_DIR)/lib
-export INCLUDE_DIR   := $(ROOT_DIR)/include
-export IMAGE_DIR     := $(ROOT_DIR)/iso
-export BUILD_DIR     := $(ROOT_DIR)/build
-export SOURCES_DIR   := $(ROOT_DIR)/src
-export SCRIPTS_DIR   := $(ROOT_DIR)/scripts
+export ROOT_DIR      ?= $(CURDIR)
+export BINARIES_DIR  ?= $(ROOT_DIR)/bin
+export LIBRARIES_DIR ?= $(ROOT_DIR)/lib
+export BUILD_DIR     ?= $(ROOT_DIR)/build
+export IMAGE_DIR     ?= $(BUILD_DIR)/iso
+export SCRIPTS_DIR   ?= $(BUILD_DIR)/scripts
+export SOURCES_DIR   ?= $(ROOT_DIR)/src
 export TOOLCHAIN_DIR ?= $(ROOT_DIR)/toolchain
 
 #===============================================================================
 # Libraries and Binaries
 #===============================================================================
-
-# File format for executables.
-export EXEC_FORMAT := elf
 
 # Binary
 export KERNEL := nanvix.$(EXEC_FORMAT)
@@ -44,58 +40,47 @@ export KERNEL := nanvix.$(EXEC_FORMAT)
 # Image
 export IMAGE := nanvix.iso
 
-# Libraries
-export LIBCORE := libcore.a
-export LIBDEV := libdev.a
-export LIBNANVIX := libnanvix.a
-
 #===============================================================================
 # Toolchain
 #===============================================================================
 
-include $(ROOT_DIR)/build/$(TARGET)/makefile
+include $(BUILD_DIR)/makefile
 
 #===============================================================================
 # Toolchain Configuration
 #===============================================================================
 
-# Compiler Options
-export CFLAGS += -std=c17
-export CFLAGS += -Wall -Wextra -Werror
-export CFLAGS += -Winit-self -Wswitch-default -Wfloat-equal -Wno-pointer-arith
-export CFLAGS += -Wundef -Wshadow -Wuninitialized -Wlogical-op
-export CFLAGS += -Wvla -Wredundant-decls
-export CFLAGS += -pedantic-errors
-export CFLAGS += -Wstack-usage=4096
-export CFLAGS += -I $(INCLUDE_DIR)
+export LDFLAGS += -L $(BUILD_DIR)/$(TARGET) -T kernel.ld
 
-# Optimization Flags
-ifeq ($(RELEASE), yes)
-export CFLAGS += -O3
-else
-export CFLAGS += -O0
-export CFLAGS += -g
-endif
+#===============================================================================
+# Build Artifacts
+#===============================================================================
 
-# Cargo Options
-export CARGO_FLAGS += -Z build-std=core
-ifeq ($(RELEASE), yes)
-export CARGO_FLAGS += --release
-endif
+# Objects
+export NAME := kernel
+export LIB := lib$(NAME).a
+export BIN := $(NAME).$(EXEC_FORMAT)
 
-# Archiver Options
-export ARFLAGS = rc
+# Asembly Source Files
+ASM = $(wildcard src/hal/arch/x86/*.S)
 
-# Linker Options
-export LDFLAGS += -z noexecstack
+# Object Files
+OBJS = $(ASM:.S=.$(TARGET).o)
 
 #===============================================================================
 # Build Rules
 #===============================================================================
 
 # Builds everything.
-all: check-format make-dirs
-	@$(MAKE) -C $(SOURCES_DIR) all
+all: make-dirs $(OBJS)
+	$(CARGO) build --lib $(CARGO_FLAGS)
+ifeq ($(RELEASE), yes)
+	@echo [CARGO] $(LIB)
+	cp --preserve target/$(TARGET)/release/$(LIB) $(LIB)
+else
+	cp --preserve target/$(TARGET)/debug/$(LIB) $(LIB)
+endif
+	$(LD) $(LDFLAGS) -o $(BINARIES_DIR)/$(BIN) $(OBJS) $(LIB)
 
 # Performs local initialization.
 init:
@@ -108,40 +93,19 @@ make-dirs: init
 
 # Cleans build.
 clean:
-	@$(MAKE) -C $(SOURCES_DIR) clean
+	$(CARGO) clean
+	rm -rf Cargo.lock
+	rm -rf $(LIB)
+	rm -rf $(OBJS)
 	@rm -f $(IMAGE_DIR)/*.$(EXEC_FORMAT)
 	@rm -f $(IMAGE)
+	rm -rf $(BINARIES_DIR)/$(BIN)
 
-# Builds Doxygen documentation.
-doxygen:
-	doxygen doc/kernel.doxygen
-
-
-#===============================================================================
-# Check
-#===============================================================================
-
-# Check code style formatting.
-check-format: check-fmt-c
-
-# Check code style formatting for C.
-check-fmt-c:
-	$(shell find include src -type f \( -name "*.c" -o -name "*.h" \) -print0 | xargs -0 clang-format --sort-includes --dry-run -Werror)
-	@exit $(.SHELLSTATUS)
-
-#===============================================================================
-# Run and Debug Rules
-#===============================================================================
-
-# Builds the system image.
-image: all
-	@cp -f $(BINARIES_DIR)/*.$(EXEC_FORMAT) $(IMAGE_DIR)/
-	@grub-mkrescue  $(IMAGE_DIR) -o $(IMAGE)
-
-# Runs system in release mode.
-run: image
-	bash $(SCRIPTS_DIR)/run.sh $(TARGET) $(IMAGE) --no-debug $(TIMEOUT)
-
-# Runs system in debug mode.
-debug: image
-	bash $(SCRIPTS_DIR)/run.sh $(TARGET) $(IMAGE) --debug $(TIMEOUT)
+# Builds an assembly source file.
+%.$(TARGET).o: %.S
+ifeq ($(VERBOSE), no)
+	@echo [CC] $@
+	@$(CC) $(CFLAGS) $< -c -o $@
+else
+	$(CC) $(CFLAGS) $< -c -o $@
+endif

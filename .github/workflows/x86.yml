@@ -26,10 +26,14 @@ jobs:
           cd microkernel
           git pull
           git checkout origin/${TARGET_BRANCH}
+          rm -rf build
+          git submodule update --init --recursive
+          git submodule foreach --recursive git fetch
           git status
+          ls build
 
-  build-doc:
-    name: Build Documentation
+  build:
+    name: Build
     needs: setup
     runs-on: ubuntu-latest
     steps:
@@ -42,23 +46,7 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd microkernel
-          make TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 doxygen
-
-  build:
-    name: Build
-    needs: [build-doc]
-    runs-on: ubuntu-latest
-    steps:
-    - name: Build
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.hostname }}
-        username: ${{ secrets.username }}
-        key: ${{ secrets.sshkey }}
-        port: ${{ secrets.portnum }}
-        script: |
-          cd microkernel
-          make TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 clean all
+          make TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 all
 
   test:
     name: Test
@@ -93,6 +81,6 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd microkernel
-          git checkout dev
+          git checkout --force dev
           git clean -fdx
           git remote prune origin

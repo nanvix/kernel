@@ -14,7 +14,7 @@ PAGE_SIZE = 0x1000;
 /*
  * Boot Address
  */
-BOOT_ADDR = 0x8000;
+BOOT_ADDR = 0x00100000;
 
 SECTIONS
 {
@@ -47,20 +47,20 @@ SECTIONS
 		__DATA_END = .;
 	}
 
-	/* Uninitialized data section. */
-	.bss : ALIGN(PAGE_SIZE)
-	{
-		__BSS_START = .;
-		*(.bss*)
-		__BSS_END = .;
-	}
-
 	/* Read-only data section. */
 	.rodata : ALIGN(PAGE_SIZE)
 	{
 		__RODATA_START = .;
 		*(.rodata*)
 		__RODATA_END = .;
+	}
+
+	/* Uninitialized data section. */
+	.bss : ALIGN(PAGE_SIZE)
+	{
+		__BSS_START = .;
+		*(.bss*)
+		__BSS_END = .;
 	}
 
 	. = ALIGN(PAGE_SIZE);

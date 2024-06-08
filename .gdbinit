@@ -3,14 +3,14 @@
 
 layout split
 target remote tcp::1234
-file bin/nanvix.elf
-symbol-file bin/nanvix.elf
-add-symbol-file bin/init.elf
-add-symbol-file bin/test.elf
+file bin/kernel.elf
+symbol-file bin/kernel.elf
+symbol-file bin/init.elf
 handle SIGSEGV nostop noprint nopass
 set confirm off
 focus cmd
 set detach-on-fork
+b _do_start
 b kmain
 
 define hook-stop
