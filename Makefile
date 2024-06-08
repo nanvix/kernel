@@ -109,6 +109,8 @@ make-dirs: init
 # Cleans build.
 clean:
 	@$(MAKE) -C $(SOURCES_DIR) clean
+	@rm -f $(IMAGE_DIR)/*.$(EXEC_FORMAT)
+	@rm -f $(IMAGE)
 
 # Builds Doxygen documentation.
 doxygen:
