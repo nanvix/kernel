@@ -15,6 +15,7 @@ pub mod kcall;
 pub mod misc;
 pub mod mm;
 pub mod pm;
+pub mod readerswriters;
 
 //==============================================================================
 // Imports
@@ -57,5 +58,6 @@ pub fn main() {
     mm::test();
     misc::test();
     ipc::test();
+    readerswriters::test();
     power::shutdown();
 }
