@@ -24,9 +24,9 @@ function setup_qemu
     mkdir -p build-qemu && cd build-qemu
 
     # Get the sources.
-    wget "http://wiki.qemu-project.org/download/qemu-$VERSION.tar.bz2"
-    tar -xjvf qemu-$VERSION.tar.bz2
-    rm -f qemu-$VERSION.tar.bz2
+    wget "https://download.qemu.org/qemu-$VERSION.tar.xz"
+    tar -xJvf qemu-$VERSION.tar.xz
+    rm -f qemu-$VERSION.tar.xz
 
     # Build and install.
     cd qemu-$VERSION
