@@ -57,16 +57,18 @@ function run_qemu
 	local MEMSIZE=256M # Memory Size
 
 	if [ $target == "i386" ]; then
-		machine="-machine pc"
+		machine="-machine q35"
 	fi
 
 	qemu_cmd="$TOOLCHAIN_DIR/qemu/bin/qemu-system-$target
-	  		$machine
+			$machine
 			-serial stdio
 			-display none
-			-cpu pentium2
 			-m $MEMSIZE
-			-mem-prealloc"
+			-mem-prealloc
+			-enable-kvm
+			-cpu host
+			-device intel-iommu"
 
 	cmd="$qemu_cmd -gdb tcp::$GDB_PORT"
 	cmd="$cmd -cdrom $image"
