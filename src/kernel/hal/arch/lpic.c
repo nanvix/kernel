@@ -78,7 +78,7 @@ void lpic_init(unsigned hwint_off)
 
     if (is_x2apic_supported()) {
         // TODO: Support x2APIC.
-        kpanic("x2apic detected, but it is not supported");
+        info("x2apic detected, but it is not supported.");
     } else if (is_apic_supported()) {
         info("xapic detected");
     } else {
