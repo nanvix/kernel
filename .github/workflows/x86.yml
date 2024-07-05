@@ -26,7 +26,6 @@ jobs:
           cd microkernel
           git pull
           git checkout origin/${TARGET_BRANCH}
-          rm -rf build
           git submodule update --init --recursive
           git submodule foreach --recursive git fetch
           git status
