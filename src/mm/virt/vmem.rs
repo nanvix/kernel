@@ -76,8 +76,11 @@ pub const USER_STACK_TOP: VirtualAddress = VirtualAddress::new(0xc0000000);
 pub struct Vmem {
     /// Underlying page directory.
     pgdir: PageDirectory,
-    /// List of underling page tables holding kernel pages.
+    /// List of kernel page tables.
     kernel_page_tables: Rc<RefCell<LinkedList<(PageTableAddress, PageTable)>>>,
+    /// List of kernel pages mapped in the virtual address space.
+    /// NOTE: this currently excludes kernel pages that are identity mapped.
+    kernel_pages: Rc<RefCell<LinkedList<KernelPage>>>,
     /// List of underling page tables holding user pages.
     user_page_tables: LinkedList<PageTable>,
     /// List of user pages in the virtual memory space.
@@ -87,6 +90,7 @@ pub struct Vmem {
 impl Vmem {
     /// Initializes a new virtual memory space.
     pub fn new(
+        kernel_pages: Rc<RefCell<LinkedList<KernelPage>>>,
         kernel_page_tables: Rc<RefCell<LinkedList<(PageTableAddress, PageTable)>>>,
     ) -> Result<Self, Error> {
         trace!("new()");
@@ -104,6 +108,7 @@ impl Vmem {
         Ok(Self {
             pgdir,
             kernel_page_tables,
+            kernel_pages,
             user_page_tables: LinkedList::new(),
             user_pages: LinkedList::new(),
         })
@@ -118,6 +123,86 @@ impl Vmem {
     /// Returns a reference to the underlying page directory.
     pub fn pgdir(&self) -> &PageDirectory {
         &self.pgdir
+    }
+
+    ///
+    /// # Description
+    ///
+    /// Maps a kernel page to the target virtual address space.
+    ///
+    /// # Parameters
+    /// - `kpage`: Kernel page to be mapped.
+    /// - `vaddr`: Virtual address of the target page.
+    ///
+    /// # Returns
+    ///
+    /// Upon success, empty is returned. Upon failure, an error code is returned instead.
+    ///
+    pub fn map_kpage(
+        &mut self,
+        kpage: KernelPage,
+        vaddr: PageAligned<VirtualAddress>,
+    ) -> Result<(), Error> {
+        let pt_vaddr: PageTableAddress = PageTableAddress::new(PageTableAligned::from_raw_value(
+            klib::align_down(vaddr.into_raw_value(), mmu::PGTAB_ALIGNMENT),
+        )?);
+
+        // Get the corresponding page directory entry.
+        let pde: PageDirectoryEntry = match self.pgdir.read_pde(pt_vaddr) {
+            Some(pde) => pde,
+            None => {
+                let reason: &str = "failed to read page directory entry";
+                error!("map_kpage(): {}", reason);
+                return Err(Error::new(ErrorCode::TryAgain, reason));
+            },
+        };
+
+        // Check if page table does not exist.
+        if !pde.is_present() {
+            let pgtable_storage: PageTableStorage = PageTableStorage::new();
+            let page_table: PageTable = PageTable::new(pgtable_storage);
+
+            self.pgdir.map(
+                pt_vaddr,
+                page_table.physical_address()?,
+                false,
+                AccessPermission::RDWR,
+            )?;
+
+            //===================================================================
+            // NOTE: if we fail beyond this point we should unmap the page table.
+            //===================================================================
+
+            // Add page table to the list of kernel page tables.
+            self.kernel_page_tables
+                .borrow_mut()
+                .push_back((pt_vaddr, page_table));
+        };
+
+        // Get corresponding page table.
+        for (pt_addr, pt) in self.kernel_page_tables.borrow_mut().iter_mut() {
+            if pt_addr.into_raw_value() == pt_vaddr.into_raw_value() {
+                // Map the page to the target virtual address space.
+                pt.map(
+                    PageAddress::new(vaddr),
+                    kpage.frame_address(),
+                    true,
+                    AccessPermission::RDWR,
+                )?;
+
+                // Add the kernel page to the list of kernel pages.
+                self.kernel_pages.borrow_mut().push_back(kpage);
+
+                // Reload page directory to force a TLB flush.
+                self.load()?;
+
+                return Ok(());
+            }
+        }
+
+        let reason: &str = "page table not found";
+        error!("lookup_kernel_page_table(): {}", reason);
+        return Err(Error::new(ErrorCode::NoSuchEntry, reason));
     }
 
     /// Maps a page to the target virtual address space.
@@ -186,6 +271,10 @@ impl Vmem {
             .push_back(AttachedUserPage::new(PageAddress::new(vaddr), uframe));
 
         Ok(())
+    }
+
+    pub fn kernel_pages(&self) -> Rc<RefCell<LinkedList<KernelPage>>> {
+        self.kernel_pages.clone()
     }
 
     pub fn kernel_page_tables(&self) -> Rc<RefCell<LinkedList<(PageTableAddress, PageTable)>>> {

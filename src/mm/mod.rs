@@ -27,10 +27,12 @@ pub use virt::{
 //==================================================================================================
 
 use crate::{
+    arch::mem,
     error::Error,
     hal::{
         arch::x86::mem::mmu::page_table::PageTable,
         mem::{
+            Address,
             MemoryRegion,
             MemoryRegionType,
             PageAligned,
@@ -105,7 +107,7 @@ pub fn init(
 ) -> Result<(Vmem, VirtMemoryManager), Error> {
     info!("initializing the memory manager ...");
 
-    let (other_virtual_memory_regions, virtual_memory_regions, physical_memory_regions): (
+    let (mut other_virtual_memory_regions, virtual_memory_regions, physical_memory_regions): (
         LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
         LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
         LinkedList<TruncatedMemoryRegion<PhysicalAddress>>,
@@ -116,11 +118,34 @@ pub fn init(
         physical_memory_regions,
     )?;
 
-    // TODO: Map other memory regions.
+    // FIXME: the initial list of kernel pages should be spit out by the initialization.
+    let (kernel_pages, kernel_page_tables): (
+        LinkedList<KernelPage>,
+        LinkedList<(PageTableAddress, PageTable)>,
+    ) = (LinkedList::new(), virt::init(virtual_memory_regions)?);
 
-    let root: LinkedList<(PageTableAddress, PageTable)> = virt::init(virtual_memory_regions)?;
+    let (mut vmem, mut mm): (Vmem, VirtMemoryManager) =
+        VirtMemoryManager::new(kernel_pages, kernel_page_tables, physman)?;
 
-    VirtMemoryManager::new(root, physman)
+    // Map virtual memory regions that lie outside the physical memory.
+    while let Some(region) = other_virtual_memory_regions.pop_front() {
+        info!("mapping: {:?}", region);
+        let mut vaddr: PageAligned<VirtualAddress> = region.start();
+        let end: VirtualAddress =
+            VirtualAddress::new(region.start().into_raw_value() + (region.size() - 1));
+
+        while vaddr.into_inner() < end {
+            let kpage: KernelPage = mm.alloc_kpage()?;
+            vmem.map_kpage(kpage, vaddr)?;
+
+            match vaddr.into_raw_value().checked_add(mem::PAGE_SIZE) {
+                Some(raw_addr) => vaddr = PageAligned::from_raw_value(raw_addr)?,
+                None => break,
+            };
+        }
+    }
+
+    Ok((vmem, mm))
 }
 
 // Returns the user base stack address.
