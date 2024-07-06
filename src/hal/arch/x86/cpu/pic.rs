@@ -167,8 +167,17 @@ impl Pic {
         Ok(pic)
     }
 
+    ///
+    /// # Description
+    ///
+    /// Initializes the target PIC.
+    ///
+    /// # Parameters
+    ///
+    /// - `offset`: Vector offset.
+    ///
     fn init(&mut self, offset: u8) {
-        info!("initializing pic...");
+        info!("initializing pic (offset={})", offset);
         // Starts initialization sequence in cascade mode.
         self.ctrl_master.writeb(icw1::Ic4::Needed as u8);
         io::wait();
