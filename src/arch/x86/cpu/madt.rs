@@ -22,7 +22,7 @@ pub struct Madt {
     pub header: AcpiSdtHeader,
     /// Physical address at which each processor can access its local APIC
     pub local_apic_addr: u32,
-    /// Flags indicating the presence of dual 8259 Legacy PICs if set to 1
+    /// Flags.
     pub flags: u32,
     /// Start of the MADT entries
     pub entries: [u32; 0], // This is a zero-length array used for variable-sized struct
@@ -33,6 +33,10 @@ static_assert_size!(Madt, Madt::_SIZE);
 impl Madt {
     /// Size of the MADT table.
     const _SIZE: usize = core::mem::size_of::<AcpiSdtHeader>() + 8;
+
+    /// PC-AT compatible flag.
+    /// If set, the system also has a PCT-AT compatible dual-8259 setup.
+    pub const PCAT_COMPAT: u32 = 1 << 0;
 }
 
 //==================================================================================================

@@ -57,6 +57,19 @@ impl MadtInfo {
         info!("  Local APIC Address: 0x{:x}", self.local_apic_addr);
         info!("  Flags: 0x{:x}", self.flags);
     }
+
+    ///
+    /// # Description
+    ///
+    /// Checks if the system has a dual-8259 setup.
+    ///
+    /// # Return Values
+    ///
+    /// If the system has a dual-8259 setup, `true` is returned. Otherwise, `false` is returned.
+    ///
+    pub const fn has_8259_pic(&self) -> bool {
+        self.flags & Madt::PCAT_COMPAT != 0
+    }
 }
 
 impl Madt {
