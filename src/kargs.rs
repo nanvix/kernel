@@ -5,19 +5,12 @@
 // Imports
 //==================================================================================================
 
-use alloc::collections::LinkedList;
-
 use crate::{
     error::Error,
-    hal::{
-        arch::x86::cpu::madt::madt::MadtInfo,
-        mem::{
-            MemoryRegion,
-            VirtualAddress,
-        },
+    mboot::{
+        self,
+        info::BootInfo,
     },
-    kmod::KernelModule,
-    mboot,
 };
 
 //==================================================================================================
@@ -49,12 +42,7 @@ static_assert_alignment!(KernelArguments, 4);
 
 impl KernelArguments {
     /// Parses kernel arguments.
-    pub fn parse(
-        &self,
-    ) -> Result<
-        (Option<MadtInfo>, LinkedList<MemoryRegion<VirtualAddress>>, LinkedList<KernelModule>),
-        Error,
-    > {
+    pub fn parse(&self) -> Result<BootInfo, Error> {
         mboot::parse(self.mboot_magic, self.mboot_info)
     }
 }

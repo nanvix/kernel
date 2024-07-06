@@ -6,6 +6,7 @@
 //==================================================================================================
 
 mod acpi;
+pub mod info;
 mod memory_map;
 mod module;
 
@@ -48,6 +49,7 @@ use crate::{
         },
     },
     kmod::KernelModule,
+    mboot::info::BootInfo,
 };
 use alloc::{
     collections::LinkedList,
@@ -255,13 +257,7 @@ impl core::fmt::Debug for MbootTag {
 // Implementations
 //==================================================================================================
 
-pub fn parse(
-    bootloader_magic: u32,
-    addr: usize,
-) -> Result<
-    (Option<MadtInfo>, LinkedList<MemoryRegion<VirtualAddress>>, LinkedList<KernelModule>),
-    Error,
-> {
+pub fn parse(bootloader_magic: u32, addr: usize) -> Result<BootInfo, Error> {
     // Check if bootloader magic value mismatches what we expect.
     if bootloader_magic != MBOOT_BOOTLOADER_MAGIC {
         return Err(Error::new(ErrorCode::InvalidArgument, "invalid bootloader magic value"));
@@ -501,5 +497,5 @@ pub fn parse(
         return Err(Error::new(ErrorCode::BadAddress, "invalid multiboot size"));
     }
 
-    Ok((madt, memory_regions, kernel_modules))
+    Ok(BootInfo::new(madt, memory_regions, kernel_modules))
 }

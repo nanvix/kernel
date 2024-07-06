@@ -177,7 +177,7 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
         LinkedList<MemoryRegion<VirtualAddress>>,
         LinkedList<KernelModule>,
     ) = match kargs.parse() {
-        Ok((madt, memory_regions, kernel_modules)) => (madt, memory_regions, kernel_modules),
+        Ok(bootinfo) => (bootinfo.madt, bootinfo.memory_layout, bootinfo.kernel_modules),
         Err(err) => {
             panic!("failed to parse kernel arguments: {:?}", err);
         },
