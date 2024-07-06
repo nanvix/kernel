@@ -13,22 +13,14 @@ pub mod mem;
 //==================================================================================================
 
 use crate::{
-    config,
     error::Error,
     hal::{
         arch::x86::{
             cpu::{
-                idt,
-                pic,
-                pic::{
-                    Pic,
-                    PicRef,
-                },
                 pit,
                 tss::TssRef,
             },
             mem::gdt::{
-                self,
                 Gdt,
                 GdtPtr,
             },
@@ -37,10 +29,18 @@ use crate::{
         io::allocator::IoPortAllocator,
     },
 };
+use cpu::madt::madt::MadtInfo;
 
-extern "C" {
-    static kstack: u8;
-}
+//==================================================================================================
+// Exports
+//==================================================================================================
+
+pub use cpu::{
+    forge_user_stack,
+    InterruptController,
+    InterruptHandlersRef,
+    InterruptNumber,
+};
 
 //==================================================================================================
 // Structures
@@ -53,13 +53,13 @@ extern "C" {
 ///
 pub struct Arch {
     /// Global Descriptor Table (GDT).
-    pub gdt: Option<Gdt>,
+    _gdt: Option<Gdt>,
     /// Global Descriptor Table Register (GDTR).
     pub gdtr: Option<GdtPtr>,
     /// Task State Segment (TSS).
     pub tss: Option<TssRef>,
-    /// Programmable Interrupt Controller (PIC).
-    pub pic: Option<PicRef>,
+    /// Interrupt controller.
+    pub controller: Option<InterruptController>,
     /// Programmable Interval Timer (PIT).
     pub pit: Option<Pit>,
 }
@@ -68,41 +68,17 @@ pub struct Arch {
 // Standalone Functions
 //==================================================================================================
 
-pub fn init(ioports: &mut IoPortAllocator) -> Result<Arch, Error> {
-    // Register I/O ports for 8259 PIC.
-    ioports.register_read_write(Pic::PIC_CTRL_MASTER as u16)?;
-    ioports.register_read_write(Pic::PIC_DATA_MASTER as u16)?;
-    ioports.register_read_write(Pic::PIC_CTRL_SLAVE as u16)?;
-    ioports.register_read_write(Pic::PIC_DATA_SLAVE as u16)?;
+pub fn init(ioports: &mut IoPortAllocator, madt: Option<MadtInfo>) -> Result<Arch, Error> {
+    info!("initializing architecture-specific components...");
 
-    // Register I/O ports from 0x3f8 to 0x3fc as read/write.
-    for base in [0x3F8, 0x2F8, 0x3E8, 0x2E8, 0x3E0, 0x2E0, 0x3F0, 0x2F0].iter() {
-        for p in [0, 1, 2, 3, 4, 7].iter() {
-            ioports.register_read_write(base + p)?;
-        }
-
-        // Register read-only ports.
-        for p in [5, 6].iter() {
-            ioports.register_read_only(base + p)?;
-        }
-    }
-
-    // Register ports for the PIT.
-    ioports.register_read_write(pit::PIT_CTRL)?;
-    ioports.register_read_write(pit::PIT_DATA)?;
-
-    let (gdt, gdtr, tss) = unsafe { gdt::init(&kstack)? };
-    unsafe { idt::init() };
-
-    let pic: PicRef = pic::init(ioports, idt::INT_OFF)?;
-
-    let pit: Pit = Pit::new(ioports, config::TIMER_FREQ)?;
+    // Initialize interrupt controller.
+    let (gdt, gdtr, tss, controller, pit) = cpu::init(ioports, madt)?;
 
     Ok(Arch {
-        gdt: Some(gdt),
+        _gdt: Some(gdt),
         gdtr: Some(gdtr),
         tss: Some(tss),
-        pic: Some(pic),
+        controller: Some(controller),
         pit: Some(pit),
     })
 }

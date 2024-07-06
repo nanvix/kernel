@@ -20,7 +20,10 @@ use crate::{
         ErrorCode,
     },
     hal::{
-        arch::x86::Arch,
+        arch::x86::{
+            cpu::madt::madt::MadtInfo,
+            Arch,
+        },
         cpu::InterruptManager,
         io::allocator::IoPortAllocator,
     },
@@ -51,11 +54,11 @@ pub struct Hal {
 // Standalone Functions
 //==================================================================================================
 
-pub fn init() -> Result<Hal, Error> {
+pub fn init(madt: Option<MadtInfo>) -> Result<Hal, Error> {
     info!("initializing hardware abstraction layer...");
 
     let mut ioports: IoPortAllocator = IoPortAllocator::new();
-    let mut arch: Arch = arch::init(&mut ioports)?;
+    let mut arch: Arch = arch::init(&mut ioports, madt)?;
 
     let uart: Box<Uart> = match Uart::new(&mut ioports, uart::BaudRate::Baud38400) {
         Ok(uart) => Box::new(uart),
@@ -63,9 +66,13 @@ pub fn init() -> Result<Hal, Error> {
     };
 
     // Initialize the interrupt manager.
-    let intman: InterruptManager = match arch.pic.take() {
-        Some(pic) => InterruptManager::new(pic)?,
-        None => Err(Error::new(ErrorCode::ResourceBusy, "Failed to initialize interrupt manager"))?,
+    let intman: InterruptManager = match arch.controller.take() {
+        Some(controller) => InterruptManager::new(controller)?,
+        None => {
+            let reason: &str = "no interrupt controller found";
+            error!("{}", reason);
+            return Err(Error::new(ErrorCode::NoSuchDevice, reason));
+        },
     };
 
     unsafe { stdout::init(uart) };

@@ -25,10 +25,7 @@
 extern crate alloc;
 use crate::{
     hal::{
-        arch::x86::cpu::{
-            interrupt::InterruptNumber,
-            madt::madt::MadtInfo,
-        },
+        arch::x86::cpu::madt::madt::MadtInfo,
         io::mmio::MemoryMappedIoRegion,
         mem::{
             AccessPermission,
@@ -215,7 +212,7 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
         }
     }
 
-    let mut hal: Hal = match hal::init() {
+    let mut hal: Hal = match hal::init(madt) {
         Ok(hal) => hal,
         Err(err) => {
             panic!("failed to initialize hardware abstraction layer: {:?}", err);
@@ -243,7 +240,7 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
         kcall::init();
 
         // Enable timer interrupts.
-        if let Err(e) = hal.intman.mask(InterruptNumber::Timer) {
+        if let Err(e) = hal.intman.mask(hal::arch::InterruptNumber::Timer) {
             panic!("failed to mask timer interrupt: {:?}", e);
         }
 

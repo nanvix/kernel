@@ -10,9 +10,13 @@ pub mod eflags;
 pub mod excp;
 pub mod idt;
 pub mod idtr;
+pub mod ioapic;
 pub mod madt;
+pub mod pic;
+pub mod pit;
 pub mod ring;
 pub mod tss;
+pub mod xapic;
 
 //==================================================================================================
 // Standalone Functions

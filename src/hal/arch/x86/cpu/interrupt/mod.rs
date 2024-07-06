@@ -5,106 +5,46 @@
 // Modules
 //==================================================================================================
 
+mod controller;
+mod ioapic;
+mod number;
+mod pic;
+mod vector;
+mod xapic;
+
+//==================================================================================================
+// Imports
+//==================================================================================================
+
+use super::madt::madt::MadtInfo;
 use crate::{
-    arch::cpu::eflags::{
-        self,
-        EflagsRegister,
+    arch::cpu::{
+        eflags::{
+            self,
+            EflagsRegister,
+        },
+        madt::MadtEntryLocalApic,
     },
-    error::{
-        Error,
-        ErrorCode,
+    error::Error,
+    hal::{
+        arch::x86::{
+            cpu::idt,
+            mem::gdt,
+        },
+        io::allocator::IoPortAllocator,
     },
-    hal::arch::x86::mem::gdt,
 };
+use ioapic::IoapicPtr;
+use pic::Pic;
+use xapic::XapicRef;
 
 //==================================================================================================
-// Structures
+// Exports
 //==================================================================================================
 
-pub type InterruptHandler = fn();
-
-pub struct InterruptHandlersRef(&'static mut [Option<InterruptHandler>; 256]);
-
-#[derive(Debug, Clone, Copy)]
-#[repr(u32)]
-pub enum InterruptNumber {
-    Timer = 0,
-    Keyboard = 1,
-    Com2 = 3,
-    Com1 = 4,
-    Lpt2 = 5,
-    Floppy = 6,
-    Lpt1 = 7,
-    Cmos = 8,
-    Free1 = 9,
-    Free2 = 10,
-    Free3 = 11,
-    Mouse = 12,
-    Coprocessor = 13,
-    PrimaryAta = 14,
-    SecondaryAta = 15,
-}
-
-impl InterruptNumber {
-    pub const VALUES: [InterruptNumber; 15] = [
-        InterruptNumber::Timer,
-        InterruptNumber::Keyboard,
-        InterruptNumber::Com2,
-        InterruptNumber::Com1,
-        InterruptNumber::Lpt2,
-        InterruptNumber::Floppy,
-        InterruptNumber::Lpt1,
-        InterruptNumber::Cmos,
-        InterruptNumber::Free1,
-        InterruptNumber::Free2,
-        InterruptNumber::Free3,
-        InterruptNumber::Mouse,
-        InterruptNumber::Coprocessor,
-        InterruptNumber::PrimaryAta,
-        InterruptNumber::SecondaryAta,
-    ];
-}
-
-//==================================================================================================
-// Global Variables
-//==================================================================================================
-
-#[no_mangle]
-static mut INTERRUPT_HANDLERS: [Option<InterruptHandler>; 256] = [None; 256];
-
-//==================================================================================================
-// Implementations
-//==================================================================================================
-
-static mut BORROWED: bool = false;
-
-impl InterruptHandlersRef {
-    pub fn try_borrow() -> Result<InterruptHandlersRef, Error> {
-        unsafe {
-            if BORROWED {
-                Err(Error::new(ErrorCode::ResourceBusy, "interrupts already initialized"))
-            } else {
-                Ok(InterruptHandlersRef(&mut INTERRUPT_HANDLERS))
-            }
-        }
-    }
-
-    pub fn get_handler(&self, intnum: InterruptNumber) -> Option<InterruptHandler> {
-        self.0[intnum as usize]
-    }
-
-    pub fn set_handler(&mut self, intnum: InterruptNumber, handler: Option<InterruptHandler>) {
-        self.0[intnum as usize] = handler;
-    }
-}
-
-impl Drop for InterruptHandlersRef {
-    fn drop(&mut self) {
-        unsafe {
-            BORROWED = false;
-        }
-    }
-}
+pub use controller::InterruptController;
+pub use number::InterruptNumber;
+pub use vector::InterruptHandlersRef;
 
 //==================================================================================================
 // Standalone Functions
@@ -167,4 +107,41 @@ pub unsafe fn forge_user_stack(
     *stackp = kernel_func as u32;
 
     stackp as *mut u8
+}
+
+/// Initializes the interrupt controller.
+pub fn init(
+    ioports: &mut IoPortAllocator,
+    madt: Option<MadtInfo>,
+) -> Result<InterruptController, Error> {
+    info!("initializing interrupt controller...");
+    match madt {
+        // MADT is present.
+        Some(madt) => {
+            info!("retriving information from madt");
+            // Check if the 8259 PIC is present.
+            let pic: Option<Pic> = match madt.has_8259_pic() {
+                true => {
+                    info!("8259 pic found");
+                    Some(pic::init(ioports, idt::INT_OFF)?)
+                },
+                false => {
+                    info!("8259 pic not found");
+                    None
+                },
+            };
+
+            let ioapic: Option<IoapicPtr> = None;
+            let xapic: Option<XapicRef> = None;
+
+            InterruptController::new(pic, xapic, ioapic)
+        },
+
+        // MADT is not present.
+        None => {
+            info!("madt not present, falling back to 8259 pic");
+            let pic: Pic = pic::init(ioports, idt::INT_OFF)?;
+            Ok(InterruptController::new(Some(pic), None, None)?)
+        },
+    }
 }

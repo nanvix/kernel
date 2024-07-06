@@ -7,18 +7,14 @@
 
 use crate::{
     arch::mem,
-    config::{
-        self,
-    },
+    config,
     error::{
         Error,
         ErrorCode,
     },
     hal::{
-        arch::x86::cpu::{
-            context::ContextInformation,
-            interrupt,
-        },
+        self,
+        arch::x86::cpu::context::ContextInformation,
         mem::{
             AccessPermission,
             Address,
@@ -216,7 +212,7 @@ impl ProcessManagerInner {
     ) -> Result<ContextInformation, Error> {
         let cr3: u32 = vmem.pgdir().physical_address()?.into_raw_value() as u32;
         let esp: u32 = unsafe {
-            interrupt::forge_user_stack(
+            hal::arch::forge_user_stack(
                 kstack.top(),
                 user_stack.into_raw_value(),
                 user_func.into_raw_value(),

@@ -17,10 +17,8 @@ pub mod thread;
 use crate::{
     config,
     error::Error,
-    hal::{
-        arch::x86::cpu::interrupt::InterruptNumber,
-        Hal,
-    },
+    hal,
+    hal::Hal,
     mm::Vmem,
     pm::{
         process::ProcessManager,
@@ -54,7 +52,7 @@ pub fn init(hal: &mut Hal, root: Vmem, kstack: &mut u8) -> Result<ProcessManager
     // Register the timer handler.
     info!("registering timer interrupt handler...");
     hal.intman
-        .register_handler(InterruptNumber::Timer, timer_handler)?;
+        .register_handler(hal::arch::InterruptNumber::Timer, timer_handler)?;
 
     // Initialize the thread manager.
     info!("initializing the thread manager...");
