@@ -23,13 +23,8 @@ jobs:
         port: ${{ secrets.portnum }}
         envs: TARGET_BRANCH
         script: |
-          cd microkernel
-          git pull
-          git checkout origin/${TARGET_BRANCH}
-          git submodule update --init --recursive
-          git submodule foreach --recursive git fetch
-          git status
-          ls build
+          rm -rf microkernel
+          git clone --recursive https://github.com/nanvix/microkernel.git --branch ${TARGET_BRANCH}
 
   build:
     name: Build
