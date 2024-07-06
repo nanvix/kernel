@@ -20,6 +20,7 @@ use crate::{
         Error,
         ErrorCode,
     },
+    hal::io::mmio::MemoryMappedIoAddress,
     klib::Alignment,
 };
 
@@ -50,6 +51,28 @@ impl PhysicalAddress {
         }
 
         Ok(Self(addr))
+    }
+
+    ///
+    /// # Description
+    ///
+    /// Constructs a physical address from a memory-mapped I/O address.
+    ///
+    /// # Parameters
+    ///
+    /// - `addr`: The memory-mapped I/O address.
+    ///
+    /// # Return Values
+    ///
+    /// Upon success, a physical address associated with the given memory-mapped I/O address is
+    /// returned. Upon failure, an error is returned instead.
+    ///
+    /// # Safety
+    ///
+    /// Behavior is undefined if the provided memory-mapped I/O address is invalid.
+    ///
+    pub unsafe fn from_mmio_address(addr: MemoryMappedIoAddress) -> Result<Self, Error> {
+        Ok(Self(VirtualAddress::from_raw_value(addr.into_raw_value())?))
     }
 
     pub fn into_virtual_address(self) -> VirtualAddress {
