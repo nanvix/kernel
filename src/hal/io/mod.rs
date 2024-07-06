@@ -7,3 +7,4 @@
 
 pub mod allocator;
 pub mod ioport;
+pub mod mmio;
