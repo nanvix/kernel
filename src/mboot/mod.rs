@@ -19,12 +19,15 @@ use self::{
     module::MbootModule,
 };
 use crate::{
-    arch::cpu::{
-        acpi::{
-            AcpiSdtHeader,
-            Rsdp,
+    arch::{
+        self,
+        cpu::{
+            acpi::{
+                AcpiSdtHeader,
+                Rsdp,
+            },
+            madt::Madt,
         },
-        madt::Madt,
     },
     error::{
         Error,
@@ -255,7 +258,10 @@ impl core::fmt::Debug for MbootTag {
 pub fn parse(
     bootloader_magic: u32,
     addr: usize,
-) -> Result<(LinkedList<MemoryRegion<VirtualAddress>>, LinkedList<KernelModule>), Error> {
+) -> Result<
+    (Option<MadtInfo>, LinkedList<MemoryRegion<VirtualAddress>>, LinkedList<KernelModule>),
+    Error,
+> {
     // Check if bootloader magic value mismatches what we expect.
     if bootloader_magic != MBOOT_BOOTLOADER_MAGIC {
         return Err(Error::new(ErrorCode::InvalidArgument, "invalid bootloader magic value"));
@@ -269,6 +275,9 @@ pub fn parse(
     let mut memory_regions: LinkedList<MemoryRegion<VirtualAddress>> = LinkedList::new();
     // List of kernel modules.
     let mut kernel_modules: LinkedList<KernelModule> = LinkedList::new();
+
+    // Machine information.
+    let mut madt: Option<MadtInfo> = None;
 
     while tag.typ != MbootTagType::End as u16 {
         match tag.typ.into() {
@@ -390,15 +399,52 @@ pub fn parse(
                 let rsdp: Rsdp = unsafe { Rsdp::from_ptr(acpi.rsdp())? };
                 rsdp.display();
                 let rsdt: *const AcpiSdtHeader = rsdp.rsdt_addr as *const AcpiSdtHeader;
-                let rsdt = unsafe { AcpiSdtHeader::from_ptr(rsdt) }?;
+                let rsdt: AcpiSdtHeader = unsafe { AcpiSdtHeader::from_ptr(rsdt) }?;
                 rsdt.display();
 
                 let ptr: *const AcpiSdtHeader = unsafe {
                     cpu::acpi::find_table_by_sig(rsdp.rsdt_addr as *const AcpiSdtHeader, "APIC")?
                 };
                 rsdp.display();
-                let madt: MadtInfo = unsafe { Madt::parse(ptr as *const Madt)? };
-                madt.display();
+                madt = match unsafe { Madt::parse(ptr as *const Madt) } {
+                    Ok(madt) => {
+                        madt.display();
+
+                        // If I/O APIC is present, book corresponding memory.
+                        if let Some(ioapic) = madt.get_ioapic_info() {
+                            let addr: VirtualAddress =
+                                VirtualAddress::new(ioapic.io_apic_addr as usize);
+                            let region: MemoryRegion<VirtualAddress> = MemoryRegion::new(
+                                "ioapic",
+                                addr,
+                                arch::mem::PAGE_SIZE,
+                                MemoryRegionType::Reserved,
+                                AccessPermission::RDWR,
+                            )?;
+                            memory_regions.push_back(region);
+                        }
+
+                        // If local APIC is present, book corresponding memory.
+                        if madt.get_lapic_info().is_some() {
+                            let addr: VirtualAddress =
+                                VirtualAddress::new(madt.local_apic_addr as usize);
+                            let region: MemoryRegion<VirtualAddress> = MemoryRegion::new(
+                                "local_apic",
+                                addr,
+                                arch::mem::PAGE_SIZE,
+                                MemoryRegionType::Reserved,
+                                AccessPermission::RDWR,
+                            )?;
+                            memory_regions.push_back(region);
+                        }
+
+                        Some(madt)
+                    },
+                    Err(err) => {
+                        warn!("failed to parse madt: {:?}", err);
+                        None
+                    },
+                };
             },
             MbootTagType::AcpiNew => {
                 let acpi: MbootAcpi = unsafe {
@@ -455,5 +501,5 @@ pub fn parse(
         return Err(Error::new(ErrorCode::BadAddress, "invalid multiboot size"));
     }
 
-    Ok((memory_regions, kernel_modules))
+    Ok((madt, memory_regions, kernel_modules))
 }

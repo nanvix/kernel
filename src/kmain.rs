@@ -25,7 +25,10 @@
 extern crate alloc;
 use crate::{
     hal::{
-        arch::x86::cpu::interrupt::InterruptNumber,
+        arch::x86::cpu::{
+            interrupt::InterruptNumber,
+            madt::madt::MadtInfo,
+        },
         mem::{
             AccessPermission,
             Address,
@@ -169,11 +172,12 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
 
     // Parse kernel arguments.
     info!("parsing kernel arguments...");
-    let (mut memory_regions, kernel_modules): (
+    let (madt, mut memory_regions, kernel_modules): (
+        Option<MadtInfo>,
         LinkedList<MemoryRegion<VirtualAddress>>,
         LinkedList<KernelModule>,
     ) = match kargs.parse() {
-        Ok((memory_regions, kernel_modules)) => (memory_regions, kernel_modules),
+        Ok((madt, memory_regions, kernel_modules)) => (madt, memory_regions, kernel_modules),
         Err(err) => {
             panic!("failed to parse kernel arguments: {:?}", err);
         },

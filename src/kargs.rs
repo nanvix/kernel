@@ -9,9 +9,12 @@ use alloc::collections::LinkedList;
 
 use crate::{
     error::Error,
-    hal::mem::{
-        MemoryRegion,
-        VirtualAddress,
+    hal::{
+        arch::x86::cpu::madt::madt::MadtInfo,
+        mem::{
+            MemoryRegion,
+            VirtualAddress,
+        },
     },
     kmod::KernelModule,
     mboot,
@@ -48,7 +51,10 @@ impl KernelArguments {
     /// Parses kernel arguments.
     pub fn parse(
         &self,
-    ) -> Result<(LinkedList<MemoryRegion<VirtualAddress>>, LinkedList<KernelModule>), Error> {
+    ) -> Result<
+        (Option<MadtInfo>, LinkedList<MemoryRegion<VirtualAddress>>, LinkedList<KernelModule>),
+        Error,
+    > {
         mboot::parse(self.mboot_magic, self.mboot_info)
     }
 }
