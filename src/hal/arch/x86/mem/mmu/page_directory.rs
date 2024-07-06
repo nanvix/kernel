@@ -13,8 +13,10 @@ use crate::{
         paging::{
             AccessedFlag,
             DirtyFlag,
+            PageCacheDisableFlag,
             PageDirectoryEntry,
             PageDirectoryEntryFlags,
+            PageWriteThroughFlag,
             PresentFlag,
             ReadWriteFlag,
             UserSupervisorFlag,
@@ -131,6 +133,8 @@ impl PageDirectory {
                 } else {
                     UserSupervisorFlag::User
                 },
+                PageWriteThroughFlag::WriteThrough,
+                PageCacheDisableFlag::CacheDisabled,
                 AccessedFlag::NotAccessed,
                 DirtyFlag::NotDirty,
             ),

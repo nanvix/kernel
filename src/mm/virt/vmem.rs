@@ -183,10 +183,13 @@ impl Vmem {
         for (pt_addr, pt) in self.kernel_page_tables.borrow_mut().iter_mut() {
             if pt_addr.into_raw_value() == pt_vaddr.into_raw_value() {
                 // Map the page to the target virtual address space.
+                // FIXME: do not be so open about permissions and caching.
                 pt.map(
                     PageAddress::new(vaddr),
                     kpage.frame_address(),
                     true,
+                    true,
+                    false,
                     AccessPermission::RDWR,
                 )?;
 
@@ -261,7 +264,7 @@ impl Vmem {
         };
 
         // Map the page to the target virtual address space.
-        page_table.map(PageAddress::new(vaddr), uframe.address(), false, access)?;
+        page_table.map(PageAddress::new(vaddr), uframe.address(), false, false, true, access)?;
 
         //=============================================================
         // NOTE: if we fail beyond this point we should unmap the page.

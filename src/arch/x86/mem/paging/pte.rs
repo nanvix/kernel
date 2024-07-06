@@ -11,6 +11,8 @@ use crate::arch::{
         flags::{
             AccessedFlag,
             DirtyFlag,
+            PageCacheDisableFlag,
+            PageWriteThroughFlag,
             PresentFlag,
             ReadWriteFlag,
             UserSupervisorFlag,
@@ -36,6 +38,10 @@ pub struct PageTableEntryFlags {
     read_write: ReadWriteFlag,
     /// User/supervisor flag.
     user_supervisor: UserSupervisorFlag,
+    /// Page write-through flag.
+    page_write_through: PageWriteThroughFlag,
+    /// Page cache disable flag.
+    page_cache_disable: PageCacheDisableFlag,
     /// Accessed flag.
     accessed: AccessedFlag,
     /// Dirty flag.
@@ -53,6 +59,8 @@ impl PageTableEntryFlags {
     /// - `present`: The present flag.
     /// - `read_write`: The read/write flag.
     /// - `user_supervisor`: The user/supervisor flag.
+    /// - `page_write_through`: The page write-through flag.
+    /// - `page_cache_disable`: The page cache disable flag.
     /// - `accessed`: The accessed flag.
     /// - `dirty`: The dirty flag.
     ///
@@ -64,6 +72,8 @@ impl PageTableEntryFlags {
         present: PresentFlag,
         read_write: ReadWriteFlag,
         user_supervisor: UserSupervisorFlag,
+        page_write_through: PageWriteThroughFlag,
+        page_cache_disable: PageCacheDisableFlag,
         accessed: AccessedFlag,
         dirty: DirtyFlag,
     ) -> Self {
@@ -71,6 +81,8 @@ impl PageTableEntryFlags {
             present,
             read_write,
             user_supervisor,
+            page_write_through,
+            page_cache_disable,
             accessed,
             dirty,
         }
@@ -94,6 +106,8 @@ impl PageTableEntryFlags {
             present: PresentFlag::from_raw_value(value),
             read_write: ReadWriteFlag::from_raw_value(value),
             user_supervisor: UserSupervisorFlag::from_raw_value(value),
+            page_write_through: PageWriteThroughFlag::from_raw_value(value),
+            page_cache_disable: PageCacheDisableFlag::from_raw_value(value),
             accessed: AccessedFlag::from_raw_value(value),
             dirty: DirtyFlag::from_raw_value(value),
         }
@@ -114,6 +128,8 @@ impl PageTableEntryFlags {
         value |= self.present.into_raw_value();
         value |= self.read_write.into_raw_value();
         value |= self.user_supervisor.into_raw_value();
+        value |= self.page_write_through.into_raw_value();
+        value |= self.page_cache_disable.into_raw_value();
         value |= self.accessed.into_raw_value();
         value |= self.dirty.into_raw_value();
 

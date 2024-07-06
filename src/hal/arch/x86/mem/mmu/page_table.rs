@@ -11,8 +11,10 @@ use crate::{
         paging::{
             AccessedFlag,
             DirtyFlag,
+            PageCacheDisableFlag,
             PageTableEntry,
             PageTableEntryFlags,
+            PageWriteThroughFlag,
             PresentFlag,
             ReadWriteFlag,
             UserSupervisorFlag,
@@ -96,6 +98,8 @@ impl PageTable {
         vaddr: PageAddress,
         paddr: FrameAddress,
         supervisor: bool,
+        writethrough: bool,
+        cache: bool,
         access: AccessPermission,
     ) -> Result<(), Error> {
         // Obtain a cached copy of the page table entry.
@@ -129,6 +133,16 @@ impl PageTable {
                 } else {
                     UserSupervisorFlag::User
                 },
+                if writethrough {
+                    PageWriteThroughFlag::WriteThrough
+                } else {
+                    PageWriteThroughFlag::NotWriteThrough
+                },
+                if cache {
+                    PageCacheDisableFlag::CacheEnabled
+                } else {
+                    PageCacheDisableFlag::CacheDisabled
+                },
                 AccessedFlag::NotAccessed,
                 DirtyFlag::NotDirty,
             ),
@@ -142,7 +156,6 @@ impl PageTable {
     }
 
     fn clean(&mut self) {
-        trace!("clean()");
         for pte in self.entries.iter_mut() {
             *pte = 0;
         }

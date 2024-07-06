@@ -47,6 +47,32 @@ pub enum UserSupervisorFlag {
 ///
 /// # Description
 ///
+/// A type that represents the page write-through flag of a page table entry.
+///
+#[derive(Debug)]
+pub enum PageWriteThroughFlag {
+    /// The page table entry is not write-through.
+    NotWriteThrough = 0,
+    /// The page table entry is write-through.
+    WriteThrough = (1 << Self::SHIFT),
+}
+
+///
+/// # Description
+///
+/// A type that represents the page cache disable flag of a page table entry.
+///
+#[derive(Debug)]
+pub enum PageCacheDisableFlag {
+    /// The page table entry is not cache disabled.
+    CacheEnabled = 0,
+    /// The page table entry is cache disabled.
+    CacheDisabled = (1 << Self::SHIFT),
+}
+
+///
+/// # Description
+///
 /// A type that represents the accessed flag of a page table entry.
 ///
 #[derive(Debug)]
@@ -120,6 +146,42 @@ impl UserSupervisorFlag {
         match value & Self::MASK {
             0 => UserSupervisorFlag::Supervisor,
             _ => UserSupervisorFlag::User,
+        }
+    }
+
+    pub fn into_raw_value(self) -> u32 {
+        self as u32
+    }
+}
+
+impl PageWriteThroughFlag {
+    /// Bit shift of the page write-through flag in the page table entry.
+    const SHIFT: u32 = 3;
+    /// Bit mask of the page write-through flag in the page table entry.
+    const MASK: u32 = (1 << Self::SHIFT);
+
+    pub fn from_raw_value(value: u32) -> Self {
+        match value & Self::MASK {
+            0 => PageWriteThroughFlag::NotWriteThrough,
+            _ => PageWriteThroughFlag::WriteThrough,
+        }
+    }
+
+    pub fn into_raw_value(self) -> u32 {
+        self as u32
+    }
+}
+
+impl PageCacheDisableFlag {
+    /// Bit shift of the page cache disable flag in the page table entry.
+    const SHIFT: u32 = 4;
+    /// Bit mask of the page cache disable flag in the page table entry.
+    const MASK: u32 = (1 << Self::SHIFT);
+
+    pub fn from_raw_value(value: u32) -> Self {
+        match value & Self::MASK {
+            0 => PageCacheDisableFlag::CacheEnabled,
+            _ => PageCacheDisableFlag::CacheDisabled,
         }
     }
 

@@ -181,6 +181,8 @@ pub fn init(
             page_table.map(
                 PageAddress::new(PageAligned::from_raw_value(raw_vaddr)?),
                 paddr,
+                true,
+                true,
                 false,
                 AccessPermission::RDWR,
             )?;
