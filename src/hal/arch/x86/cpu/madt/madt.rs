@@ -70,6 +70,27 @@ impl MadtInfo {
     pub const fn has_8259_pic(&self) -> bool {
         self.flags & Madt::PCAT_COMPAT != 0
     }
+
+    ///
+    /// # Description
+    ///
+    /// Retrieves information about the I/O APIC.
+    ///
+    /// # Return Values
+    ///
+    /// If the I/O APIC is present, a reference to its information is returned. Otherwise, `None` is
+    /// returned instead
+    ///
+    pub fn get_ioapic_info(&self) -> Option<&MadtEntryIoApic> {
+        // TODO: handle multiple I/O APICs.
+        for entry in self.entries.iter() {
+            match entry {
+                MadtEntry::IoApic(ioapic_info) => return Some(ioapic_info),
+                _ => (),
+            }
+        }
+        None
+    }
 }
 
 impl Madt {
