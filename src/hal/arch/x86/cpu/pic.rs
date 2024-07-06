@@ -197,7 +197,7 @@ impl Pic {
         io::wait();
 
         // Mask all interrupts.
-        self.mask(u16::MAX);
+        self.disable();
     }
 
     pub fn mask(&mut self, mask: u16) {
@@ -205,6 +205,15 @@ impl Pic {
         io::wait();
         self.data_slave.writeb((mask >> 8) as u8);
         io::wait();
+    }
+
+    ///
+    /// # Description
+    ///
+    /// Disables the target PIC.
+    ///
+    pub fn disable(&mut self) {
+        self.mask(u16::MAX);
     }
 
     pub fn ack(&mut self, irq: u32) {
