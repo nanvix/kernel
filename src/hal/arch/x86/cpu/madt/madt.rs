@@ -91,6 +91,27 @@ impl MadtInfo {
         }
         None
     }
+
+    ///
+    /// # Description
+    ///
+    /// Retrieves information about the local APIC.
+    ///
+    /// # Return Values
+    ///
+    /// If the local APIC is present, a reference to its information is returned. Otherwise, `None`
+    /// is returned instead.
+    ///
+    pub fn get_lapic_info(&self) -> Option<&MadtEntryLocalApic> {
+        // TODO: handle multiple local APICs.
+        for entry in self.entries.iter() {
+            match entry {
+                MadtEntry::LocalApic(local_apic_info) => return Some(local_apic_info),
+                _ => (),
+            }
+        }
+        None
+    }
 }
 
 impl Madt {
