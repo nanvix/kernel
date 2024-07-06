@@ -98,6 +98,9 @@
  */
 #define EXCEPTION_SKIP -CONTEXT_SW_SIZE - EXCEPTION_SIZE + EXCEPTION_ERR
 
+
+#define EFLAGS_ID (1 << 21) /* Able to use CPUID instruction? */
+
 /*============================================================================*
  * Macros                                                                     *
  *============================================================================*/
@@ -305,6 +308,7 @@
 .global __leave_kernel
 .global __leave_kernel_to_user_mode
 .global __physcopy
+.global __has_cpuid
 
 /*----------------------------------------------------------------------------*
  * _do_excp()                                                                 *
@@ -523,4 +527,29 @@ __physcopy.loop:
 	popl %edi
 	popl %esi
 
+    ret
+
+/*----------------------------------------------------------------------------*
+ * __has_cpuid()                                                              *
+ *----------------------------------------------------------------------------*/
+
+
+/*
+ * Checks if the CPU supports the CPUID instruction.
+ */
+ .align 4
+__has_cpuid:
+    pushfl                   # Save EFLAGS
+    pushfl                   # Store EFLAGS
+    xorl $EFLAGS_ID, (%esp)  # Invert the ID bit in stored EFLAGS
+    popfl                    # Load stored EFLAGS (with ID bit inverted)
+    pushfl                   # Store EFLAGS again (ID bit may or may not be inverted)
+    popl %eax                # eax = modified EFLAGS (ID bit may or may not be inverted)
+    xorl (%esp), %eax        # eax = whichever bits were changed
+    popfl                    # Restore original EFLAGS
+    andl $EFLAGS_ID, %eax    # eax = zero if ID bit can't be changed, else non-zero
+    movl $0, %eax
+    jz __has_cpuid.out
+    movl $1, %eax
+    __has_cpuid.out:
     ret
