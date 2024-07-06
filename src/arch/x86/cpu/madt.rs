@@ -103,6 +103,26 @@ pub struct MadtEntryLocalApic {
 impl MadtEntryLocalApic {
     /// Size of the Local APIC entry.
     const _SIZE: usize = MadtEntryHeader::_SIZE + 6;
+
+    ///
+    /// Enabled flag.
+    ///
+    /// If this bit is set the processor is ready for use. If this bit is clear and
+    /// the Online Capable bit is set, system hardware supports enabling this
+    /// processor during OS runtime. If this bit is clear and the Online Capable bit
+    /// is also clear, this processor is unusable, and OSPM shall ignore the
+    /// contents of the Processor Local APIC Structure.
+    pub const ENABLED: u32 = 1 << 0;
+
+    ///
+    /// Online Capable flag.
+    ///
+    /// The information conveyed by this bit depends on the value of the Enabled
+    /// bit. If the Enabled bit is set, this bit is reserved and must be zero.
+    /// Otherwise, if this this bit is set, system hardware supports enabling
+    /// this processor during OS runtime.
+    ///
+    pub const ONLINE_CAPABLE: u32 = 1 << 1;
 }
 
 static_assert_size!(MadtEntryLocalApic, MadtEntryLocalApic::_SIZE);
