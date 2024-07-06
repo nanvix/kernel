@@ -159,15 +159,15 @@ impl VirtMemoryManager {
     /// # Parameters
     ///
     /// - `clear`: Clear pages?
-    /// - `size`: Number of pages to allocate.
+    /// - `count`: Number of pages to allocate.
     ///
     /// # Return Values
     ///
     /// Upon success, a vector of kernel pages is returned. Upon failure, an error is returned
     /// instead.
     ///
-    pub fn alloc_kpages(&mut self, clear: bool, size: usize) -> Result<Vec<KernelPage>, Error> {
-        let mut kpages: Vec<KernelFrame> = self.physman.alloc_many_kernel_frames(clear, size)?;
+    pub fn alloc_kpages(&mut self, clear: bool, count: usize) -> Result<Vec<KernelPage>, Error> {
+        let mut kpages: Vec<KernelFrame> = self.physman.alloc_many_kernel_frames(clear, count)?;
 
         let mut pages: Vec<KernelPage> = Vec::new();
         while let Some(kframes) = kpages.pop() {
