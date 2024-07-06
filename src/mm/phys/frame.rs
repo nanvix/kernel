@@ -16,6 +16,7 @@ use crate::{
     },
     hal::mem::{
         FrameAddress,
+        PageAligned,
         PhysicalAddress,
         TruncatedMemoryRegion,
     },
@@ -110,6 +111,25 @@ impl FrameAllocator {
     pub fn free(&mut self, frame: FrameAddress) -> Result<(), Error> {
         let frame_number: usize = frame.into_frame_number().into_raw_value();
         self.bitmap.clear(frame_number)
+    }
+
+    ///
+    /// # Description
+    ///
+    /// Books a frame that was previously allocated.
+    ///
+    /// # Parameters
+    ///
+    /// - `phys_addr`: Physical address of the frame to book.
+    ///
+    /// # Returns
+    ///
+    /// Upon success, `Ok(())` is returned. Upon failure, an error is returned instead.
+    ///
+    pub fn book(&mut self, phys_addr: PageAligned<PhysicalAddress>) -> Result<(), Error> {
+        let frame_number: usize = phys_addr.into_frame_number().into_raw_value();
+        self.bitmap.set(frame_number)?;
+        Ok(())
     }
 
     ///
