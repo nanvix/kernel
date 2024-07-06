@@ -31,6 +31,7 @@ use crate::{
     error::Error,
     hal::{
         arch::x86::mem::mmu::page_table::PageTable,
+        io::mmio::MemoryMappedIoRegion,
         mem::{
             Address,
             MemoryRegion,
@@ -104,6 +105,7 @@ fn parse_memory_regions(
 pub fn init(
     kimage: &KernelImage,
     memory_regions: LinkedList<MemoryRegion<VirtualAddress>>,
+    mmio_regions: LinkedList<MemoryMappedIoRegion>,
 ) -> Result<(Vmem, VirtMemoryManager), Error> {
     info!("initializing the memory manager ...");
 
@@ -116,13 +118,14 @@ pub fn init(
     let physman: PhysMemoryManager = phys::init(
         TruncatedMemoryRegion::from_virtual_memory_region(kimage.kpool())?,
         physical_memory_regions,
+        &mmio_regions,
     )?;
 
     // FIXME: the initial list of kernel pages should be spit out by the initialization.
     let (kernel_pages, kernel_page_tables): (
         LinkedList<KernelPage>,
         LinkedList<(PageTableAddress, PageTable)>,
-    ) = (LinkedList::new(), virt::init(virtual_memory_regions)?);
+    ) = (LinkedList::new(), virt::init(mmio_regions, virtual_memory_regions)?);
 
     let (mut vmem, mut mm): (Vmem, VirtMemoryManager) =
         VirtMemoryManager::new(kernel_pages, kernel_page_tables, physman)?;

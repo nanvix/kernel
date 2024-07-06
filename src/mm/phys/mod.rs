@@ -17,10 +17,21 @@ mod upool;
 use crate::{
     arch::mem,
     config,
-    error::Error,
-    hal::mem::{
-        PhysicalAddress,
-        TruncatedMemoryRegion,
+    error::{
+        Error,
+        ErrorCode,
+    },
+    hal::{
+        io::mmio::{
+            self,
+            MemoryMappedIoAddress,
+        },
+        mem::{
+            Address,
+            PageAligned,
+            PhysicalAddress,
+            TruncatedMemoryRegion,
+        },
     },
     klib::raw_array::RawArray,
     mm::phys::{
@@ -70,9 +81,47 @@ fn book_physical_memory_regions(
 
     Ok(())
 }
+
+fn book_mmio_regions(
+    frame_allocator: &mut FrameAllocator,
+    mmio_regions: &LinkedList<mmio::MemoryMappedIoRegion>,
+) -> Result<(), Error> {
+    info!("booking memory-mapped i/o regions ...");
+
+    // Book memory-mapped I/O regions.
+    for region in mmio_regions.iter() {
+        info!("booking: {:?}", region);
+        let mut start: usize = region.start().into_raw_value();
+        let end: usize = start + (region.size() - 1);
+        while start < end {
+            let mmio_addr: MemoryMappedIoAddress = MemoryMappedIoAddress::from_raw_value(start)?;
+            let phys_addr: PageAligned<PhysicalAddress> = PageAligned::from_address(unsafe {
+                PhysicalAddress::from_mmio_address(mmio_addr)?
+            })?;
+
+            // Attempt to book underlying frame.
+            match frame_allocator.book(phys_addr) {
+                // Frame successfully booked.
+                Ok(()) => {},
+                // Frame lies outside addressable physical memory.
+                Err(e) if e.code == ErrorCode::InvalidArgument => {},
+                // Something went wrong.
+                Err(e) => {
+                    warn!("failed to book frame for mmio region {:?} ({:?})", region, e);
+                    return Err(e);
+                },
+            }
+            start += mem::FRAME_SIZE;
+        }
+    }
+
+    Ok(())
+}
+
 pub fn init(
     kpool: TruncatedMemoryRegion<PhysicalAddress>,
     physical_memory_regions: LinkedList<TruncatedMemoryRegion<PhysicalAddress>>,
+    mmio_regions: &LinkedList<mmio::MemoryMappedIoRegion>,
 ) -> Result<PhysMemoryManager, Error> {
     // Initialize frame allocator.
     info!("initializing the frame allocator ...");
@@ -86,6 +135,8 @@ pub fn init(
         FrameAllocator::from_raw_storage(storage)?
     };
     book_physical_memory_regions(&mut frame_allocator, physical_memory_regions)?;
+
+    book_mmio_regions(&mut frame_allocator, mmio_regions)?;
 
     // Initialize kernel page pool.
     info!("initializing the kernel page pool ...");

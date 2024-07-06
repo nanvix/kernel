@@ -29,6 +29,10 @@ use crate::{
                 PageTableStorage,
             },
         },
+        io::mmio::{
+            MemoryMappedIoAddress,
+            MemoryMappedIoRegion,
+        },
         mem::{
             AccessPermission,
             Address,
@@ -44,7 +48,10 @@ use crate::{
     },
     klib,
 };
-use alloc::collections::LinkedList;
+use alloc::{
+    collections::LinkedList,
+    vec::Vec,
+};
 use core::cmp::Ordering;
 
 //==================================================================================================
@@ -63,28 +70,65 @@ pub use vmem::{
 // Standalone Functions
 //==================================================================================================
 
+#[derive(Debug)]
+enum Region {
+    GeneralPurpose(TruncatedMemoryRegion<VirtualAddress>),
+    Io(MemoryMappedIoRegion),
+}
+
+impl Region {
+    fn size(&self) -> usize {
+        match self {
+            Region::GeneralPurpose(region) => region.size(),
+            Region::Io(region) => region.size(),
+        }
+    }
+}
+
+// FIXME: this function is too long and complex.
 pub fn init(
+    mut mmio_regions: LinkedList<MemoryMappedIoRegion>,
     mut virtual_memory_regions: LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
 ) -> Result<LinkedList<(PageTableAddress, PageTable)>, Error> {
     info!("booking virtual memory regions ...");
 
     let mut root_pagetables: LinkedList<(PageTableAddress, PageTable)> = LinkedList::new();
 
-    // Identity map memory regions.
+    let mut regions: LinkedList<Region> = LinkedList::new();
+    while let Some(region) = mmio_regions.pop_front() {
+        regions.push_back(Region::Io(region));
+    }
     while let Some(region) = virtual_memory_regions.pop_front() {
+        regions.push_back(Region::GeneralPurpose(region));
+    }
+
+    // TODO: sort memory regions by start address.
+    let mut regions: LinkedList<Region> = {
+        let mut regions: Vec<Region> = regions.into_iter().collect();
+        regions.sort_by(|a, b| match (a, b) {
+            (Region::GeneralPurpose(a), Region::GeneralPurpose(b)) => a.start().cmp(&b.start()),
+            (Region::Io(a), Region::Io(b)) => a.start().cmp(&b.start()),
+            _ => Ordering::Less,
+        });
+        regions.into_iter().collect()
+    };
+
+    // Identity map memory regions.
+    while let Some(region) = regions.pop_front() {
         info!("booking: {:?}", region);
         assert!(region.size() <= mem::PGTAB_SIZE);
 
-        let mut vaddr: PageAligned<VirtualAddress> = region.start();
-        let end: VirtualAddress =
-            VirtualAddress::new(region.start().into_raw_value() + (region.size() - 1));
+        let raw_vaddr: usize = match &region {
+            Region::GeneralPurpose(region) => region.start().into_raw_value(),
+            Region::Io(region) => region.start().into_raw_value(),
+        };
 
         let (page_table_addr, mut page_table): (PageTableAddress, PageTable) = if let Some(last) =
             root_pagetables.pop_back()
         {
             let page_table_addr: PageTableAddress =
                 PageTableAddress::new(PageTableAligned::from_address(VirtualAddress::new(
-                    klib::align_down(vaddr.into_raw_value(), mmu::PGTAB_ALIGNMENT),
+                    klib::align_down(raw_vaddr, mmu::PGTAB_ALIGNMENT),
                 ))?);
 
             match page_table_addr.cmp(&last.0) {
@@ -93,40 +137,71 @@ pub fn init(
                     let page_table: PageTable = PageTable::new(PageTableStorage::new());
                     let page_table_addr: PageTableAligned<VirtualAddress> =
                         PageTableAligned::from_address(VirtualAddress::new(klib::align_down(
-                            vaddr.into_raw_value(),
+                            raw_vaddr,
                             mmu::PGTAB_ALIGNMENT,
                         )))?;
                     (PageTableAddress::new(page_table_addr), page_table)
                 },
                 Ordering::Equal => last,
                 Ordering::Less => {
-                    return Err(Error::new(
-                        ErrorCode::InvalidArgument,
-                        "overlapping memory regions",
-                    ))
+                    let reason: &str = "overlapping memory regions";
+                    error!("{}: {:#010x}", reason, raw_vaddr);
+                    return Err(Error::new(ErrorCode::InvalidArgument, reason));
                 },
             }
         } else {
-            trace!("creating new page table for {:?}", vaddr);
+            trace!("creating new page table for {:#010x}", raw_vaddr);
             let page_table: PageTable = PageTable::new(PageTableStorage::new());
             let page_table_addr: PageTableAligned<VirtualAddress> = PageTableAligned::from_address(
-                VirtualAddress::new(klib::align_down(vaddr.into_raw_value(), mmu::PGTAB_ALIGNMENT)),
+                VirtualAddress::new(klib::align_down(raw_vaddr, mmu::PGTAB_ALIGNMENT)),
             )?;
             (PageTableAddress::new(page_table_addr), page_table)
         };
 
-        let mut paddr: FrameAddress = FrameAddress::new(PageAligned::from_address(
-            PhysicalAddress::from_virtual_address(vaddr.into_inner())?,
-        )?);
+        let mut paddr: FrameAddress = match &region {
+            Region::GeneralPurpose(_) => FrameAddress::new(PageAligned::from_address(
+                PhysicalAddress::from_raw_value(raw_vaddr)?,
+            )?),
+            Region::Io(region) => {
+                let mmio_addr: MemoryMappedIoAddress = region.start().into_inner();
+                let phys_addr: PhysicalAddress =
+                    // FIXME: ensure safety here.
+                    unsafe { PhysicalAddress::from_mmio_address(mmio_addr)? };
+                let page_aligned_phys_addr: PageAligned<PhysicalAddress> =
+                    PageAligned::from_address(phys_addr)?;
+                FrameAddress::new(page_aligned_phys_addr)
+            },
+        };
 
-        while vaddr.into_inner() < end {
-            // FIXME: do not be so open about permissions.
-            page_table.map(PageAddress::new(vaddr), paddr, true, AccessPermission::RDWR)?;
-            if vaddr.into_raw_value() == (config::MEMORY_SIZE - mem::PAGE_SIZE) {
+        let mut raw_vaddr: usize = raw_vaddr;
+        let end: usize = raw_vaddr + (region.size() - 1);
+
+        while raw_vaddr < end {
+            // FIXME: do not be so open about permissions and caching.
+            page_table.map(
+                PageAddress::new(PageAligned::from_raw_value(raw_vaddr)?),
+                paddr,
+                false,
+                AccessPermission::RDWR,
+            )?;
+            if raw_vaddr == (config::MEMORY_SIZE - mem::PAGE_SIZE) {
                 break;
             }
-            vaddr = PageAligned::from_raw_value(vaddr.into_raw_value() + mem::PAGE_SIZE)?;
-            paddr = FrameAddress::from_raw_value(paddr.into_raw_value() + mem::PAGE_SIZE)?;
+            raw_vaddr = raw_vaddr + mem::PAGE_SIZE;
+            paddr = match &region {
+                Region::GeneralPurpose(_) => FrameAddress::new(PageAligned::from_address(
+                    PhysicalAddress::from_raw_value(raw_vaddr)?,
+                )?),
+                Region::Io(region) => {
+                    let mmio_addr: MemoryMappedIoAddress = region.start().into_inner();
+                    let phys_addr: PhysicalAddress =
+                    // FIXME: ensure safety here.
+                    unsafe { PhysicalAddress::from_mmio_address(mmio_addr)? };
+                    let page_aligned_phys_addr: PageAligned<PhysicalAddress> =
+                        PageAligned::from_address(phys_addr)?;
+                    FrameAddress::new(page_aligned_phys_addr)
+                },
+            };
         }
 
         root_pagetables.push_back((page_table_addr, page_table));

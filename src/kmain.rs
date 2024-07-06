@@ -223,12 +223,13 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
     };
 
     // Initialize the memory manager.
-    let (root, mut mm): (Vmem, VirtMemoryManager) = match mm::init(&kimage, memory_regions) {
-        Ok((root, mm)) => (root, mm),
-        Err(err) => {
-            panic!("failed to initialize memory manager: {:?}", err);
-        },
-    };
+    let (root, mut mm): (Vmem, VirtMemoryManager) =
+        match mm::init(&kimage, memory_regions, mmio_regions) {
+            Ok((root, mm)) => (root, mm),
+            Err(err) => {
+                panic!("failed to initialize memory manager: {:?}", err);
+            },
+        };
 
     let mut pm: ProcessManager = match pm::init(&mut hal, root, unsafe { &mut kstack }) {
         Ok(pm) => pm,
