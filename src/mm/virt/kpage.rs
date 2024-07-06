@@ -20,7 +20,7 @@ use crate::{
 #[derive(Debug)]
 pub struct KernelPage {
     /// Underlying kernel frame.
-    frame: KernelFrame,
+    kframe: KernelFrame,
 }
 
 //==================================================================================================
@@ -28,17 +28,52 @@ pub struct KernelPage {
 //==================================================================================================
 
 impl KernelPage {
-    /// Initializes a new kernel page.
-    pub fn new(frame: KernelFrame) -> Self {
-        Self { frame }
+    ///
+    /// # Description
+    ///
+    /// Instantiate a  kernel page.
+    ///
+    /// # Parameters
+    ///
+    /// - `kframe`: Underlying kernel frame.
+    ///
+    /// # Returns
+    ///
+    /// A new kernel page.
+    ///
+    pub fn new(kframe: KernelFrame) -> Self {
+        Self { kframe }
     }
 
-    /// Gets the base address of the kernel page.
+    ///
+    /// # Description
+    ///
+    /// Get the base address of the target kernel page.
+    ///
+    /// # Returns
+    ///
+    /// The page address of the target kernel page.
+    ///
     pub fn base(&self) -> PageAddress {
-        PageAddress::new(self.frame.base().into_page_address().into_virtual_address())
+        // TODO: rename this function to `page_address()`.
+        PageAddress::new(
+            self.kframe
+                .base()
+                .into_page_address()
+                .into_virtual_address(),
+        )
     }
 
+    ///
+    /// # Description
+    ///
+    /// Get the frame address of the target kernel page.
+    ///
+    /// # Returns
+    ///
+    /// The frame address of the target kernel page.
+    ///
     pub fn frame_address(&self) -> FrameAddress {
-        self.frame.base()
+        self.kframe.base()
     }
 }
