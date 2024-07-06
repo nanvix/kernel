@@ -39,6 +39,10 @@ use crate::{
             self,
             madt::madt::MadtInfo,
         },
+        io::mmio::{
+            MemoryMappedIoAddress,
+            MemoryMappedIoRegion,
+        },
         mem::{
             AccessPermission,
             Address,
@@ -271,7 +275,8 @@ pub fn parse(bootloader_magic: u32, addr: usize) -> Result<BootInfo, Error> {
     let mut memory_regions: LinkedList<MemoryRegion<VirtualAddress>> = LinkedList::new();
     // List of kernel modules.
     let mut kernel_modules: LinkedList<KernelModule> = LinkedList::new();
-
+    // List of memory-mapped I/O regions.
+    let mut mmio_regions: LinkedList<MemoryMappedIoRegion> = LinkedList::new();
     // Machine information.
     let mut madt: Option<MadtInfo> = None;
 
@@ -408,30 +413,32 @@ pub fn parse(bootloader_magic: u32, addr: usize) -> Result<BootInfo, Error> {
 
                         // If I/O APIC is present, book corresponding memory.
                         if let Some(ioapic) = madt.get_ioapic_info() {
-                            let addr: VirtualAddress =
-                                VirtualAddress::new(ioapic.io_apic_addr as usize);
-                            let region: MemoryRegion<VirtualAddress> = MemoryRegion::new(
+                            let addr: MemoryMappedIoAddress =
+                                MemoryMappedIoAddress::from_raw_value(
+                                    ioapic.io_apic_addr as usize,
+                                )?;
+                            let region: MemoryMappedIoRegion = MemoryMappedIoRegion::new(
                                 "ioapic",
                                 addr,
                                 arch::mem::PAGE_SIZE,
-                                MemoryRegionType::Reserved,
                                 AccessPermission::RDWR,
                             )?;
-                            memory_regions.push_back(region);
+                            mmio_regions.push_back(region);
                         }
 
                         // If local APIC is present, book corresponding memory.
                         if madt.get_lapic_info().is_some() {
-                            let addr: VirtualAddress =
-                                VirtualAddress::new(madt.local_apic_addr as usize);
-                            let region: MemoryRegion<VirtualAddress> = MemoryRegion::new(
+                            let addr: MemoryMappedIoAddress =
+                                MemoryMappedIoAddress::from_raw_value(
+                                    madt.local_apic_addr as usize,
+                                )?;
+                            let region: MemoryMappedIoRegion = MemoryMappedIoRegion::new(
                                 "local_apic",
                                 addr,
                                 arch::mem::PAGE_SIZE,
-                                MemoryRegionType::Reserved,
                                 AccessPermission::RDWR,
                             )?;
-                            memory_regions.push_back(region);
+                            mmio_regions.push_back(region);
                         }
 
                         Some(madt)
@@ -497,5 +504,5 @@ pub fn parse(bootloader_magic: u32, addr: usize) -> Result<BootInfo, Error> {
         return Err(Error::new(ErrorCode::BadAddress, "invalid multiboot size"));
     }
 
-    Ok(BootInfo::new(madt, memory_regions, kernel_modules))
+    Ok(BootInfo::new(madt, memory_regions, mmio_regions, kernel_modules))
 }

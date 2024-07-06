@@ -8,6 +8,7 @@
 use crate::{
     hal::{
         arch::x86::cpu::madt::madt::MadtInfo,
+        io::mmio::MemoryMappedIoRegion,
         mem::{
             MemoryRegion,
             VirtualAddress,
@@ -29,8 +30,10 @@ use alloc::collections::LinkedList;
 pub struct BootInfo {
     /// ACPI MADT information.
     pub madt: Option<MadtInfo>,
-    /// Memory layout information.
-    pub memory_layout: LinkedList<MemoryRegion<VirtualAddress>>,
+    /// General-purpose memory regions.
+    pub memory_regions: LinkedList<MemoryRegion<VirtualAddress>>,
+    /// Memory-mapped I/O regions.
+    pub mmio_regions: LinkedList<MemoryMappedIoRegion>,
     /// Kernel modules.
     pub kernel_modules: LinkedList<KernelModule>,
 }
@@ -45,18 +48,27 @@ impl BootInfo {
     ///
     /// Instantiates a new boot information structure.
     ///
+    /// # Parameters
+    ///
+    /// - `madt`: ACPI MADT information.
+    /// - `memory_regions`: General-purpose memory regions.
+    /// - `mmio_regions`: Memory-mapped I/O regions.
+    /// - `kernel_modules`: Kernel modules.
+    ///
     /// # Returns
     ///
     /// A new boot information structure.
     ///
     pub fn new(
         madt: Option<MadtInfo>,
-        memory_layout: LinkedList<MemoryRegion<VirtualAddress>>,
+        memory_regions: LinkedList<MemoryRegion<VirtualAddress>>,
+        mmio_regions: LinkedList<MemoryMappedIoRegion>,
         kernel_modules: LinkedList<KernelModule>,
     ) -> Self {
         Self {
             madt,
-            memory_layout,
+            memory_regions,
+            mmio_regions,
             kernel_modules,
         }
     }

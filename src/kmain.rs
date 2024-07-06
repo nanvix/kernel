@@ -29,6 +29,7 @@ use crate::{
             interrupt::InterruptNumber,
             madt::madt::MadtInfo,
         },
+        io::mmio::MemoryMappedIoRegion,
         mem::{
             AccessPermission,
             Address,
@@ -172,12 +173,15 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
 
     // Parse kernel arguments.
     info!("parsing kernel arguments...");
-    let (madt, mut memory_regions, kernel_modules): (
+    let (madt, mut memory_regions, mmio_regions, kernel_modules): (
         Option<MadtInfo>,
         LinkedList<MemoryRegion<VirtualAddress>>,
+        LinkedList<MemoryMappedIoRegion>,
         LinkedList<KernelModule>,
     ) = match kargs.parse() {
-        Ok(bootinfo) => (bootinfo.madt, bootinfo.memory_layout, bootinfo.kernel_modules),
+        Ok(bootinfo) => {
+            (bootinfo.madt, bootinfo.memory_regions, bootinfo.mmio_regions, bootinfo.kernel_modules)
+        },
         Err(err) => {
             panic!("failed to parse kernel arguments: {:?}", err);
         },
