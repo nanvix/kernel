@@ -133,13 +133,41 @@ impl VirtMemoryManager {
         Ok(())
     }
 
-    pub fn alloc_kpage(&mut self) -> Result<KernelPage, Error> {
-        let kframe: KernelFrame = self.physman.alloc_kernel_frame()?;
+    ///
+    /// # Description
+    ///
+    /// Allocates a kernel page.
+    ///
+    /// # Parameters
+    ///
+    /// - `clear`: Clear page?
+    ///
+    /// # Return Values
+    ///
+    /// Upon success, a kernel page is returned. Upon failure, an error is returned instead.
+    ///
+    pub fn alloc_kpage(&mut self, clear: bool) -> Result<KernelPage, Error> {
+        let kframe: KernelFrame = self.physman.alloc_kernel_frame(clear)?;
         Ok(KernelPage::new(kframe))
     }
 
-    pub fn alloc_kpages(&mut self, size: usize) -> Result<Vec<KernelPage>, Error> {
-        let mut kpages: Vec<KernelFrame> = self.physman.alloc_many_kernel_frames(size)?;
+    ///
+    /// # Description
+    ///
+    /// Allocates a contiguous range of kernel pages.
+    ///
+    /// # Parameters
+    ///
+    /// - `clear`: Clear pages?
+    /// - `size`: Number of pages to allocate.
+    ///
+    /// # Return Values
+    ///
+    /// Upon success, a vector of kernel pages is returned. Upon failure, an error is returned
+    /// instead.
+    ///
+    pub fn alloc_kpages(&mut self, clear: bool, size: usize) -> Result<Vec<KernelPage>, Error> {
+        let mut kpages: Vec<KernelFrame> = self.physman.alloc_many_kernel_frames(clear, size)?;
 
         let mut pages: Vec<KernelPage> = Vec::new();
         while let Some(kframes) = kpages.pop() {

@@ -42,11 +42,43 @@ impl PhysMemoryManager {
         self.upool.alloc_many(nframes)
     }
 
-    pub fn alloc_kernel_frame(&mut self) -> Result<KernelFrame, Error> {
-        self.kpool.alloc()
+    ///
+    /// # Description
+    ///
+    /// Allocates a kernel frame.
+    ///
+    /// # Parameters
+    ///
+    /// - `clear`: Clear frame?
+    ///
+    /// # Return Values
+    ///
+    /// Upon success, a kernel frame is returned. Upon failure, an error is returned instead.
+    ///
+    pub fn alloc_kernel_frame(&mut self, clear: bool) -> Result<KernelFrame, Error> {
+        self.kpool.alloc(clear)
     }
 
-    pub fn alloc_many_kernel_frames(&mut self, nframes: usize) -> Result<Vec<KernelFrame>, Error> {
-        self.kpool.alloc_many(nframes)
+    ///
+    /// # Description
+    ///
+    /// Allocates a contiguous range of kernel frames.
+    ///
+    /// # Parameters
+    ///
+    /// - `clear`: Clear frames?
+    /// - `count`: Number of frames to allocate.
+    ///
+    /// # Return Values
+    ///
+    /// Upon success, a vector of kernel frames is returned. Upon failure, an error is returned
+    /// instead.
+    ///
+    pub fn alloc_many_kernel_frames(
+        &mut self,
+        clear: bool,
+        count: usize,
+    ) -> Result<Vec<KernelFrame>, Error> {
+        self.kpool.alloc_many(clear, count)
     }
 }

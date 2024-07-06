@@ -46,7 +46,8 @@ pub struct Stack {
 
 impl Stack {
     pub fn new(mm: &mut VirtMemoryManager) -> Result<Self, Error> {
-        let kpages: Vec<KernelPage> = mm.alloc_kpages(config::KSTACK_SIZE / mem::PAGE_SIZE)?;
+        let kpages: Vec<KernelPage> =
+            mm.alloc_kpages(true, config::KSTACK_SIZE / mem::PAGE_SIZE)?;
 
         let base: PageAddress = kpages[0].base();
         let size: usize = config::KSTACK_SIZE;

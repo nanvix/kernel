@@ -135,7 +135,7 @@ pub fn init(
             VirtualAddress::new(region.start().into_raw_value() + (region.size() - 1));
 
         while vaddr.into_inner() < end {
-            let kpage: KernelPage = mm.alloc_kpage()?;
+            let kpage: KernelPage = mm.alloc_kpage(false)?;
             vmem.map_kpage(kpage, vaddr)?;
 
             match vaddr.into_raw_value().checked_add(mem::PAGE_SIZE) {

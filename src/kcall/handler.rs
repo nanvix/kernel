@@ -55,7 +55,7 @@ fn do_debug(
     let src: VirtualAddress = VirtualAddress::new(buf);
 
     let process: Process = pm.find_process(args.pid)?;
-    let mut dst: KernelPage = mm.alloc_kpage()?;
+    let mut dst: KernelPage = mm.alloc_kpage(true)?;
     let vm: &Vmem = process.vmem();
 
     vm.copy_from_user_unaligned(&mut dst, src, size)?;
