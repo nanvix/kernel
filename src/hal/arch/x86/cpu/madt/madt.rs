@@ -61,7 +61,8 @@ impl MadtInfo {
 
 impl Madt {
     pub unsafe fn parse(madt: *const Madt) -> Result<MadtInfo, Error> {
-        let base: *const u8 = (*madt).entries.as_ptr() as *const u8;
+        let base: *const u8 = madt as *const u8;
+        let base: *const u8 = base.add(core::mem::size_of::<Self>());
         let madt_len: usize = madt.read_unaligned().header.length as usize;
         let mut offset: usize = 0;
 

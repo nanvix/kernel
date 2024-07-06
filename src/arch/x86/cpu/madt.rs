@@ -16,7 +16,7 @@ use crate::arch::cpu::acpi::AcpiSdtHeader;
 ///
 /// A structure that describes the Multiple APIC Description Table (MADT).
 ///
-#[repr(C)]
+#[repr(C, packed)]
 pub struct Madt {
     /// Standard ACPI System Description Table header
     pub header: AcpiSdtHeader,
@@ -26,6 +26,13 @@ pub struct Madt {
     pub flags: u32,
     /// Start of the MADT entries
     pub entries: [u32; 0], // This is a zero-length array used for variable-sized struct
+}
+
+static_assert_size!(Madt, Madt::_SIZE);
+
+impl Madt {
+    /// Size of the MADT table.
+    const _SIZE: usize = core::mem::size_of::<AcpiSdtHeader>() + 8;
 }
 
 //==================================================================================================
