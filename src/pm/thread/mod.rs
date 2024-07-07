@@ -16,31 +16,11 @@ use core::{
     fmt::Debug,
     pin::Pin,
 };
+use kcall::ThreadIdentifier;
 
 //==================================================================================================
 // Thread
 //==================================================================================================
-
-///
-/// # Description
-///
-/// A type that represents a thread identifier.
-///
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ThreadIdentifier(pub usize);
-
-impl ThreadIdentifier {
-    /// Instantiates a thread identifier.
-    pub fn new(id: usize) -> Self {
-        Self(id)
-    }
-}
-
-impl Debug for ThreadIdentifier {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:?}", self.0)
-    }
-}
 
 #[derive(Debug)]
 struct Thread {
@@ -128,14 +108,14 @@ pub struct ThreadManager {
 impl ThreadManager {
     fn new(kstack: &mut u8) -> (ReadyThread, Self) {
         let kernel: ReadyThread = ReadyThread::new(
-            ThreadIdentifier(0),
+            ThreadIdentifier::from(0),
             ContextInformation::default(),
             Stack::from_raw_parts(kstack, config::KSTACK_SIZE),
         );
         (
             kernel,
             Self {
-                next_id: ThreadIdentifier(1),
+                next_id: ThreadIdentifier::from(1),
             },
         )
     }
@@ -146,7 +126,7 @@ impl ThreadManager {
         stack: Stack,
     ) -> Result<ReadyThread, Error> {
         let id: ThreadIdentifier = self.next_id;
-        self.next_id = ThreadIdentifier(self.next_id.0 + 1);
+        self.next_id = ThreadIdentifier::from(Into::<usize>::into(self.next_id) + 1);
 
         Ok(ReadyThread(Thread::new(id, context, stack)))
     }

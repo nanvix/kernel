@@ -12,12 +12,12 @@ use crate::{
             Spinlock,
             SpinlockGuard,
         },
-        thread::ThreadIdentifier,
         ProcessManager,
     },
 };
 use alloc::collections::LinkedList;
 use core::cell::RefCell;
+use kcall::ThreadIdentifier;
 
 //==================================================================================================
 // Structures

@@ -33,7 +33,6 @@ use crate::{
         thread::{
             ReadyThread,
             RunningThread,
-            ThreadIdentifier,
             ThreadManager,
         },
     },
@@ -50,6 +49,7 @@ use core::{
         DerefMut,
     },
 };
+use kcall::ThreadIdentifier;
 
 //==================================================================================================
 // Exports

@@ -26,11 +26,13 @@ use crate::{
             },
             semaphore::Semaphore,
         },
-        thread::ThreadIdentifier,
     },
 };
 use core::fmt::Debug;
-use kcall::ProcessIdentifier;
+use kcall::{
+    ProcessIdentifier,
+    ThreadIdentifier,
+};
 
 //==================================================================================================
 // Exports
