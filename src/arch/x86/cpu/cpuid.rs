@@ -63,21 +63,22 @@ pub enum EdxFeature {
 ///
 fn cpuid(eax: u32) -> (u32, u32, u32, u32) {
     let mut eax: u32 = eax;
-    let mut _ebx: u32 = 0;
-    let mut _ecx: u32 = 0;
-    let mut _edx: u32 = 0;
+    let mut ebx: u32;
+    let mut ecx: u32;
+    let mut edx: u32;
 
     unsafe {
         core::arch::asm!(
             "cpuid",
             inout("eax") eax => eax,
-            out("ebx") _ebx,
-            out("ecx") _ecx,
-            out("edx") _edx,
+            out("ebx") ebx,
+            out("ecx") ecx,
+            out("edx") edx,
+            options(nomem, preserves_flags, nostack)
         );
     }
 
-    (eax, _ebx, _ecx, _edx)
+    (eax, ebx, ecx, edx)
 }
 
 ///
