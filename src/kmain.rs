@@ -10,7 +10,6 @@
 #![forbid(clippy::large_stack_arrays)]
 #![feature(allocator_api)] // kheap uses this.
 #![feature(panic_info_message)] // kpanic uses this.
-#![feature(error_in_core)] // error uses this.
 #![feature(ptr_sub_ptr)] // slab uses this.
 #![feature(pointer_is_aligned)] // mboot uses this.
 #![feature(asm_const)] // gdt uses this.
