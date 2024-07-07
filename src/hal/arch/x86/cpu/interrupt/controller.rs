@@ -6,6 +6,10 @@
 //==================================================================================================
 
 use crate::{
+    arch::{
+        self,
+        cpu::msr,
+    },
     error::{
         Error,
         ErrorCode,
@@ -75,14 +79,47 @@ impl InterruptController {
             match ioapic {
                 Some(mut ioapic) => {
                     info!("using xapic and ioapic");
+
+                    // Enable APIC.
+                    let apic_base: msr::ApicBase = msr::ApicBase::read();
+                    info!("reading apic_base={:?}", apic_base);
+                    // NOTE: check this in behavior in real hardware.
+                    // Specification is unclear whether address is the full linear address or the
+                    // page address. QEMU works with both, but it defaults to page address, so let's
+                    // use that to keep consistency.
+                    let apic_base: msr::ApicBase = msr::ApicBase::new(
+                        (xapic.base() >> arch::mem::PAGE_SHIFT) as u64,
+                        true,
+                        true,
+                    );
+                    info!("writing apic_base={:?}", apic_base);
+                    apic_base.write();
+
+                    // Initialize xAPIC and I/O APIC.
                     let xapic: Xapic = xapic.init()?;
                     let ioapic: Ioapic = ioapic.init()?;
+
                     return Ok(Self {
                         intmap,
                         intctrl: InterruptControllerType::Xapic(xapic, ioapic),
                     });
                 },
                 None => {
+                    // Disable APIC (no turning back).
+                    let apic_base: msr::ApicBase = msr::ApicBase::read();
+                    info!("reading apic_base={:?}", apic_base);
+                    // NOTE: check this in behavior in real hardware.
+                    // Specification is unclear whether address is the full linear address or the
+                    // page address. QEMU works with both, but it defaults to page address, so let's
+                    // use that to keep consistency.
+                    let apic_base: msr::ApicBase = msr::ApicBase::new(
+                        (xapic.base() >> arch::mem::PAGE_SHIFT) as u64,
+                        true,
+                        false,
+                    );
+                    info!("writing apic_base={:?}", apic_base);
+                    apic_base.write();
+
                     warn!("ioapic not found, falling back to legacy pic");
                 },
             }

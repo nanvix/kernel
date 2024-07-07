@@ -173,6 +173,19 @@ impl UninitXapic {
 
         Ok(xapic)
     }
+
+    ///
+    /// # Description
+    ///
+    /// Returns the base address of the target xAPIC.
+    ///
+    /// # Return Values
+    ///
+    /// The base address of the target xAPIC.
+    ///
+    pub fn base(&self) -> usize {
+        self.base
+    }
 }
 
 //==================================================================================================
