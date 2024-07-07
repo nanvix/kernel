@@ -13,6 +13,7 @@ pub mod idt;
 pub mod idtr;
 pub mod ioapic;
 pub mod madt;
+pub mod msr;
 pub mod pic;
 pub mod pit;
 pub mod ring;
