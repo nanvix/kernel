@@ -5,7 +5,11 @@
 // Modules
 //==================================================================================================
 
-use crate::kcall::ScoreBoard;
+use crate::{
+    kcall::ScoreBoard,
+    pm::process::ProcessManager,
+};
+use kcall::KcallNumber;
 
 //==================================================================================================
 //  Standalone Functions
@@ -27,14 +31,20 @@ use crate::kcall::ScoreBoard;
 ///
 #[no_mangle]
 pub extern "C" fn do_kcall(number: u32, arg0: u32, arg1: u32, arg2: u32, arg3: u32) -> i32 {
-    // todo: copy buffer from user space.
-    // Dispatch kernel call.
-    match ScoreBoard::get_mut() {
-        Ok(scoreboard) => match scoreboard.dispatch(number, arg0, arg1, arg2, arg3) {
-            Ok(result) => result,
+    match KcallNumber::from(number) {
+        // Handle `getpid()` locally.
+        KcallNumber::GetPid => match ProcessManager::get_pid() {
+            Ok(pid) => pid.into(),
             Err(e) => e.code.into_errno(),
         },
+        // Dispatch kernel call for remote execution.
+        _ => match ScoreBoard::get_mut() {
+            Ok(scoreboard) => match scoreboard.dispatch(number, arg0, arg1, arg2, arg3) {
+                Ok(result) => result,
+                Err(e) => e.code.into_errno(),
+            },
 
-        Err(e) => e.code.into_errno(),
+            Err(e) => e.code.into_errno(),
+        },
     }
 }
