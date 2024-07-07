@@ -28,9 +28,14 @@ use crate::{
         VirtMemoryManager,
         Vmem,
     },
-    pm::thread::{
-        ReadyThread,
-        RunningThread,
+    pm::{
+        stack::Stack,
+        thread::{
+            ReadyThread,
+            RunningThread,
+            ThreadIdentifier,
+            ThreadManager,
+        },
     },
 };
 use alloc::{
@@ -46,38 +51,11 @@ use core::{
     },
 };
 
-use super::{
-    stack::Stack,
-    thread::{
-        ThreadIdentifier,
-        ThreadManager,
-    },
-};
-
 //==================================================================================================
-// Process Identifier
+// Exports
 //==================================================================================================
 
-///
-/// # Description
-///
-/// A type that represents a process identifier.
-///
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub struct ProcessIdentifier(usize);
-
-impl ProcessIdentifier {
-    /// Instantiates a process identifier.
-    pub fn new(id: usize) -> Self {
-        Self(id)
-    }
-}
-
-impl Debug for ProcessIdentifier {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:?}", self.0)
-    }
-}
+pub use kcall::ProcessIdentifier;
 
 //==================================================================================================
 // Process State
@@ -188,7 +166,7 @@ impl ProcessManagerInner {
         // The kernel process is special, handcraft it.
         let kernel: Process = Process(Rc::new(ProcessInner {
             state: ProcessState::Running,
-            id: ProcessIdentifier(0),
+            id: ProcessIdentifier::from(0),
             running: Some(kernel.resume()),
             sleeping: LinkedList::new(),
             ready: LinkedList::new(),
@@ -196,7 +174,7 @@ impl ProcessManagerInner {
         }));
 
         Self {
-            next_pid: ProcessIdentifier(1),
+            next_pid: ProcessIdentifier::from(1),
             ready: LinkedList::new(),
             running: Some(kernel),
             tm,
@@ -276,7 +254,7 @@ impl ProcessManagerInner {
         )?;
 
         let pid: ProcessIdentifier = self.next_pid;
-        self.next_pid = ProcessIdentifier(self.next_pid.0 + 1);
+        self.next_pid = ProcessIdentifier::from(Into::<usize>::into(pid) + 1);
         let process: Process = Process::new(pid, thread, vmem);
 
         self.ready.push_back(process);

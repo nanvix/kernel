@@ -12,18 +12,13 @@ mod handler;
 // Imports
 //==================================================================================================
 
-use core::fmt::Debug;
-
 use crate::{
     error::{
         Error,
         ErrorCode,
     },
     pm::{
-        process::{
-            ProcessIdentifier,
-            ProcessManager,
-        },
+        process::ProcessManager,
         sync::{
             mutex::{
                 Mutex,
@@ -34,6 +29,8 @@ use crate::{
         thread::ThreadIdentifier,
     },
 };
+use core::fmt::Debug;
+use kcall::ProcessIdentifier;
 
 //==================================================================================================
 // Exports
@@ -84,7 +81,7 @@ impl ScoreBoard {
                 dispatched: Semaphore::new(0),
                 handled: Semaphore::new(0),
                 args: KcallArgs {
-                    pid: ProcessIdentifier::new(usize::MAX),
+                    pid: ProcessIdentifier::from(usize::MAX),
                     tid: ThreadIdentifier::new(usize::MAX),
                     arg0: 0,
                     arg1: 0,
