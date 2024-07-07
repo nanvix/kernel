@@ -37,6 +37,11 @@ pub extern "C" fn do_kcall(number: u32, arg0: u32, arg1: u32, arg2: u32, arg3: u
             Ok(pid) => pid.into(),
             Err(e) => e.code.into_errno(),
         },
+        // Handle `gettid()` locally.
+        KcallNumber::GetTid => match ProcessManager::get_tid() {
+            Ok(tid) => tid.into(),
+            Err(e) => e.code.into_errno(),
+        },
         // Dispatch kernel call for remote execution.
         _ => match ScoreBoard::get_mut() {
             Ok(scoreboard) => match scoreboard.dispatch(number, arg0, arg1, arg2, arg3) {
