@@ -38,7 +38,7 @@ use cpu::madt::madt::MadtInfo;
 pub use cpu::{
     forge_user_stack,
     InterruptController,
-    InterruptHandlersRef,
+    InterruptHandler,
     InterruptNumber,
 };
 

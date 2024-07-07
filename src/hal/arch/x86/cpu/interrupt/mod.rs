@@ -7,9 +7,9 @@
 
 mod controller;
 mod ioapic;
+mod map;
 mod number;
 mod pic;
-mod vector;
 mod xapic;
 
 //==================================================================================================
@@ -23,7 +23,10 @@ use crate::{
             self,
             EflagsRegister,
         },
-        madt::MadtEntryLocalApic,
+        madt::{
+            MadtEntryIoApicSourceOverride,
+            MadtEntryLocalApic,
+        },
     },
     error::Error,
     hal::{
@@ -34,7 +37,9 @@ use crate::{
         io::allocator::IoPortAllocator,
     },
 };
+use alloc::collections::LinkedList;
 use ioapic::IoapicPtr;
+use map::InterruptMap;
 use pic::Pic;
 use xapic::XapicRef;
 
@@ -42,9 +47,11 @@ use xapic::XapicRef;
 // Exports
 //==================================================================================================
 
-pub use controller::InterruptController;
+pub use controller::{
+    InterruptController,
+    InterruptHandler,
+};
 pub use number::InterruptNumber;
-pub use vector::InterruptHandlersRef;
 
 //==================================================================================================
 // Standalone Functions
@@ -109,6 +116,19 @@ pub unsafe fn forge_user_stack(
     stackp as *mut u8
 }
 
+fn build_interrupt_map(madt: &MadtInfo) -> InterruptMap {
+    let interrupt_override: LinkedList<&MadtEntryIoApicSourceOverride> =
+        madt.get_ioapic_source_override();
+    let mut intmap: InterruptMap = InterruptMap::new();
+
+    // Build the interrupt map.
+    for entry in interrupt_override {
+        intmap.remap(entry.source, entry.global_sys_int as u8);
+    }
+
+    intmap
+}
+
 /// Initializes the interrupt controller.
 pub fn init(
     ioports: &mut IoPortAllocator,
@@ -119,6 +139,7 @@ pub fn init(
         // MADT is present.
         Some(madt) => {
             info!("retriving information from madt");
+
             // Check if the 8259 PIC is present.
             let pic: Option<Pic> = match madt.has_8259_pic() {
                 true => {
@@ -131,17 +152,67 @@ pub fn init(
                 },
             };
 
-            let ioapic: Option<IoapicPtr> = None;
-            let xapic: Option<XapicRef> = None;
+            // Check if the I/O APIC is present.
+            let ioapic: Option<IoapicPtr> = match madt.get_ioapic_info() {
+                Some(ioapic_info) => {
+                    info!("ioapic found");
 
-            InterruptController::new(pic, xapic, ioapic)
+                    let id: u8 = ioapic_info.io_apic_id;
+                    let addr: u32 = ioapic_info.io_apic_addr;
+                    let gsi: u32 = ioapic_info.global_sys_int_base;
+                    Some(IoapicPtr::init(idt::INT_OFF, id, addr as usize, gsi)?)
+                },
+                None => {
+                    info!("ioapic not found");
+                    None
+                },
+            };
+
+            // Check if local APIC is present.
+            let xapic: Option<XapicRef> = match madt.get_lapic_info() {
+                Some(local_apic_info) => {
+                    info!("xapic found");
+
+                    if (local_apic_info.flags & MadtEntryLocalApic::ENABLED) != 0 {
+                        if (local_apic_info.flags & MadtEntryLocalApic::ONLINE_CAPABLE) == 0 {
+                            info!("cpu is enabled")
+                        } else {
+                            // This should not happen if MADT is consistent to the spec.
+                            unreachable!("xapic is malfunctioning")
+                        }
+                    } else {
+                        if (local_apic_info.flags & MadtEntryLocalApic::ONLINE_CAPABLE) != 0 {
+                            info!("cpu is online capable")
+                        } else {
+                            info!("cpu is disabled")
+                        }
+                    }
+
+                    // TODO: remove the following assert when we handle multiple local APICs.
+                    // CPU 0 must be enabled.
+                    assert!(
+                        local_apic_info.apic_id == 0
+                            || (local_apic_info.flags & MadtEntryLocalApic::ENABLED) != 0
+                    );
+
+                    Some(xapic::init(local_apic_info.apic_id, madt.local_apic_addr as usize)?)
+                },
+                None => {
+                    info!("xapic not found");
+                    None
+                },
+            };
+
+            let intmap: InterruptMap = build_interrupt_map(&madt);
+            InterruptController::new(pic, xapic, ioapic, intmap)
         },
 
         // MADT is not present.
         None => {
             info!("madt not present, falling back to 8259 pic");
             let pic: Pic = pic::init(ioports, idt::INT_OFF)?;
-            Ok(InterruptController::new(Some(pic), None, None)?)
+            let intmap: InterruptMap = InterruptMap::new();
+            Ok(InterruptController::new(Some(pic), None, None, intmap)?)
         },
     }
 }

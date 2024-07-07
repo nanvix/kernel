@@ -43,6 +43,21 @@ impl InterruptController {
     pub fn mask(&self, intnum: arch::InterruptNumber) -> Result<(), Error> {
         self.0.borrow_mut().mask(intnum)
     }
+
+    pub fn get_handler(
+        &self,
+        intnum: arch::InterruptNumber,
+    ) -> Result<Option<arch::InterruptHandler>, Error> {
+        self.0.borrow().get_handler(intnum)
+    }
+
+    pub fn set_handler(
+        &self,
+        intnum: arch::InterruptNumber,
+        handler: Option<arch::InterruptHandler>,
+    ) -> Result<(), Error> {
+        self.0.borrow_mut().set_handler(intnum, handler)
+    }
 }
 
 impl InterruptController {

@@ -112,6 +112,26 @@ impl MadtInfo {
         }
         None
     }
+
+    ///
+    /// # Description
+    ///
+    /// Retrieves information about interrupt source override.
+    ///
+    /// # Return Values
+    ///
+    /// A list of interrupt source override information.
+    ///
+    pub fn get_ioapic_source_override(&self) -> LinkedList<&MadtEntryIoApicSourceOverride> {
+        let mut ioapic_source_override: LinkedList<&MadtEntryIoApicSourceOverride> =
+            LinkedList::new();
+        for e in self.entries.iter() {
+            if let MadtEntry::IoApicSourceOverride(ioapic_source_override_info) = e {
+                ioapic_source_override.push_back(ioapic_source_override_info)
+            }
+        }
+        ioapic_source_override
+    }
 }
 
 impl Madt {

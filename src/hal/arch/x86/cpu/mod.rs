@@ -38,7 +38,7 @@ use madt::madt::MadtInfo;
 pub use interrupt::{
     forge_user_stack,
     InterruptController,
-    InterruptHandlersRef,
+    InterruptHandler,
     InterruptNumber,
 };
 
