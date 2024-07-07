@@ -5,18 +5,27 @@
 // Imports
 //==================================================================================================
 
-use super::{
-    ioapic::IoapicPtr,
-    map::InterruptMap,
-    pic::Pic,
-    xapic::XapicRef,
-};
 use crate::{
     error::{
         Error,
         ErrorCode,
     },
-    hal::arch::x86::cpu::interrupt::InterruptNumber,
+    hal::arch::x86::cpu::interrupt::{
+        ioapic::{
+            Ioapic,
+            UninitIoapic,
+        },
+        map::InterruptMap,
+        pic::{
+            Pic,
+            UninitPic,
+        },
+        xapic::{
+            UninitXapic,
+            Xapic,
+        },
+        InterruptNumber,
+    },
 };
 
 //==================================================================================================
@@ -38,7 +47,7 @@ static mut INTERRUPT_VECTOR: [Option<InterruptHandler>; INTERRUPT_VECTOR_LENGTH]
 
 enum InterruptControllerType {
     Legacy(Pic),
-    Xapic(XapicRef, IoapicPtr),
+    Xapic(Xapic, Ioapic),
 }
 
 pub struct InterruptController {
@@ -48,15 +57,26 @@ pub struct InterruptController {
 
 impl InterruptController {
     pub fn new(
-        pic: Option<Pic>,
-        xapic: Option<XapicRef>,
-        ioapic: Option<IoapicPtr>,
+        pic: Option<UninitPic>,
+        xapic: Option<UninitXapic>,
+        ioapic: Option<UninitIoapic>,
         intmap: InterruptMap,
     ) -> Result<Self, Error> {
-        if let Some(xapic) = xapic {
+        // If legacy PIC is available, initialize it.
+        let pic: Option<Pic> = if let Some(mut pic) = pic {
+            Some(pic.init()?)
+        } else {
+            None
+        };
+
+        // Check if xAPIC is available.
+        if let Some(mut xapic) = xapic {
+            // Check if IOAPIC is available.
             match ioapic {
-                Some(ioapic) => {
+                Some(mut ioapic) => {
                     info!("using xapic and ioapic");
+                    let xapic: Xapic = xapic.init()?;
+                    let ioapic: Ioapic = ioapic.init()?;
                     return Ok(Self {
                         intmap,
                         intctrl: InterruptControllerType::Xapic(xapic, ioapic),
@@ -68,6 +88,7 @@ impl InterruptController {
             }
         }
 
+        // If legacy PIC is available, use it.
         if let Some(pic) = pic {
             info!("using legacy pic");
             return Ok(Self {

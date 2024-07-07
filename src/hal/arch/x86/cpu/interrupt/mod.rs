@@ -16,7 +16,6 @@ mod xapic;
 // Imports
 //==================================================================================================
 
-use super::madt::madt::MadtInfo;
 use crate::{
     arch::cpu::{
         eflags::{
@@ -31,17 +30,22 @@ use crate::{
     error::Error,
     hal::{
         arch::x86::{
-            cpu::idt,
+            cpu::{
+                idt,
+                interrupt::{
+                    ioapic::UninitIoapic,
+                    map::InterruptMap,
+                    pic::UninitPic,
+                    xapic::UninitXapic,
+                },
+                madt::madt::MadtInfo,
+            },
             mem::gdt,
         },
         io::allocator::IoPortAllocator,
     },
 };
 use alloc::collections::LinkedList;
-use ioapic::IoapicPtr;
-use map::InterruptMap;
-use pic::Pic;
-use xapic::XapicRef;
 
 //==================================================================================================
 // Exports
@@ -141,10 +145,10 @@ pub fn init(
             info!("retriving information from madt");
 
             // Check if the 8259 PIC is present.
-            let pic: Option<Pic> = match madt.has_8259_pic() {
+            let pic: Option<UninitPic> = match madt.has_8259_pic() {
                 true => {
                     info!("8259 pic found");
-                    Some(pic::init(ioports, idt::INT_OFF)?)
+                    Some(UninitPic::new(ioports, idt::INT_OFF)?)
                 },
                 false => {
                     info!("8259 pic not found");
@@ -153,14 +157,14 @@ pub fn init(
             };
 
             // Check if the I/O APIC is present.
-            let ioapic: Option<IoapicPtr> = match madt.get_ioapic_info() {
+            let ioapic: Option<UninitIoapic> = match madt.get_ioapic_info() {
                 Some(ioapic_info) => {
                     info!("ioapic found");
 
                     let id: u8 = ioapic_info.io_apic_id;
                     let addr: u32 = ioapic_info.io_apic_addr;
                     let gsi: u32 = ioapic_info.global_sys_int_base;
-                    Some(IoapicPtr::init(idt::INT_OFF, id, addr as usize, gsi)?)
+                    Some(UninitIoapic::new(idt::INT_OFF, id, addr as usize, gsi))
                 },
                 None => {
                     info!("ioapic not found");
@@ -169,7 +173,7 @@ pub fn init(
             };
 
             // Check if local APIC is present.
-            let xapic: Option<XapicRef> = match madt.get_lapic_info() {
+            let xapic: Option<UninitXapic> = match madt.get_lapic_info() {
                 Some(local_apic_info) => {
                     info!("xapic found");
 
@@ -195,7 +199,7 @@ pub fn init(
                             || (local_apic_info.flags & MadtEntryLocalApic::ENABLED) != 0
                     );
 
-                    Some(xapic::init(local_apic_info.apic_id, madt.local_apic_addr as usize)?)
+                    Some(UninitXapic::new(local_apic_info.apic_id, madt.local_apic_addr as usize))
                 },
                 None => {
                     info!("xapic not found");
@@ -210,7 +214,7 @@ pub fn init(
         // MADT is not present.
         None => {
             info!("madt not present, falling back to 8259 pic");
-            let pic: Pic = pic::init(ioports, idt::INT_OFF)?;
+            let pic: UninitPic = UninitPic::new(ioports, idt::INT_OFF)?;
             let intmap: InterruptMap = InterruptMap::new();
             Ok(InterruptController::new(Some(pic), None, None, intmap)?)
         },
