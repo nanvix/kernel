@@ -44,15 +44,13 @@ use crate::{
         VirtMemoryManager,
         Vmem,
     },
-    pm::process::{
-        ProcessIdentifier,
-        ProcessManager,
-    },
+    pm::process::ProcessManager,
 };
-use alloc::{
+use ::alloc::{
     collections::LinkedList,
     string::String,
 };
+use ::kcall::ProcessIdentifier;
 
 //==================================================================================================
 // Modules
