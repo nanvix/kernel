@@ -85,6 +85,12 @@ pub fn kcall_handler(hal: Hal, mut mm: VirtMemoryManager, pm: ProcessManager) ->
                             error!("cannot handle getpid()");
                             ErrorCode::InvalidSysCall.into_errno()
                         },
+                        KcallNumber::GetTid => {
+                            // NOTE: this should be handled by the dispatcher.
+                            // However we emit an invalid system call, just in case.
+                            error!("cannot handle gettid()");
+                            ErrorCode::InvalidSysCall.into_errno()
+                        },
                         _ => {
                             error!("invalid kernel call");
                             ErrorCode::InvalidSysCall.into_errno()
