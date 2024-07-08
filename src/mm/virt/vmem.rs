@@ -410,4 +410,88 @@ impl Vmem {
         __physcopy(dst, src, mem::PAGE_SIZE);
         Ok(())
     }
+
+    ///
+    /// # Description
+    ///
+    /// Unmaps a page from the target virtual address space.
+    ///
+    /// # Parameters
+    ///
+    /// - `vaddr`: Virtual address of the target page.
+    ///
+    /// # Returns
+    ///
+    /// Upon success, the user frame that was unmapped is returned. Upon failure, an error code is
+    /// returned instead.
+    ///
+    pub fn unmap(&mut self, vaddr: PageAligned<VirtualAddress>) -> Result<UserFrame, Error> {
+        // Check if the provided address lies outside the user space.
+        if !Self::is_user_addr(vaddr)? {
+            let reason: &str = "address is not in user space";
+            error!("unmap(): {}", reason);
+            return Err(Error::new(ErrorCode::BadAddress, reason));
+        }
+
+        // Find the corresponding frame address.
+        let frame_addres: FrameAddress = self.find_page(vaddr)?.frame_address();
+
+        // Get corresponding page table.
+        let page_table: &mut PageTable = {
+            let vaddr: PageTableAligned<VirtualAddress> = PageTableAligned::from_raw_value(
+                klib::align_down(vaddr.into_raw_value(), mmu::PGTAB_ALIGNMENT),
+            )?;
+            // Get the corresponding page directory entry.
+            let pde: PageDirectoryEntry = match self.pgdir.read_pde(PageTableAddress::new(vaddr)) {
+                Some(pde) => pde,
+                None => {
+                    let reason: &str = "failed to read page directory entry";
+                    error!("map(): {}", reason);
+                    return Err(Error::new(ErrorCode::TryAgain, reason));
+                },
+            };
+
+            // Get corresponding page table.
+            // Check if corresponding page table does not exist.
+            if !pde.is_present() {
+                let reason: &str = "page table not present";
+                error!("unmap(): {}", reason);
+                return Err(Error::new(ErrorCode::NoSuchEntry, reason));
+            };
+
+            self.lookup_page_table(&pde)?
+        };
+
+        let page_address: PageAddress = PageAddress::new(vaddr);
+
+        // Check if frame address matches what we expect.
+        if page_table.lookup(page_address)? != frame_addres {
+            // The following statement should not be reachable because after mapping user frame we
+            // must have added it to the list of user pages.
+            unreachable!("frame address must match what we expect");
+        }
+
+        // Unmap the page from the target virtual address space.
+        page_table.unmap(page_address)?;
+
+        //====================================================================================
+        // NOTE: if we fail beyond this point and we want to recover we should remap the page.
+        //====================================================================================
+
+        // Remove user page from the list of user pages.
+        let (_page_address, uframe) = match self
+            .user_pages
+            .iter()
+            .position(|page| page.vaddr().into_virtual_address() == vaddr)
+        {
+            Some(at) => self.user_pages.remove(at).into_owned_parts(),
+            None => {
+                // The following statement should not be reachable because we have checked earlier
+                // in this function that the user page was in the list of user pages.
+                unreachable!("page must be in the list of user pages")
+            },
+        };
+
+        Ok(uframe)
+    }
 }

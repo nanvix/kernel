@@ -15,6 +15,7 @@
 #![feature(asm_const)] // gdt uses this.
 #![feature(const_mut_refs)] // tss uses this.
 #![feature(linked_list_remove)] // vmem uses this.
+#![feature(linked_list_retain)] // vmem uses this.
 #![no_std]
 
 //==================================================================================================

@@ -112,6 +112,29 @@ impl VirtMemoryManager {
         Ok(())
     }
 
+    ///
+    /// # Description
+    ///
+    /// Unmaps a user page from the target virtual memory space.
+    ///
+    /// # Parameters
+    ///
+    /// - `vmem`: Virtual memory space where the page is mapped.
+    /// - `vaddr`: Virtual address of the page to be unmapped.
+    ///
+    /// # Return Values
+    ///
+    /// Upon success, empty is returned. Upon failure, an error is returned instead.
+    ///
+    pub fn unmap_upage(
+        &mut self,
+        vmem: &mut Vmem,
+        vaddr: PageAligned<VirtualAddress>,
+    ) -> Result<(), Error> {
+        vmem.unmap(vaddr)?;
+        Ok(())
+    }
+
     pub fn alloc_upages(
         &mut self,
         vmem: &mut Vmem,
