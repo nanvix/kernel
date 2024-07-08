@@ -43,4 +43,17 @@ impl AttachedUserPage {
     pub fn frame_address(&self) -> FrameAddress {
         self.frame.address()
     }
+
+    ///
+    /// # Description
+    ///
+    /// Converts the target user page into owned parts.
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing the page address and the user frame.
+    ///
+    pub fn into_owned_parts(self) -> (PageAddress, UserFrame) {
+        (self.addr, self.frame)
+    }
 }
