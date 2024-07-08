@@ -215,6 +215,19 @@ impl PageTableEntry {
     ///
     /// # Description
     ///
+    /// Returns the frame number associated with the target page table entry.
+    ///
+    /// # Returns
+    ///
+    /// The frame number associated with the target page table entry.
+    ///
+    pub fn frame_number(&self) -> FrameNumber {
+        self.frame
+    }
+
+    ///
+    /// # Description
+    ///
     /// Checks if the target page table entry is marked as present.
     ///
     /// # Returns
