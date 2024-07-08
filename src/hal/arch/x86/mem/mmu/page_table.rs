@@ -159,6 +159,62 @@ impl PageTable {
     ///
     /// # Description
     ///
+    /// Unmaps a page address from the target page table.
+    ///
+    /// # Parameters
+    ///
+    /// - `page_address`: Page address to unmap.
+    ///
+    /// # Return Values
+    ///
+    ///Upon success, the frame address that was associated with the given page address is returned
+    ///and the concerned page is unmapped from the target page table. Upon failure, an error is
+    ///returned instead.
+    ///
+    pub fn unmap(&mut self, page_address: PageAddress) -> Result<FrameAddress, Error> {
+        // Obtain a cached copy of the page table entry.
+        let pte: PageTableEntry = match self.read_pte(page_address) {
+            Some(pte) => pte,
+            None => {
+                let reason: &str = "failed to read page table entry";
+                error!("unmap(): {}", reason);
+                return Err(Error::new(ErrorCode::TryAgain, reason));
+            },
+        };
+
+        // Check if page is not present.
+        if !pte.is_present() {
+            let reason: &str = "page is not present";
+            error!("unmap(): {}", reason);
+            return Err(Error::new(ErrorCode::ResourceBusy, reason));
+        }
+
+        // Retrieve frame address.
+        let paddr: FrameAddress = FrameAddress::from_frame_number(pte.frame_number())?;
+
+        // Construct page table entry.
+        let pte: PageTableEntry = PageTableEntry::new(
+            PageTableEntryFlags::new(
+                PresentFlag::NotPresent,
+                ReadWriteFlag::ReadOnly,
+                UserSupervisorFlag::User,
+                PageWriteThroughFlag::NotWriteThrough,
+                PageCacheDisableFlag::CacheDisabled,
+                AccessedFlag::NotAccessed,
+                DirtyFlag::NotDirty,
+            ),
+            FrameNumber::NULL,
+        );
+
+        // Write page table entry.
+        self.write_pte(page_address, pte);
+
+        Ok(paddr)
+    }
+
+    ///
+    /// # Description
+    ///
     /// Looks up a page address in the target page table.
     ///
     /// # Parameters
