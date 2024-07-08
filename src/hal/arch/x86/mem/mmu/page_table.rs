@@ -11,6 +11,7 @@ use crate::{
         paging::{
             AccessedFlag,
             DirtyFlag,
+            FrameNumber,
             PageCacheDisableFlag,
             PageTableEntry,
             PageTableEntryFlags,
@@ -153,6 +154,44 @@ impl PageTable {
         self.write_pte(vaddr, pte);
 
         Ok(())
+    }
+
+    ///
+    /// # Description
+    ///
+    /// Looks up a page address in the target page table.
+    ///
+    /// # Parameters
+    ///
+    /// - `page_address`: Page address to lookup.
+    ///
+    /// # Return Values
+    ///
+    /// Upon success, the frame address associated with the target page is returned. Upon failure,
+    /// an error is returned instead.
+    ///
+    pub fn lookup(&self, page_address: PageAddress) -> Result<FrameAddress, Error> {
+        // Obtain a cached copy of the page table entry.
+        let pte: PageTableEntry = match self.read_pte(page_address) {
+            Some(pte) => pte,
+            None => {
+                let reason: &str = "failed to read page table entry";
+                error!("lookup(): {}", reason);
+                return Err(Error::new(ErrorCode::TryAgain, reason));
+            },
+        };
+
+        // Check if page is not present.
+        if !pte.is_present() {
+            let reason: &str = "page is not present";
+            error!("lookup(): {}", reason);
+            return Err(Error::new(ErrorCode::NoSuchEntry, reason));
+        }
+
+        // Retrieve frame address.
+        let paddr: FrameAddress = FrameAddress::from_frame_number(pte.frame_number())?;
+
+        Ok(paddr)
     }
 
     fn clean(&mut self) {
