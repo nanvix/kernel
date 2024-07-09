@@ -80,7 +80,7 @@ pub struct ProcessInner {
 /// A type that represents a process.
 ///
 #[derive(Clone)]
-pub struct Process(Rc<RefCell<ProcessInner>>);
+struct Process(Rc<RefCell<ProcessInner>>);
 
 impl Process {
     /// Initializes a new process.
@@ -194,5 +194,96 @@ impl Process {
         let next_thread: RunningThread = next_thread.resume();
         self.0.borrow_mut().running = Some(next_thread);
         return Some(next_context);
+    }
+}
+
+//==================================================================================================
+// Running Process
+//==================================================================================================
+
+///
+/// # Description
+///
+/// A type that represents a running process.
+///
+#[derive(Clone)]
+pub struct RunningProcess(Process);
+
+impl RunningProcess {
+    pub fn schedule(mut self) -> (SuspendedProcess, *mut ContextInformation) {
+        let ctx: *mut ContextInformation = self.0.schedule();
+        (SuspendedProcess(self.0), ctx)
+    }
+
+    pub fn sleep(mut self) -> (SuspendedProcess, *mut ContextInformation) {
+        let ctx: *mut ContextInformation = self.0.sleep();
+        (SuspendedProcess(self.0), ctx)
+    }
+
+    pub fn get_tid(&self) -> Option<ThreadIdentifier> {
+        self.0.get_tid()
+    }
+
+    pub fn pid(&self) -> ProcessIdentifier {
+        self.0.pid()
+    }
+
+    pub fn wakeup_sleeping_thread(&mut self, tid: ThreadIdentifier) -> Result<(), Error> {
+        self.0.wakeup_sleeping_thread(tid)
+    }
+
+    pub fn clone_vmem(&self, mm: &VirtMemoryManager) -> Result<Vmem, Error> {
+        self.0.clone_vmem(mm)
+    }
+}
+
+//==================================================================================================
+// Suspended Process
+//==================================================================================================
+
+///
+/// # Description
+///
+/// A type that represents a suspended process. A suspended process is a process that has all its
+/// threads in either the ready or sleeping states.
+///
+#[derive(Clone)]
+pub struct SuspendedProcess(Process);
+
+impl SuspendedProcess {
+    pub fn pid(&self) -> ProcessIdentifier {
+        self.0.pid()
+    }
+
+    pub fn new(pid: ProcessIdentifier, thread: ReadyThread, vmem: Vmem) -> Self {
+        SuspendedProcess(Process::new(pid, thread, vmem))
+    }
+
+    pub fn run(mut self) -> Result<(RunningProcess, *mut ContextInformation), SuspendedProcess> {
+        match self.0.run() {
+            Some(context) => Ok((RunningProcess(self.0), context)),
+            None => Err(self),
+        }
+    }
+
+    pub fn exec(
+        &mut self,
+        mm: &mut VirtMemoryManager,
+        elf: &Elf32Fhdr,
+    ) -> Result<VirtualAddress, Error> {
+        self.0.exec(mm, elf)
+    }
+
+    pub fn wakeup_sleeping_thread(&mut self, tid: ThreadIdentifier) -> Result<(), Error> {
+        self.0.wakeup_sleeping_thread(tid)
+    }
+
+    pub fn copy_from_user_unaligned(
+        &self,
+        dst: &mut KernelPage,
+        src: VirtualAddress,
+        size: usize,
+    ) -> Result<(), Error> {
+        self.0.copy_from_user_unaligned(dst, src, size)
     }
 }

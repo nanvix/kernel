@@ -23,8 +23,8 @@ use crate::{
         VirtMemoryManager,
     },
     pm::process::{
-        Process,
         ProcessManager,
+        SuspendedProcess,
     },
 };
 use ::kcall::KcallNumber;
@@ -53,7 +53,7 @@ fn do_debug(
 
     let src: VirtualAddress = VirtualAddress::new(buf);
 
-    let process: Process = pm.find_process(args.pid)?;
+    let process: SuspendedProcess = pm.find_suspended_process(args.pid)?;
     let mut dst: KernelPage = mm.alloc_kpage(true)?;
 
     process.copy_from_user_unaligned(&mut dst, src, size)?;

@@ -56,7 +56,10 @@ use ::kcall::{
 // Exports
 //==================================================================================================
 
-pub use process::Process;
+pub use process::{
+    RunningProcess,
+    SuspendedProcess,
+};
 
 //==================================================================================================
 // Process Manager Inner
@@ -70,9 +73,9 @@ pub use process::Process;
 struct ProcessManagerInner {
     next_pid: ProcessIdentifier,
     /// Running process.
-    running: Option<Process>,
+    running: Option<RunningProcess>,
     /// Ready processes.
-    ready: LinkedList<Process>,
+    ready: LinkedList<SuspendedProcess>,
     /// Thread manager.
     tm: ThreadManager,
 }
@@ -80,9 +83,15 @@ struct ProcessManagerInner {
 impl ProcessManagerInner {
     /// Initializes the process manager.
     pub fn new(kernel: ReadyThread, root: Vmem, tm: ThreadManager) -> Self {
-        let mut kernel: Process = Process::new(ProcessIdentifier::from(0), kernel, root);
+        let kernel: SuspendedProcess =
+            SuspendedProcess::new(ProcessIdentifier::from(0), kernel, root);
 
-        let _ = kernel.run();
+        let kernel: RunningProcess = match kernel.run() {
+            Ok((kernel, _ctx)) => kernel,
+            Err(_kernel) => {
+                unreachable!("failed to run kernel thread");
+            },
+        };
 
         Self {
             next_pid: ProcessIdentifier::from(1),
@@ -134,7 +143,7 @@ impl ProcessManagerInner {
     /// Creates a new process.
     pub fn create_process(
         &mut self,
-        from: Process,
+        from: RunningProcess,
         mm: &mut VirtMemoryManager,
     ) -> Result<ProcessIdentifier, Error> {
         extern "C" {
@@ -166,7 +175,7 @@ impl ProcessManagerInner {
 
         let pid: ProcessIdentifier = self.next_pid;
         self.next_pid = ProcessIdentifier::from(Into::<usize>::into(pid) + 1);
-        let process: Process = Process::new(pid, thread, vmem);
+        let process: SuspendedProcess = SuspendedProcess::new(pid, thread, vmem);
 
         self.ready.push_back(process);
 
@@ -176,19 +185,23 @@ impl ProcessManagerInner {
     /// Schedule a process to run.
     pub fn schedule(&mut self) -> (*mut ContextInformation, *mut ContextInformation) {
         // Reschedule running process.
-        let mut previous_process: Process = self.running.take().unwrap();
-        let previous_context: *mut ContextInformation = previous_process.schedule();
+        let previous_process: RunningProcess = self.running.take().unwrap();
+        let (previous_process, previous_context): (SuspendedProcess, *mut ContextInformation) =
+            previous_process.schedule();
         self.ready.push_back(previous_process);
 
         // Select next ready process to run.
         loop {
-            let mut next_process: Process = self.ready.pop_front().unwrap();
-            if let Some(next_context) = next_process.run() {
-                self.running = Some(next_process);
-                return (previous_context, next_context);
+            let next_process: SuspendedProcess = self.ready.pop_front().unwrap();
+            match next_process.run() {
+                Ok((next_process, next_context)) => {
+                    self.running = Some(next_process);
+                    return (previous_context, next_context);
+                },
+                Err(next_process) => {
+                    self.ready.push_back(next_process);
+                },
             }
-
-            self.ready.push_back(next_process);
         }
     }
 
@@ -199,7 +212,7 @@ impl ProcessManagerInner {
         elf: &Elf32Fhdr,
     ) -> Result<(), Error> {
         // Find corresponding process.
-        let process: &mut Process = match self.ready.iter_mut().find(|p| p.pid() == pid) {
+        let process: &mut SuspendedProcess = match self.ready.iter_mut().find(|p| p.pid() == pid) {
             Some(p) => p,
             None => {
                 let reason: &str = "process not found";
@@ -239,29 +252,8 @@ impl ProcessManagerInner {
         self.get_running().get_tid().unwrap()
     }
 
-    pub fn find_process(&self, pid: ProcessIdentifier) -> Result<&Process, Error> {
-        trace!("find_process(): pid={:?}", pid);
-
-        // Search the list of ready processes.
-        if let Some(process) = self.ready.iter().find(|p| p.pid() == pid) {
-            return Ok(process);
-        }
-
-        // Search the list of sleeping processes.
-        if let Some(process) = self.ready.iter().find(|p| p.pid() == pid) {
-            return Ok(process);
-        }
-
-        // Check if the process is the running process.
-        if let Some(process) = self.running.as_ref() {
-            if process.pid() == pid {
-                return Ok(process);
-            }
-        }
-
-        let reason: &str = "process not found";
-        error!("find_process(): {}", reason);
-        Err(Error::new(ErrorCode::NoSuchEntry, reason))
+    pub fn find_suspended_process(&self, pid: ProcessIdentifier) -> Option<&SuspendedProcess> {
+        self.ready.iter().find(|p| p.pid() == pid)
     }
 
     ///
@@ -275,18 +267,30 @@ impl ProcessManagerInner {
     ///
     pub fn sleep(&mut self) -> (*mut ContextInformation, *mut ContextInformation) {
         // Safety: it is safe to call unwrap because there is always a process running.
-        let mut previous_process: Process = self.running.take().unwrap();
-        let previous_context: *mut ContextInformation = previous_process.sleep();
+        let running_process: RunningProcess = self.running.take().unwrap();
 
-        match previous_process.run() {
-            Some(next_context) => (previous_context, next_context),
-            None => {
-                self.ready.push_back(previous_process);
+        let (suspended_process, previous_context): (SuspendedProcess, *mut ContextInformation) =
+            running_process.sleep();
 
+        match suspended_process.run() {
+            Ok((next_process, next_context)) => {
+                self.running = Some(next_process);
+                (previous_context, next_context)
+            },
+            Err(suspended_process) => {
+                self.ready.push_back(suspended_process);
                 // Safety: it is safe to call unwrap because there is always a process ready to be run.
-                let mut next_process: Process = self.ready.pop_front().unwrap();
+                let suspended_process: SuspendedProcess = self.ready.pop_front().unwrap();
+
                 // Safety: it is safe to call unwrap because there is always a thread ready to be run.
-                let next_context: *mut ContextInformation = next_process.run().unwrap();
+                let (next_process, next_context): (RunningProcess, *mut ContextInformation) =
+                    match suspended_process.run() {
+                        Ok((next_process, next_context)) => (next_process, next_context),
+                        Err(_) => {
+                            unreachable!("there should exist a runnable thread")
+                        },
+                    };
+
                 self.running = Some(next_process);
                 (previous_context, next_context)
             },
@@ -307,16 +311,16 @@ impl ProcessManagerInner {
     /// Upon successful completion, empty is returned. Otherwise, an error code is returned instead.
     ///
     pub fn wakeup(&mut self, tid: ThreadIdentifier) -> Result<(), Error> {
-        // Check if thread belongs to running process.
-        if self.get_running_mut().wakeup_sleeping_thread(tid).is_ok() {
-            return Ok(());
-        }
-
-        // Check if thread belongs to ready processes.
+        // Check if thread belongs to a ready processes.
         for process in self.ready.iter_mut() {
             if process.wakeup_sleeping_thread(tid).is_ok() {
                 return Ok(());
             }
+        }
+
+        // Check if thread belongs to the running process.
+        if self.get_running_mut().wakeup_sleeping_thread(tid).is_ok() {
+            return Ok(());
         }
 
         let reason: &str = "thread not found";
@@ -324,7 +328,7 @@ impl ProcessManagerInner {
         Err(Error::new(ErrorCode::NoSuchEntry, reason))
     }
 
-    fn get_running(&self) -> &Process {
+    fn get_running(&self) -> &RunningProcess {
         // NOTE: The following call to unwrap is safe because there is always a running process.
         self.running.as_ref().unwrap()
     }
@@ -338,7 +342,7 @@ impl ProcessManagerInner {
     ///
     /// A mutable reference to the running process.
     ///
-    fn get_running_mut(&mut self) -> &mut Process {
+    fn get_running_mut(&mut self) -> &mut RunningProcess {
         // NOTE: The following call to unwrap is safe because there is always a running process.
         self.running.as_mut().unwrap()
     }
@@ -356,7 +360,7 @@ impl ProcessManager {
     /// Creates a new process.
     pub fn create_process(
         &self,
-        from: Process,
+        from: RunningProcess,
         mm: &mut VirtMemoryManager,
     ) -> Result<ProcessIdentifier, Error> {
         match self.0.try_borrow_mut() {
@@ -377,12 +381,26 @@ impl ProcessManager {
         }
     }
 
-    pub fn find_process(&self, pid: ProcessIdentifier) -> Result<Process, Error> {
+    pub fn get_running(&self) -> Result<RunningProcess, Error> {
+        match self.0.try_borrow() {
+            Ok(pm) => Ok(pm.get_running().clone()),
+            Err(_) => Err(Error::new(ErrorCode::ResourceBusy, "cannot borrow process manager")),
+        }
+    }
+
+    pub fn find_suspended_process(
+        &self,
+        pid: ProcessIdentifier,
+    ) -> Result<SuspendedProcess, Error> {
         match self.0.try_borrow() {
             Ok(pm) => {
-                let proc = pm.find_process(pid)?;
-                Ok(proc.clone())
-                // todo!();
+                if let Some(proc) = pm.find_suspended_process(pid) {
+                    Ok(proc.clone())
+                } else {
+                    let reason: &str = "ready process not found";
+                    error!("find_ready_process(): {}", reason);
+                    Err(Error::new(ErrorCode::NoSuchEntry, &reason))
+                }
             },
             Err(_) => Err(Error::new(ErrorCode::ResourceBusy, "cannot borrow process manager")),
         }

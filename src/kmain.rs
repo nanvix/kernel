@@ -47,8 +47,8 @@ use crate::{
         Vmem,
     },
     pm::process::{
-        Process,
         ProcessManager,
+        RunningProcess,
     },
 };
 use ::alloc::{
@@ -134,14 +134,7 @@ fn spawn_servers(
     for kmod in kmods.iter() {
         let elf: &Elf32Fhdr = Elf32Fhdr::from_address(kmod.start().into_raw_value());
         let pid: ProcessIdentifier = {
-            let pid: ProcessIdentifier = match ProcessManager::get_pid() {
-                Ok(pid) => pid,
-                Err(e) => {
-                    warn!("failed to get process identifier: {:?}", e);
-                    continue;
-                },
-            };
-            let running: Process = match pm.find_process(pid) {
+            let running: RunningProcess = match pm.get_running() {
                 Ok(running) => running,
                 Err(e) => {
                     warn!("failed to find running process: {:?}", e);
