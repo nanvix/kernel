@@ -23,6 +23,7 @@
 //==================================================================================================
 
 extern crate alloc;
+
 use crate::{
     hal::{
         arch::x86::cpu::madt::madt::MadtInfo,
@@ -45,7 +46,10 @@ use crate::{
         VirtMemoryManager,
         Vmem,
     },
-    pm::process::ProcessManager,
+    pm::process::{
+        Process,
+        ProcessManager,
+    },
 };
 use ::alloc::{
     collections::LinkedList,
@@ -129,12 +133,29 @@ fn spawn_servers(
     // Spawn all servers.
     for kmod in kmods.iter() {
         let elf: &Elf32Fhdr = Elf32Fhdr::from_address(kmod.start().into_raw_value());
-        let pid: ProcessIdentifier = match pm.create_process(mm) {
-            Ok(pid) => pid,
-            Err(err) => {
-                warn!("failed to create server process: {:?}", err);
-                continue;
-            },
+        let pid: ProcessIdentifier = {
+            let pid: ProcessIdentifier = match ProcessManager::get_pid() {
+                Ok(pid) => pid,
+                Err(e) => {
+                    warn!("failed to get process identifier: {:?}", e);
+                    continue;
+                },
+            };
+            let running: Process = match pm.find_process(pid) {
+                Ok(running) => running,
+                Err(e) => {
+                    warn!("failed to find running process: {:?}", e);
+                    continue;
+                },
+            };
+
+            match pm.create_process(running, mm) {
+                Ok(pid) => pid,
+                Err(err) => {
+                    warn!("failed to create server process: {:?}", err);
+                    continue;
+                },
+            }
         };
         match pm.exec(mm, pid, elf) {
             Ok(_) => {

@@ -2,6 +2,12 @@
 // Licensed under the MIT License.
 
 //==================================================================================================
+// Modules
+//==================================================================================================
+
+mod process;
+
+//==================================================================================================
 // Imports
 //==================================================================================================
 
@@ -32,7 +38,6 @@ use crate::{
         stack::Stack,
         thread::{
             ReadyThread,
-            RunningThread,
             ThreadManager,
         },
     },
@@ -41,102 +46,17 @@ use ::alloc::{
     collections::LinkedList,
     rc::Rc,
 };
-use ::core::{
-    cell::RefCell,
-    fmt::Debug,
-    ops::{
-        Deref,
-        DerefMut,
-    },
-};
+use ::core::cell::RefCell;
 use ::kcall::{
     ProcessIdentifier,
     ThreadIdentifier,
 };
 
 //==================================================================================================
-// Process State
+// Exports
 //==================================================================================================
 
-///
-/// # Description
-///
-/// A type that represents the state of a process.
-///
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ProcessState {
-    /// The process is ready to run.
-    Ready,
-    /// The process is running.
-    Running,
-}
-
-//==================================================================================================
-// Process
-//==================================================================================================
-
-pub struct ProcessInner {
-    /// Identifier.
-    id: ProcessIdentifier,
-    /// State.
-    state: ProcessState,
-    /// Running thread.
-    running: Option<RunningThread>,
-    /// Ready threads.
-    ready: LinkedList<ReadyThread>,
-    /// Sleeping threads.
-    sleeping: LinkedList<ReadyThread>,
-    /// Memory address space.
-    vmem: Vmem,
-}
-
-///
-/// # Description
-///
-/// A type that represents a process.
-///
-#[derive(Clone)]
-pub struct Process(Rc<ProcessInner>);
-
-impl Process {
-    /// Initializes a new process.
-    pub fn new(id: ProcessIdentifier, thread: ReadyThread, vmem: Vmem) -> Self {
-        let mut ready: LinkedList<ReadyThread> = LinkedList::new();
-        ready.push_back(thread);
-        Self(Rc::new(ProcessInner {
-            id,
-            state: ProcessState::Running,
-            running: None,
-            ready,
-            sleeping: LinkedList::new(),
-            vmem,
-        }))
-    }
-
-    /// Gets the virtual memory address space of the target process.
-    pub fn vmem(&self) -> &Vmem {
-        &self.0.vmem
-    }
-
-    /// Gets the identifier of the process.
-    pub fn id(&self) -> ProcessIdentifier {
-        self.0.id
-    }
-}
-
-impl Deref for Process {
-    type Target = ProcessInner;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for Process {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        Rc::get_mut(&mut self.0).unwrap()
-    }
-}
+pub use process::Process;
 
 //==================================================================================================
 // Process Manager Inner
@@ -160,15 +80,9 @@ struct ProcessManagerInner {
 impl ProcessManagerInner {
     /// Initializes the process manager.
     pub fn new(kernel: ReadyThread, root: Vmem, tm: ThreadManager) -> Self {
-        // The kernel process is special, handcraft it.
-        let kernel: Process = Process(Rc::new(ProcessInner {
-            state: ProcessState::Running,
-            id: ProcessIdentifier::from(0),
-            running: Some(kernel.resume()),
-            sleeping: LinkedList::new(),
-            ready: LinkedList::new(),
-            vmem: root,
-        }));
+        let mut kernel: Process = Process::new(ProcessIdentifier::from(0), kernel, root);
+
+        let _ = kernel.run();
 
         Self {
             next_pid: ProcessIdentifier::from(1),
@@ -220,6 +134,7 @@ impl ProcessManagerInner {
     /// Creates a new process.
     pub fn create_process(
         &mut self,
+        from: Process,
         mm: &mut VirtMemoryManager,
     ) -> Result<ProcessIdentifier, Error> {
         extern "C" {
@@ -227,10 +142,9 @@ impl ProcessManagerInner {
         }
 
         trace!("create_process()");
-        let current: &Process = self.get_running();
 
         // Create a new memory address space for the process.
-        let mut vmem: Vmem = mm.new_vmem(&current.vmem)?;
+        let mut vmem: Vmem = from.clone_vmem(mm)?;
 
         let user_stack: VirtualAddress = mm::user_stack_top().into_inner();
         let user_func: VirtualAddress = mm::USER_BASE;
@@ -263,21 +177,13 @@ impl ProcessManagerInner {
     pub fn schedule(&mut self) -> (*mut ContextInformation, *mut ContextInformation) {
         // Reschedule running process.
         let mut previous_process: Process = self.running.take().unwrap();
-        previous_process.state = ProcessState::Ready;
-        let previous_thread = previous_process.running.take().unwrap();
-        let mut previous_thread: ReadyThread = previous_thread.suspend();
-        let previous_context: *mut ContextInformation = previous_thread.context_mut();
-        previous_process.ready.push_back(previous_thread);
+        let previous_context: *mut ContextInformation = previous_process.schedule();
         self.ready.push_back(previous_process);
 
         // Select next ready process to run.
         loop {
             let mut next_process: Process = self.ready.pop_front().unwrap();
-            next_process.state = ProcessState::Running;
-            if let Some(mut next_thread) = next_process.ready.pop_front() {
-                let next_context: *mut ContextInformation = next_thread.context_mut();
-                let next_thread: RunningThread = next_thread.resume();
-                next_process.running = Some(next_thread);
+            if let Some(next_context) = next_process.run() {
                 self.running = Some(next_process);
                 return (previous_context, next_context);
             }
@@ -293,12 +199,16 @@ impl ProcessManagerInner {
         elf: &Elf32Fhdr,
     ) -> Result<(), Error> {
         // Find corresponding process.
-        let process: &mut Process = match self.ready.iter_mut().find(|p| p.id() == pid) {
+        let process: &mut Process = match self.ready.iter_mut().find(|p| p.pid() == pid) {
             Some(p) => p,
-            None => return Err(Error::new(ErrorCode::NoSuchProcess, "process not found")),
+            None => {
+                let reason: &str = "process not found";
+                error!("exec(): {}", reason);
+                return Err(Error::new(ErrorCode::NoSuchProcess, reason));
+            },
         };
 
-        mm.load_elf(&mut process.vmem, elf)?;
+        process.exec(mm, elf)?;
 
         Ok(())
     }
@@ -313,7 +223,7 @@ impl ProcessManagerInner {
     /// The ID of the calling process.
     ///
     pub fn get_pid(&self) -> ProcessIdentifier {
-        self.get_running().id()
+        self.get_running().pid()
     }
 
     ///
@@ -326,18 +236,27 @@ impl ProcessManagerInner {
     /// The ID of the calling thread.
     ///
     pub fn get_tid(&self) -> ThreadIdentifier {
-        self.get_running().running.as_ref().unwrap().id()
+        self.get_running().get_tid().unwrap()
     }
 
     pub fn find_process(&self, pid: ProcessIdentifier) -> Result<&Process, Error> {
+        trace!("find_process(): pid={:?}", pid);
+
         // Search the list of ready processes.
-        if let Some(process) = self.ready.iter().find(|p| p.id() == pid) {
+        if let Some(process) = self.ready.iter().find(|p| p.pid() == pid) {
             return Ok(process);
         }
 
         // Search the list of sleeping processes.
-        if let Some(process) = self.ready.iter().find(|p| p.id() == pid) {
+        if let Some(process) = self.ready.iter().find(|p| p.pid() == pid) {
             return Ok(process);
+        }
+
+        // Check if the process is the running process.
+        if let Some(process) = self.running.as_ref() {
+            if process.pid() == pid {
+                return Ok(process);
+            }
         }
 
         let reason: &str = "process not found";
@@ -357,33 +276,17 @@ impl ProcessManagerInner {
     pub fn sleep(&mut self) -> (*mut ContextInformation, *mut ContextInformation) {
         // Safety: it is safe to call unwrap because there is always a process running.
         let mut previous_process: Process = self.running.take().unwrap();
-        // Safety: it is safe to call unwrap because there is always a thread running.
-        let thread: RunningThread = previous_process.running.take().unwrap();
-        let mut thread: ReadyThread = thread.suspend();
-        let previous_context: *mut ContextInformation = thread.context_mut();
-        previous_process.sleeping.push_back(thread);
+        let previous_context: *mut ContextInformation = previous_process.sleep();
 
-        // Reschedule.
-        match previous_process.ready.pop_front() {
-            Some(mut next_thread) => {
-                let next_context: *mut ContextInformation = next_thread.context_mut();
-                let next_thread: RunningThread = next_thread.resume();
-                previous_process.running = Some(next_thread);
-                self.running = Some(previous_process);
-                (previous_context, next_context)
-            },
+        match previous_process.run() {
+            Some(next_context) => (previous_context, next_context),
             None => {
-                previous_process.state = ProcessState::Ready;
                 self.ready.push_back(previous_process);
 
                 // Safety: it is safe to call unwrap because there is always a process ready to be run.
                 let mut next_process: Process = self.ready.pop_front().unwrap();
-                next_process.state = ProcessState::Running;
                 // Safety: it is safe to call unwrap because there is always a thread ready to be run.
-                let mut next_thread: ReadyThread = next_process.ready.pop_front().unwrap();
-                let next_context: *mut ContextInformation = next_thread.context_mut();
-                let next_thread: RunningThread = next_thread.resume();
-                next_process.running = Some(next_thread);
+                let next_context: *mut ContextInformation = next_process.run().unwrap();
                 self.running = Some(next_process);
                 (previous_context, next_context)
             },
@@ -405,23 +308,14 @@ impl ProcessManagerInner {
     ///
     pub fn wakeup(&mut self, tid: ThreadIdentifier) -> Result<(), Error> {
         // Check if thread belongs to running process.
-        if let Some(thread) = self
-            .get_running_mut()
-            .sleeping
-            .iter()
-            .position(|t| t.id() == tid)
-        {
-            let thread: ReadyThread = self.get_running_mut().sleeping.remove(thread);
-            self.get_running_mut().ready.push_back(thread);
+        if self.get_running_mut().wakeup_sleeping_thread(tid).is_ok() {
             return Ok(());
-        } else {
-            // Check if thread belongs to ready processes.
-            for process in self.ready.iter_mut() {
-                if let Some(thread) = process.sleeping.iter().position(|t| t.id() == tid) {
-                    let thread: ReadyThread = process.sleeping.remove(thread);
-                    process.ready.push_back(thread);
-                    return Ok(());
-                }
+        }
+
+        // Check if thread belongs to ready processes.
+        for process in self.ready.iter_mut() {
+            if process.wakeup_sleeping_thread(tid).is_ok() {
+                return Ok(());
             }
         }
 
@@ -460,9 +354,13 @@ static mut PROCESS_MANAGER: Option<ProcessManager> = None;
 
 impl ProcessManager {
     /// Creates a new process.
-    pub fn create_process(&self, mm: &mut VirtMemoryManager) -> Result<ProcessIdentifier, Error> {
+    pub fn create_process(
+        &self,
+        from: Process,
+        mm: &mut VirtMemoryManager,
+    ) -> Result<ProcessIdentifier, Error> {
         match self.0.try_borrow_mut() {
-            Ok(ref mut pm) => pm.create_process(mm),
+            Ok(ref mut pm) => pm.create_process(from, mm),
             Err(_) => Err(Error::new(ErrorCode::ResourceBusy, "failed to borrow process manager")),
         }
     }

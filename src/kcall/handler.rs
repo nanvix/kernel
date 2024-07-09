@@ -21,7 +21,6 @@ use crate::{
     mm::{
         KernelPage,
         VirtMemoryManager,
-        Vmem,
     },
     pm::process::{
         Process,
@@ -56,9 +55,8 @@ fn do_debug(
 
     let process: Process = pm.find_process(args.pid)?;
     let mut dst: KernelPage = mm.alloc_kpage(true)?;
-    let vm: &Vmem = process.vmem();
 
-    vm.copy_from_user_unaligned(&mut dst, src, size)?;
+    process.copy_from_user_unaligned(&mut dst, src, size)?;
 
     Ok(debug(dst.base().into_raw_value(), size))
 }
