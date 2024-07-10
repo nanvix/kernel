@@ -5,25 +5,30 @@
 // Imports
 //==================================================================================================
 
-use crate::pm::process::{
-    ProcessManager,
-    RunningProcess,
+use crate::{
+    kcall::KcallArgs,
+    pm::process::{
+        ProcessManager,
+        RunningProcess,
+    },
 };
 use ::kcall::{
     Error,
-    GroupIdentifier,
+    UserIdentifier,
 };
 
 //==================================================================================================
 // Standalone Functions
 //==================================================================================================
 
-pub fn do_getgid(pm: &ProcessManager) -> Result<GroupIdentifier, Error> {
-    let running: RunningProcess = pm.get_running()?;
-    Ok(running.get_gid())
+fn do_setuid(pm: &ProcessManager, uid: UserIdentifier) -> Result<(), Error> {
+    let mut running: RunningProcess = pm.get_running()?;
+    running.set_uid(uid)
 }
 
-pub fn do_setgid(pm: &ProcessManager, gid: GroupIdentifier) -> Result<(), Error> {
-    let mut running: RunningProcess = pm.get_running()?;
-    running.set_gid(gid)
+pub fn setuid(pm: &ProcessManager, args: &KcallArgs) -> i32 {
+    match do_setuid(pm, UserIdentifier::from(args.arg0)) {
+        Ok(_) => 0,
+        Err(e) => e.code.into_errno(),
+    }
 }

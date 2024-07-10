@@ -15,6 +15,7 @@ use crate::{
         Hal,
     },
     kcall::{
+        pm,
         KcallArgs,
         ScoreBoard,
     },
@@ -89,6 +90,14 @@ pub fn kcall_handler(hal: Hal, mut mm: VirtMemoryManager, pm: ProcessManager) ->
                             error!("cannot handle gettid()");
                             ErrorCode::InvalidSysCall.into_errno()
                         },
+                        KcallNumber::GetUid => pm::getuid(&pm, args),
+                        KcallNumber::GetGid => pm::getgid(&pm, args),
+                        KcallNumber::GetEuid => pm::geteuid(&pm, args),
+                        KcallNumber::GetEgid => pm::getegid(&pm, args),
+                        KcallNumber::SetUid => pm::setuid(&pm, args),
+                        KcallNumber::SetGid => pm::setgid(&pm, args),
+                        KcallNumber::SetEuid => pm::seteuid(&pm, args),
+                        KcallNumber::SetEgid => pm::setegid(&pm, args),
                         _ => {
                             error!("invalid kernel call");
                             ErrorCode::InvalidSysCall.into_errno()
