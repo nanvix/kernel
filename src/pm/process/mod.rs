@@ -32,6 +32,7 @@ use crate::{
     mm::{
         self,
         elf::Elf32Fhdr,
+        KernelPage,
         VirtMemoryManager,
         Vmem,
     },
@@ -151,12 +152,13 @@ impl ProcessManagerInner {
     /// Creates a new process.
     pub fn create_process(
         &mut self,
-        from: RunningProcess,
         mm: &mut VirtMemoryManager,
     ) -> Result<ProcessIdentifier, Error> {
         extern "C" {
             pub fn __leave_kernel_to_user_mode();
         }
+
+        let from: RunningProcess = self.get_running().clone();
 
         trace!("create_process()");
 
@@ -367,13 +369,9 @@ static mut PROCESS_MANAGER: Option<ProcessManager> = None;
 
 impl ProcessManager {
     /// Creates a new process.
-    pub fn create_process(
-        &self,
-        from: RunningProcess,
-        mm: &mut VirtMemoryManager,
-    ) -> Result<ProcessIdentifier, Error> {
+    pub fn create_process(&self, mm: &mut VirtMemoryManager) -> Result<ProcessIdentifier, Error> {
         match self.0.try_borrow_mut() {
-            Ok(ref mut pm) => pm.create_process(from, mm),
+            Ok(ref mut pm) => pm.create_process(mm),
             Err(_) => Err(Error::new(ErrorCode::ResourceBusy, "failed to borrow process manager")),
         }
     }
@@ -397,21 +395,28 @@ impl ProcessManager {
         }
     }
 
-    pub fn find_suspended_process(
-        &self,
+    pub fn vmcopy_from_user(
+        &mut self,
         pid: ProcessIdentifier,
-    ) -> Result<SuspendedProcess, Error> {
+        dst: &mut KernelPage,
+        src: VirtualAddress,
+        size: usize,
+    ) -> Result<(), Error> {
         match self.0.try_borrow() {
             Ok(pm) => {
                 if let Some(proc) = pm.find_suspended_process(pid) {
-                    Ok(proc.clone())
+                    proc.copy_from_user_unaligned(dst, src, size)
                 } else {
-                    let reason: &str = "ready process not found";
-                    error!("find_ready_process(): {}", reason);
+                    let reason: &str = "process not found";
+                    error!("vmcopy_from_user(): {}", reason);
                     Err(Error::new(ErrorCode::NoSuchEntry, &reason))
                 }
             },
-            Err(_) => Err(Error::new(ErrorCode::ResourceBusy, "cannot borrow process manager")),
+            Err(_) => {
+                let reason: &str = "failed to borrow process manager";
+                error!("vmcopy_from_user(): {}", reason);
+                Err(Error::new(ErrorCode::ResourceBusy, "cannot borrow process manager"))
+            },
         }
     }
 

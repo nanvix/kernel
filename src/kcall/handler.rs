@@ -15,7 +15,6 @@ use crate::{
         Hal,
     },
     kcall::{
-        pm,
         KcallArgs,
         ScoreBoard,
     },
@@ -23,9 +22,9 @@ use crate::{
         KernelPage,
         VirtMemoryManager,
     },
-    pm::process::{
+    pm::{
+        self,
         ProcessManager,
-        SuspendedProcess,
     },
 };
 use ::kcall::KcallNumber;
@@ -45,7 +44,7 @@ fn debug(buf: usize, count: usize) -> i32 {
 }
 
 fn do_debug(
-    pm: &ProcessManager,
+    pm: &mut ProcessManager,
     mm: &mut VirtMemoryManager,
     args: &KcallArgs,
 ) -> Result<i32, Error> {
@@ -53,11 +52,9 @@ fn do_debug(
     let size: usize = args.arg1 as usize;
 
     let src: VirtualAddress = VirtualAddress::new(buf);
-
-    let process: SuspendedProcess = pm.find_suspended_process(args.pid)?;
     let mut dst: KernelPage = mm.alloc_kpage(true)?;
 
-    process.copy_from_user_unaligned(&mut dst, src, size)?;
+    pm.vmcopy_from_user(args.pid, &mut dst, src, size)?;
 
     Ok(debug(dst.base().into_raw_value(), size))
 }
@@ -67,14 +64,14 @@ fn do_debug(
 ///
 /// Kernel call handler.
 ///
-pub fn kcall_handler(hal: Hal, mut mm: VirtMemoryManager, pm: ProcessManager) -> ! {
+pub fn kcall_handler(hal: Hal, mut mm: VirtMemoryManager, mut pm: ProcessManager) -> ! {
     loop {
         // Read kernel call arguments from the scoreboard.
         match ScoreBoard::get_mut() {
             Ok(scoreboard) => match scoreboard.handle() {
                 Ok(args) => {
                     let ret: i32 = match KcallNumber::from(args.number) {
-                        KcallNumber::Debug => match do_debug(&pm, &mut mm, args) {
+                        KcallNumber::Debug => match do_debug(&mut pm, &mut mm, args) {
                             Ok(ret) => ret,
                             Err(e) => e.code.into_errno(),
                         },

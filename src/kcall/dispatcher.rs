@@ -7,7 +7,7 @@
 
 use crate::{
     kcall::ScoreBoard,
-    pm::process::ProcessManager,
+    pm::ProcessManager,
 };
 use kcall::KcallNumber;
 

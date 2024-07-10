@@ -9,19 +9,17 @@ mod dispatcher;
 mod handler;
 
 /// Process management kernel calls.
-mod pm;
+// mod pm;
 
 //==================================================================================================
 // Imports
 //==================================================================================================
-
 use crate::{
     error::{
         Error,
         ErrorCode,
     },
     pm::{
-        process::ProcessManager,
         sync::{
             mutex::{
                 Mutex,
@@ -29,6 +27,7 @@ use crate::{
             },
             semaphore::Semaphore,
         },
+        ProcessManager,
     },
 };
 use core::fmt::Debug;

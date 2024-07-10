@@ -5,7 +5,8 @@
 // Modules
 //==================================================================================================
 
-pub mod process;
+mod kcall;
+mod process;
 mod stack;
 pub mod sync;
 pub mod thread;
@@ -20,14 +21,18 @@ use crate::{
     hal,
     hal::Hal,
     mm::Vmem,
-    pm::{
-        process::ProcessManager,
-        thread::{
-            ReadyThread,
-            ThreadManager,
-        },
+    pm::thread::{
+        ReadyThread,
+        ThreadManager,
     },
 };
+
+//==================================================================================================
+// Exports
+//==================================================================================================
+
+pub use kcall::*;
+pub use process::ProcessManager;
 
 //==================================================================================================
 // Standalone Functions

@@ -46,10 +46,7 @@ use crate::{
         VirtMemoryManager,
         Vmem,
     },
-    pm::process::{
-        ProcessManager,
-        RunningProcess,
-    },
+    pm::ProcessManager,
 };
 use ::alloc::{
     collections::LinkedList,
@@ -134,15 +131,7 @@ fn spawn_servers(
     for kmod in kmods.iter() {
         let elf: &Elf32Fhdr = Elf32Fhdr::from_address(kmod.start().into_raw_value());
         let pid: ProcessIdentifier = {
-            let running: RunningProcess = match pm.get_running() {
-                Ok(running) => running,
-                Err(e) => {
-                    warn!("failed to find running process: {:?}", e);
-                    continue;
-                },
-            };
-
-            match pm.create_process(running, mm) {
+            match pm.create_process(mm) {
                 Ok(pid) => pid,
                 Err(err) => {
                     warn!("failed to create server process: {:?}", err);
