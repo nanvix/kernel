@@ -16,9 +16,12 @@ use crate::{
         VirtMemoryManager,
         Vmem,
     },
-    pm::thread::{
-        ReadyThread,
-        RunningThread,
+    pm::{
+        process::identity::ProcessIdentity,
+        thread::{
+            ReadyThread,
+            RunningThread,
+        },
     },
 };
 use alloc::{
@@ -29,8 +32,10 @@ use core::cell::RefCell;
 use kcall::{
     Error,
     ErrorCode,
+    GroupIdentifier,
     ProcessIdentifier,
     ThreadIdentifier,
+    UserIdentifier,
 };
 
 //==================================================================================================
@@ -45,6 +50,8 @@ use kcall::{
 pub struct ProcessInner {
     /// Process identifier.
     pid: ProcessIdentifier,
+    /// Process identity.
+    identity: ProcessIdentity,
     /// Running thread.
     running: Option<RunningThread>,
     /// Ready threads.
@@ -65,11 +72,17 @@ struct Process(Rc<RefCell<ProcessInner>>);
 
 impl Process {
     /// Initializes a new process.
-    pub fn new(pid: ProcessIdentifier, thread: ReadyThread, vmem: Vmem) -> Self {
+    pub fn new(
+        pid: ProcessIdentifier,
+        identity: ProcessIdentity,
+        thread: ReadyThread,
+        vmem: Vmem,
+    ) -> Self {
         let mut ready: LinkedList<ReadyThread> = LinkedList::new();
         ready.push_back(thread);
         Self(Rc::new(RefCell::new(ProcessInner {
             pid,
+            identity,
             running: None,
             ready,
             sleeping: LinkedList::new(),
@@ -172,6 +185,51 @@ impl Process {
         self.0.borrow_mut().running = Some(next_thread);
         return Some(next_context);
     }
+
+    ///
+    /// # Description
+    ///
+    /// Gets the identity of the target process.
+    ///
+    /// # Return Values
+    ///
+    /// The identity of the target process.
+    ///
+    pub fn identity(&self) -> ProcessIdentity {
+        self.0.borrow().identity.clone()
+    }
+
+    pub fn get_uid(&self) -> UserIdentifier {
+        self.0.borrow().identity.get_uid()
+    }
+
+    pub fn set_uid(&mut self, uid: UserIdentifier) -> Result<(), Error> {
+        self.0.borrow_mut().identity.set_uid(uid)
+    }
+
+    pub fn get_euid(&self) -> UserIdentifier {
+        self.0.borrow().identity.get_euid()
+    }
+
+    pub fn set_euid(&mut self, euid: UserIdentifier) -> Result<(), Error> {
+        self.0.borrow_mut().identity.set_euid(euid)
+    }
+
+    pub fn get_gid(&self) -> GroupIdentifier {
+        self.0.borrow().identity.get_gid()
+    }
+
+    pub fn set_gid(&mut self, gid: GroupIdentifier) -> Result<(), Error> {
+        self.0.borrow_mut().identity.set_gid(gid)
+    }
+
+    pub fn get_egid(&self) -> GroupIdentifier {
+        self.0.borrow().identity.get_egid()
+    }
+
+    pub fn set_egid(&mut self, egid: GroupIdentifier) -> Result<(), Error> {
+        self.0.borrow_mut().identity.set_egid(egid)
+    }
 }
 
 //==================================================================================================
@@ -212,6 +270,51 @@ impl RunningProcess {
     pub fn clone_vmem(&self, mm: &VirtMemoryManager) -> Result<Vmem, Error> {
         self.0.clone_vmem(mm)
     }
+
+    ///
+    /// # Description
+    ///
+    /// Clones the identity of the target process.
+    ///
+    /// # Return Values
+    ///
+    /// The cloned identity of the target process.
+    ///
+    pub fn clone_identity(&self) -> ProcessIdentity {
+        self.0.identity()
+    }
+
+    pub fn get_uid(&self) -> UserIdentifier {
+        self.0.get_uid()
+    }
+
+    pub fn set_uid(&mut self, uid: UserIdentifier) -> Result<(), Error> {
+        self.0.set_uid(uid)
+    }
+
+    pub fn get_euid(&self) -> UserIdentifier {
+        self.0.get_euid()
+    }
+
+    pub fn set_euid(&mut self, euid: UserIdentifier) -> Result<(), Error> {
+        self.0.set_euid(euid)
+    }
+
+    pub fn get_gid(&self) -> GroupIdentifier {
+        self.0.get_gid()
+    }
+
+    pub fn set_gid(&mut self, gid: GroupIdentifier) -> Result<(), Error> {
+        self.0.set_gid(gid)
+    }
+
+    pub fn get_egid(&self) -> GroupIdentifier {
+        self.0.get_egid()
+    }
+
+    pub fn set_egid(&mut self, egid: GroupIdentifier) -> Result<(), Error> {
+        self.0.set_egid(egid)
+    }
 }
 
 //==================================================================================================
@@ -232,8 +335,29 @@ impl SuspendedProcess {
         self.0.pid()
     }
 
-    pub fn new(pid: ProcessIdentifier, thread: ReadyThread, vmem: Vmem) -> Self {
-        SuspendedProcess(Process::new(pid, thread, vmem))
+    ///
+    /// # Description
+    ///
+    /// Instantiates a new suspended process.
+    ///
+    /// # Parameters
+    ///
+    /// - `pid`: Process identifier.
+    /// - `identity`: Process identity.
+    /// - `thread`: Running thread.
+    /// - `vmem`: Virtual memory address space.
+    ///
+    /// # Return Values
+    ///
+    /// A new suspended process.
+    ///
+    pub fn new(
+        pid: ProcessIdentifier,
+        identity: ProcessIdentity,
+        thread: ReadyThread,
+        vmem: Vmem,
+    ) -> Self {
+        SuspendedProcess(Process::new(pid, identity, thread, vmem))
     }
 
     pub fn run(mut self) -> Result<(RunningProcess, *mut ContextInformation), SuspendedProcess> {

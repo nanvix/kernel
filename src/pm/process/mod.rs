@@ -5,6 +5,7 @@
 // Modules
 //==================================================================================================
 
+mod identity;
 mod process;
 
 //==================================================================================================
@@ -48,14 +49,17 @@ use ::alloc::{
 };
 use ::core::cell::RefCell;
 use ::kcall::{
+    GroupIdentifier,
     ProcessIdentifier,
     ThreadIdentifier,
+    UserIdentifier,
 };
 
 //==================================================================================================
 // Exports
 //==================================================================================================
 
+pub use identity::ProcessIdentity;
 pub use process::{
     RunningProcess,
     SuspendedProcess,
@@ -83,8 +87,12 @@ struct ProcessManagerInner {
 impl ProcessManagerInner {
     /// Initializes the process manager.
     pub fn new(kernel: ReadyThread, root: Vmem, tm: ThreadManager) -> Self {
-        let kernel: SuspendedProcess =
-            SuspendedProcess::new(ProcessIdentifier::from(0), kernel, root);
+        let kernel: SuspendedProcess = SuspendedProcess::new(
+            ProcessIdentifier::from(0),
+            ProcessIdentity::new(UserIdentifier::ROOT, GroupIdentifier::ROOT),
+            kernel,
+            root,
+        );
 
         let kernel: RunningProcess = match kernel.run() {
             Ok((kernel, _ctx)) => kernel,
@@ -175,7 +183,8 @@ impl ProcessManagerInner {
 
         let pid: ProcessIdentifier = self.next_pid;
         self.next_pid = ProcessIdentifier::from(Into::<usize>::into(pid) + 1);
-        let process: SuspendedProcess = SuspendedProcess::new(pid, thread, vmem);
+        let identity: ProcessIdentity = from.clone_identity();
+        let process: SuspendedProcess = SuspendedProcess::new(pid, identity, thread, vmem);
 
         self.ready.push_back(process);
 
