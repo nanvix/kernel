@@ -34,23 +34,6 @@ use kcall::{
 };
 
 //==================================================================================================
-// Process State
-//==================================================================================================
-
-///
-/// # Description
-///
-/// A type that represents the state of a process.
-///
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ProcessState {
-    /// The process is ready to run.
-    Ready,
-    /// The process is running.
-    Running,
-}
-
-//==================================================================================================
 // Process
 //==================================================================================================
 
@@ -62,8 +45,6 @@ pub enum ProcessState {
 pub struct ProcessInner {
     /// Process identifier.
     pid: ProcessIdentifier,
-    /// State.
-    state: ProcessState,
     /// Running thread.
     running: Option<RunningThread>,
     /// Ready threads.
@@ -89,7 +70,6 @@ impl Process {
         ready.push_back(thread);
         Self(Rc::new(RefCell::new(ProcessInner {
             pid,
-            state: ProcessState::Ready,
             running: None,
             ready,
             sleeping: LinkedList::new(),
@@ -164,7 +144,6 @@ impl Process {
     }
 
     pub fn schedule(&mut self) -> *mut ContextInformation {
-        self.0.borrow_mut().state = ProcessState::Ready;
         let previous_thread = self.0.borrow_mut().running.take().unwrap();
         let mut previous_thread: ReadyThread = previous_thread.suspend();
         let previous_context: *mut ContextInformation = previous_thread.context_mut();
@@ -174,7 +153,6 @@ impl Process {
     }
 
     pub fn sleep(&mut self) -> *mut ContextInformation {
-        self.0.borrow_mut().state = ProcessState::Ready;
         let previous_thread = self.0.borrow_mut().running.take().unwrap();
         let mut previous_thread: ReadyThread = previous_thread.suspend();
         let previous_context: *mut ContextInformation = previous_thread.context_mut();
@@ -189,7 +167,6 @@ impl Process {
             None => return None,
         };
 
-        self.0.borrow_mut().state = ProcessState::Running;
         let next_context: *mut ContextInformation = next_thread.context_mut();
         let next_thread: RunningThread = next_thread.resume();
         self.0.borrow_mut().running = Some(next_thread);
