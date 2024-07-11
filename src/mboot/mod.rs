@@ -156,6 +156,10 @@ static_assert_size!(MbootTag, 8);
 // `MbootTag` must be 8-byte aligned. This must match the multiboot specification.
 static_assert_alignment!(MbootTag, 8);
 
+//==================================================================================================
+// Implementations
+//==================================================================================================
+
 impl MbootTag {
     ///
     /// # Description
@@ -258,7 +262,7 @@ impl core::fmt::Debug for MbootTag {
 }
 
 //==================================================================================================
-// Implementations
+// Standalone Functions
 //==================================================================================================
 
 pub fn parse(bootloader_magic: u32, addr: usize) -> Result<BootInfo, Error> {
