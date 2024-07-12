@@ -356,6 +356,47 @@ impl ProcessManagerInner {
         Err(Error::new(ErrorCode::NoSuchEntry, reason))
     }
 
+    pub fn exit(
+        &mut self,
+        status: i32,
+    ) -> Result<(*mut ContextInformation, *mut ContextInformation), Error> {
+        // Safety: it is safe to call unwrap because there is always a process running.
+        let running_process: RunningProcess = self.running.take().unwrap();
+
+        match running_process.exit(status) {
+            Ok((runnable_process, previous_context)) => {
+                let (running_process, next_context) = runnable_process.run();
+                self.running = Some(running_process);
+                Ok((previous_context, next_context))
+            },
+            Err((zombie_process, previous_context)) => {
+                self.zombies.push_back(zombie_process);
+
+                match self.ready.pop_front() {
+                    Some(runnable_process) => {
+                        let (running_process, next_context) = runnable_process.run();
+                        self.running = Some(running_process);
+                        Ok((previous_context, next_context))
+                    },
+                    None => {
+                        if self.suspended.len() == 1 {
+                            let suspended_process: SuspendedProcess =
+                                self.suspended.pop_front().unwrap();
+                            let interrupted_process = suspended_process.interrupt();
+                            let (next_process, next_context) = interrupted_process.resume();
+                            self.interrupted = true;
+                            self.running = Some(next_process);
+                            return Ok((previous_context, next_context));
+                        }
+                        trace!("number of suspended: {:?}", self.suspended.len());
+                        trace!("number of zombies: {:?}", self.zombies.len());
+                        todo!();
+                    },
+                }
+            },
+        }
+    }
+
     fn get_running(&self) -> &RunningProcess {
         // NOTE: The following call to unwrap is safe because there is always a running process.
         self.running.as_ref().unwrap()
@@ -421,6 +462,33 @@ impl ProcessManager {
         match self.0.try_borrow() {
             Ok(pm) => Ok(pm.get_running().clone()),
             Err(_) => Err(Error::new(ErrorCode::ResourceBusy, "cannot borrow process manager")),
+        }
+    }
+
+    pub fn exit(status: i32) -> Result<!, Error> {
+        trace!("exit({:?})", status);
+        unsafe {
+            let (from, to): (*mut ContextInformation, *mut ContextInformation) =
+                match PROCESS_MANAGER {
+                    Some(ref pm) => match pm.0.try_borrow_mut() {
+                        Ok(mut pm) => pm.exit(status)?,
+                        Err(_) => {
+                            return Err(Error::new(
+                                ErrorCode::ResourceBusy,
+                                "cannot borrow process manager",
+                            ));
+                        },
+                    },
+                    None => {
+                        return Err(Error::new(
+                            ErrorCode::TryAgain,
+                            "process manager not initialized",
+                        ))
+                    },
+                };
+            trace!("exit(): switching from {:?} to {:?}", from, to);
+            ContextInformation::switch(from, to);
+            core::hint::unreachable_unchecked()
         }
     }
 

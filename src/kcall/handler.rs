@@ -64,7 +64,7 @@ fn do_debug(
 ///
 /// Kernel call handler.
 ///
-pub fn kcall_handler(hal: Hal, mut mm: VirtMemoryManager, mut pm: ProcessManager) -> ! {
+pub fn kcall_handler(hal: Hal, mut mm: VirtMemoryManager, mut pm: ProcessManager) {
     loop {
         // Read kernel call arguments from the scoreboard.
         match ScoreBoard::get_mut() {
@@ -105,12 +105,20 @@ pub fn kcall_handler(hal: Hal, mut mm: VirtMemoryManager, mut pm: ProcessManager
                     }
                 },
                 Err(e) => {
-                    warn!("failed to handle kernel call: {:?}", e)
+                    if e.code == ErrorCode::Interrupted {
+                        break;
+                    }
                 },
             },
             Err(e) => {
                 warn!("failed to get scoreboard: {:?}", e)
             },
         };
+
+        pm.harvest_zombies();
     }
+
+    pm.harvest_zombies();
+
+    trace!("shutting down");
 }

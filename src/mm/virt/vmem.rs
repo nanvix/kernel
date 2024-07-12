@@ -537,3 +537,39 @@ impl Vmem {
         Ok(uframe)
     }
 }
+
+impl Drop for Vmem {
+    fn drop(&mut self) {
+        trace!("drop()");
+
+        while !self.user_pages.is_empty() {
+            let vaddr = self
+                .user_pages
+                .front()
+                .unwrap()
+                .vaddr()
+                .into_virtual_address();
+
+            if let Err(err) = self.unmap(vaddr) {
+                error!("drop(): failed to unmap user page: {:?}", err);
+            }
+        }
+
+        // Unmap all kernel private kernel pages.
+        while let Some(kpage) = self.private_kernel_pages.pop_front() {
+            trace!("freeing kernel page: {:?}", kpage.frame_address());
+        }
+
+        // Unmap shared kernel pages.
+        while let Some(entry) = self.kernel_pages.pop_front() {
+            trace!("freeing shared kernel pages: {:?}", entry.borrow().frame_address());
+            drop(entry);
+        }
+
+        // Unmap shared kernel page tables.
+        while let Some(entry) = self.kernel_page_tables.pop_front() {
+            trace!("freeing share dkernel page table: {:?}", entry.borrow().0);
+            drop(entry)
+        }
+    }
+}

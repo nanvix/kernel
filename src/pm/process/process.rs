@@ -130,6 +130,33 @@ impl RunningProcess {
         self.0.borrow_mut().wakeup_sleeping_thread(tid)
     }
 
+    pub fn exit(
+        self,
+        status: i32,
+    ) -> Result<(RunnableProcess, *mut ContextInformation), (ZombieProcess, *mut ContextInformation)>
+    {
+        let running_thread = self.0.borrow_mut().running.take().unwrap();
+        let (zombie_thread, ctx) = running_thread.exit();
+        self.0.borrow_mut().zombies = Some(zombie_thread);
+
+        if let Some(sleeping_thread) = self.0.borrow_mut().sleeping.take() {
+            let interrupted_thread = sleeping_thread.interrupt();
+            self.0.borrow_mut().interrupted = Some(interrupted_thread);
+        }
+
+        if self.is_runnable() {
+            return Ok((RunnableProcess(self.0), ctx));
+        }
+
+        Err((
+            ZombieProcess {
+                process: self.0,
+                status,
+            },
+            ctx,
+        ))
+    }
+
     pub fn get_tid(&self) -> Option<ThreadIdentifier> {
         match self.0.borrow().running {
             Some(ref running) => Some(running.id()),

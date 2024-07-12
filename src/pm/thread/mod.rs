@@ -70,6 +70,11 @@ impl RunningThread {
     pub fn id(&self) -> ThreadIdentifier {
         self.0.id
     }
+
+    pub fn exit(mut self) -> (ZombieThread, *mut ContextInformation) {
+        let ctx: *mut ContextInformation = self.0.context_mut();
+        (ZombieThread(self.0), ctx)
+    }
 }
 
 //==================================================================================================

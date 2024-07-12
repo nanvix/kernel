@@ -42,6 +42,10 @@ pub extern "C" fn do_kcall(number: u32, arg0: u32, arg1: u32, arg2: u32, arg3: u
             Ok(tid) => tid.into(),
             Err(e) => e.code.into_errno(),
         },
+        KcallNumber::Exit => match ProcessManager::exit(arg0 as i32) {
+            Ok(_) => unsafe { core::hint::unreachable_unchecked() },
+            Err(e) => e.code.into_errno(),
+        },
         // Dispatch kernel call for remote execution.
         _ => match ScoreBoard::get_mut() {
             Ok(scoreboard) => match scoreboard.dispatch(number, arg0, arg1, arg2, arg3) {
