@@ -28,17 +28,13 @@ struct Thread {
     id: ThreadIdentifier,
     /// Execution context.
     context: Pin<Box<ContextInformation>>,
-    /// Kernel stack.
-    #[allow(dead_code)]
-    kstack: Stack,
 }
 
 impl Thread {
-    pub fn new(id: ThreadIdentifier, context: ContextInformation, stack: Stack) -> Self {
+    pub fn new(id: ThreadIdentifier, context: ContextInformation) -> Self {
         Self {
             id,
             context: Box::pin(context),
-            kstack: stack,
         }
     }
 
@@ -71,8 +67,8 @@ impl RunningThread {
 pub struct ReadyThread(Thread);
 
 impl ReadyThread {
-    pub fn new(id: ThreadIdentifier, context: ContextInformation, stack: Stack) -> Self {
-        Self(Thread::new(id, context, stack))
+    pub fn new(id: ThreadIdentifier, context: ContextInformation) -> Self {
+        Self(Thread::new(id, context))
     }
 
     pub fn resume(self) -> RunningThread {
@@ -97,6 +93,7 @@ impl ReadyThread {
     }
 }
 
+
 //==================================================================================================
 // Thread Manager
 //==================================================================================================
@@ -106,12 +103,9 @@ pub struct ThreadManager {
 }
 
 impl ThreadManager {
-    fn new(kstack: &mut u8) -> (ReadyThread, Self) {
-        let kernel: ReadyThread = ReadyThread::new(
-            ThreadIdentifier::from(0),
-            ContextInformation::default(),
-            Stack::from_raw_parts(kstack, config::KSTACK_SIZE),
-        );
+    fn new() -> (ReadyThread, Self) {
+        let kernel: ReadyThread =
+            ReadyThread::new(ThreadIdentifier::from(0), ContextInformation::default());
         (
             kernel,
             Self {
@@ -120,15 +114,11 @@ impl ThreadManager {
         )
     }
 
-    pub fn create_thread(
-        &mut self,
-        context: ContextInformation,
-        stack: Stack,
-    ) -> Result<ReadyThread, Error> {
+    pub fn create_thread(&mut self, context: ContextInformation) -> Result<ReadyThread, Error> {
         let id: ThreadIdentifier = self.next_id;
         self.next_id = ThreadIdentifier::from(Into::<usize>::into(self.next_id) + 1);
 
-        Ok(ReadyThread(Thread::new(id, context, stack)))
+        Ok(ReadyThread(Thread::new(id, context)))
     }
 }
 
@@ -137,8 +127,8 @@ impl ThreadManager {
 //==================================================================================================
 
 /// Initializes the thread manager.
-pub fn init(kstack: &mut u8) -> (ReadyThread, ThreadManager) {
+pub fn init() -> (ReadyThread, ThreadManager) {
     // TODO: check for double initialization.
 
-    ThreadManager::new(kstack)
+    ThreadManager::new()
 }

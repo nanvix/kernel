@@ -51,7 +51,7 @@ pub fn timer_handler() {
 }
 
 /// Initializes the processor manager.
-pub fn init(hal: &mut Hal, root: Vmem, kstack: &mut u8) -> Result<ProcessManager, Error> {
+pub fn init(hal: &mut Hal, root: Vmem) -> Result<ProcessManager, Error> {
     info!("initializing the processor manager...");
 
     // Register the timer handler.
@@ -61,7 +61,7 @@ pub fn init(hal: &mut Hal, root: Vmem, kstack: &mut u8) -> Result<ProcessManager
 
     // Initialize the thread manager.
     info!("initializing the thread manager...");
-    let (kernel, tm): (ReadyThread, ThreadManager) = thread::init(kstack);
+    let (kernel, tm): (ReadyThread, ThreadManager) = thread::init();
     let pm: ProcessManager = process::init(kernel, root, tm);
 
     Ok(pm)

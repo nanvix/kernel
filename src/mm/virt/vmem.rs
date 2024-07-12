@@ -81,6 +81,8 @@ pub struct Vmem {
     /// List of kernel pages mapped in the virtual address space.
     /// NOTE: this currently excludes kernel pages that are identity mapped.
     kernel_pages: LinkedList<Rc<RefCell<KernelPage>>>,
+    /// List of private kernel pages.
+    private_kernel_pages: LinkedList<KernelPage>,
     /// List of underling page tables holding user pages.
     user_page_tables: LinkedList<PageTable>,
     /// List of user pages in the virtual memory space.
@@ -119,6 +121,7 @@ impl Vmem {
             pgdir,
             kernel_page_tables: kpage_tables,
             kernel_pages: kpages,
+            private_kernel_pages: LinkedList::new(),
             user_page_tables: LinkedList::new(),
             user_pages: LinkedList::new(),
         })
@@ -150,9 +153,15 @@ impl Vmem {
             pgdir,
             kernel_page_tables,
             kernel_pages,
+            private_kernel_pages: LinkedList::new(),
             user_page_tables: LinkedList::new(),
             user_pages: LinkedList::new(),
         })
+    }
+
+    /// Adds a kernel page to the private list of the kernel pages in the target virtual memory space.
+    pub fn add_private_kernel_page(&mut self, kpage: KernelPage) {
+        self.private_kernel_pages.push_back(kpage);
     }
 
     pub fn load(&self) -> Result<(), Error> {

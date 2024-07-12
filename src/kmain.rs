@@ -229,7 +229,7 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
             },
         };
 
-    let mut pm: ProcessManager = match pm::init(&mut hal, root, unsafe { &mut kstack }) {
+    let mut pm: ProcessManager = match pm::init(&mut hal, root) {
         Ok(pm) => pm,
         Err(err) => {
             panic!("failed to initialize process manager: {:?}", err);

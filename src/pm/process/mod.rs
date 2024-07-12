@@ -25,6 +25,7 @@ use crate::{
         mem::{
             AccessPermission,
             Address,
+            PageAddress,
             PageAligned,
             VirtualAddress,
         },
@@ -36,17 +37,15 @@ use crate::{
         VirtMemoryManager,
         Vmem,
     },
-    pm::{
-        stack::Stack,
-        thread::{
-            ReadyThread,
-            ThreadManager,
-        },
+    pm::thread::{
+        ReadyThread,
+        ThreadManager,
     },
 };
 use ::alloc::{
     collections::LinkedList,
     rc::Rc,
+    vec::Vec,
 };
 use ::core::cell::RefCell;
 use ::kcall::{
@@ -112,21 +111,21 @@ impl ProcessManagerInner {
 
     fn forge_user_context(
         vmem: &Vmem,
-        kstack: &Stack,
         user_stack: VirtualAddress,
         user_func: VirtualAddress,
         kernel_func: VirtualAddress,
+        kernel_stack: VirtualAddress,
     ) -> Result<ContextInformation, Error> {
         let cr3: u32 = vmem.pgdir().physical_address()?.into_raw_value() as u32;
         let esp: u32 = unsafe {
             hal::arch::forge_user_stack(
-                kstack.top(),
+                kernel_stack.into_raw_value() as *mut u8,
                 user_stack.into_raw_value(),
                 user_func.into_raw_value(),
                 kernel_func.into_raw_value(),
             )
         } as u32;
-        let esp0: u32 = kstack.top() as u32;
+        let esp0: u32 = kernel_stack.into_raw_value() as u32;
 
         trace!("forge_context(): cr3={:#x}, esp={:#x}, ebp={:#x}", cr3, esp, esp0);
         Ok(ContextInformation::new(cr3, esp, esp0))
@@ -136,17 +135,27 @@ impl ProcessManagerInner {
     pub fn create_thread(
         &mut self,
         mm: &mut VirtMemoryManager,
-        vmem: &Vmem,
+        vmem: &mut Vmem,
         user_stack: VirtualAddress,
         user_func: VirtualAddress,
         kernel_func: VirtualAddress,
     ) -> Result<ReadyThread, Error> {
-        let stack: Stack = Stack::new(mm)?;
+        let mut kpages: Vec<KernelPage> =
+            mm.alloc_kpages(true, config::KSTACK_SIZE / mem::PAGE_SIZE)?;
+
+        let base: PageAddress = kpages[0].base();
+        let size: usize = config::KSTACK_SIZE;
+        let top = unsafe { (base.into_raw_value() as *mut u8).add(size) };
+        let kernel_stack = VirtualAddress::from_raw_value(top as usize)?;
 
         let context: ContextInformation =
-            Self::forge_user_context(vmem, &stack, user_stack, user_func, kernel_func)?;
+            Self::forge_user_context(vmem, user_stack, user_func, kernel_func, kernel_stack)?;
 
-        self.tm.create_thread(context, stack)
+        while let Some(kpage) = kpages.pop() {
+            vmem.add_private_kernel_page(kpage);
+        }
+
+        self.tm.create_thread(context)
     }
 
     /// Creates a new process.
@@ -170,7 +179,7 @@ impl ProcessManagerInner {
         let kernel_func: VirtualAddress =
             VirtualAddress::from_raw_value(__leave_kernel_to_user_mode as usize)?;
         let thread: ReadyThread =
-            self.create_thread(mm, &vmem, user_stack, user_func, kernel_func)?;
+            self.create_thread(mm, &mut vmem, user_stack, user_func, kernel_func)?;
 
         // Alloc user stack.
         let vaddr: PageAligned<VirtualAddress> = PageAligned::from_raw_value(
