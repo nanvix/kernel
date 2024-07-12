@@ -70,30 +70,6 @@ impl ProcessIdentity {
     ///
     /// # Description
     ///
-    /// Constructs a process identity from another one.
-    ///
-    /// # Parameters
-    ///
-    /// - `other`: The other process identity.
-    ///
-    /// # Returns
-    ///
-    /// A new process identity.
-    ///
-    pub fn from(other: &Self) -> Self {
-        Self {
-            uid: other.uid,
-            euid: other.euid,
-            suid: other.suid,
-            gid: other.gid,
-            egid: other.egid,
-            sgid: other.sgid,
-        }
-    }
-
-    ///
-    /// # Description
-    ///
     /// Gets the user identifier in the target process identity.
     ///
     /// # Return Values

@@ -7,7 +7,6 @@
 
 mod kcall;
 mod process;
-mod stack;
 pub mod sync;
 pub mod thread;
 

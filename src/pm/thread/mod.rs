@@ -6,10 +6,8 @@
 //==================================================================================================
 
 use crate::{
-    config,
     error::Error,
     hal::arch::x86::cpu::context::ContextInformation,
-    pm::stack::Stack,
 };
 use alloc::boxed::Box;
 use core::{
@@ -38,16 +36,26 @@ impl Thread {
         }
     }
 
-    pub fn context_mut(&mut self) -> &mut ContextInformation {
-        self.context.as_mut().get_mut()
+    fn context_mut(&mut self) -> *mut ContextInformation {
+        self.context.as_mut().get_mut() as *mut ContextInformation
     }
 }
+
+//==================================================================================================
+// Running Thread
+//==================================================================================================
 
 pub struct RunningThread(Thread);
 
 impl RunningThread {
-    pub fn suspend(self) -> ReadyThread {
-        ReadyThread(self.0)
+    pub fn sleep(mut self) -> (SleepingThread, *mut ContextInformation) {
+        let ctx: *mut ContextInformation = self.0.context_mut();
+        (SleepingThread(self.0), ctx)
+    }
+
+    pub fn schedule(mut self) -> (ReadyThread, *mut ContextInformation) {
+        let ctx: *mut ContextInformation = self.0.context_mut();
+        (ReadyThread(self.0), ctx)
     }
 
     ///
@@ -63,6 +71,10 @@ impl RunningThread {
         self.0.id
     }
 }
+
+//==================================================================================================
+// Ready Thread
+//==================================================================================================
 
 pub struct ReadyThread(Thread);
 
@@ -71,28 +83,50 @@ impl ReadyThread {
         Self(Thread::new(id, context))
     }
 
-    pub fn resume(self) -> RunningThread {
-        RunningThread(self.0)
+    pub fn resume(mut self) -> (RunningThread, *mut ContextInformation) {
+        let ctx: *mut ContextInformation = self.0.context_mut();
+        (RunningThread(self.0), ctx)
+    }
+}
+
+//==================================================================================================
+// Sleeping Thread
+//==================================================================================================
+
+pub struct SleepingThread(Thread);
+
+impl SleepingThread {
+    pub fn wakeup(self) -> ReadyThread {
+        ReadyThread(self.0)
     }
 
-    pub fn context_mut(&mut self) -> &mut ContextInformation {
-        self.0.context_mut()
+    pub fn interrupt(self) -> InterruptedThread {
+        InterruptedThread(self.0)
     }
 
-    ///
-    /// # Description
-    ///
-    /// Returns the identifier of the target thread.
-    ///
-    /// # Returns
-    ///
-    /// The identifier of the target thread.
-    ///
     pub fn id(&self) -> ThreadIdentifier {
         self.0.id
     }
 }
 
+//==================================================================================================
+// Interrupted Thread
+//==================================================================================================
+
+pub struct InterruptedThread(Thread);
+
+impl InterruptedThread {
+    pub fn resume(mut self) -> (RunningThread, *mut ContextInformation) {
+        let ctx: *mut ContextInformation = self.0.context_mut();
+        (RunningThread(self.0), ctx)
+    }
+}
+
+//==================================================================================================
+// Zombie Thread
+//==================================================================================================
+
+pub struct ZombieThread(Thread);
 
 //==================================================================================================
 // Thread Manager

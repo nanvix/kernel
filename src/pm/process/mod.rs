@@ -37,9 +37,15 @@ use crate::{
         VirtMemoryManager,
         Vmem,
     },
-    pm::thread::{
-        ReadyThread,
-        ThreadManager,
+    pm::{
+        process::process::{
+            RunnableProcess,
+            ZombieProcess,
+        },
+        thread::{
+            ReadyThread,
+            ThreadManager,
+        },
     },
 };
 use ::alloc::{
@@ -75,11 +81,18 @@ pub use process::{
 /// A type that represents the process manager.
 ///
 struct ProcessManagerInner {
+    /// Was the process interrupted?
+    interrupted: bool,
+    /// Next process identifier.
     next_pid: ProcessIdentifier,
     /// Running process.
     running: Option<RunningProcess>,
     /// Ready processes.
-    ready: LinkedList<SuspendedProcess>,
+    ready: LinkedList<RunnableProcess>,
+    /// Suspended processes.
+    suspended: LinkedList<SuspendedProcess>,
+    /// Zombie processes.
+    zombies: LinkedList<ZombieProcess>,
     /// Thread manager.
     tm: ThreadManager,
 }
@@ -87,23 +100,21 @@ struct ProcessManagerInner {
 impl ProcessManagerInner {
     /// Initializes the process manager.
     pub fn new(kernel: ReadyThread, root: Vmem, tm: ThreadManager) -> Self {
-        let kernel: SuspendedProcess = SuspendedProcess::new(
+        let kernel: RunnableProcess = RunnableProcess::new(
             ProcessIdentifier::from(0),
             ProcessIdentity::new(UserIdentifier::ROOT, GroupIdentifier::ROOT),
             kernel,
             root,
         );
 
-        let kernel: RunningProcess = match kernel.run() {
-            Ok((kernel, _ctx)) => kernel,
-            Err(_kernel) => {
-                unreachable!("failed to run kernel thread");
-            },
-        };
+        let (kernel, _): (RunningProcess, *mut ContextInformation) = kernel.run();
 
         Self {
+            interrupted: false,
             next_pid: ProcessIdentifier::from(1),
             ready: LinkedList::new(),
+            suspended: LinkedList::new(),
+            zombies: LinkedList::new(),
             running: Some(kernel),
             tm,
         }
@@ -195,7 +206,7 @@ impl ProcessManagerInner {
         let pid: ProcessIdentifier = self.next_pid;
         self.next_pid = ProcessIdentifier::from(Into::<usize>::into(pid) + 1);
         let identity: ProcessIdentity = from.clone_identity();
-        let process: SuspendedProcess = SuspendedProcess::new(pid, identity, thread, vmem);
+        let process: RunnableProcess = RunnableProcess::new(pid, identity, thread, vmem);
 
         self.ready.push_back(process);
 
@@ -206,23 +217,16 @@ impl ProcessManagerInner {
     pub fn schedule(&mut self) -> (*mut ContextInformation, *mut ContextInformation) {
         // Reschedule running process.
         let previous_process: RunningProcess = self.running.take().unwrap();
-        let (previous_process, previous_context): (SuspendedProcess, *mut ContextInformation) =
-            previous_process.schedule();
+        let (previous_process, previous_context) = previous_process.schedule();
         self.ready.push_back(previous_process);
 
         // Select next ready process to run.
-        loop {
-            let next_process: SuspendedProcess = self.ready.pop_front().unwrap();
-            match next_process.run() {
-                Ok((next_process, next_context)) => {
-                    self.running = Some(next_process);
-                    return (previous_context, next_context);
-                },
-                Err(next_process) => {
-                    self.ready.push_back(next_process);
-                },
-            }
-        }
+        let next_process: RunnableProcess = self.ready.pop_front().unwrap();
+        let (next_process, next_context): (RunningProcess, *mut ContextInformation) =
+            next_process.run();
+
+        self.running = Some(next_process);
+        (previous_context, next_context)
     }
 
     pub fn exec(
@@ -232,7 +236,7 @@ impl ProcessManagerInner {
         elf: &Elf32Fhdr,
     ) -> Result<(), Error> {
         // Find corresponding process.
-        let process: &mut SuspendedProcess = match self.ready.iter_mut().find(|p| p.pid() == pid) {
+        let process: &mut RunnableProcess = match self.ready.iter_mut().find(|p| p.pid() == pid) {
             Some(p) => p,
             None => {
                 let reason: &str = "process not found";
@@ -273,7 +277,7 @@ impl ProcessManagerInner {
     }
 
     pub fn find_suspended_process(&self, pid: ProcessIdentifier) -> Option<&SuspendedProcess> {
-        self.ready.iter().find(|p| p.pid() == pid)
+        self.suspended.iter().find(|p| p.pid() == pid)
     }
 
     ///
@@ -289,28 +293,17 @@ impl ProcessManagerInner {
         // Safety: it is safe to call unwrap because there is always a process running.
         let running_process: RunningProcess = self.running.take().unwrap();
 
-        let (suspended_process, previous_context): (SuspendedProcess, *mut ContextInformation) =
-            running_process.sleep();
-
-        match suspended_process.run() {
-            Ok((next_process, next_context)) => {
+        match running_process.sleep() {
+            Ok((runnable_process, previous_context)) => {
+                let (next_process, next_context) = runnable_process.run();
                 self.running = Some(next_process);
                 (previous_context, next_context)
             },
-            Err(suspended_process) => {
-                self.ready.push_back(suspended_process);
-                // Safety: it is safe to call unwrap because there is always a process ready to be run.
-                let suspended_process: SuspendedProcess = self.ready.pop_front().unwrap();
-
-                // Safety: it is safe to call unwrap because there is always a thread ready to be run.
-                let (next_process, next_context): (RunningProcess, *mut ContextInformation) =
-                    match suspended_process.run() {
-                        Ok((next_process, next_context)) => (next_process, next_context),
-                        Err(_) => {
-                            unreachable!("there should exist a runnable thread")
-                        },
-                    };
-
+            Err((suspended_process, previous_context)) => {
+                self.suspended.push_back(suspended_process);
+                let next_process: RunnableProcess = self.ready.pop_front().unwrap();
+                let (next_process, next_context) = next_process.run();
+                self.interrupted = false;
                 self.running = Some(next_process);
                 (previous_context, next_context)
             },
@@ -343,6 +336,21 @@ impl ProcessManagerInner {
             return Ok(());
         }
 
+        // Check if thread belongs to a suspended process.
+        let mut suspended: LinkedList<SuspendedProcess> = LinkedList::new();
+        while let Some(process) = self.suspended.pop_front() {
+            match process.wakeup_sleeping_thread(tid) {
+                Ok(runnable_process) => {
+                    self.ready.push_back(runnable_process);
+                    while let Some(process) = suspended.pop_front() {
+                        self.suspended.push_back(process);
+                    }
+                    return Ok(());
+                },
+                Err(suspended_process) => suspended.push_back(suspended_process),
+            }
+        }
+
         let reason: &str = "thread not found";
         error!("wake_up(): {}", reason);
         Err(Error::new(ErrorCode::NoSuchEntry, reason))
@@ -365,6 +373,18 @@ impl ProcessManagerInner {
     fn get_running_mut(&mut self) -> &mut RunningProcess {
         // NOTE: The following call to unwrap is safe because there is always a running process.
         self.running.as_mut().unwrap()
+    }
+
+    fn interrupt_flag(&mut self) -> bool {
+        let interrupted = self.interrupted;
+        self.interrupted = false;
+        interrupted
+    }
+
+    pub fn harvest_zombies(&mut self) {
+        while let Some(zombie) = self.zombies.pop_front() {
+            trace!("harvest_zombies(): pid={:?}", zombie.pid());
+        }
     }
 }
 
@@ -429,6 +449,13 @@ impl ProcessManager {
         }
     }
 
+    pub fn harvest_zombies(&mut self) {
+        match self.0.try_borrow_mut() {
+            Ok(mut pm) => pm.harvest_zombies(),
+            Err(_) => error!("harvest_zombies(): cannot borrow process manager"),
+        }
+    }
+
     ///
     /// # Description
     ///
@@ -469,7 +496,9 @@ impl ProcessManager {
                 Some(ref pm) => match pm.0.try_borrow() {
                     Ok(pm) => Ok(pm.get_tid()),
                     Err(_) => {
-                        Err(Error::new(ErrorCode::ResourceBusy, "cannot borrow process manager"))
+                        let reason: &str = "cannot borrow process manager";
+                        error!("get_tid(): {}", reason);
+                        Err(Error::new(ErrorCode::ResourceBusy, &reason))
                     },
                 },
                 None => Err(Error::new(ErrorCode::TryAgain, "process manager not initialized")),
@@ -506,6 +535,29 @@ impl ProcessManager {
         };
 
         unsafe { ContextInformation::switch(from, to) }
+        let interrupted_flag: bool = unsafe {
+            match PROCESS_MANAGER {
+                Some(ref pm) => match pm.0.try_borrow_mut() {
+                    Ok(mut pm) => pm.interrupt_flag(),
+                    Err(_) => {
+                        let reason: &str = "cannot borrow process manager";
+                        error!("sleep(): {}", reason);
+                        return Err(Error::new(ErrorCode::ResourceBusy, reason));
+                    },
+                },
+                None => {
+                    let reason: &str = "process manager not initialized";
+                    error!("sleep(): {}", reason);
+                    return Err(Error::new(ErrorCode::TryAgain, reason));
+                },
+            }
+        };
+
+        if interrupted_flag {
+            let reason: &str = "interrupted";
+            error!("sleep(): {}", reason);
+            return Err(Error::new(ErrorCode::Interrupted, reason));
+        }
 
         Ok(())
     }
