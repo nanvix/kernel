@@ -71,10 +71,7 @@ impl VirtMemoryManager {
         kernel_page_tables: LinkedList<(PageTableAddress, PageTable)>,
         physman: PhysMemoryManager,
     ) -> Result<(Vmem, Self), Error> {
-        let root: Vmem = Vmem::new(
-            Rc::new(RefCell::new(kernel_pages)),
-            Rc::new(RefCell::new(kernel_page_tables)),
-        )?;
+        let root: Vmem = Vmem::new(kernel_pages, kernel_page_tables)?;
 
         // Load root root address space.
         root.load()?;
@@ -84,11 +81,7 @@ impl VirtMemoryManager {
 
     /// Creates a new virtual address space, based on root.
     pub fn new_vmem(&self, vmem: &Vmem) -> Result<Vmem, Error> {
-        let kernel_pages: Rc<RefCell<LinkedList<KernelPage>>> = vmem.kernel_pages();
-        let kernel_page_tables: Rc<RefCell<LinkedList<(PageTableAddress, PageTable)>>> =
-            vmem.kernel_page_tables();
-
-        let new_vmem: Vmem = Vmem::new(kernel_pages, kernel_page_tables)?;
+        let new_vmem: Vmem = Vmem::clone(vmem)?;
 
         trace!(
             "new_vmem(): new_vmem={:?}, old_vmem={:?}",

@@ -77,10 +77,10 @@ pub struct Vmem {
     /// Underlying page directory.
     pgdir: PageDirectory,
     /// List of kernel page tables.
-    kernel_page_tables: Rc<RefCell<LinkedList<(PageTableAddress, PageTable)>>>,
+    kernel_page_tables: LinkedList<Rc<RefCell<(PageTableAddress, PageTable)>>>,
     /// List of kernel pages mapped in the virtual address space.
     /// NOTE: this currently excludes kernel pages that are identity mapped.
-    kernel_pages: Rc<RefCell<LinkedList<KernelPage>>>,
+    kernel_pages: LinkedList<Rc<RefCell<KernelPage>>>,
     /// List of underling page tables holding user pages.
     user_page_tables: LinkedList<PageTable>,
     /// List of user pages in the virtual memory space.
@@ -90,19 +90,60 @@ pub struct Vmem {
 impl Vmem {
     /// Initializes a new virtual memory space.
     pub fn new(
-        kernel_pages: Rc<RefCell<LinkedList<KernelPage>>>,
-        kernel_page_tables: Rc<RefCell<LinkedList<(PageTableAddress, PageTable)>>>,
+        mut kernel_pages: LinkedList<KernelPage>,
+        mut kernel_page_tables: LinkedList<(PageTableAddress, PageTable)>,
     ) -> Result<Self, Error> {
         trace!("new()");
 
+        // Create a clean page directory.
         let mut pgdir: PageDirectory = PageDirectory::new(PageDirectoryStorage::new());
         pgdir.clean();
 
-        // Map root page tables.
-        for (vaddr, page_table) in kernel_page_tables.borrow().iter() {
+        // Map and store root page tables.
+        let mut kpage_tables: LinkedList<Rc<RefCell<(PageTableAddress, PageTable)>>> =
+            LinkedList::new();
+        while let Some((vaddr, page_table)) = kernel_page_tables.pop_front() {
             let page_table_address: FrameAddress = page_table.physical_address()?;
             // FIXME: do not be so open about permissions.
-            pgdir.map(*vaddr, page_table_address, true, AccessPermission::RDWR)?;
+            pgdir.map(vaddr, page_table_address, true, AccessPermission::RDWR)?;
+            kpage_tables.push_back(Rc::new(RefCell::new((vaddr, page_table))));
+        }
+
+        // Store root pages.
+        let mut kpages: LinkedList<Rc<RefCell<KernelPage>>> = LinkedList::new();
+        while let Some(entry) = kernel_pages.pop_front() {
+            kpages.push_back(Rc::new(RefCell::new(entry)));
+        }
+
+        Ok(Self {
+            pgdir,
+            kernel_page_tables: kpage_tables,
+            kernel_pages: kpages,
+            user_page_tables: LinkedList::new(),
+            user_pages: LinkedList::new(),
+        })
+    }
+
+    /// Clones the target virtual memory space.
+    pub fn clone(from: &Vmem) -> Result<Vmem, Error> {
+        // Create a clean page directory.
+        let mut pgdir: PageDirectory = PageDirectory::new(PageDirectoryStorage::new());
+        pgdir.clean();
+
+        // Map and store root page tables.
+        let mut kernel_page_tables: LinkedList<Rc<RefCell<(PageTableAddress, PageTable)>>> =
+            LinkedList::new();
+        for entry in from.kernel_page_tables.iter() {
+            let page_table_address: FrameAddress = entry.borrow().1.physical_address()?;
+            // FIXME: do not be so open about permissions.
+            pgdir.map(entry.borrow().0, page_table_address, true, AccessPermission::RDWR)?;
+            kernel_page_tables.push_back(entry.clone());
+        }
+
+        // Store root pages.
+        let mut kernel_pages: LinkedList<Rc<RefCell<KernelPage>>> = LinkedList::new();
+        for entry in from.kernel_pages.iter() {
+            kernel_pages.push_back(entry.clone());
         }
 
         Ok(Self {
@@ -175,16 +216,16 @@ impl Vmem {
 
             // Add page table to the list of kernel page tables.
             self.kernel_page_tables
-                .borrow_mut()
-                .push_back((pt_vaddr, page_table));
+                .push_back(Rc::new(RefCell::new((pt_vaddr, page_table))));
         };
 
         // Get corresponding page table.
-        for (pt_addr, pt) in self.kernel_page_tables.borrow_mut().iter_mut() {
-            if pt_addr.into_raw_value() == pt_vaddr.into_raw_value() {
+        for entry in self.kernel_page_tables.iter_mut() {
+            // let entry = (pt_addr, pt);
+            if entry.borrow().0.into_raw_value() == pt_vaddr.into_raw_value() {
                 // Map the page to the target virtual address space.
                 // FIXME: do not be so open about permissions and caching.
-                pt.map(
+                entry.borrow_mut().1.map(
                     PageAddress::new(vaddr),
                     kpage.frame_address(),
                     true,
@@ -194,7 +235,7 @@ impl Vmem {
                 )?;
 
                 // Add the kernel page to the list of kernel pages.
-                self.kernel_pages.borrow_mut().push_back(kpage);
+                self.kernel_pages.push_back(Rc::new(RefCell::new(kpage)));
 
                 // Reload page directory to force a TLB flush.
                 self.load()?;
@@ -274,14 +315,6 @@ impl Vmem {
             .push_back(AttachedUserPage::new(PageAddress::new(vaddr), uframe));
 
         Ok(())
-    }
-
-    pub fn kernel_pages(&self) -> Rc<RefCell<LinkedList<KernelPage>>> {
-        self.kernel_pages.clone()
-    }
-
-    pub fn kernel_page_tables(&self) -> Rc<RefCell<LinkedList<(PageTableAddress, PageTable)>>> {
-        self.kernel_page_tables.clone()
     }
 
     /// Asserts whether an address lies in the user space.
