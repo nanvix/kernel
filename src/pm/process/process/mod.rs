@@ -2,29 +2,22 @@
 // Licensed under the MIT License.
 
 //==================================================================================================
-// Imports
+// Modules
 //==================================================================================================
 
-use crate::{
-    kcall::KcallArgs,
-    pm::process::ProcessManager,
-};
-use ::kcall::{
-    Error,
-    GroupIdentifier,
-};
+mod interrupted;
+mod runnable;
+mod running;
+mod state;
+mod suspended;
+mod zombie;
 
 //==================================================================================================
-// Standalone Functions
+// Exports
 //==================================================================================================
 
-fn do_getegid(pm: &ProcessManager) -> Result<GroupIdentifier, Error> {
-    pm.getegid()
-}
-
-pub fn getegid(pm: &ProcessManager, _args: &KcallArgs) -> i32 {
-    match do_getegid(pm) {
-        Ok(egid) => egid.into(),
-        Err(e) => e.code.into_errno(),
-    }
-}
+pub use interrupted::InterruptedProcess;
+pub use runnable::RunnableProcess;
+pub use running::RunningProcess;
+pub use suspended::SleepingProcess;
+pub use zombie::ZombieProcess;

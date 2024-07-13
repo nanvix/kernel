@@ -7,10 +7,7 @@
 
 use crate::{
     kcall::KcallArgs,
-    pm::process::{
-        ProcessManager,
-        RunningProcess,
-    },
+    pm::process::ProcessManager,
 };
 use ::kcall::{
     Error,
@@ -21,12 +18,11 @@ use ::kcall::{
 // Standalone Functions
 //==================================================================================================
 
-fn do_setegid(pm: &ProcessManager, gid: GroupIdentifier) -> Result<(), Error> {
-    let mut running: RunningProcess = pm.get_running()?;
-    running.set_egid(gid)
+fn do_setegid(pm: &mut ProcessManager, gid: GroupIdentifier) -> Result<(), Error> {
+    pm.setegid(gid)
 }
 
-pub fn setegid(pm: &ProcessManager, args: &KcallArgs) -> i32 {
+pub fn setegid(pm: &mut ProcessManager, args: &KcallArgs) -> i32 {
     match do_setegid(pm, GroupIdentifier::from(args.arg0)) {
         Ok(_) => 0,
         Err(e) => e.code.into_errno(),

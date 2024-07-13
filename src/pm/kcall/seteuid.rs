@@ -7,10 +7,7 @@
 
 use crate::{
     kcall::KcallArgs,
-    pm::process::{
-        ProcessManager,
-        RunningProcess,
-    },
+    pm::process::ProcessManager,
 };
 use ::kcall::{
     Error,
@@ -21,12 +18,11 @@ use ::kcall::{
 // Standalone Functions
 //==================================================================================================
 
-fn do_seteuid(pm: &ProcessManager, uid: UserIdentifier) -> Result<(), Error> {
-    let mut running: RunningProcess = pm.get_running()?;
-    running.set_euid(uid)
+fn do_seteuid(pm: &mut ProcessManager, uid: UserIdentifier) -> Result<(), Error> {
+    pm.seteuid(uid)
 }
 
-pub fn seteuid(pm: &ProcessManager, args: &KcallArgs) -> i32 {
+pub fn seteuid(pm: &mut ProcessManager, args: &KcallArgs) -> i32 {
     match do_seteuid(pm, UserIdentifier::from(args.arg0)) {
         Ok(_) => 0,
         Err(e) => e.code.into_errno(),

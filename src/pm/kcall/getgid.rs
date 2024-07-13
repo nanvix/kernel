@@ -7,10 +7,7 @@
 
 use crate::{
     kcall::KcallArgs,
-    pm::process::{
-        ProcessManager,
-        RunningProcess,
-    },
+    pm::process::ProcessManager,
 };
 use ::kcall::{
     Error,
@@ -22,8 +19,7 @@ use ::kcall::{
 //==================================================================================================
 
 fn do_getgid(pm: &ProcessManager) -> Result<GroupIdentifier, Error> {
-    let running: RunningProcess = pm.get_running()?;
-    Ok(running.get_gid())
+    pm.getgid()
 }
 
 pub fn getgid(pm: &ProcessManager, _args: &KcallArgs) -> i32 {

@@ -83,10 +83,6 @@ mod uart;
 // Standalone Functions
 //==================================================================================================
 
-extern "C" {
-    static mut kstack: u8;
-}
-
 fn test() {
     if !crate::arch::cpu::eflags::test() {
         panic!("eflags tests failed");

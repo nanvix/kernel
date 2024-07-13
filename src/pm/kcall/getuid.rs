@@ -7,10 +7,7 @@
 
 use crate::{
     kcall::KcallArgs,
-    pm::process::{
-        ProcessManager,
-        RunningProcess,
-    },
+    pm::process::ProcessManager,
 };
 use ::kcall::{
     Error,
@@ -22,8 +19,7 @@ use ::kcall::{
 //==================================================================================================
 
 fn do_getuid(pm: &ProcessManager) -> Result<UserIdentifier, Error> {
-    let running: RunningProcess = pm.get_running()?;
-    Ok(running.get_uid())
+    pm.getuid()
 }
 
 pub fn getuid(pm: &ProcessManager, _args: &KcallArgs) -> i32 {

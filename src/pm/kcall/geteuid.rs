@@ -5,10 +5,10 @@
 // Imports
 //==================================================================================================
 
-use crate::{kcall::KcallArgs, pm::process::{
-    ProcessManager,
-    RunningProcess,
-}};
+use crate::{
+    kcall::KcallArgs,
+    pm::process::ProcessManager,
+};
 use ::kcall::{
     Error,
     UserIdentifier,
@@ -19,8 +19,7 @@ use ::kcall::{
 //==================================================================================================
 
 fn do_geteuid(pm: &ProcessManager) -> Result<UserIdentifier, Error> {
-    let running: RunningProcess = pm.get_running()?;
-    Ok(running.get_euid())
+    pm.geteuid()
 }
 
 pub fn geteuid(pm: &ProcessManager, _args: &KcallArgs) -> i32 {
