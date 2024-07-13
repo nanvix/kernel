@@ -58,6 +58,7 @@ use ::core::cell::{
     RefMut,
 };
 use ::kcall::{
+    Capability,
     GroupIdentifier,
     ProcessIdentifier,
     ThreadIdentifier,
@@ -380,6 +381,23 @@ impl ProcessManagerInner {
         self.running.as_ref().unwrap()
     }
 
+    pub fn capctl(
+        &mut self,
+        pid: ProcessIdentifier,
+        capability: Capability,
+        value: bool,
+    ) -> Result<(), Error> {
+        let process: &mut RunnableProcess = self.find_runnable_process_mut(pid)?;
+
+        if value {
+            process.set_capability(capability);
+        } else {
+            process.clear_capability(capability);
+        }
+
+        Ok(())
+    }
+
     fn interrupt_flag(&mut self) -> bool {
         let interrupted: bool = self.interrupted;
         self.interrupted = false;
@@ -492,6 +510,15 @@ impl ProcessManager {
             .try_borrow_mut()?
             .find_runnable_process_mut(pid)?
             .set_egid(egid)?)
+    }
+
+    pub fn capctl(
+        &mut self,
+        pid: ProcessIdentifier,
+        capability: Capability,
+        value: bool,
+    ) -> Result<(), Error> {
+        Ok(self.try_borrow_mut()?.capctl(pid, capability, value)?)
     }
 
     pub fn exit(status: i32) -> Result<!, Error> {

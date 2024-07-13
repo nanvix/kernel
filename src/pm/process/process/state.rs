@@ -7,9 +7,13 @@
 
 use crate::{
     mm::Vmem,
-    pm::process::identity::ProcessIdentity,
+    pm::process::{
+        capability::Capabilities,
+        identity::ProcessIdentity,
+    },
 };
 use ::kcall::{
+    Capability,
     Error,
     GroupIdentifier,
     ProcessIdentifier,
@@ -30,6 +34,8 @@ pub struct ProcessState {
     pid: ProcessIdentifier,
     /// Process identity.
     identity: ProcessIdentity,
+    /// Capabilities.
+    capabilities: Capabilities,
     /// Memory address space.
     vmem: Vmem,
 }
@@ -39,6 +45,7 @@ impl ProcessState {
         Self {
             pid,
             identity,
+            capabilities: Capabilities::default(),
             vmem,
         }
     }
@@ -81,6 +88,14 @@ impl ProcessState {
 
     pub fn set_egid(&mut self, egid: GroupIdentifier) -> Result<(), Error> {
         self.identity.set_egid(egid)
+    }
+
+    pub fn set_capability(&mut self, capability: Capability) {
+        self.capabilities.set(capability)
+    }
+
+    pub fn clear_capability(&mut self, capability: Capability) {
+        self.capabilities.clear(capability)
     }
 
     pub fn vmem(&self) -> &Vmem {

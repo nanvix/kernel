@@ -20,6 +20,7 @@ use crate::{
     },
 };
 use ::kcall::{
+    Capability,
     Error,
     GroupIdentifier,
     ProcessIdentifier,
@@ -89,6 +90,14 @@ impl RunnableProcess {
 
     pub fn pid(&self) -> ProcessIdentifier {
         self.state.as_ref().unwrap().pid()
+    }
+
+    pub fn set_capability(&mut self, capability: Capability) {
+        self.state.as_mut().unwrap().set_capability(capability);
+    }
+
+    pub fn clear_capability(&mut self, capability: Capability) {
+        self.state.as_mut().unwrap().clear_capability(capability);
     }
 
     pub fn get_uid(&self) -> UserIdentifier {
