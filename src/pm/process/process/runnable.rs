@@ -21,7 +21,9 @@ use crate::{
 };
 use ::kcall::{
     Error,
+    GroupIdentifier,
     ProcessIdentifier,
+    UserIdentifier,
 };
 
 use super::RunningProcess;
@@ -87,5 +89,37 @@ impl RunnableProcess {
 
     pub fn pid(&self) -> ProcessIdentifier {
         self.state.as_ref().unwrap().pid()
+    }
+
+    pub fn get_uid(&self) -> UserIdentifier {
+        self.state.as_ref().unwrap().get_uid()
+    }
+
+    pub fn set_uid(&mut self, uid: UserIdentifier) -> Result<(), Error> {
+        self.state.as_mut().unwrap().set_uid(uid)
+    }
+
+    pub fn get_euid(&self) -> UserIdentifier {
+        self.state.as_ref().unwrap().get_euid()
+    }
+
+    pub fn set_euid(&mut self, euid: UserIdentifier) -> Result<(), Error> {
+        self.state.as_mut().unwrap().set_euid(euid)
+    }
+
+    pub fn get_gid(&self) -> GroupIdentifier {
+        self.state.as_ref().unwrap().get_gid()
+    }
+
+    pub fn set_gid(&mut self, gid: GroupIdentifier) -> Result<(), Error> {
+        self.state.as_mut().unwrap().set_gid(gid)
+    }
+
+    pub fn get_egid(&self) -> GroupIdentifier {
+        self.state.as_ref().unwrap().get_egid()
+    }
+
+    pub fn set_egid(&mut self, egid: GroupIdentifier) -> Result<(), Error> {
+        self.state.as_mut().unwrap().set_egid(egid)
     }
 }

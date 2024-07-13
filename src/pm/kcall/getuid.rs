@@ -11,6 +11,7 @@ use crate::{
 };
 use ::kcall::{
     Error,
+    ProcessIdentifier,
     UserIdentifier,
 };
 
@@ -18,12 +19,12 @@ use ::kcall::{
 // Standalone Functions
 //==================================================================================================
 
-fn do_getuid(pm: &ProcessManager) -> Result<UserIdentifier, Error> {
-    pm.getuid()
+fn do_getuid(pm: &ProcessManager, pid: ProcessIdentifier) -> Result<UserIdentifier, Error> {
+    pm.getuid(pid)
 }
 
-pub fn getuid(pm: &ProcessManager, _args: &KcallArgs) -> i32 {
-    match do_getuid(pm) {
+pub fn getuid(pm: &ProcessManager, args: &KcallArgs) -> i32 {
+    match do_getuid(pm, args.pid) {
         Ok(uid) => uid.into(),
         Err(e) => e.code.into_errno(),
     }

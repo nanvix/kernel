@@ -380,11 +380,6 @@ impl ProcessManagerInner {
         self.running.as_ref().unwrap()
     }
 
-    fn get_running_mut(&mut self) -> &mut RunningProcess {
-        // NOTE: The following call to unwrap is safe because there is always a running process.
-        self.running.as_mut().unwrap()
-    }
-
     fn interrupt_flag(&mut self) -> bool {
         let interrupted: bool = self.interrupted;
         self.interrupted = false;
@@ -400,6 +395,31 @@ impl ProcessManagerInner {
                 thread.id(),
                 status
             );
+        }
+    }
+
+    fn find_runnable_process(&self, pid: ProcessIdentifier) -> Result<&RunnableProcess, Error> {
+        match self.ready.iter().find(|p| p.pid() == pid) {
+            Some(p) => Ok(p),
+            None => {
+                let reason: &str = "process not found";
+                error!("find_runnable_process(): {}", reason);
+                Err(Error::new(ErrorCode::NoSuchProcess, reason))
+            },
+        }
+    }
+
+    fn find_runnable_process_mut(
+        &mut self,
+        pid: ProcessIdentifier,
+    ) -> Result<&mut RunnableProcess, Error> {
+        match self.ready.iter_mut().find(|p| p.pid() == pid) {
+            Some(p) => Ok(p),
+            None => {
+                let reason: &str = "process not found";
+                error!("find_runnable_process(): {}", reason);
+                Err(Error::new(ErrorCode::NoSuchProcess, reason))
+            },
         }
     }
 }
@@ -430,36 +450,48 @@ impl ProcessManager {
         Ok(self.try_borrow_mut()?.exec(mm, pid, elf)?)
     }
 
-    pub fn getuid(&self) -> Result<UserIdentifier, Error> {
-        Ok(self.try_borrow()?.get_running().get_uid())
+    pub fn getuid(&self, pid: ProcessIdentifier) -> Result<UserIdentifier, Error> {
+        Ok(self.try_borrow()?.find_runnable_process(pid)?.get_uid())
     }
 
-    pub fn setuid(&mut self, uid: UserIdentifier) -> Result<(), Error> {
-        Ok(self.try_borrow_mut()?.get_running_mut().set_uid(uid)?)
+    pub fn setuid(&mut self, pid: ProcessIdentifier, uid: UserIdentifier) -> Result<(), Error> {
+        Ok(self
+            .try_borrow_mut()?
+            .find_runnable_process_mut(pid)?
+            .set_uid(uid)?)
     }
 
-    pub fn geteuid(&self) -> Result<UserIdentifier, Error> {
-        Ok(self.try_borrow()?.get_running().get_euid())
+    pub fn geteuid(&self, pid: ProcessIdentifier) -> Result<UserIdentifier, Error> {
+        Ok(self.try_borrow()?.find_runnable_process(pid)?.get_euid())
     }
 
-    pub fn seteuid(&mut self, euid: UserIdentifier) -> Result<(), Error> {
-        Ok(self.try_borrow_mut()?.get_running_mut().set_euid(euid)?)
+    pub fn seteuid(&mut self, pid: ProcessIdentifier, euid: UserIdentifier) -> Result<(), Error> {
+        Ok(self
+            .try_borrow_mut()?
+            .find_runnable_process_mut(pid)?
+            .set_euid(euid)?)
     }
 
-    pub fn getgid(&self) -> Result<GroupIdentifier, Error> {
-        Ok(self.try_borrow()?.get_running().get_gid())
+    pub fn getgid(&self, pid: ProcessIdentifier) -> Result<GroupIdentifier, Error> {
+        Ok(self.try_borrow()?.find_runnable_process(pid)?.get_gid())
     }
 
-    pub fn setgid(&mut self, gid: GroupIdentifier) -> Result<(), Error> {
-        Ok(self.try_borrow_mut()?.get_running_mut().set_gid(gid)?)
+    pub fn setgid(&mut self, pid: ProcessIdentifier, gid: GroupIdentifier) -> Result<(), Error> {
+        Ok(self
+            .try_borrow_mut()?
+            .find_runnable_process_mut(pid)?
+            .set_gid(gid)?)
     }
 
-    pub fn getegid(&self) -> Result<GroupIdentifier, Error> {
-        Ok(self.try_borrow()?.get_running().get_egid())
+    pub fn getegid(&self, pid: ProcessIdentifier) -> Result<GroupIdentifier, Error> {
+        Ok(self.try_borrow()?.find_runnable_process(pid)?.get_egid())
     }
 
-    pub fn setegid(&mut self, egid: GroupIdentifier) -> Result<(), Error> {
-        Ok(self.try_borrow_mut()?.get_running_mut().set_egid(egid)?)
+    pub fn setegid(&mut self, pid: ProcessIdentifier, egid: GroupIdentifier) -> Result<(), Error> {
+        Ok(self
+            .try_borrow_mut()?
+            .find_runnable_process_mut(pid)?
+            .set_egid(egid)?)
     }
 
     pub fn exit(status: i32) -> Result<!, Error> {

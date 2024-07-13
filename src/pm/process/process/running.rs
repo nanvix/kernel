@@ -1,6 +1,10 @@
 // Copyright(c) The Maintainers of Nanvix.
 // Licensed under the MIT License.
 
+//==================================================================================================
+// Imports
+//==================================================================================================
+
 use crate::{
     hal::arch::x86::cpu::context::ContextInformation,
     mm::{
@@ -19,10 +23,8 @@ use ::alloc::rc::Rc;
 use ::core::cell::RefCell;
 use ::kcall::{
     Error,
-    GroupIdentifier,
     ProcessIdentifier,
     ThreadIdentifier,
-    UserIdentifier,
 };
 
 use super::{
@@ -30,6 +32,10 @@ use super::{
     RunnableProcess,
     ZombieProcess,
 };
+
+//==================================================================================================
+// Structures
+//==================================================================================================
 
 ///
 /// # Description
@@ -41,6 +47,10 @@ pub struct RunningProcess {
     /// Running thread.
     running: Rc<RefCell<Option<RunningThread>>>,
 }
+
+//==================================================================================================
+// Implementations
+//==================================================================================================
 
 impl RunningProcess {
     pub fn from_state(process: ProcessState, running: RunningThread) -> Self {
@@ -112,37 +122,5 @@ impl RunningProcess {
     ///
     pub fn clone_identity(&self) -> ProcessIdentity {
         self.state.as_ref().unwrap().identity()
-    }
-
-    pub fn get_uid(&self) -> UserIdentifier {
-        self.state.as_ref().unwrap().get_uid()
-    }
-
-    pub fn set_uid(&mut self, uid: UserIdentifier) -> Result<(), Error> {
-        self.state.as_mut().unwrap().set_uid(uid)
-    }
-
-    pub fn get_euid(&self) -> UserIdentifier {
-        self.state.as_ref().unwrap().get_euid()
-    }
-
-    pub fn set_euid(&mut self, euid: UserIdentifier) -> Result<(), Error> {
-        self.state.as_mut().unwrap().set_euid(euid)
-    }
-
-    pub fn get_gid(&self) -> GroupIdentifier {
-        self.state.as_ref().unwrap().get_gid()
-    }
-
-    pub fn set_gid(&mut self, gid: GroupIdentifier) -> Result<(), Error> {
-        self.state.as_mut().unwrap().set_gid(gid)
-    }
-
-    pub fn get_egid(&self) -> GroupIdentifier {
-        self.state.as_ref().unwrap().get_egid()
-    }
-
-    pub fn set_egid(&mut self, egid: GroupIdentifier) -> Result<(), Error> {
-        self.state.as_mut().unwrap().set_egid(egid)
     }
 }
