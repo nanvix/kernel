@@ -63,6 +63,7 @@ pub fn init(
 
     // Print CPU features.
     info!("CPU features:");
+    info!("  - has cpuid: {}", cpuid::has_cpuid());
     info!("  - has fpu:   {}", cpuid::has_fpu());
     info!("  - has vme:   {}", cpuid::has_vme());
     info!("  - has de:    {}", cpuid::has_de());

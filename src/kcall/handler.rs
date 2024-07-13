@@ -64,7 +64,7 @@ fn do_debug(
 ///
 /// Kernel call handler.
 ///
-pub fn kcall_handler(hal: Hal, mut mm: VirtMemoryManager, mut pm: ProcessManager) {
+pub fn kcall_handler(_hal: Hal, mut mm: VirtMemoryManager, mut pm: ProcessManager) {
     loop {
         // Read kernel call arguments from the scoreboard.
         match ScoreBoard::get_mut() {
