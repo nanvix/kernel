@@ -69,8 +69,8 @@ impl InterruptManager {
         self.controller.set_handler(intnum, Some(handler))
     }
 
-    pub fn mask(&mut self, intnum: arch::InterruptNumber) -> Result<(), Error> {
-        self.controller.mask(intnum)
+    pub fn unmask(&mut self, intnum: arch::InterruptNumber) -> Result<(), Error> {
+        self.controller.unmask(intnum)
     }
 
     fn init(&mut self) -> Result<(), Error> {

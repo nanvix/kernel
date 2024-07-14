@@ -40,8 +40,8 @@ impl InterruptController {
         self.0.borrow_mut().ack(intnum)
     }
 
-    pub fn mask(&self, intnum: arch::InterruptNumber) -> Result<(), Error> {
-        self.0.borrow_mut().mask(intnum)
+    pub fn unmask(&self, intnum: arch::InterruptNumber) -> Result<(), Error> {
+        self.0.borrow_mut().unmask(intnum)
     }
 
     pub fn get_handler(

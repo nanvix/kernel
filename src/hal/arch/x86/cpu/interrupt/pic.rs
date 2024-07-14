@@ -28,6 +28,13 @@ use crate::{
 };
 
 //==================================================================================================
+// Constants
+//==================================================================================================
+
+/// Default mask. All interrupts disabled, expect IRQ 2 which is used for cascading.
+const DEFAULT_MASK: u16 = 0xfffb;
+
+//==================================================================================================
 // Uninitialized PIC
 //==================================================================================================
 
@@ -126,6 +133,7 @@ impl UninitPic {
                 },
             };
             Pic {
+                mask: DEFAULT_MASK,
                 ctrl_master,
                 data_master,
                 ctrl_slave,
@@ -177,6 +185,8 @@ impl UninitPic {
 /// A struct that represents an initialized Programmable Interrupt Controller (PIC).
 ///
 pub struct Pic {
+    /// Interrupt mask.
+    mask: u16,
     /// Master PIC Control Register
     ctrl_master: ReadWriteIoPort,
     /// Master PIC Data Register
@@ -191,27 +201,31 @@ impl Pic {
     ///
     /// # Description
     ///
-    /// Masks the target PIC.
+    /// Unmasks an interrupt in the target PIC.
     ///
     /// # Parameters
     ///
     /// - `mask`: Mask.
     ///
-    ///
-    pub fn mask(&mut self, mask: u16) {
-        self.data_master.writeb(mask as u8);
+    pub fn unmask(&mut self, intnum: u16) {
+        self.mask &= !(1 << intnum);
+        self.data_master.writeb(self.mask as u8);
         io::wait();
-        self.data_slave.writeb((mask >> 8) as u8);
+        self.data_slave.writeb((self.mask >> 8) as u8);
         io::wait();
     }
 
     ///
     /// # Description
     ///
-    /// Disables the target PIC.
+    /// Disables all interrupts in the target PIC.
     ///
     pub fn disable(&mut self) {
-        self.mask(u16::MAX);
+        self.mask = DEFAULT_MASK;
+        self.data_master.writeb(self.mask as u8);
+        io::wait();
+        self.data_slave.writeb((self.mask >> 8) as u8);
+        io::wait();
     }
 
     ///

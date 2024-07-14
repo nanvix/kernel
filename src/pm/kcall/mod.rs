@@ -5,7 +5,6 @@
 // Modules
 //==================================================================================================
 
-mod capctl;
 mod getegid;
 mod geteuid;
 mod getgid;
@@ -19,7 +18,6 @@ mod setuid;
 // Exports
 //==================================================================================================
 
-pub use capctl::capctl;
 pub use getegid::getegid;
 pub use geteuid::geteuid;
 pub use getgid::getgid;

@@ -238,7 +238,7 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
         kcall::init();
 
         // Enable timer interrupts.
-        if let Err(e) = hal.intman.mask(hal::arch::InterruptNumber::Timer) {
+        if let Err(e) = hal.intman.unmask(hal::arch::InterruptNumber::Timer) {
             panic!("failed to mask timer interrupt: {:?}", e);
         }
 

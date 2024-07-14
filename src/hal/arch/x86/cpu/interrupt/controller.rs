@@ -146,9 +146,9 @@ impl InterruptController {
         }
     }
 
-    pub fn mask(&mut self, intnum: InterruptNumber) -> Result<(), Error> {
+    pub fn unmask(&mut self, intnum: InterruptNumber) -> Result<(), Error> {
         match self.intctrl {
-            InterruptControllerType::Legacy(ref mut pic) => Ok(pic.mask(intnum as u16)),
+            InterruptControllerType::Legacy(ref mut pic) => Ok(pic.unmask(intnum as u16)),
             // FIXME: enable interrupt on right CPU.
             InterruptControllerType::Xapic(_, ref mut ioapic) => {
                 let intnum: u8 = self.intmap[intnum];
