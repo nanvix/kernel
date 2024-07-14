@@ -140,7 +140,6 @@ impl InterruptController {
     }
 
     pub fn ack(&mut self, intnum: InterruptNumber) -> Result<(), Error> {
-        let intnum: u8 = self.intmap[intnum];
         match self.intctrl {
             InterruptControllerType::Legacy(ref mut pic) => Ok(pic.ack(intnum as u32)),
             InterruptControllerType::Xapic(ref mut xapic, _) => Ok(xapic.ack()),
@@ -148,11 +147,13 @@ impl InterruptController {
     }
 
     pub fn mask(&mut self, intnum: InterruptNumber) -> Result<(), Error> {
-        let intnum: u8 = self.intmap[intnum];
         match self.intctrl {
             InterruptControllerType::Legacy(ref mut pic) => Ok(pic.mask(intnum as u16)),
             // FIXME: enable interrupt on right CPU.
-            InterruptControllerType::Xapic(_, ref mut ioapic) => ioapic.enable(intnum as u8, 0),
+            InterruptControllerType::Xapic(_, ref mut ioapic) => {
+                let intnum: u8 = self.intmap[intnum];
+                ioapic.enable(intnum as u8, 0)
+            },
         }
     }
 
@@ -161,13 +162,19 @@ impl InterruptController {
         intnum: InterruptNumber,
         handler: Option<InterruptHandler>,
     ) -> Result<(), Error> {
-        let intnum: u8 = self.intmap[intnum];
+        let intnum: u8 = match self.intctrl {
+            InterruptControllerType::Legacy(_) => intnum as u8,
+            InterruptControllerType::Xapic(_, _) => self.intmap[intnum],
+        };
         unsafe { INTERRUPT_VECTOR[intnum as usize] = handler };
         Ok(())
     }
 
     pub fn get_handler(&self, intnum: InterruptNumber) -> Result<Option<InterruptHandler>, Error> {
-        let intnum: u8 = self.intmap[intnum];
+        let intnum: u8 = match self.intctrl {
+            InterruptControllerType::Legacy(_) => intnum as u8,
+            InterruptControllerType::Xapic(_, _) => self.intmap[intnum],
+        };
         unsafe { Ok(INTERRUPT_VECTOR[intnum as usize]) }
     }
 }
