@@ -36,7 +36,11 @@ use madt::madt::MadtInfo;
 // Exports
 //==================================================================================================
 
-pub use exception::ExceptionInformation;
+pub use exception::{
+    ExceptionController,
+    ExceptionHandler,
+    ExceptionInformation,
+};
 pub use interrupt::{
     forge_user_stack,
     InterruptController,

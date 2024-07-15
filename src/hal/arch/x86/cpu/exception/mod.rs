@@ -12,4 +12,8 @@ mod info;
 // Exports
 //==================================================================================================
 
+pub use controller::{
+    ExceptionController,
+    ExceptionHandler,
+};
 pub use info::ExceptionInformation;

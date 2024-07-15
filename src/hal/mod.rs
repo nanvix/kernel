@@ -34,6 +34,7 @@ use crate::{
     },
 };
 use alloc::boxed::Box;
+use arch::x86::cpu::ExceptionController;
 
 //==================================================================================================
 // Structures
@@ -48,6 +49,7 @@ pub struct Hal {
     pub arch: Arch,
     pub ioports: IoPortAllocator,
     pub intman: cpu::InterruptManager,
+    pub excpman: ExceptionController,
 }
 
 //==================================================================================================
@@ -75,11 +77,15 @@ pub fn init(madt: Option<MadtInfo>) -> Result<Hal, Error> {
         },
     };
 
+    // Initialize exception manager.
+    let excpman: ExceptionController = ExceptionController::init()?;
+
     unsafe { stdout::init(uart) };
 
     Ok(Hal {
         arch,
         ioports,
         intman,
+        excpman,
     })
 }
