@@ -17,8 +17,10 @@ pub mod thread;
 use crate::{
     config,
     error::Error,
-    hal,
-    hal::Hal,
+    hal::{
+        arch::InterruptNumber,
+        Hal,
+    },
     mm::Vmem,
     pm::thread::{
         ReadyThread,
@@ -37,7 +39,7 @@ pub use process::ProcessManager;
 // Standalone Functions
 //==================================================================================================
 
-pub fn timer_handler() {
+pub fn timer_handler(_intnum: InterruptNumber) {
     static mut TIMER_TICKS: usize = 0;
 
     unsafe { TIMER_TICKS = TIMER_TICKS.wrapping_add(1) };
@@ -56,7 +58,7 @@ pub fn init(hal: &mut Hal, root: Vmem) -> Result<ProcessManager, Error> {
     // Register the timer handler.
     info!("registering timer interrupt handler...");
     hal.intman
-        .register_handler(hal::arch::InterruptNumber::Timer, timer_handler)?;
+        .register_handler(InterruptNumber::Timer, timer_handler)?;
 
     // Initialize the thread manager.
     info!("initializing the thread manager...");

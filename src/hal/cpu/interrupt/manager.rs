@@ -100,7 +100,7 @@ impl InterruptManager {
                 }
 
                 match controller.get_handler(intnum) {
-                    Ok(Some(handler)) => handler(),
+                    Ok(Some(handler)) => handler(intnum),
                     Ok(None) => error!("no handler for interrupt {:?}", intnum as u32),
                     Err(e) => error!("failed to get handler: {:?}", e),
                 }

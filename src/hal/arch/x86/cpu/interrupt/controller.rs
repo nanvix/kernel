@@ -39,7 +39,12 @@ use crate::{
 /// Number of entries in the interrupt vector.
 pub const INTERRUPT_VECTOR_LENGTH: usize = 256;
 
-pub type InterruptHandler = fn();
+///
+/// # Description
+///
+/// A type that represents an interrupt handler.
+///
+pub type InterruptHandler = fn(InterruptNumber);
 
 #[no_mangle]
 static mut INTERRUPT_VECTOR: [Option<InterruptHandler>; INTERRUPT_VECTOR_LENGTH] =
