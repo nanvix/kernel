@@ -8,6 +8,9 @@
 # Target Architecture
 export TARGET ?= x86
 
+# Target Machine
+export MACHINE ?= pc
+
 # Verbose build?
 export VERBOSE ?= no
 
