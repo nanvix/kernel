@@ -265,6 +265,236 @@ impl core::fmt::Debug for MbootTag {
 // Standalone Functions
 //==================================================================================================
 
+///
+/// # Description
+///
+/// Parse modules from Multiboot tag.
+///
+/// # Parameters
+///
+/// - `tag`: Mboot tag for parse.
+/// - `kernel_modules`: List of kernel modules.
+///
+/// # Returns
+///
+/// Upon success, returns kernel modules list. Otherwise, it returns an error.
+///
+fn parse_module(tag: &MbootTag,
+    mut kernel_modules: LinkedList<KernelModule>,
+) -> Result<LinkedList<KernelModule>, Error>{
+
+    let module: MbootModule = unsafe {
+        // Safety: `MbootModule` is a prefix of `MbootTag`.
+        let ptr: *const MbootTag = tag as *const MbootTag;
+        // Safety: `ptr` points to a valid `MbootModule`.
+        MbootModule::from_ptr(ptr as *const u8)?
+    };
+    module.display();
+
+    // Add kernel module to the list of kernel modules.
+    let start: PhysicalAddress = match module.start().try_into() {
+        Ok(raw_addr) => PhysicalAddress::from_raw_value(raw_addr)?,
+        Err(_) => {
+            return Err(Error::new(
+                ErrorCode::BadAddress,
+                "invalid kernel module start address",
+            ));
+        },
+    };
+
+    let cmdline: String = module.cmdline().to_string();
+
+    let module: KernelModule = KernelModule::new(start, module.size(), cmdline);
+    kernel_modules.push_back(module);
+
+    Ok(kernel_modules)
+}
+
+///
+/// # Description
+///
+/// Parse Memory Regions from Multiboot tag.
+///
+/// # Parameters
+///
+/// - `tag`: Mboot tag for parse.
+/// - `memory_regions`: List of memory regions.
+///
+/// # Returns
+///
+/// Upon success, returns memory region. Otherwise, it returns an error.
+///
+fn parse_mmap(tag: &MbootTag,
+    mut memory_regions: LinkedList<MemoryRegion<VirtualAddress>>,
+) -> Result <LinkedList<MemoryRegion<VirtualAddress>>, Error> {
+    let mmap: MbootMemoryMap = unsafe {
+        // Safety: `MbootMemoryMap` is a prefix of `MbootTag`.
+        let ptr: *const MbootTag = tag as *const MbootTag;
+        // Safety: `ptr` points to a valid `MbootMemoryMap`.
+        MbootMemoryMap::from_ptr(ptr as *const u8)?
+    };
+    mmap.display();
+
+    // Add memory regions to the list of memory regions.
+    for entry in mmap {
+        let typ: MemoryRegionType = entry.typ().into();
+        let start: VirtualAddress = match entry.addr().try_into() {
+            Ok(raw_addr) => VirtualAddress::from_raw_value(raw_addr)?,
+            Err(_) => {
+                return Err(Error::new(
+                    ErrorCode::BadAddress,
+                    "invalid memory region address",
+                ));
+            },
+        };
+        let size: usize = match entry.len().try_into() {
+            Ok(len) => len,
+            Err(_) => {
+                return Err(Error::new(
+                    ErrorCode::BadAddress,
+                    "invalid memory region size",
+                ));
+            },
+        };
+        let perm: AccessPermission = if typ != MemoryRegionType::Bad {
+            AccessPermission::new(
+                crate::hal::mem::ReadPermission::Allow,
+                crate::hal::mem::WritePermission::Allow,
+                crate::hal::mem::ExecutePermission::Deny,
+            )
+        } else {
+            AccessPermission::default()
+        };
+        let name: &str = match typ {
+            MemoryRegionType::Usable => "usable",
+            MemoryRegionType::Reserved => "reserved",
+            MemoryRegionType::Bad => "bad",
+        };
+        let region: MemoryRegion<VirtualAddress> =
+            MemoryRegion::new(name, start, size, typ, perm)?;
+        memory_regions.push_back(region);
+    }
+
+    Ok(memory_regions)
+}
+
+///
+/// # Description
+///
+/// Parse Old Root System Description Pointer (RSDP) from Multiboot tag.
+///
+/// # Parameters
+///
+/// - `tag`: Mboot tag for parse.
+/// - `mmio_regions`: List of mapped I/O memory regions.
+///
+/// # Returns
+///
+/// Upon success, returns information about the machine. Otherwise, it returns an error.
+///
+fn parse_acpiold(tag: &MbootTag,
+    mmio_regions: &mut LinkedList<MemoryMappedIoRegion>,
+)-> Result<Option<MadtInfo>, Error>{
+    let acpi: MbootAcpi = unsafe {
+        // Safety: `MbootAcpi` is a prefix of `MbootTag`.
+        let ptr: *const MbootTag = tag as *const MbootTag;
+        // Safety: `ptr` points to a valid `MbootAcpi`.
+        MbootAcpi::from_raw(ptr as *const u8)?
+    };
+    acpi.display();
+    let rsdp: Rsdp = unsafe { Rsdp::from_ptr(acpi.rsdp())? };
+    rsdp.display();
+    let rsdt: *const AcpiSdtHeader = rsdp.rsdt_addr as *const AcpiSdtHeader;
+    let rsdt: AcpiSdtHeader = unsafe { AcpiSdtHeader::from_ptr(rsdt) }?;
+    rsdt.display();
+
+    let ptr: *const AcpiSdtHeader = unsafe {
+        cpu::acpi::find_table_by_sig(rsdp.rsdt_addr as *const AcpiSdtHeader, "APIC")?
+    };
+    rsdp.display();
+    let madt: Option<MadtInfo> = match unsafe { Madt::parse(ptr as *const Madt) } {
+        Ok(madt) => {
+            madt.display();
+
+            // If I/O APIC is present, book corresponding memory.
+            if let Some(ioapic) = madt.get_ioapic_info() {
+                let addr: MemoryMappedIoAddress =
+                    MemoryMappedIoAddress::from_raw_value(
+                        ioapic.io_apic_addr as usize,
+                    )?;
+                let region: MemoryMappedIoRegion = MemoryMappedIoRegion::new(
+                    "ioapic",
+                    addr,
+                    arch::mem::PAGE_SIZE,
+                    AccessPermission::RDWR,
+                )?;
+                mmio_regions.push_back(region);
+            }
+
+            // If local APIC is present, book corresponding memory.
+            if madt.get_lapic_info().is_some() {
+                let addr: MemoryMappedIoAddress =
+                    MemoryMappedIoAddress::from_raw_value(
+                        madt.local_apic_addr as usize,
+                    )?;
+                let region: MemoryMappedIoRegion = MemoryMappedIoRegion::new(
+                    "local_apic",
+                    addr,
+                    arch::mem::PAGE_SIZE,
+                    AccessPermission::RDWR,
+                )?;
+                mmio_regions.push_back(region);
+            }
+
+            Some(madt)
+        },
+        Err(err) => {
+            warn!("failed to parse madt: {:?}", err);
+            None
+        },
+    };
+
+    Ok(madt)
+}
+
+///
+/// # Description
+///
+/// Parse New Root System Description Pointer (RSDP) from Multiboot tag.
+///
+/// # Parameters
+///
+/// - `tag`: Mboot tag for parse.
+///
+/// # Returns
+///
+/// Upon success, returns RSDP structure. Otherwise, it returns an error.
+///
+fn parse_acpinew(tag: &MbootTag) -> Result<MbootAcpi, Error> {
+    let acpi: MbootAcpi = unsafe {
+        // Safety: `MbootAcpi` is a prefix of `MbootTag`.
+        let ptr: *const MbootTag = tag as *const MbootTag;
+        // Safety: `ptr` points to a valid `MbootAcpi`.
+        MbootAcpi::from_raw(ptr as *const u8)?
+    };
+
+    Ok(acpi)
+}
+
+///
+/// # Description
+///
+/// Parse Multiboot tags.
+///
+/// # Parameters
+///
+/// - `bootloader_magic`: Multiboot magic number.
+/// - `addr`: Multiboot header address.
+///
+/// # Returns
+///
+/// Upon success, returns boot informations. Otherwise, it returns an error.
+///
 pub fn parse(bootloader_magic: u32, addr: usize) -> Result<BootInfo, Error> {
     // Check if bootloader magic value mismatches what we expect.
     if bootloader_magic != MBOOT_BOOTLOADER_MAGIC {
@@ -293,29 +523,7 @@ pub fn parse(bootloader_magic: u32, addr: usize) -> Result<BootInfo, Error> {
                 info!("bootloader_name: {:?}", tag);
             },
             MbootTagType::Module => {
-                let module: MbootModule = unsafe {
-                    // Safety: `MbootModule` is a prefix of `MbootTag`.
-                    let ptr: *const MbootTag = tag as *const MbootTag;
-                    // Safety: `ptr` points to a valid `MbootModule`.
-                    MbootModule::from_ptr(ptr as *const u8)?
-                };
-                module.display();
-
-                // Add kernel module to the list of kernel modules.
-                let start: PhysicalAddress = match module.start().try_into() {
-                    Ok(raw_addr) => PhysicalAddress::from_raw_value(raw_addr)?,
-                    Err(_) => {
-                        return Err(Error::new(
-                            ErrorCode::BadAddress,
-                            "invalid kernel module start address",
-                        ));
-                    },
-                };
-
-                let cmdline: String = module.cmdline().to_string();
-
-                let module: KernelModule = KernelModule::new(start, module.size(), cmdline);
-                kernel_modules.push_back(module);
+                kernel_modules = parse_module(tag, kernel_modules)?;
             },
             MbootTagType::BasicMeminfo => {
                 info!("basic_mem_info: {:?}", tag);
@@ -324,53 +532,7 @@ pub fn parse(bootloader_magic: u32, addr: usize) -> Result<BootInfo, Error> {
                 info!("boot_device: {:?}", tag);
             },
             MbootTagType::Mmap => {
-                let mmap: MbootMemoryMap = unsafe {
-                    // Safety: `MbootMemoryMap` is a prefix of `MbootTag`.
-                    let ptr: *const MbootTag = tag as *const MbootTag;
-                    // Safety: `ptr` points to a valid `MbootMemoryMap`.
-                    MbootMemoryMap::from_ptr(ptr as *const u8)?
-                };
-                mmap.display();
-
-                // Add memory regions to the list of memory regions.
-                for entry in mmap {
-                    let typ: MemoryRegionType = entry.typ().into();
-                    let start: VirtualAddress = match entry.addr().try_into() {
-                        Ok(raw_addr) => VirtualAddress::from_raw_value(raw_addr)?,
-                        Err(_) => {
-                            return Err(Error::new(
-                                ErrorCode::BadAddress,
-                                "invalid memory region address",
-                            ));
-                        },
-                    };
-                    let size: usize = match entry.len().try_into() {
-                        Ok(len) => len,
-                        Err(_) => {
-                            return Err(Error::new(
-                                ErrorCode::BadAddress,
-                                "invalid memory region size",
-                            ));
-                        },
-                    };
-                    let perm: AccessPermission = if typ != MemoryRegionType::Bad {
-                        AccessPermission::new(
-                            crate::hal::mem::ReadPermission::Allow,
-                            crate::hal::mem::WritePermission::Allow,
-                            crate::hal::mem::ExecutePermission::Deny,
-                        )
-                    } else {
-                        AccessPermission::default()
-                    };
-                    let name: &str = match typ {
-                        MemoryRegionType::Usable => "usable",
-                        MemoryRegionType::Reserved => "reserved",
-                        MemoryRegionType::Bad => "bad",
-                    };
-                    let region: MemoryRegion<VirtualAddress> =
-                        MemoryRegion::new(name, start, size, typ, perm)?;
-                    memory_regions.push_back(region);
-                }
+                memory_regions = parse_mmap(tag, memory_regions)?;
             },
             MbootTagType::Vbe => {
                 info!("vbe: {:?}", tag);
@@ -394,73 +556,11 @@ pub fn parse(bootloader_magic: u32, addr: usize) -> Result<BootInfo, Error> {
                 info!("smbios: {:?}", tag);
             },
             MbootTagType::AcpiOld => {
-                let acpi: MbootAcpi = unsafe {
-                    // Safety: `MbootAcpi` is a prefix of `MbootTag`.
-                    let ptr: *const MbootTag = tag as *const MbootTag;
-                    // Safety: `ptr` points to a valid `MbootAcpi`.
-                    MbootAcpi::from_raw(ptr as *const u8)?
-                };
-                acpi.display();
-                let rsdp: Rsdp = unsafe { Rsdp::from_ptr(acpi.rsdp())? };
-                rsdp.display();
-                let rsdt: *const AcpiSdtHeader = rsdp.rsdt_addr as *const AcpiSdtHeader;
-                let rsdt: AcpiSdtHeader = unsafe { AcpiSdtHeader::from_ptr(rsdt) }?;
-                rsdt.display();
-
-                let ptr: *const AcpiSdtHeader = unsafe {
-                    cpu::acpi::find_table_by_sig(rsdp.rsdt_addr as *const AcpiSdtHeader, "APIC")?
-                };
-                rsdp.display();
-                madt = match unsafe { Madt::parse(ptr as *const Madt) } {
-                    Ok(madt) => {
-                        madt.display();
-
-                        // If I/O APIC is present, book corresponding memory.
-                        if let Some(ioapic) = madt.get_ioapic_info() {
-                            let addr: MemoryMappedIoAddress =
-                                MemoryMappedIoAddress::from_raw_value(
-                                    ioapic.io_apic_addr as usize,
-                                )?;
-                            let region: MemoryMappedIoRegion = MemoryMappedIoRegion::new(
-                                "ioapic",
-                                addr,
-                                arch::mem::PAGE_SIZE,
-                                AccessPermission::RDWR,
-                            )?;
-                            mmio_regions.push_back(region);
-                        }
-
-                        // If local APIC is present, book corresponding memory.
-                        if madt.get_lapic_info().is_some() {
-                            let addr: MemoryMappedIoAddress =
-                                MemoryMappedIoAddress::from_raw_value(
-                                    madt.local_apic_addr as usize,
-                                )?;
-                            let region: MemoryMappedIoRegion = MemoryMappedIoRegion::new(
-                                "local_apic",
-                                addr,
-                                arch::mem::PAGE_SIZE,
-                                AccessPermission::RDWR,
-                            )?;
-                            mmio_regions.push_back(region);
-                        }
-
-                        Some(madt)
-                    },
-                    Err(err) => {
-                        warn!("failed to parse madt: {:?}", err);
-                        None
-                    },
-                };
+                madt = parse_acpiold(tag, &mut mmio_regions)?;
             },
             MbootTagType::AcpiNew => {
-                let acpi: MbootAcpi = unsafe {
-                    // Safety: `MbootAcpi` is a prefix of `MbootTag`.
-                    let ptr: *const MbootTag = tag as *const MbootTag;
-                    // Safety: `ptr` points to a valid `MbootAcpi`.
-                    MbootAcpi::from_raw(ptr as *const u8)?
-                };
-                acpi.display();
+                let acpinew = parse_acpinew(tag)?;
+                acpinew.display();
             },
             MbootTagType::Network => {
                 info!("network: {:?}", tag);
