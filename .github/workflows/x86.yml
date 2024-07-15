@@ -42,9 +42,27 @@ jobs:
           cd microkernel
           make TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 all
 
+  test-isapc:
+    name: Test (isapc)
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Test
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.hostname }}
+        username: ${{ secrets.username }}
+        key: ${{ secrets.sshkey }}
+        port: ${{ secrets.portnum }}
+        script: |
+          cd microkernel
+          make TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 MACHINE=isapc run | tee output.txt
+          echo "Magic String: $(cat output.txt | tail -n 1)"
+          [ "$(cat output.txt | tail -n 1)" != "PANIC: Hello World!" ] && exit 1 || exit 0 ;
+
   test-pc:
     name: Test (pc)
-    needs: [build]
+    needs: [test-isapc]
     runs-on: ubuntu-latest
     steps:
     - name: Test
