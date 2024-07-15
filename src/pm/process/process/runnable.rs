@@ -3,7 +3,7 @@
 
 use crate::{
     hal::{
-        arch::x86::cpu::context::ContextInformation,
+        arch::ContextInformation,
         mem::VirtualAddress,
     },
     mm::{

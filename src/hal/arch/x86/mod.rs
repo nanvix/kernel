@@ -37,6 +37,7 @@ use cpu::madt::madt::MadtInfo;
 
 pub use cpu::{
     forge_user_stack,
+    ContextInformation,
     ExceptionHandler,
     ExceptionInformation,
     InterruptController,

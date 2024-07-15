@@ -6,7 +6,7 @@
 //==================================================================================================
 
 use crate::hal::arch::{
-    x86::cpu::context::ContextInformation,
+    ContextInformation,
     ExceptionInformation,
 };
 use kcall::{

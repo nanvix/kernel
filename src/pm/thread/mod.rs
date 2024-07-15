@@ -7,7 +7,7 @@
 
 use crate::{
     error::Error,
-    hal::arch::x86::cpu::context::ContextInformation,
+    hal::arch::ContextInformation,
 };
 use alloc::boxed::Box;
 use core::{

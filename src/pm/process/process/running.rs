@@ -6,7 +6,7 @@
 //==================================================================================================
 
 use crate::{
-    hal::arch::x86::cpu::context::ContextInformation,
+    hal::arch::ContextInformation,
     mm::{
         VirtMemoryManager,
         Vmem,

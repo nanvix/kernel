@@ -7,7 +7,7 @@
 
 use super::RunningProcess;
 use crate::{
-    hal::arch::x86::cpu::context::ContextInformation,
+    hal::arch::ContextInformation,
     pm::{
         process::process::state::ProcessState,
         thread::InterruptedThread,

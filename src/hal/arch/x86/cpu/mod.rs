@@ -5,6 +5,7 @@
 // Modules
 //==================================================================================================
 
+mod context;
 mod exception;
 mod idt;
 mod interrupt;
@@ -36,6 +37,7 @@ use madt::madt::MadtInfo;
 // Exports
 //==================================================================================================
 
+pub use context::ContextInformation;
 pub use exception::{
     ExceptionController,
     ExceptionHandler,
@@ -48,7 +50,6 @@ pub use interrupt::{
     InterruptNumber,
 };
 pub mod acpi;
-pub mod context;
 pub mod madt;
 pub mod pit;
 pub mod tss;

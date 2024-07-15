@@ -14,7 +14,7 @@ use crate::{
     },
     hal::{
         self,
-        arch::x86::cpu::context::ContextInformation,
+        arch::ContextInformation,
         mem::{
             AccessPermission,
             Address,
