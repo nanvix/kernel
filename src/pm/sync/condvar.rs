@@ -8,16 +8,13 @@
 use crate::{
     error::Error,
     pm::{
-        sync::spinlock::{
-            Spinlock,
-            SpinlockGuard,
-        },
+        sync::spinlock::SpinlockGuard,
         ProcessManager,
     },
 };
-use alloc::collections::LinkedList;
-use core::cell::RefCell;
-use kcall::ThreadIdentifier;
+use ::alloc::collections::LinkedList;
+use ::core::cell::RefCell;
+use ::kcall::ThreadIdentifier;
 
 //==================================================================================================
 // Structures
@@ -29,8 +26,6 @@ use kcall::ThreadIdentifier;
 /// A type that represents a condition variable.
 ///
 pub struct Condvar {
-    /// Underlying spinlock.
-    lock: Spinlock,
     /// Threads that are sleeping on the condition variable.
     sleeping: RefCell<LinkedList<ThreadIdentifier>>,
 }
@@ -51,7 +46,6 @@ impl Condvar {
     ///
     pub fn new() -> Self {
         Self {
-            lock: Spinlock::new(),
             sleeping: RefCell::new(LinkedList::new()),
         }
     }
@@ -75,8 +69,6 @@ impl Condvar {
     /// Waits on the condition variable.
     ///
     pub fn wait(&self, guard: &SpinlockGuard) -> Result<(), Error> {
-        let _condvar_guard: SpinlockGuard = self.lock.lock();
-
         self.sleeping
             .borrow_mut()
             .push_back(ProcessManager::get_tid()?);
