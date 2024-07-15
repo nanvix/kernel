@@ -5,6 +5,7 @@
 // Modules
 //==================================================================================================
 
+mod exception;
 mod idt;
 mod interrupt;
 
@@ -35,16 +36,15 @@ use madt::madt::MadtInfo;
 // Exports
 //==================================================================================================
 
+pub use exception::ExceptionInformation;
 pub use interrupt::{
     forge_user_stack,
     InterruptController,
     InterruptHandler,
     InterruptNumber,
 };
-
 pub mod acpi;
 pub mod context;
-mod exception;
 pub mod madt;
 pub mod pit;
 pub mod tss;

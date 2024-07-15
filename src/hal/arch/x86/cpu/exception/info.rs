@@ -2,13 +2,10 @@
 // Licensed under the MIT License.
 
 //==================================================================================================
-// Imports
+// Modules
 //==================================================================================================
 
-use crate::{
-    arch::cpu::excp::Exception,
-    hal::arch::x86::cpu::context::ContextInformation,
-};
+use crate::arch::cpu::excp::Exception;
 
 //==================================================================================================
 // Structures
@@ -35,8 +32,26 @@ pub struct ExceptionInformation {
 static_assert_size!(ExceptionInformation, 16);
 
 //==================================================================================================
-// Trait Implementations
+// Implementations
 //==================================================================================================
+
+impl ExceptionInformation {
+    pub fn num(&self) -> u32 {
+        self.num
+    }
+
+    pub fn code(&self) -> u32 {
+        self.code
+    }
+
+    pub fn addr(&self) -> u32 {
+        self.addr
+    }
+
+    pub fn instruction(&self) -> u32 {
+        self.instruction
+    }
+}
 
 impl core::fmt::Debug for ExceptionInformation {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
@@ -52,27 +67,4 @@ impl core::fmt::Debug for ExceptionInformation {
             excp, code, addr, instr
         )
     }
-}
-
-//==================================================================================================
-// Standalone Functions
-//==================================================================================================
-
-///
-/// # Description
-///
-/// High-level exception dispatcher.
-///
-/// # Parameters
-///
-/// - `excp` Exception information.
-/// - `ctx`  Context information.
-///
-#[no_mangle]
-pub extern "C" fn do_exception(excp: *const ExceptionInformation, ctx: *const ContextInformation) {
-    let excp: &ExceptionInformation = unsafe { &*excp };
-    let ctx: &ContextInformation = unsafe { &*ctx };
-    info!("{:?}", excp);
-    info!("{:?}", ctx);
-    panic!("unhandled exception")
 }
