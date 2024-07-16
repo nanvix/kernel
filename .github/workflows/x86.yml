@@ -27,7 +27,7 @@ jobs:
           git clone --recursive https://github.com/nanvix/microkernel.git --branch ${TARGET_BRANCH}
 
   build:
-    name: Build
+    name: Build Documentation
     needs: setup
     runs-on: ubuntu-latest
     steps:
@@ -61,7 +61,7 @@ jobs:
           [ "$(cat output.txt | tail -n 1)" != "PANIC: Hello World!" ] && exit 1 || exit 0 ;
 
   test-pc:
-    name: Test (pc)
+    name: Test
     needs: [test-isapc]
     runs-on: ubuntu-latest
     steps:
