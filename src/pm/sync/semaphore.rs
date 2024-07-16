@@ -7,15 +7,10 @@
 
 use crate::{
     error::Error,
-    pm::sync::{
-        condvar::Condvar,
-        spinlock::{
-            Spinlock,
-            SpinlockGuard,
-        },
-    },
+    pm::sync::condvar::Condvar,
 };
-use core::cell::RefCell;
+use ::core::cell::RefCell;
+use ::kcall::ErrorCode;
 
 //==================================================================================================
 // Structures
@@ -27,8 +22,6 @@ use core::cell::RefCell;
 /// A type that represents a semaphore.
 ///
 pub struct Semaphore {
-    /// Underlying spinlock.
-    lock: Spinlock,
     /// Value.
     value: RefCell<usize>,
     /// Threads that are sleeping on the semaphore.
@@ -55,7 +48,6 @@ impl Semaphore {
     ///
     pub fn new(value: usize) -> Self {
         Self {
-            lock: Spinlock::new(),
             value: RefCell::new(value),
             sleeping: Condvar::new(),
         }
@@ -71,10 +63,8 @@ impl Semaphore {
     /// Upon success, empty result is returned. Upon failure, an error is returned instead.
     ///
     pub fn down(&self) -> Result<(), Error> {
-        let guard: SpinlockGuard = self.lock.lock();
-
         while *self.value.borrow() == 0 {
-            self.sleeping.wait(&guard)?;
+            self.sleeping.wait()?;
         }
 
         *self.value.borrow_mut() -= 1;
@@ -92,8 +82,6 @@ impl Semaphore {
     /// Upon success, empty result is returned. Upon failure, an error is returned instead.
     ///
     pub fn up(&self) -> Result<(), Error> {
-        let _guard: SpinlockGuard = self.lock.lock();
-
         *self.value.borrow_mut() += 1;
         self.sleeping.notify()
     }

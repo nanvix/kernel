@@ -7,13 +7,7 @@
 
 use crate::{
     error::Error,
-    pm::sync::{
-        condvar::Condvar,
-        spinlock::{
-            Spinlock,
-            SpinlockGuard,
-        },
-    },
+    pm::sync::condvar::Condvar,
 };
 use alloc::sync::Arc;
 use core::cell::RefCell;
@@ -28,8 +22,6 @@ use core::cell::RefCell;
 /// A type that represents the inner data of a mutex.
 ///
 pub struct MutexInner {
-    /// Underlying spinlock.
-    lock: Spinlock,
     /// Locked?
     locked: RefCell<bool>,
     /// Threads that are sleeping on the mutex.
@@ -50,8 +42,6 @@ pub struct Mutex(Arc<MutexInner>);
 /// A type that represents a guard for a mutex.
 ///
 pub struct MutexGuard {
-    /// Underlying locked spinlock.
-    _guard: SpinlockGuard,
     /// Reference to underlying mutex data.
     mutex: Arc<MutexInner>,
 }
@@ -97,7 +87,6 @@ impl Mutex {
     ///
     pub fn new() -> Self {
         Self(Arc::new(MutexInner {
-            lock: Spinlock::new(),
             locked: RefCell::new(false),
             sleeping: Condvar::new(),
         }))
@@ -113,16 +102,13 @@ impl Mutex {
     /// Upon success, empty result is returned. Upon failure, an error is returned instead.
     ///
     pub fn lock(&self) -> Result<MutexGuard, Error> {
-        let guard: SpinlockGuard = self.0.lock.lock();
-
         while *self.0.locked.borrow() {
-            self.0.sleeping.wait(&guard)?;
+            self.0.sleeping.wait()?;
         }
 
         *self.0.locked.borrow_mut() = true;
 
         Ok(MutexGuard {
-            _guard: guard,
             mutex: self.0.clone(),
         })
     }

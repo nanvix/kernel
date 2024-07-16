@@ -7,14 +7,14 @@
 
 use crate::{
     error::Error,
-    pm::{
-        sync::spinlock::SpinlockGuard,
-        ProcessManager,
-    },
+    pm::ProcessManager,
 };
 use ::alloc::collections::LinkedList;
 use ::core::cell::RefCell;
-use ::kcall::ThreadIdentifier;
+use ::kcall::{
+    ErrorCode,
+    ThreadIdentifier,
+};
 
 //==================================================================================================
 // Structures
@@ -68,16 +68,12 @@ impl Condvar {
     ///
     /// Waits on the condition variable.
     ///
-    pub fn wait(&self, guard: &SpinlockGuard) -> Result<(), Error> {
+    pub fn wait(&self) -> Result<(), Error> {
         self.sleeping
             .borrow_mut()
             .push_back(ProcessManager::get_tid()?);
 
-        guard.unlock();
-
         ProcessManager::sleep()?;
-
-        guard.lock();
 
         Ok(())
     }
