@@ -75,6 +75,27 @@ impl Semaphore {
     ///
     /// # Description
     ///
+    /// Attempts to acquire the semaphore.
+    ///
+    /// # Returns
+    ///
+    /// If the semaphore is not busy, it is acquired and an empty result is returned. If the
+    /// semaphore is busy, [`ErrorCode::OperationWouldBlock`] is returned instead. If an error
+    /// occurs, an error is returned instead.
+    ///
+    pub fn try_down(&self) -> Result<(), Error> {
+        if *self.value.borrow() == 0 {
+            return Err(Error::new(ErrorCode::OperationWouldBlock, "semaphore is busy"));
+        }
+
+        *self.value.borrow_mut() -= 1;
+
+        Ok(())
+    }
+
+    ///
+    /// # Description
+    ///
     /// Releases the semaphore.
     ///
     /// # Returns
