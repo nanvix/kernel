@@ -137,7 +137,7 @@ impl ScoreBoard {
     }
 
     pub fn handle(&self) -> Result<&KcallArgs, Error> {
-        self.dispatched.down()?;
+        self.dispatched.try_down()?;
 
         Ok(&self.args)
     }

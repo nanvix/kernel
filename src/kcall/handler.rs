@@ -104,10 +104,16 @@ pub fn kcall_handler(_hal: Hal, mut mm: VirtMemoryManager, mut pm: ProcessManage
                         warn!("failed to signal kernel call handled: {:?}", e)
                     }
                 },
-                Err(e) => {
-                    if e.code == ErrorCode::Interrupted {
-                        break;
-                    }
+                Err(e) => match e.code {
+                    ErrorCode::Interrupted => break,
+                    ErrorCode::OperationWouldBlock => {
+                        if let Err(e) = ProcessManager::switch() {
+                            error!("context switch failed: {:?}", e);
+                        }
+                    },
+                    _ => {
+                        error!("failed to handle kernel call: {:?}", e);
+                    },
                 },
             },
             Err(e) => {
