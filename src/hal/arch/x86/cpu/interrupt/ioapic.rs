@@ -151,7 +151,6 @@ impl Ioapic {
         // NOTE: The following cast is safe because "cpunum" is a 4-bit value.
         // NOTE: The following cast is safe because "irq" is an 8-bit value.
         let intvec_base: u8 = self.intvec_base;
-        info!("intvec_base={}", intvec_base);
         ioapic::IoapicRedirectionTable::write(
             self.deref_mut(),
             irq as u32,

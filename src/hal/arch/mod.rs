@@ -33,7 +33,6 @@ use crate::{
 pub use x86::{
     forge_user_stack,
     ContextInformation,
-    ExceptionHandler,
     ExceptionInformation,
     InterruptController,
     InterruptHandler,
