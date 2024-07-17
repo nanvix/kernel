@@ -28,7 +28,7 @@ fn do_capctl(
     value: bool,
 ) -> Result<(), Error> {
     // Checks if the process has enough privileges.
-    if pm.geteuid(pid)? == UserIdentifier::ROOT {
+    if pm.geteuid(pid)? != UserIdentifier::ROOT {
         let reason: &str = "permission denied";
         error!("do_capctl: {}", reason);
         return Err(Error::new(ErrorCode::PermissionDenied, reason));
