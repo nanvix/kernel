@@ -266,7 +266,7 @@ impl Vmem {
         access: AccessPermission,
     ) -> Result<(), Error> {
         // Check if the provided address lies outside the user space.
-        if !Self::is_user_addr(vaddr)? {
+        if !Self::is_user_addr(vaddr.into_inner()) {
             return Err(Error::new(ErrorCode::BadAddress, "address is not in user space"));
         }
 
@@ -327,9 +327,8 @@ impl Vmem {
     }
 
     /// Asserts whether an address lies in the user space.
-    fn is_user_addr(virt_addr: PageAligned<VirtualAddress>) -> Result<bool, Error> {
-        Ok(virt_addr >= PageAligned::from_address(USER_BASE)?
-            && virt_addr < PageAligned::from_address(USER_END)?)
+    fn is_user_addr(virt_addr: VirtualAddress) -> bool {
+        virt_addr >= USER_BASE && virt_addr < USER_END
     }
 
     /// Looks up a page table in the list of page tables.
@@ -469,7 +468,7 @@ impl Vmem {
     ///
     pub fn unmap(&mut self, vaddr: PageAligned<VirtualAddress>) -> Result<UserFrame, Error> {
         // Check if the provided address lies outside the user space.
-        if !Self::is_user_addr(vaddr)? {
+        if !Self::is_user_addr(vaddr.into_inner()) {
             let reason: &str = "address is not in user space";
             error!("unmap(): {}", reason);
             return Err(Error::new(ErrorCode::BadAddress, reason));
