@@ -331,6 +331,11 @@ impl Vmem {
         virt_addr >= USER_BASE && virt_addr < USER_END
     }
 
+    /// Asserts wether an address lies in the kernel space.
+    fn is_kernel_addr(virt_addr: VirtualAddress) -> bool {
+        !Self::is_user_addr(virt_addr)
+    }
+
     /// Looks up a page table in the list of page tables.
     fn lookup_page_table(&mut self, pde: &PageDirectoryEntry) -> Result<&mut PageTable, Error> {
         // Check if corresponding page table does not exist.
@@ -400,7 +405,7 @@ impl Vmem {
         }
 
         // Check if destination address does not lie in kernel space.
-        if !Self::is_user_addr(dst) {
+        if !Self::is_kernel_addr(dst) {
             let reason: &str = "destination address does not lie in kernel space";
             error!("copy_from_user_unaligned(): {}", reason);
             return Err(Error::new(ErrorCode::BadAddress, reason));
