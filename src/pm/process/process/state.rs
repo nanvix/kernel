@@ -6,7 +6,11 @@
 //==================================================================================================
 
 use crate::{
-    mm::Vmem,
+    hal::mem::VirtualAddress,
+    mm::{
+        KernelPage,
+        Vmem,
+    },
     pm::process::{
         capability::Capabilities,
         identity::ProcessIdentity,
@@ -54,8 +58,8 @@ impl ProcessState {
         self.pid
     }
 
-    pub fn identity(&self) -> ProcessIdentity {
-        self.identity.clone()
+    pub fn identity(&self) -> &ProcessIdentity {
+        &self.identity
     }
 
     pub fn get_uid(&self) -> UserIdentifier {
@@ -98,11 +102,24 @@ impl ProcessState {
         self.capabilities.clear(capability)
     }
 
+    pub fn has_capability(&self, capability: Capability) -> bool {
+        self.capabilities.has(capability)
+    }
+
     pub fn vmem(&self) -> &Vmem {
         &self.vmem
     }
 
     pub fn vmem_mut(&mut self) -> &mut Vmem {
         &mut self.vmem
+    }
+
+    pub fn copy_from_user_unaligned(
+        &self,
+        dst: &mut KernelPage,
+        src: VirtualAddress,
+        size: usize,
+    ) -> Result<(), Error> {
+        self.vmem.copy_from_user_unaligned(dst, src, size)
     }
 }

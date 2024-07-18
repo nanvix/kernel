@@ -34,7 +34,10 @@ use crate::{
         process::{
             identity::ProcessIdentity,
             process::{
+                InterruptReason,
                 InterruptedProcess,
+                ProcessRef,
+                ProcessRefMut,
                 RunnableProcess,
                 RunningProcess,
                 SleepingProcess,
@@ -75,8 +78,7 @@ use ::kcall::{
 /// A type that represents the process manager.
 ///
 struct ProcessManagerInner {
-    /// Was the process interrupted?
-    interrupted: bool,
+    interrupt_reason: Option<InterruptReason>,
     /// Next process identifier.
     next_pid: ProcessIdentifier,
     /// Running process.
@@ -85,6 +87,8 @@ struct ProcessManagerInner {
     ready: LinkedList<RunnableProcess>,
     /// Suspended processes.
     suspended: LinkedList<SleepingProcess>,
+    /// Interrupted processes.
+    interrupted: LinkedList<InterruptedProcess>,
     /// Zombie processes.
     zombies: LinkedList<ZombieProcess>,
     /// Thread manager.
@@ -104,10 +108,11 @@ impl ProcessManagerInner {
         let (kernel, _): (RunningProcess, *mut ContextInformation) = kernel.run();
 
         Self {
-            interrupted: false,
+            interrupt_reason: None,
             next_pid: ProcessIdentifier::from(1),
             ready: LinkedList::new(),
             suspended: LinkedList::new(),
+            interrupted: LinkedList::new(),
             zombies: LinkedList::new(),
             running: Some(kernel),
             tm,
@@ -175,7 +180,7 @@ impl ProcessManagerInner {
         trace!("create_process()");
 
         // Create a new memory address space for the process.
-        let mut vmem: Vmem = self.get_running().clone_vmem(mm)?;
+        let mut vmem: Vmem = mm.new_vmem(self.get_running().state().vmem())?;
 
         let user_stack: VirtualAddress = mm::user_stack_top().into_inner();
         let user_func: VirtualAddress = mm::USER_BASE;
@@ -197,7 +202,7 @@ impl ProcessManagerInner {
 
         let pid: ProcessIdentifier = self.next_pid;
         self.next_pid = ProcessIdentifier::from(Into::<usize>::into(pid) + 1);
-        let identity: ProcessIdentity = self.get_running().clone_identity();
+        let identity: ProcessIdentity = self.get_running().state().identity().clone();
         let process: RunnableProcess = RunnableProcess::new(pid, identity, thread, vmem);
 
         self.ready.push_back(process);
@@ -208,17 +213,24 @@ impl ProcessManagerInner {
     /// Schedule a process to run.
     pub fn schedule(&mut self) -> (*mut ContextInformation, *mut ContextInformation) {
         // Reschedule running process.
-        let previous_process: RunningProcess = self.running.take().unwrap();
+        let previous_process: RunningProcess = self.take_running();
         let (previous_process, previous_context) = previous_process.schedule();
         self.ready.push_back(previous_process);
 
         // Select next ready process to run.
-        let next_process: RunnableProcess = self.ready.pop_front().unwrap();
-        let (next_process, next_context): (RunningProcess, *mut ContextInformation) =
-            next_process.run();
+        if let Some(next_process) = self.interrupted.pop_back() {
+            let (next_process, reason, next_context) = next_process.resume();
+            self.interrupt_reason = Some(reason);
+            self.running = Some(next_process);
+            return (previous_context, next_context);
+        } else {
+            let next_process: RunnableProcess = self.take_ready();
+            let (next_process, next_context): (RunningProcess, *mut ContextInformation) =
+                next_process.run();
 
-        self.running = Some(next_process);
-        (previous_context, next_context)
+            self.running = Some(next_process);
+            (previous_context, next_context)
+        }
     }
 
     pub fn exec(
@@ -228,48 +240,19 @@ impl ProcessManagerInner {
         elf: &Elf32Fhdr,
     ) -> Result<(), Error> {
         // Find corresponding process.
-        let process: &mut RunnableProcess = match self.ready.iter_mut().find(|p| p.pid() == pid) {
-            Some(p) => p,
-            None => {
-                let reason: &str = "process not found";
-                error!("exec(): {}", reason);
-                return Err(Error::new(ErrorCode::NoSuchProcess, reason));
-            },
-        };
+        let process: &mut RunnableProcess =
+            match self.ready.iter_mut().find(|p| p.state().pid() == pid) {
+                Some(p) => p,
+                None => {
+                    let reason: &str = "process not found";
+                    error!("exec(): {}", reason);
+                    return Err(Error::new(ErrorCode::NoSuchProcess, reason));
+                },
+            };
 
         process.exec(mm, elf)?;
 
         Ok(())
-    }
-
-    ///
-    /// # Description
-    ///
-    /// Returns the ID of the calling process.
-    ///
-    /// # Returns
-    ///
-    /// The ID of the calling process.
-    ///
-    pub fn get_pid(&self) -> ProcessIdentifier {
-        self.get_running().pid()
-    }
-
-    ///
-    /// # Description
-    ///
-    /// Returns the ID of the calling thread.
-    ///
-    /// # Returns
-    ///
-    /// The ID of the calling thread.
-    ///
-    pub fn get_tid(&self) -> ThreadIdentifier {
-        self.get_running().get_tid().unwrap()
-    }
-
-    pub fn find_suspended_process(&self, pid: ProcessIdentifier) -> Option<&SleepingProcess> {
-        self.suspended.iter().find(|p| p.pid() == pid)
     }
 
     ///
@@ -282,8 +265,12 @@ impl ProcessManagerInner {
     /// Upon successful completion, empty is returned. Otherwise, an error code is returned instead.
     ///
     pub fn sleep(&mut self) -> (*mut ContextInformation, *mut ContextInformation) {
-        // Safety: it is safe to call unwrap because there is always a process running.
-        let running_process: RunningProcess = self.running.take().unwrap();
+        let running_process: RunningProcess = self.take_running();
+
+        // Check if kernel is trying to sleep.
+        if running_process.state().pid() == ProcessIdentifier::from(0) {
+            panic!("kernel process cannot sleep");
+        }
 
         match running_process.sleep() {
             Ok((runnable_process, previous_context)) => {
@@ -293,7 +280,7 @@ impl ProcessManagerInner {
             },
             Err((suspended_process, previous_context)) => {
                 self.suspended.push_back(suspended_process);
-                let next_process: RunnableProcess = self.ready.pop_front().unwrap();
+                let next_process: RunnableProcess = self.take_ready();
                 let (next_process, next_context) = next_process.run();
                 self.running = Some(next_process);
                 (previous_context, next_context)
@@ -338,8 +325,12 @@ impl ProcessManagerInner {
         &mut self,
         status: i32,
     ) -> Result<(*mut ContextInformation, *mut ContextInformation), Error> {
-        // Safety: it is safe to call unwrap because there is always a process running.
-        let running_process: RunningProcess = self.running.take().unwrap();
+        let running_process: RunningProcess = self.take_running();
+
+        // Check if kernel is trying to exit.
+        if running_process.state().pid() == ProcessIdentifier::from(0) {
+            panic!("kernel process cannot exit");
+        }
 
         match running_process.exit(status) {
             Ok((runnable_process, previous_context)) => {
@@ -356,29 +347,46 @@ impl ProcessManagerInner {
                         self.running = Some(running_process);
                         Ok((previous_context, next_context))
                     },
-                    None => {
-                        if self.suspended.len() == 1 {
-                            let suspended_process: SleepingProcess =
-                                self.suspended.pop_front().unwrap();
-                            let interrupted_process: InterruptedProcess =
-                                suspended_process.interrupt();
-                            let (next_process, next_context) = interrupted_process.resume();
-                            self.interrupted = true;
-                            self.running = Some(next_process);
-                            return Ok((previous_context, next_context));
-                        }
-                        trace!("number of suspended: {:?}", self.suspended.len());
-                        trace!("number of zombies: {:?}", self.zombies.len());
-                        todo!();
-                    },
+                    None => unreachable!("there should be a process ready to run"),
                 }
             },
         }
     }
 
-    fn get_running(&self) -> &RunningProcess {
-        // NOTE: The following call to unwrap is safe because there is always a running process.
-        self.running.as_ref().unwrap()
+    pub fn terminate(&mut self, pid: ProcessIdentifier) -> Result<(), Error> {
+        // Check if terminating kernel process.
+        if pid == ProcessIdentifier::from(0) {
+            let reason: &str = "cannot terminate kernel process";
+            error!("terminate(): {}", reason);
+            return Err(Error::new(ErrorCode::InvalidArgument, reason));
+        }
+
+        // Check if target process is running.
+        if self.running.is_some() && self.get_running().state().pid() == pid {
+            let reason: &str = "cannot terminate running process";
+            error!("terminate(): {}", reason);
+            return Err(Error::new(ErrorCode::InvalidArgument, reason));
+        }
+
+        // Check if target process is ready.
+        if let Some(process) = self.ready.iter().position(|p| p.state().pid() == pid) {
+            let process: RunnableProcess = self.ready.remove(process);
+            let process: ZombieProcess = process.terminate();
+            self.zombies.push_back(process);
+            return Ok(());
+        }
+
+        // Check if target process is suspended.
+        if let Some(process) = self.suspended.iter().position(|p| p.state().pid() == pid) {
+            let process: SleepingProcess = self.suspended.remove(process);
+            let process: InterruptedProcess = process.terminate();
+            self.interrupted.push_back(process);
+            return Ok(());
+        }
+
+        let reason: &str = "process not found";
+        error!("terminate(): {}", reason);
+        Err(Error::new(ErrorCode::NoSuchProcess, reason))
     }
 
     pub fn capctl(
@@ -387,21 +395,19 @@ impl ProcessManagerInner {
         capability: Capability,
         value: bool,
     ) -> Result<(), Error> {
-        let process: &mut RunnableProcess = self.find_runnable_process_mut(pid)?;
+        let mut process: ProcessRefMut = self.find_process_mut(pid)?;
 
         if value {
-            process.set_capability(capability);
+            process.state_mut().set_capability(capability);
         } else {
-            process.clear_capability(capability);
+            process.state_mut().clear_capability(capability);
         }
 
         Ok(())
     }
 
-    fn interrupt_flag(&mut self) -> bool {
-        let interrupted: bool = self.interrupted;
-        self.interrupted = false;
-        interrupted
+    fn interrupt_reason(&mut self) -> Option<InterruptReason> {
+        self.interrupt_reason.take()
     }
 
     pub fn harvest_zombies(&mut self) {
@@ -416,28 +422,61 @@ impl ProcessManagerInner {
         }
     }
 
-    fn find_runnable_process(&self, pid: ProcessIdentifier) -> Result<&RunnableProcess, Error> {
-        match self.ready.iter().find(|p| p.pid() == pid) {
-            Some(p) => Ok(p),
-            None => {
-                let reason: &str = "process not found";
-                error!("find_runnable_process(): {}", reason);
-                Err(Error::new(ErrorCode::NoSuchProcess, reason))
-            },
+    fn take_ready(&mut self) -> RunnableProcess {
+        // NOTE: it is safe to call unwrap because there is always a process ready to run.
+        self.ready
+            .pop_front()
+            .expect("the kernel should be ready to run")
+    }
+
+    fn take_running(&mut self) -> RunningProcess {
+        // NOTE: it is safe to call unwrap because there is always a process running.
+        self.running.take().expect("the kernel should be running")
+    }
+
+    fn get_running(&self) -> &RunningProcess {
+        // NOTE: it is safe to call unwrap because there is always a process running.
+        self.running.as_ref().expect("the kernel should be running")
+    }
+
+    fn get_running_mut(&mut self) -> &mut RunningProcess {
+        // NOTE: it is safe to call unwrap because there is always a process running.
+        self.running.as_mut().expect("the kernel should be running")
+    }
+
+    fn find_process(&self, pid: ProcessIdentifier) -> Result<ProcessRef, Error> {
+        if self.get_running().state().pid() == pid {
+            Ok(ProcessRef::Running(self.get_running()))
+        } else if let Some(process) = self.ready.iter().find(|p| p.state().pid() == pid) {
+            Ok(ProcessRef::Runnable(process))
+        } else if let Some(process) = self.suspended.iter().find(|p| p.state().pid() == pid) {
+            Ok(ProcessRef::Sleeping(process))
+        } else if let Some(process) = self.interrupted.iter().find(|p| p.state().pid() == pid) {
+            Ok(ProcessRef::Interrupted(process))
+        } else if let Some(process) = self.zombies.iter().find(|p| p.state().pid() == pid) {
+            Ok(ProcessRef::Zombie(process))
+        } else {
+            let reason: &str = "process not found";
+            error!("find_process(): {}", reason);
+            Err(Error::new(ErrorCode::NoSuchProcess, reason))
         }
     }
 
-    fn find_runnable_process_mut(
-        &mut self,
-        pid: ProcessIdentifier,
-    ) -> Result<&mut RunnableProcess, Error> {
-        match self.ready.iter_mut().find(|p| p.pid() == pid) {
-            Some(p) => Ok(p),
-            None => {
-                let reason: &str = "process not found";
-                error!("find_runnable_process(): {}", reason);
-                Err(Error::new(ErrorCode::NoSuchProcess, reason))
-            },
+    fn find_process_mut(&mut self, pid: ProcessIdentifier) -> Result<ProcessRefMut, Error> {
+        if self.get_running_mut().state_mut().pid() == pid {
+            Ok(ProcessRefMut::Running(self.get_running_mut()))
+        } else if let Some(process) = self.ready.iter_mut().find(|p| p.state().pid() == pid) {
+            Ok(ProcessRefMut::Runnable(process))
+        } else if let Some(process) = self.suspended.iter_mut().find(|p| p.state().pid() == pid) {
+            Ok(ProcessRefMut::Sleeping(process))
+        } else if let Some(process) = self.interrupted.iter_mut().find(|p| p.state().pid() == pid) {
+            Ok(ProcessRefMut::Interrupted(process))
+        } else if let Some(process) = self.zombies.iter_mut().find(|p| p.state().pid() == pid) {
+            Ok(ProcessRefMut::Zombie(process))
+        } else {
+            let reason: &str = "process not found";
+            error!("find_process(): {}", reason);
+            Err(Error::new(ErrorCode::NoSuchProcess, reason))
         }
     }
 }
@@ -469,46 +508,50 @@ impl ProcessManager {
     }
 
     pub fn getuid(&self, pid: ProcessIdentifier) -> Result<UserIdentifier, Error> {
-        Ok(self.try_borrow()?.find_runnable_process(pid)?.get_uid())
+        Ok(self.try_borrow()?.find_process(pid)?.state().get_uid())
     }
 
     pub fn setuid(&mut self, pid: ProcessIdentifier, uid: UserIdentifier) -> Result<(), Error> {
         Ok(self
             .try_borrow_mut()?
-            .find_runnable_process_mut(pid)?
+            .find_process_mut(pid)?
+            .state_mut()
             .set_uid(uid)?)
     }
 
     pub fn geteuid(&self, pid: ProcessIdentifier) -> Result<UserIdentifier, Error> {
-        Ok(self.try_borrow()?.find_runnable_process(pid)?.get_euid())
+        Ok(self.try_borrow()?.find_process(pid)?.state().get_euid())
     }
 
     pub fn seteuid(&mut self, pid: ProcessIdentifier, euid: UserIdentifier) -> Result<(), Error> {
         Ok(self
             .try_borrow_mut()?
-            .find_runnable_process_mut(pid)?
+            .find_process_mut(pid)?
+            .state_mut()
             .set_euid(euid)?)
     }
 
     pub fn getgid(&self, pid: ProcessIdentifier) -> Result<GroupIdentifier, Error> {
-        Ok(self.try_borrow()?.find_runnable_process(pid)?.get_gid())
+        Ok(self.try_borrow()?.find_process(pid)?.state().get_gid())
     }
 
     pub fn setgid(&mut self, pid: ProcessIdentifier, gid: GroupIdentifier) -> Result<(), Error> {
         Ok(self
             .try_borrow_mut()?
-            .find_runnable_process_mut(pid)?
+            .find_process_mut(pid)?
+            .state_mut()
             .set_gid(gid)?)
     }
 
     pub fn getegid(&self, pid: ProcessIdentifier) -> Result<GroupIdentifier, Error> {
-        Ok(self.try_borrow()?.find_runnable_process(pid)?.get_egid())
+        Ok(self.try_borrow()?.find_process(pid)?.state().get_egid())
     }
 
     pub fn setegid(&mut self, pid: ProcessIdentifier, egid: GroupIdentifier) -> Result<(), Error> {
         Ok(self
             .try_borrow_mut()?
-            .find_runnable_process_mut(pid)?
+            .find_process_mut(pid)?
+            .state_mut()
             .set_egid(egid)?)
     }
 
@@ -519,6 +562,14 @@ impl ProcessManager {
         value: bool,
     ) -> Result<(), Error> {
         Ok(self.try_borrow_mut()?.capctl(pid, capability, value)?)
+    }
+
+    pub fn has_capability(capability: Capability) -> Result<bool, Error> {
+        Ok(Self::get()?
+            .try_borrow()?
+            .get_running()
+            .state()
+            .has_capability(capability))
     }
 
     pub fn exit(status: i32) -> Result<!, Error> {
@@ -532,6 +583,10 @@ impl ProcessManager {
         }
     }
 
+    pub fn terminate(&mut self, pid: ProcessIdentifier) -> Result<(), Error> {
+        Ok(self.try_borrow_mut()?.terminate(pid)?)
+    }
+
     pub fn vmcopy_from_user(
         &mut self,
         pid: ProcessIdentifier,
@@ -539,10 +594,10 @@ impl ProcessManager {
         src: VirtualAddress,
         size: usize,
     ) -> Result<(), Error> {
-        match self.0.try_borrow() {
-            Ok(pm) => {
-                if let Some(proc) = pm.find_suspended_process(pid) {
-                    proc.copy_from_user_unaligned(dst, src, size)
+        match self.0.try_borrow_mut() {
+            Ok(mut pm) => {
+                if let Ok(mut proc) = pm.find_process_mut(pid) {
+                    proc.state_mut().copy_from_user_unaligned(dst, src, size)
                 } else {
                     let reason: &str = "process not found";
                     error!("vmcopy_from_user(): {}", reason);
@@ -557,8 +612,9 @@ impl ProcessManager {
         }
     }
 
-    pub fn harvest_zombies(&mut self) {
-        self.try_borrow_mut().unwrap().harvest_zombies();
+    pub fn harvest_zombies(&mut self) -> Result<(), Error> {
+        self.try_borrow_mut()?.harvest_zombies();
+        Ok(())
     }
 
     ///
@@ -572,7 +628,7 @@ impl ProcessManager {
     /// code is returned instead.
     ///
     pub fn get_pid() -> Result<ProcessIdentifier, Error> {
-        Ok(Self::get()?.try_borrow()?.get_pid())
+        Ok(Self::get()?.try_borrow()?.get_running().state().pid())
     }
 
     ///
@@ -586,7 +642,7 @@ impl ProcessManager {
     /// code is returned instead.
     ///
     pub fn get_tid() -> Result<ThreadIdentifier, Error> {
-        Ok(Self::get()?.try_borrow()?.get_tid())
+        Ok(Self::get()?.try_borrow()?.get_running().get_tid())
     }
 
     ///
@@ -604,9 +660,10 @@ impl ProcessManager {
 
         unsafe { ContextInformation::switch(from, to) }
 
-        let interrupted_flag: bool = Self::get_mut()?.try_borrow_mut()?.interrupt_flag();
+        let interrupt_reason: Option<InterruptReason> =
+            Self::get_mut()?.try_borrow_mut()?.interrupt_reason();
 
-        if interrupted_flag {
+        if interrupt_reason.is_some() {
             let reason: &str = "interrupted";
             error!("sleep(): {}", reason);
             return Err(Error::new(ErrorCode::Interrupted, reason));

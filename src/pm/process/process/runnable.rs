@@ -1,6 +1,10 @@
 // Copyright(c) The Maintainers of Nanvix.
 // Licensed under the MIT License.
 
+//==================================================================================================
+// Imports
+//==================================================================================================
+
 use crate::{
     hal::{
         arch::ContextInformation,
@@ -14,20 +18,20 @@ use crate::{
     pm::{
         process::{
             identity::ProcessIdentity,
-            process::state::ProcessState,
+            process::{
+                state::ProcessState,
+                RunningProcess,
+            },
         },
         thread::ReadyThread,
     },
 };
 use ::kcall::{
-    Capability,
     Error,
-    GroupIdentifier,
     ProcessIdentifier,
-    UserIdentifier,
 };
 
-use super::RunningProcess;
+use super::ZombieProcess;
 
 //==================================================================================================
 // Runnable Process
@@ -74,6 +78,21 @@ impl RunnableProcess {
         }
     }
 
+    pub fn state(&self) -> &ProcessState {
+        self.state.as_ref().unwrap()
+    }
+
+    pub fn state_mut(&mut self) -> &mut ProcessState {
+        self.state.as_mut().unwrap()
+    }
+
+    pub fn terminate(mut self) -> ZombieProcess {
+        let state = self.state.take().unwrap();
+        let thread = self.thread.take().unwrap();
+        let thread = thread.terminate();
+        ZombieProcess::new(state, thread, ZombieProcess::KILLED)
+    }
+
     pub fn run(mut self) -> (RunningProcess, *mut ContextInformation) {
         let next_thread: ReadyThread = self.thread.take().unwrap();
         let (next_thread, next_context) = next_thread.resume();
@@ -86,49 +105,5 @@ impl RunnableProcess {
         elf: &Elf32Fhdr,
     ) -> Result<VirtualAddress, Error> {
         mm.load_elf(self.state.as_mut().unwrap().vmem_mut(), elf)
-    }
-
-    pub fn pid(&self) -> ProcessIdentifier {
-        self.state.as_ref().unwrap().pid()
-    }
-
-    pub fn set_capability(&mut self, capability: Capability) {
-        self.state.as_mut().unwrap().set_capability(capability);
-    }
-
-    pub fn clear_capability(&mut self, capability: Capability) {
-        self.state.as_mut().unwrap().clear_capability(capability);
-    }
-
-    pub fn get_uid(&self) -> UserIdentifier {
-        self.state.as_ref().unwrap().get_uid()
-    }
-
-    pub fn set_uid(&mut self, uid: UserIdentifier) -> Result<(), Error> {
-        self.state.as_mut().unwrap().set_uid(uid)
-    }
-
-    pub fn get_euid(&self) -> UserIdentifier {
-        self.state.as_ref().unwrap().get_euid()
-    }
-
-    pub fn set_euid(&mut self, euid: UserIdentifier) -> Result<(), Error> {
-        self.state.as_mut().unwrap().set_euid(euid)
-    }
-
-    pub fn get_gid(&self) -> GroupIdentifier {
-        self.state.as_ref().unwrap().get_gid()
-    }
-
-    pub fn set_gid(&mut self, gid: GroupIdentifier) -> Result<(), Error> {
-        self.state.as_mut().unwrap().set_gid(gid)
-    }
-
-    pub fn get_egid(&self) -> GroupIdentifier {
-        self.state.as_ref().unwrap().get_egid()
-    }
-
-    pub fn set_egid(&mut self, egid: GroupIdentifier) -> Result<(), Error> {
-        self.state.as_mut().unwrap().set_egid(egid)
     }
 }

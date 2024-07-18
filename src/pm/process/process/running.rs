@@ -7,31 +7,19 @@
 
 use crate::{
     hal::arch::ContextInformation,
-    mm::{
-        VirtMemoryManager,
-        Vmem,
-    },
     pm::{
-        process::{
-            identity::ProcessIdentity,
-            process::state::ProcessState,
+        process::process::{
+            state::ProcessState,
+            suspended::SleepingProcess,
+            RunnableProcess,
+            ZombieProcess,
         },
         thread::RunningThread,
     },
 };
 use ::alloc::rc::Rc;
 use ::core::cell::RefCell;
-use ::kcall::{
-    Error,
-    ProcessIdentifier,
-    ThreadIdentifier,
-};
-
-use super::{
-    suspended::SleepingProcess,
-    RunnableProcess,
-    ZombieProcess,
-};
+use ::kcall::ThreadIdentifier;
 
 //==================================================================================================
 // Structures
@@ -58,6 +46,14 @@ impl RunningProcess {
             state: Some(process),
             running: Rc::new(RefCell::new(Some(running))),
         }
+    }
+
+    pub fn state(&self) -> &ProcessState {
+        self.state.as_ref().unwrap()
+    }
+
+    pub fn state_mut(&mut self) -> &mut ProcessState {
+        self.state.as_mut().unwrap()
     }
 
     pub fn schedule(mut self) -> (RunnableProcess, *mut ContextInformation) {
@@ -90,37 +86,11 @@ impl RunningProcess {
         Err((ZombieProcess::new(self.state.take().unwrap(), zombie_thread, status), ctx))
     }
 
-    pub fn get_tid(&self) -> Option<ThreadIdentifier> {
-        self.running.borrow().as_ref().map(|thread| thread.id())
-    }
-
-    ///
-    /// # Description
-    ///
-    /// Gets the process identifier of the target process.
-    ///
-    /// # Returns
-    ///
-    /// The process identifier of the target process.
-    ///
-    pub fn pid(&self) -> ProcessIdentifier {
-        self.state.as_ref().unwrap().pid()
-    }
-
-    pub fn clone_vmem(&self, mm: &VirtMemoryManager) -> Result<Vmem, Error> {
-        mm.new_vmem(self.state.as_ref().unwrap().vmem())
-    }
-
-    ///
-    /// # Description
-    ///
-    /// Clones the identity of the target process.
-    ///
-    /// # Return Values
-    ///
-    /// The cloned identity of the target process.
-    ///
-    pub fn clone_identity(&self) -> ProcessIdentity {
-        self.state.as_ref().unwrap().identity()
+    pub fn get_tid(&self) -> ThreadIdentifier {
+        self.running
+            .borrow()
+            .as_ref()
+            .map(|thread| thread.id())
+            .unwrap()
     }
 }

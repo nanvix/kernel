@@ -27,12 +27,22 @@ pub struct ZombieProcess {
 }
 
 impl ZombieProcess {
+    pub const KILLED: i32 = -1;
+
     pub fn new(process: ProcessState, zombie: ZombieThread, status: i32) -> Self {
         Self {
             zombie: Some(zombie),
             process: Some(process),
             status,
         }
+    }
+
+    pub fn state(&self) -> &ProcessState {
+        self.process.as_ref().unwrap()
+    }
+
+    pub fn state_mut(&mut self) -> &mut ProcessState {
+        self.process.as_mut().unwrap()
     }
 
     pub fn bury(&mut self) -> (ZombieThread, ProcessState, i32) {

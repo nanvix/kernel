@@ -5,23 +5,18 @@
 // Imports
 //==================================================================================================
 
-use super::{
-    interrupted::InterruptedProcess,
-    runnable::RunnableProcess,
-};
-use crate::{
-    hal::mem::VirtualAddress,
-    mm::KernelPage,
-    pm::{
-        process::process::state::ProcessState,
-        thread::SleepingThread,
+use crate::pm::{
+    process::process::{
+        interrupted::{
+            InterruptReason,
+            InterruptedProcess,
+        },
+        runnable::RunnableProcess,
+        state::ProcessState,
     },
+    thread::SleepingThread,
 };
-use ::kcall::{
-    Error,
-    ProcessIdentifier,
-    ThreadIdentifier,
-};
+use ::kcall::ThreadIdentifier;
 
 //==================================================================================================
 // Suspended Process
@@ -46,6 +41,20 @@ impl SleepingProcess {
         }
     }
 
+    pub fn state(&self) -> &ProcessState {
+        &self.state
+    }
+
+    pub fn state_mut(&mut self) -> &mut ProcessState {
+        &mut self.state
+    }
+
+    pub fn terminate(mut self) -> InterruptedProcess {
+        let thread = self.thread.take().unwrap();
+        let thread = thread.interrupt();
+        InterruptedProcess::from_state(self.state, InterruptReason::Killed, thread)
+    }
+
     pub fn wakeup_sleeping_thread(
         self,
         tid: ThreadIdentifier,
@@ -57,24 +66,5 @@ impl SleepingProcess {
             },
             _ => Err(self),
         }
-    }
-
-    pub fn interrupt(mut self) -> InterruptedProcess {
-        let interrupted_thread = self.thread.take().unwrap();
-        let interrupted_thread = interrupted_thread.interrupt();
-        InterruptedProcess::from_state(self.state, interrupted_thread)
-    }
-
-    pub fn pid(&self) -> ProcessIdentifier {
-        self.state.pid()
-    }
-
-    pub fn copy_from_user_unaligned(
-        &self,
-        dst: &mut KernelPage,
-        src: VirtualAddress,
-        size: usize,
-    ) -> Result<(), Error> {
-        self.state.vmem().copy_from_user_unaligned(dst, src, size)
     }
 }
