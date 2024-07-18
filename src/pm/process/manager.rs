@@ -590,7 +590,7 @@ impl ProcessManager {
     pub fn vmcopy_from_user(
         &mut self,
         pid: ProcessIdentifier,
-        dst: &mut KernelPage,
+        dst: VirtualAddress,
         src: VirtualAddress,
         size: usize,
     ) -> Result<(), Error> {

@@ -52,9 +52,9 @@ fn do_debug(
     let size: usize = args.arg1 as usize;
 
     let src: VirtualAddress = VirtualAddress::new(buf);
-    let mut dst: KernelPage = mm.alloc_kpage(true)?;
+    let dst: KernelPage = mm.alloc_kpage(true)?;
 
-    pm.vmcopy_from_user(args.pid, &mut dst, src, size)?;
+    pm.vmcopy_from_user(args.pid, dst.base().into_virtual_address().into_inner(), src, size)?;
 
     Ok(debug(dst.base().into_raw_value(), size))
 }

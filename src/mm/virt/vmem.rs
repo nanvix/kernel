@@ -391,12 +391,19 @@ impl Vmem {
 
     pub fn copy_from_user_unaligned(
         &self,
-        dst: &mut KernelPage,
+        dst: VirtualAddress,
         src: VirtualAddress,
         size: usize,
     ) -> Result<(), Error> {
         extern "C" {
             fn __physcopy(dst: *mut u8, src: *const u8, size: usize);
+        }
+
+        // Check if destination address does not lie in kernel space.
+        if !Self::is_user_addr(dst) {
+            let reason: &str = "destination address does not lie in kernel space";
+            error!("copy_from_user_unaligned(): {}", reason);
+            return Err(Error::new(ErrorCode::BadAddress, reason));
         }
 
         // Check if size is too big.
@@ -420,11 +427,10 @@ impl Vmem {
         let src = self.find_page(vaddr)?;
 
         let src_frame: FrameAddress = src.frame_address();
-        let dst_frame: FrameAddress = dst.frame_address();
 
         unsafe {
             __physcopy(
-                dst_frame.into_raw_value() as *mut u8,
+                dst.into_raw_value() as *mut u8,
                 (src_frame.into_raw_value() + offset) as *const u8,
                 size,
             )

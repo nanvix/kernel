@@ -7,10 +7,7 @@
 
 use crate::{
     hal::mem::VirtualAddress,
-    mm::{
-        KernelPage,
-        Vmem,
-    },
+    mm::Vmem,
     pm::process::{
         capability::Capabilities,
         identity::ProcessIdentity,
@@ -116,7 +113,7 @@ impl ProcessState {
 
     pub fn copy_from_user_unaligned(
         &self,
-        dst: &mut KernelPage,
+        dst: VirtualAddress,
         src: VirtualAddress,
         size: usize,
     ) -> Result<(), Error> {
