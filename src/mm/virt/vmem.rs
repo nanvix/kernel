@@ -451,6 +451,63 @@ impl Vmem {
         Ok(())
     }
 
+    pub fn copy_to_user_unaligned(
+        &self,
+        dst: VirtualAddress,
+        src: VirtualAddress,
+        size: usize,
+    ) -> Result<(), Error> {
+        extern "C" {
+            fn __physcopy(dst: *mut u8, src: *const u8, size: usize);
+        }
+
+        // Checks if destination address does not lie in kernel space.
+        if !Self::is_kernel_addr(src) {
+            let reason: &str = "source address does not lie in kernel space";
+            error!("copy_unaligned(): {}", reason);
+            return Err(Error::new(ErrorCode::BadAddress, reason));
+        }
+
+        // Check if source address does not lie in user space.
+        if !Self::is_user_addr(dst) {
+            let reason: &str = "destination address does not lie in user space";
+            error!("copy_to_user_unaligned(): {}", reason);
+            return Err(Error::new(ErrorCode::BadAddress, reason));
+        }
+
+        // Check if size is too big.
+        if size > mem::PAGE_SIZE {
+            let reason: &str = "size is too big";
+            error!("copy_unaligned(): {}", reason);
+            return Err(Error::new(ErrorCode::InvalidArgument, reason));
+        }
+
+        let vaddr: PageAligned<VirtualAddress> =
+            PageAligned::from_address(dst.align_down(mmu::PAGE_ALIGNMENT)?)?;
+
+        let offset: usize = dst.into_raw_value() - vaddr.into_raw_value();
+
+        // Check if area spans across pages.
+        if offset + size > mem::PAGE_SIZE {
+            let reason: &str = "area spans across pages";
+            error!("copy_unaligned(): {}", reason);
+            return Err(Error::new(ErrorCode::InvalidArgument, reason));
+        }
+
+        let dst: &AttachedUserPage = self.find_page(vaddr)?;
+        let dst_frame: FrameAddress = dst.frame_address();
+
+        unsafe {
+            __physcopy(
+                (dst_frame.into_raw_value() + offset) as *mut u8,
+                src.into_raw_value() as *const u8,
+                size,
+            )
+        };
+
+        Ok(())
+    }
+
     pub unsafe fn physcopy(
         &mut self,
         dst: PageAligned<VirtualAddress>,
