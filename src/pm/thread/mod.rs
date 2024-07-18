@@ -92,6 +92,10 @@ impl ReadyThread {
         let ctx: *mut ContextInformation = self.0.context_mut();
         (RunningThread(self.0), ctx)
     }
+
+    pub fn terminate(self) -> ZombieThread {
+        ZombieThread(self.0)
+    }
 }
 
 //==================================================================================================
