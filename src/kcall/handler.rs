@@ -121,10 +121,14 @@ pub fn kcall_handler(_hal: Hal, mut mm: VirtMemoryManager, mut pm: ProcessManage
             },
         };
 
-        pm.harvest_zombies();
+        if let Err(e) = pm.harvest_zombies() {
+            error!("failed to harvest zombies: {:?}", e);
+        }
     }
 
-    pm.harvest_zombies();
+    if let Err(e) = pm.harvest_zombies() {
+        error!("failed to harvest zombies: {:?}", e);
+    }
 
     trace!("shutting down");
 }
