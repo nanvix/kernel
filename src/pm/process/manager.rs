@@ -613,28 +613,15 @@ impl ProcessManager {
     }
 
     pub fn vmcopy_to_user(
-        &mut self,
-        pid: ProcessIdentifier,
         dst: VirtualAddress,
         src: VirtualAddress,
         size: usize,
     ) -> Result<(), Error> {
-        match self.0.try_borrow_mut() {
-            Ok(mut pm) => {
-                if let Ok(mut proc) = pm.find_process_mut(pid) {
-                    proc.state_mut().copy_to_user_unaligned(dst, src, size)
-                } else {
-                    let reason: &str = "process not found";
-                    error!("vmcopy_from_user(): {}", reason);
-                    Err(Error::new(ErrorCode::NoSuchEntry, &reason))
-                }
-            },
-            Err(_) => {
-                let reason: &str = "failed to borrow process manager";
-                error!("vmcopy_from_user(): {}", reason);
-                Err(Error::new(ErrorCode::ResourceBusy, "cannot borrow process manager"))
-            },
-        }
+        Self::get_mut()?
+            .try_borrow_mut()?
+            .get_running_mut()
+            .state_mut()
+            .copy_to_user_unaligned(dst, src, size)
     }
 
     pub fn harvest_zombies(&mut self) -> Result<(), Error> {
