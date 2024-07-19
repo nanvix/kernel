@@ -268,7 +268,7 @@ impl ProcessManagerInner {
         let running_process: RunningProcess = self.take_running();
 
         // Check if kernel is trying to sleep.
-        if running_process.state().pid() == ProcessIdentifier::from(0) {
+        if running_process.state().pid() == ProcessIdentifier::KERNEL {
             panic!("kernel process cannot sleep");
         }
 
@@ -328,7 +328,7 @@ impl ProcessManagerInner {
         let running_process: RunningProcess = self.take_running();
 
         // Check if kernel is trying to exit.
-        if running_process.state().pid() == ProcessIdentifier::from(0) {
+        if running_process.state().pid() == ProcessIdentifier::KERNEL {
             panic!("kernel process cannot exit");
         }
 
@@ -355,7 +355,7 @@ impl ProcessManagerInner {
 
     pub fn terminate(&mut self, pid: ProcessIdentifier) -> Result<(), Error> {
         // Check if terminating kernel process.
-        if pid == ProcessIdentifier::from(0) {
+        if pid == ProcessIdentifier::KERNEL {
             let reason: &str = "cannot terminate kernel process";
             error!("terminate(): {}", reason);
             return Err(Error::new(ErrorCode::InvalidArgument, reason));
