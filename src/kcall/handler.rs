@@ -96,6 +96,7 @@ pub fn kcall_handler(_hal: Hal, mut mm: VirtMemoryManager, mut pm: ProcessManage
                         KcallNumber::SetEuid => pm::seteuid(&mut pm, args),
                         KcallNumber::SetEgid => pm::setegid(&mut pm, args),
                         KcallNumber::CapCtl => pm::capctl(&mut pm, args),
+                        KcallNumber::Terminate => pm::terminate(&mut pm, args),
                         _ => {
                             error!("invalid kernel call");
                             ErrorCode::InvalidSysCall.into_errno()
