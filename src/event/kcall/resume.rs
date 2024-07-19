@@ -5,7 +5,7 @@
 // Imports
 //==================================================================================================
 
-use crate::event::dispatcher::Dispatcher;
+use crate::event::manager::EventManager;
 use ::kcall::EventDescriptor;
 
 //==================================================================================================
@@ -18,7 +18,7 @@ pub fn resume(eventinfo: usize) -> i32 {
         Err(e) => return e.code.into_errno(),
     };
 
-    match Dispatcher::do_resume(eventinfo) {
+    match EventManager::do_resume(eventinfo) {
         Ok(_) => 0,
         Err(e) => e.code.into_errno(),
     }

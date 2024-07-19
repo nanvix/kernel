@@ -42,14 +42,13 @@ use ::kcall::{
 // Structures
 //==================================================================================================
 
-static mut DISPATCHER: Option<Dispatcher> = None;
+static mut DISPATCHER: Option<EventManager> = None;
 
 struct ExceptionEventInformation {
     pid: ProcessIdentifier,
     info: ExceptionInformation,
 }
-
-pub struct Dispatcher {
+pub struct EventManager {
     nevents: usize,
     wait: Condvar,
     pending_interrupts: [LinkedList<EventDescriptor>; usize::BITS as usize],
@@ -57,7 +56,7 @@ pub struct Dispatcher {
         usize::BITS as usize],
 }
 
-impl Dispatcher {
+impl EventManager {
     const NUMBER_EVENTS: usize = 2;
 
     pub fn do_wait(
@@ -149,7 +148,7 @@ impl Dispatcher {
         let idx: usize = usize::from(ev);
 
         trace!("do_resume_exception(): event={:?}", ev);
-        let dispatcher = match Dispatcher::try_get_mut() {
+        let dispatcher = match EventManager::try_get_mut() {
             Ok(dispatcher) => dispatcher,
             Err(e) => {
                 error!("failed to get dispatcher: {:?}", e);
@@ -213,7 +212,7 @@ impl Dispatcher {
         Ok(resume)
     }
 
-    pub fn try_get_mut() -> Result<&'static mut Dispatcher, Error> {
+    pub fn try_get_mut() -> Result<&'static mut EventManager, Error> {
         unsafe {
             match &mut DISPATCHER {
                 Some(dispatcher) => Ok(dispatcher),
@@ -228,7 +227,7 @@ impl Dispatcher {
 }
 
 fn interrupt_handler(intnum: InterruptNumber) {
-    if let Ok(dispatcher) = Dispatcher::try_get_mut() {
+    if let Ok(dispatcher) = EventManager::try_get_mut() {
         match dispatcher.wakeup_interrupt(1 << intnum as usize) {
             Ok(_) => {},
             Err(e) => error!("failed to wake up dispatcher: {:?}", e),
@@ -245,7 +244,7 @@ fn exception_handler(info: &ExceptionInformation, _ctx: &ContextInformation) {
         },
     };
 
-    if let Ok(dispatcher) = Dispatcher::try_get_mut() {
+    if let Ok(dispatcher) = EventManager::try_get_mut() {
         match dispatcher.wakeup_exception(1 << info.num() as usize, pid, info) {
             Ok(resume) => {
                 if let Err(_) = resume.wait() {
@@ -262,7 +261,6 @@ fn exception_handler(info: &ExceptionInformation, _ctx: &ContextInformation) {
 pub fn init(hal: &mut Hal) {
     let mut pending_interrupts: [LinkedList<EventDescriptor>; usize::BITS as usize] =
         unsafe { mem::zeroed() };
-
     for list in pending_interrupts.iter_mut() {
         *list = LinkedList::default();
     }
@@ -272,12 +270,11 @@ pub fn init(hal: &mut Hal) {
         ExceptionEventInformation,
         Rc<Condvar>,
     )>; usize::BITS as usize] = unsafe { mem::zeroed() };
-
     for list in pending_exceptions.iter_mut() {
         *list = LinkedList::default();
     }
 
-    let dispatcher: Dispatcher = Dispatcher {
+    let dispatcher: EventManager = EventManager {
         nevents: 0,
         pending_interrupts,
         pending_exceptions,

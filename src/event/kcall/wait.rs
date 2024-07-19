@@ -5,7 +5,7 @@
 // Imports
 //==================================================================================================
 
-use crate::event::dispatcher::Dispatcher;
+use crate::event::manager::EventManager;
 use ::kcall::EventInformation;
 
 //==================================================================================================
@@ -13,7 +13,7 @@ use ::kcall::EventInformation;
 //==================================================================================================
 
 pub fn wait(info: *mut EventInformation, interrupts: usize, exceptions: usize) -> i32 {
-    let dispatcher: &mut Dispatcher = match Dispatcher::try_get_mut() {
+    let dispatcher: &mut EventManager = match EventManager::try_get_mut() {
         Ok(dispatcher) => dispatcher,
         Err(e) => return e.code.into_errno(),
     };
