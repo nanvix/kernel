@@ -2,29 +2,22 @@
 // Licensed under the MIT License.
 
 //==================================================================================================
-// Modules
+// Imports
 //==================================================================================================
 
-mod getegid;
-mod geteuid;
-mod getgid;
-mod getuid;
-mod setegid;
-mod seteuid;
-mod setgid;
-mod setuid;
-mod terminate;
+use crate::{
+    kcall::KcallArgs,
+    pm::ProcessManager,
+};
+use ::kcall::ProcessIdentifier;
 
 //==================================================================================================
-// Exports
+// Standalone Functions
 //==================================================================================================
 
-pub use getegid::getegid;
-pub use geteuid::geteuid;
-pub use getgid::getgid;
-pub use getuid::getuid;
-pub use setegid::setegid;
-pub use seteuid::seteuid;
-pub use setgid::setgid;
-pub use setuid::setuid;
-pub use terminate::terminate;
+pub fn terminate(pm: &mut ProcessManager, args: &KcallArgs) -> i32 {
+    match pm.terminate(ProcessIdentifier::from(args.arg0 as usize)) {
+        Ok(_) => 0,
+        Err(e) => e.code.into_errno(),
+    }
+}
