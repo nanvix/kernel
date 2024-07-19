@@ -16,6 +16,7 @@ use crate::arch::cpu::excp::Exception;
 ///
 /// Stores information about an exception.
 ///
+#[derive(Clone)]
 #[repr(C, packed)]
 pub struct ExceptionInformation {
     /// Exception number.

@@ -40,7 +40,6 @@ use madt::madt::MadtInfo;
 pub use context::ContextInformation;
 pub use exception::{
     ExceptionController,
-    ExceptionHandler,
     ExceptionInformation,
 };
 pub use interrupt::{

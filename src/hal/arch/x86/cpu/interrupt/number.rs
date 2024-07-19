@@ -5,7 +5,7 @@
 // Structures
 //==================================================================================================
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 #[repr(u32)]
 pub enum InterruptNumber {
     Timer = 0,

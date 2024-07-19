@@ -65,6 +65,7 @@ mod macros;
 mod arch;
 mod config;
 mod error;
+mod event;
 mod hal;
 mod kargs;
 mod kcall;

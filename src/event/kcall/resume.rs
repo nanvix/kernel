@@ -2,15 +2,24 @@
 // Licensed under the MIT License.
 
 //==================================================================================================
-// Modules
+// Imports
 //==================================================================================================
 
-mod controller;
-mod info;
+use crate::event::dispatcher::Dispatcher;
+use ::kcall::EventDescriptor;
 
 //==================================================================================================
-// Exports
+// Standalone Functions
 //==================================================================================================
 
-pub use controller::ExceptionController;
-pub use info::ExceptionInformation;
+pub fn resume(eventinfo: usize) -> i32 {
+    let eventinfo: EventDescriptor = match EventDescriptor::try_from(eventinfo) {
+        Ok(eventinfo) => eventinfo,
+        Err(e) => return e.code.into_errno(),
+    };
+
+    match Dispatcher::do_resume(eventinfo) {
+        Ok(_) => 0,
+        Err(e) => e.code.into_errno(),
+    }
+}
