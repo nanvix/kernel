@@ -13,13 +13,8 @@ use ::kcall::EventInformation;
 //==================================================================================================
 
 pub fn wait(info: *mut EventInformation, interrupts: usize, exceptions: usize) -> i32 {
-    let dispatcher: &mut EventManager = match EventManager::try_get_mut() {
-        Ok(dispatcher) => dispatcher,
-        Err(e) => return e.code.into_errno(),
-    };
-
-    match dispatcher.do_wait(info, interrupts, exceptions) {
-        Ok(()) => 0,
+    match EventManager::wait(info, interrupts, exceptions) {
+        Ok(_) => 0,
         Err(e) => e.code.into_errno(),
     }
 }
