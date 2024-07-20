@@ -225,6 +225,8 @@ impl EventManagerInner {
         interrupts: usize,
         exceptions: usize,
     ) -> Result<bool, Error> {
+        let mypid: ProcessIdentifier = ProcessManager::get_pid()?;
+
         for i in 0..Self::NUMBER_EVENTS {
             // Check if any interrupts were triggered.
             if ((self.nevents + i) % Self::NUMBER_EVENTS) == 0 {
@@ -261,7 +263,7 @@ impl EventManagerInner {
                             let src: *const EventInformation = &src as *const EventInformation;
                             let src: VirtualAddress = VirtualAddress::new(src as usize);
 
-                            ProcessManager::vmcopy_to_user(dest, src, size)?;
+                            ProcessManager::vmcopy_to_user(mypid, dest, src, size)?;
 
                             self.pending_exceptions[idx].push_back(entry);
 

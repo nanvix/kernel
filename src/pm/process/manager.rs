@@ -603,13 +603,14 @@ impl ProcessManager {
     }
 
     pub fn vmcopy_to_user(
+        pid: ProcessIdentifier,
         dst: VirtualAddress,
         src: VirtualAddress,
         size: usize,
     ) -> Result<(), Error> {
         Self::get_mut()?
             .try_borrow_mut()?
-            .get_running_mut()
+            .find_process_mut(pid)?
             .state_mut()
             .copy_to_user_unaligned(dst, src, size)
     }
