@@ -55,7 +55,12 @@ fn do_debug(
     let src: VirtualAddress = VirtualAddress::new(buf);
     let dst: KernelPage = mm.alloc_kpage(true)?;
 
-    pm.vmcopy_from_user(args.pid, dst.base().into_virtual_address().into_inner(), src, size)?;
+    ProcessManager::vmcopy_from_user(
+        args.pid,
+        dst.base().into_virtual_address().into_inner(),
+        src,
+        size,
+    )?;
 
     Ok(debug(dst.base().into_raw_value(), size))
 }
