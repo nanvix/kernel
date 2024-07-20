@@ -6,6 +6,7 @@
 //==================================================================================================
 
 use crate::{
+    event::EventOwnership,
     hal::mem::VirtualAddress,
     mm::Vmem,
     pm::process::{
@@ -13,9 +14,11 @@ use crate::{
         identity::ProcessIdentity,
     },
 };
+use ::alloc::collections::LinkedList;
 use ::kcall::{
     Capability,
     Error,
+    Event,
     GroupIdentifier,
     ProcessIdentifier,
     UserIdentifier,
@@ -39,6 +42,8 @@ pub struct ProcessState {
     capabilities: Capabilities,
     /// Memory address space.
     vmem: Vmem,
+    /// Event ownerships.
+    events: LinkedList<EventOwnership>,
 }
 
 impl ProcessState {
@@ -48,6 +53,7 @@ impl ProcessState {
             identity,
             capabilities: Capabilities::default(),
             vmem,
+            events: LinkedList::new(),
         }
     }
 
@@ -127,5 +133,13 @@ impl ProcessState {
         size: usize,
     ) -> Result<(), Error> {
         self.vmem.copy_to_user_unaligned(dst, src, size)
+    }
+
+    pub fn add_event(&mut self, ownership: EventOwnership) {
+        self.events.push_back(ownership)
+    }
+
+    pub fn remove_event(&mut self, ev: &Event) {
+        self.events.retain(|o| o.event() != ev)
     }
 }

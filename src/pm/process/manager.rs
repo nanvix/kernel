@@ -12,6 +12,7 @@ use crate::{
         Error,
         ErrorCode,
     },
+    event::EventOwnership,
     hal::{
         self,
         arch::ContextInformation,
@@ -62,6 +63,7 @@ use ::core::cell::{
 };
 use ::kcall::{
     Capability,
+    Event,
     GroupIdentifier,
     ProcessIdentifier,
     ThreadIdentifier,
@@ -564,10 +566,10 @@ impl ProcessManager {
         Ok(self.try_borrow_mut()?.capctl(pid, capability, value)?)
     }
 
-    pub fn has_capability(capability: Capability) -> Result<bool, Error> {
+    pub fn has_capability(pid: ProcessIdentifier, capability: Capability) -> Result<bool, Error> {
         Ok(Self::get()?
             .try_borrow()?
-            .get_running()
+            .find_process(pid)?
             .state()
             .has_capability(capability))
     }
@@ -706,6 +708,24 @@ impl ProcessManager {
             { Self::get_mut()?.try_borrow_mut()?.schedule() };
 
         unsafe { ContextInformation::switch(from, to) }
+
+        Ok(())
+    }
+
+    pub fn add_event(&mut self, ownership: EventOwnership) -> Result<(), Error> {
+        self.try_borrow_mut()?
+            .get_running_mut()
+            .state_mut()
+            .add_event(ownership);
+
+        Ok(())
+    }
+
+    pub fn remove_event(&mut self, ev: &Event) -> Result<(), Error> {
+        self.try_borrow_mut()?
+            .get_running_mut()
+            .state_mut()
+            .remove_event(ev);
 
         Ok(())
     }
