@@ -64,6 +64,7 @@ mod macros;
 
 mod arch;
 mod config;
+mod debug;
 mod error;
 mod event;
 mod hal;
