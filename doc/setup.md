@@ -24,6 +24,7 @@ sudo -E ./scripts/setup/ubuntu.sh x86  # Install dependencies.
 
 # Install Rust toolchain.
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+rustup component add rust-src
 ```
 
 ## 3. Build Toolchain
