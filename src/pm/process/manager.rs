@@ -65,6 +65,7 @@ use ::kcall::{
     Capability,
     Event,
     GroupIdentifier,
+    Message,
     ProcessIdentifier,
     ThreadIdentifier,
     UserIdentifier,
@@ -717,6 +718,22 @@ impl ProcessManager {
             .remove_event(ev);
 
         Ok(())
+    }
+
+    pub fn post_message(&mut self, pid: ProcessIdentifier, message: Message) -> Result<(), Error> {
+        let mut pm: RefMut<ProcessManagerInner> = self.try_borrow_mut()?;
+        let mut process: ProcessRefMut = pm.find_process_mut(pid)?;
+        process.state_mut().post_message(message);
+
+        Ok(())
+    }
+
+    pub fn try_recv() -> Result<Option<Message>, Error> {
+        Ok(Self::get_mut()?
+            .try_borrow_mut()?
+            .get_running_mut()
+            .state_mut()
+            .receive_message())
     }
 
     fn try_borrow(&self) -> Result<Ref<ProcessManagerInner>, Error> {

@@ -8,6 +8,7 @@
 use crate::{
     event::EventOwnership,
     hal::mem::VirtualAddress,
+    ipc::Mailbox,
     mm::Vmem,
     pm::process::{
         capability::Capabilities,
@@ -20,6 +21,7 @@ use ::kcall::{
     Error,
     Event,
     GroupIdentifier,
+    Message,
     ProcessIdentifier,
     UserIdentifier,
 };
@@ -44,6 +46,8 @@ pub struct ProcessState {
     vmem: Vmem,
     /// Event ownerships.
     events: LinkedList<EventOwnership>,
+    /// Incoming messages.
+    mailbox: Mailbox,
 }
 
 impl ProcessState {
@@ -54,6 +58,7 @@ impl ProcessState {
             capabilities: Capabilities::default(),
             vmem,
             events: LinkedList::new(),
+            mailbox: Mailbox::default(),
         }
     }
 
@@ -141,5 +146,13 @@ impl ProcessState {
 
     pub fn remove_event(&mut self, ev: &Event) {
         self.events.retain(|o| o.event() != ev)
+    }
+
+    pub fn post_message(&mut self, message: Message) {
+        self.mailbox.send(message)
+    }
+
+    pub fn receive_message(&mut self) -> Option<Message> {
+        self.mailbox.receive()
     }
 }

@@ -10,6 +10,7 @@ use crate::{
     error::ErrorCode,
     event,
     hal::Hal,
+    ipc,
     kcall::ScoreBoard,
     mm::VirtMemoryManager,
     pm::{
@@ -29,6 +30,7 @@ use ::kcall::KcallNumber;
 ///
 pub fn kcall_handler(mut hal: Hal, mut _mm: VirtMemoryManager, mut pm: ProcessManager) {
     event::init(&mut hal);
+    ipc::init();
 
     loop {
         // Read kernel call arguments from the scoreboard.
@@ -60,6 +62,8 @@ pub fn kcall_handler(mut hal: Hal, mut _mm: VirtMemoryManager, mut pm: ProcessMa
                         KcallNumber::CapCtl => pm::capctl(&mut pm, args),
                         KcallNumber::Terminate => pm::terminate(&mut pm, args),
                         KcallNumber::EventCtrl => event::evctrl(&mut pm, args),
+                        KcallNumber::Send => ipc::send(&mut pm, args),
+
                         _ => {
                             error!("invalid kernel call");
                             ErrorCode::InvalidSysCall.into_errno()

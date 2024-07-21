@@ -68,6 +68,7 @@ mod debug;
 mod error;
 mod event;
 mod hal;
+mod ipc;
 mod kargs;
 mod kcall;
 mod kimage;
