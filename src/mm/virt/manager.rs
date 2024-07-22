@@ -150,6 +150,30 @@ impl VirtMemoryManager {
     ///
     /// # Description
     ///
+    /// Changes the access permissions of a user page.
+    ///
+    /// # Parameters
+    ///
+    /// - `vmem`: Virtual memory space where the page is mapped.
+    /// - `vaddr`: Virtual address of the page to be controlled.
+    /// - `access`: Access permissions.
+    ///
+    /// # Return Values
+    ///
+    /// Upon success, empty is returned. Upon failure, an error is returned instead.
+    ///
+    pub fn ctrl_upage(
+        &mut self,
+        vmem: &mut Vmem,
+        vaddr: PageAligned<VirtualAddress>,
+        access: AccessPermission,
+    ) -> Result<(), Error> {
+        vmem.ctrl(vaddr, access)
+    }
+
+    ///
+    /// # Description
+    ///
     /// Allocates a kernel page.
     ///
     /// # Parameters
