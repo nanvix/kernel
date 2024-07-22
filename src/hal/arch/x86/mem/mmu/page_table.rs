@@ -250,6 +250,42 @@ impl PageTable {
         Ok(paddr)
     }
 
+    /// Changes access permissions on a page.
+    pub fn ctrl(
+        &mut self,
+        page_address: PageAddress,
+        access: AccessPermission,
+    ) -> Result<(), Error> {
+        // Obtain a cached copy of the page table entry.
+        let mut pte: PageTableEntry = match self.read_pte(page_address) {
+            Some(pte) => pte,
+            None => {
+                let reason: &str = "failed to read page table entry";
+                error!("change_access_permissions(): {}", reason);
+                return Err(Error::new(ErrorCode::TryAgain, reason));
+            },
+        };
+
+        // Check if page is not present.
+        if !pte.is_present() {
+            let reason: &str = "page is not present";
+            error!("change_access_permissions(): {}", reason);
+            return Err(Error::new(ErrorCode::NoSuchEntry, reason));
+        }
+
+        // Modify page table entry.
+        if access.is_writable() {
+            pte.set_read_write(ReadWriteFlag::ReadWrite);
+        } else {
+            pte.set_read_write(ReadWriteFlag::ReadOnly);
+        }
+
+        // Write page table entry.
+        self.write_pte(page_address, pte);
+
+        Ok(())
+    }
+
     fn clean(&mut self) {
         for pte in self.entries.iter_mut() {
             *pte = 0;
