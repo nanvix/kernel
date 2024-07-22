@@ -2,6 +2,15 @@
 // Licensed under the MIT License.
 
 //==================================================================================================
+// Imports
+//==================================================================================================
+
+use ::kcall::{
+    Error,
+    ErrorCode,
+};
+
+//==================================================================================================
 // Structures
 //==================================================================================================
 
@@ -57,6 +66,95 @@ pub struct AccessPermission {
     write: WritePermission,
     /// Execute permission.
     execute: ExecutePermission,
+}
+
+impl TryFrom<u8> for AccessPermission {
+    type Error = kcall::Error;
+
+    ///
+    /// # Description
+    ///
+    /// Attempts to constructs an [`AccessPermission`] from a [u8].
+    ///
+    /// # Parameters
+    ///
+    /// * `value` - Value.
+    ///
+    /// # Returns
+    ///
+    /// Upon successful completion, an [`AccessPermission`] is returned. Upon failure, an error is
+    /// returned instead.
+    ///
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        if value > 0b111 {
+            return Err(Error::new(
+                ErrorCode::InvalidArgument,
+                "invalid value for access permission",
+            ));
+        }
+
+        Ok(Self {
+            read: if value & 0b100 != 0 {
+                ReadPermission::Allow
+            } else {
+                ReadPermission::Deny
+            },
+            write: if value & 0b010 != 0 {
+                WritePermission::Allow
+            } else {
+                WritePermission::Deny
+            },
+            execute: if value & 0b001 != 0 {
+                ExecutePermission::Allow
+            } else {
+                ExecutePermission::Deny
+            },
+        })
+    }
+}
+
+impl TryFrom<u16> for AccessPermission {
+    type Error = kcall::Error;
+
+    ///
+    /// # Description
+    ///
+    /// Attempts to constructs an [`AccessPermission`] from a [u16].
+    ///
+    /// # Parameters
+    ///
+    /// * `value` - Value.
+    ///
+    /// # Returns
+    ///
+    /// Upon successful completion, an [`AccessPermission`] is returned. Upon failure, an error is
+    /// returned instead.
+    ///
+    fn try_from(value: u16) -> Result<Self, Self::Error> {
+        Self::try_from(value as u8)
+    }
+}
+
+impl TryFrom<u32> for AccessPermission {
+    type Error = kcall::Error;
+
+    ///
+    /// # Description
+    ///
+    /// Attempts to constructs an [`AccessPermission`] from a [u32].
+    ///
+    /// # Parameters
+    ///
+    /// * `value` - Value.
+    ///
+    /// # Returns
+    ///
+    /// Upon successful completion, an [`AccessPermission`] is returned. Upon failure, an error is
+    /// returned instead.
+    ///
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        Self::try_from(value as u8)
+    }
 }
 
 //==================================================================================================
