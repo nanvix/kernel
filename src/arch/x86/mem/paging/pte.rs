@@ -241,4 +241,17 @@ impl PageTableEntry {
             PresentFlag::NotPresent => false,
         }
     }
+
+    ///
+    /// # Description
+    ///
+    /// Sets read/write flag in the target page.
+    ///
+    /// # Parameters
+    ///
+    /// - `read_write`: The read/write flag.
+    ///
+    pub fn set_read_write(&mut self, read_write: ReadWriteFlag) {
+        self.flags.read_write = read_write;
+    }
 }
