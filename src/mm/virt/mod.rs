@@ -94,6 +94,7 @@ pub fn init(
 
     let mut root_pagetables: LinkedList<(PageTableAddress, PageTable)> = LinkedList::new();
 
+    // Merge general purpose and memory mapped I/O regions.
     let mut regions: LinkedList<Region> = LinkedList::new();
     while let Some(region) = mmio_regions.pop_front() {
         regions.push_back(Region::Io(region));
@@ -102,13 +103,20 @@ pub fn init(
         regions.push_back(Region::GeneralPurpose(region));
     }
 
-    // TODO: sort memory regions by start address.
+    // Sort memory regions by start address.
     let mut regions: LinkedList<Region> = {
         let mut regions: Vec<Region> = regions.into_iter().collect();
-        regions.sort_by(|a, b| match (a, b) {
-            (Region::GeneralPurpose(a), Region::GeneralPurpose(b)) => a.start().cmp(&b.start()),
-            (Region::Io(a), Region::Io(b)) => a.start().cmp(&b.start()),
-            _ => Ordering::Less,
+        regions.sort_by(|a, b| {
+            let a_start: usize = match a {
+                Region::GeneralPurpose(region) => region.start().into_raw_value(),
+                Region::Io(region) => region.start().into_raw_value(),
+            };
+            let b_start: usize = match b {
+                Region::GeneralPurpose(region) => region.start().into_raw_value(),
+                Region::Io(region) => region.start().into_raw_value(),
+            };
+
+            a_start.cmp(&b_start)
         });
         regions.into_iter().collect()
     };
