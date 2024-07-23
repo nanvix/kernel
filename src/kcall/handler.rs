@@ -28,7 +28,7 @@ use ::kcall::KcallNumber;
 ///
 /// Kernel call handler.
 ///
-pub fn kcall_handler(mut hal: Hal, mut _mm: VirtMemoryManager, mut pm: ProcessManager) {
+pub fn kcall_handler(mut hal: Hal, mut mm: VirtMemoryManager, mut pm: ProcessManager) {
     event::init(&mut hal);
     ipc::init();
 
@@ -62,6 +62,10 @@ pub fn kcall_handler(mut hal: Hal, mut _mm: VirtMemoryManager, mut pm: ProcessMa
                         KcallNumber::CapCtl => pm::capctl(&mut pm, args),
                         KcallNumber::Terminate => pm::terminate(&mut pm, args),
                         KcallNumber::EventCtrl => event::evctrl(&mut pm, args),
+                        KcallNumber::MemoryMap => pm::mmap(&mut pm, &mut mm, args),
+                        KcallNumber::MemoryUnmap => pm::munmap(&mut pm, &mut mm, args),
+                        KcallNumber::MemoryCtrl => pm::mctrl(&mut pm, &mut mm, args),
+                        KcallNumber::MemoryCopy => pm::mcopy(&mut pm, &mut mm, args),
                         KcallNumber::Send => ipc::send(&mut pm, args),
 
                         _ => {
