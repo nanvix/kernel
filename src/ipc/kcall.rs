@@ -6,13 +6,12 @@
 //==================================================================================================
 
 use crate::{
-    ipc::{
-        copy_from_user,
-        copy_to_user,
-        IpcManager,
-    },
+    ipc::IpcManager,
     kcall::KcallArgs,
-    pm::ProcessManager,
+    pm::{
+        self,
+        ProcessManager,
+    },
 };
 use ::kcall::{
     Error,
@@ -33,7 +32,7 @@ pub fn send(pm: &mut ProcessManager, args: &KcallArgs) -> i32 {
 
     // Copy message to kernel space.
     let mut message: Message = Message::default();
-    if let Err(e) = copy_from_user(src, &mut message, args.arg0 as *const Message) {
+    if let Err(e) = pm::copy_from_user(src, &mut message, args.arg0 as *const Message) {
         return e.code.into_errno();
     }
 
@@ -63,7 +62,7 @@ pub fn recv(msg: usize) -> i32 {
 
     match IpcManager::receive_message(pid) {
         Ok(message) => {
-            if let Err(e) = copy_to_user(pid, msg as *mut Message, &message) {
+            if let Err(e) = pm::copy_to_user(pid, msg as *mut Message, &message) {
                 return e.code.into_errno();
             }
             0
