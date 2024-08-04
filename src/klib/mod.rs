@@ -6,7 +6,6 @@
 //==================================================================================================
 
 pub mod bitmap;
-pub mod raw_array;
 pub mod slab;
 
 // TODO: review this re-export once system architecture is consolidated.

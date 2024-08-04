@@ -23,7 +23,6 @@ use crate::{
         TruncatedMemoryRegion,
         VirtualAddress,
     },
-    klib::raw_array::RawArray,
     mm::phys::{
         frame::FrameAllocator,
         upool::Upool,
@@ -34,6 +33,7 @@ use ::error::{
     Error,
     ErrorCode,
 };
+use ::raw_array::RawArray;
 use ::sys::config;
 
 //==================================================================================================

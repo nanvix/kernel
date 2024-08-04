@@ -16,15 +16,13 @@ use crate::{
         PhysicalAddress,
         TruncatedMemoryRegion,
     },
-    klib::{
-        bitmap::Bitmap,
-        raw_array::RawArray,
-    },
+    klib::bitmap::Bitmap,
 };
 use ::error::{
     Error,
     ErrorCode,
 };
+use ::raw_array::RawArray;
 use ::sys::constants;
 
 //==================================================================================================
