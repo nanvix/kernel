@@ -5,10 +5,7 @@
 // Imports
 //==================================================================================================
 
-use crate::{
-    arch::mem,
-    klib::slab::Slab,
-};
+use crate::arch::mem;
 use ::alloc::alloc::{
     AllocError,
     GlobalAlloc,
@@ -19,6 +16,7 @@ use ::error::{
     Error,
     ErrorCode,
 };
+use ::slab::Slab;
 use ::sys::constants;
 
 //==================================================================================================

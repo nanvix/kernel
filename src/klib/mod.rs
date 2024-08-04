@@ -5,8 +5,6 @@
 // Exports
 //==================================================================================================
 
-pub mod slab;
-
 // TODO: review this re-export once system architecture is consolidated.
 pub use ::sys::mm::{
     align_down,
