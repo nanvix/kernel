@@ -27,13 +27,13 @@ export FEATURES ?=
 # Directories
 #===============================================================================
 
-export ROOT_DIR      := $(CURDIR)
-export BINARIES_DIR  := $(ROOT_DIR)/bin
-export LIBRARIES_DIR := $(ROOT_DIR)/lib
-export BUILD_DIR     := $(ROOT_DIR)/build
-export IMAGE_DIR     := $(BUILD_DIR)/iso
-export SCRIPTS_DIR   := $(BUILD_DIR)/scripts
-export SOURCES_DIR   := $(ROOT_DIR)/src
+export ROOT_DIR      ?= $(CURDIR)
+export BINARIES_DIR  ?= $(ROOT_DIR)/bin
+export LIBRARIES_DIR ?= $(ROOT_DIR)/lib
+export BUILD_DIR     ?= $(ROOT_DIR)/build
+export IMAGE_DIR     ?= $(BUILD_DIR)/iso
+export SCRIPTS_DIR   ?= $(BUILD_DIR)/scripts
+export SOURCES_DIR   ?= $(ROOT_DIR)/src
 export TOOLCHAIN_DIR ?= $(ROOT_DIR)/toolchain
 
 #===============================================================================
