@@ -39,7 +39,7 @@ jobs:
         key: ${{ secrets.sshkey }}
         port: ${{ secrets.portnum }}
         script: |
-          cd nanvix
+          cd kernel
           make TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 all
 
   test-isapc:
@@ -55,7 +55,7 @@ jobs:
         key: ${{ secrets.sshkey }}
         port: ${{ secrets.portnum }}
         script: |
-          cd nanvix
+          cd kernel
           make TIMEOUT=90 TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 MACHINE=isapc run | tee output.txt
           echo "Magic String: $(cat output.txt | tail -n 1)"
           [ "$(cat output.txt | tail -n 1)" != "PANIC: Hello World!" ] && exit 1 || exit 0 ;
@@ -73,7 +73,7 @@ jobs:
         key: ${{ secrets.sshkey }}
         port: ${{ secrets.portnum }}
         script: |
-          cd nanvix
+          cd kernel
           make TIMEOUT=90 TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 MACHINE=pc run | tee output.txt
           echo "Magic String: $(cat output.txt | tail -n 1)"
           [ "$(cat output.txt | tail -n 1)" != "PANIC: Hello World!" ] && exit 1 || exit 0 ;
@@ -92,7 +92,7 @@ jobs:
         key: ${{ secrets.sshkey }}
         port: ${{ secrets.portnum }}
         script: |
-          cd nanvix
+          cd kernel
           git checkout --force dev
           git clean -fdx
           git remote prune origin
