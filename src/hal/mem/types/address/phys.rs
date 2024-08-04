@@ -15,13 +15,15 @@ use crate::{
         FrameAddress,
         VirtualAddress,
     },
-    klib::Alignment,
 };
 use ::error::{
     Error,
     ErrorCode,
 };
-use ::sys::config;
+use ::sys::{
+    config,
+    mm::Alignment,
+};
 
 //==================================================================================================
 // Structures

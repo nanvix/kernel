@@ -16,9 +16,9 @@ use crate::{
             VirtualAddress,
         },
     },
-    klib::Alignment,
 };
 use ::error::ErrorCode;
+use ::sys::mm::Alignment;
 
 //==================================================================================================
 // Standalone Functions

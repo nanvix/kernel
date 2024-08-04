@@ -74,7 +74,6 @@ mod ipc;
 mod kargs;
 mod kcall;
 mod kimage;
-mod klib;
 mod klog;
 mod kmod;
 mod kpanic;

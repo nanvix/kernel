@@ -24,10 +24,6 @@ use crate::{
             VirtualAddress,
         },
     },
-    klib::{
-        self,
-        Alignment,
-    },
     mm::{
         VirtMemoryManager,
         Vmem,
@@ -37,7 +33,10 @@ use ::error::{
     Error,
     ErrorCode,
 };
-use ::sys::config;
+use ::sys::{
+    config,
+    mm::Alignment,
+};
 
 //==================================================================================================
 // Constants
@@ -211,7 +210,7 @@ fn do_elf32_load(
             .p_align
             .try_into()
             .map_err(|_| Error::new(ErrorCode::BadFile, "invalid alignment value in elf file"))?;
-        let mut virt_addr: usize = klib::align_down(phdr.p_vaddr as usize, align);
+        let mut virt_addr: usize = ::sys::mm::align_down(phdr.p_vaddr as usize, align);
 
         // Compute access permissions.
         let access: AccessPermission = if phdr.p_flags == (PF_R | PF_X) {
@@ -227,7 +226,7 @@ fn do_elf32_load(
         };
 
         let phys_addr_end: usize =
-            klib::align_down(phys_addr_base + phdr.p_filesz as usize, mmu::PAGE_ALIGNMENT);
+            ::sys::mm::align_down(phys_addr_base + phdr.p_filesz as usize, mmu::PAGE_ALIGNMENT);
 
         // Load segment page by page.
         for phys_addr in (phys_addr_base..=phys_addr_end).step_by(mem::PAGE_SIZE) {

@@ -5,18 +5,16 @@
 // Imports
 //==================================================================================================
 
-use crate::{
-    hal::{
-        arch::x86::mem::mmu,
-        mem::Address,
-    },
-    klib::Alignment,
+use crate::hal::{
+    arch::x86::mem::mmu,
+    mem::Address,
 };
 use ::core::ops::Deref;
 use ::error::{
     Error,
     ErrorCode,
 };
+use ::sys::mm::Alignment;
 
 //==================================================================================================
 // Structures

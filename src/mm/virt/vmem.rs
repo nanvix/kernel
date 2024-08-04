@@ -34,7 +34,6 @@ use crate::{
             VirtualAddress,
         },
     },
-    klib,
     mm::{
         phys::UserFrame,
         virt::{
@@ -188,7 +187,7 @@ impl Vmem {
         vaddr: PageAligned<VirtualAddress>,
     ) -> Result<(), Error> {
         let pt_vaddr: PageTableAddress = PageTableAddress::new(PageTableAligned::from_raw_value(
-            klib::align_down(vaddr.into_raw_value(), mmu::PGTAB_ALIGNMENT),
+            ::sys::mm::align_down(vaddr.into_raw_value(), mmu::PGTAB_ALIGNMENT),
         )?);
 
         // Get the corresponding page directory entry.
@@ -268,7 +267,7 @@ impl Vmem {
         // Get corresponding page table.
         let page_table: &mut PageTable = {
             let vaddr: PageTableAligned<VirtualAddress> = PageTableAligned::from_raw_value(
-                klib::align_down(vaddr.into_raw_value(), mmu::PGTAB_ALIGNMENT),
+                ::sys::mm::align_down(vaddr.into_raw_value(), mmu::PGTAB_ALIGNMENT),
             )?;
             // Get the corresponding page directory entry.
             let mut pde: PageDirectoryEntry =
@@ -586,7 +585,7 @@ impl Vmem {
         // Get corresponding page table.
         let page_table: &mut PageTable = {
             let vaddr: PageTableAligned<VirtualAddress> = PageTableAligned::from_raw_value(
-                klib::align_down(vaddr.into_raw_value(), mmu::PGTAB_ALIGNMENT),
+                ::sys::mm::align_down(vaddr.into_raw_value(), mmu::PGTAB_ALIGNMENT),
             )?;
             // Get the corresponding page directory entry.
             let pde: PageDirectoryEntry = match self.pgdir.read_pde(PageTableAddress::new(vaddr)) {
@@ -658,7 +657,7 @@ impl Vmem {
         // Get corresponding page table.
         let page_table: &mut PageTable = {
             let vaddr: PageTableAligned<VirtualAddress> = PageTableAligned::from_raw_value(
-                klib::align_down(vaddr.into_raw_value(), mmu::PGTAB_ALIGNMENT),
+                ::sys::mm::align_down(vaddr.into_raw_value(), mmu::PGTAB_ALIGNMENT),
             )?;
             // Get the corresponding page directory entry.
             let pde: PageDirectoryEntry = match self.pgdir.read_pde(PageTableAddress::new(vaddr)) {
@@ -706,7 +705,7 @@ impl Vmem {
         // Get corresponding page table.
         let page_table = {
             let vaddr: PageTableAligned<VirtualAddress> = PageTableAligned::from_raw_value(
-                klib::align_down(vaddr.into_raw_value(), mmu::PGTAB_ALIGNMENT),
+                ::sys::mm::align_down(vaddr.into_raw_value(), mmu::PGTAB_ALIGNMENT),
             )?;
             // Get the corresponding page directory entry.
             let pde: PageDirectoryEntry = match self.pgdir.read_pde(PageTableAddress::new(vaddr)) {
