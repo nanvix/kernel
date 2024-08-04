@@ -52,7 +52,7 @@ pub fn munmap(pm: &mut ProcessManager, mm: &mut VirtMemoryManager, args: &KcallA
     }
 
     // Unpack kernel call arguments.
-    let pid: ProcessIdentifier = ProcessIdentifier::from(args.arg0 as usize);
+    let pid: ProcessIdentifier = ProcessIdentifier::from(args.arg0);
     let vaddr: PageAligned<VirtualAddress> = match PageAligned::from_raw_value(args.arg1 as usize) {
         Ok(vaddr) => vaddr,
         Err(e) => return e.code.into_errno(),

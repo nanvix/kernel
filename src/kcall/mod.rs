@@ -83,7 +83,7 @@ impl ScoreBoard {
                 dispatched: Semaphore::new(0),
                 handled: Semaphore::new(0),
                 args: KcallArgs {
-                    pid: ProcessIdentifier::from(usize::MAX),
+                    pid: ProcessIdentifier::from(u32::MAX),
                     tid: ThreadIdentifier::from(usize::MAX),
                     arg0: 0,
                     arg1: 0,
