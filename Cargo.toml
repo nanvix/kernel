@@ -3,7 +3,7 @@
 
 [package]
 name = "kernel"
-version = "0.0.1"
+version = "0.0.3"
 license-file = "LICENSE.txt"
 edition = "2021"
 authors = ["The Maintainers of Nanvix"]
@@ -16,7 +16,8 @@ path = "src/kmain.rs"
 
 [dependencies]
 arch = { git = "https://github.com/nanvix/arch", version = "0.0.1" }
-sys = { git = "https://github.com/nanvix/sys", version = "0.0.1" }
+error = {git = "https://github.com/nanvix/error"}
+sys = { git = "https://github.com/nanvix/sys", tag = "v1.0.0"}
 
 [features]
 trace = []

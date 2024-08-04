@@ -57,7 +57,7 @@ use ::arch::{
     },
 };
 use ::core::mem;
-use ::sys::error::{
+use ::error::{
     Error,
     ErrorCode,
 };

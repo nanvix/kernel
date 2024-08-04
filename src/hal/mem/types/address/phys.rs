@@ -17,13 +17,11 @@ use crate::{
     },
     klib::Alignment,
 };
-use ::sys::{
-    config,
-    error::{
-        Error,
-        ErrorCode,
-    },
+use ::error::{
+    Error,
+    ErrorCode,
 };
+use ::sys::config;
 
 //==================================================================================================
 // Structures

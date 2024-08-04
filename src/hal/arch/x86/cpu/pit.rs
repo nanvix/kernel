@@ -19,7 +19,7 @@ use crate::{
         ReadWriteIoPort,
     },
 };
-use ::sys::error::Error;
+use ::error::Error;
 
 //==================================================================================================
 // Structures

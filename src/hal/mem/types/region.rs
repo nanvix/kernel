@@ -24,7 +24,7 @@ use ::alloc::string::{
     String,
     ToString,
 };
-use ::sys::error::{
+use ::error::{
     Error,
     ErrorCode,
 };

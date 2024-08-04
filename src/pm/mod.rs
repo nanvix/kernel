@@ -29,9 +29,9 @@ use crate::{
         ThreadManager,
     },
 };
+use ::error::Error;
 use ::sys::{
     config,
-    error::Error,
     pm::ProcessIdentifier,
 };
 

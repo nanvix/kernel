@@ -18,7 +18,7 @@ use ::alloc::{
     rc::Rc,
 };
 use ::core::cell::RefCell;
-use ::sys::error::{
+use ::error::{
     Error,
     ErrorCode,
 };

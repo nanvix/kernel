@@ -15,13 +15,11 @@ use ::alloc::alloc::{
     Layout,
 };
 use ::core::ptr;
-use ::sys::{
-    constants,
-    error::{
-        Error,
-        ErrorCode,
-    },
+use ::error::{
+    Error,
+    ErrorCode,
 };
+use ::sys::constants;
 
 //==================================================================================================
 // Constants

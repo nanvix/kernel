@@ -6,7 +6,7 @@
 //==================================================================================================
 
 use crate::klib::raw_array::RawArray;
-use ::sys::error::{
+use ::error::{
     Error,
     ErrorCode,
 };

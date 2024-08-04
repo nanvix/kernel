@@ -21,13 +21,11 @@ use crate::{
         raw_array::RawArray,
     },
 };
-use ::sys::{
-    constants,
-    error::{
-        Error,
-        ErrorCode,
-    },
+use ::error::{
+    Error,
+    ErrorCode,
 };
+use ::sys::constants;
 
 //==================================================================================================
 // Structures

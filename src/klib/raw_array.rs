@@ -15,7 +15,7 @@ use ::core::{
     ptr,
     slice,
 };
-use ::sys::error::{
+use ::error::{
     Error,
     ErrorCode,
 };

@@ -27,7 +27,7 @@ use ::core::{
         DerefMut,
     },
 };
-use ::sys::error::Error;
+use ::error::Error;
 
 //==================================================================================================
 // Kernel Page Pool Inner

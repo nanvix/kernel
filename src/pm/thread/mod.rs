@@ -11,10 +11,8 @@ use ::core::{
     fmt::Debug,
     pin::Pin,
 };
-use ::sys::{
-    error::Error,
-    pm::ThreadIdentifier,
-};
+use ::error::Error;
+use ::sys::pm::ThreadIdentifier;
 
 //==================================================================================================
 // Thread

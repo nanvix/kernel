@@ -19,15 +19,13 @@ use crate::{
     },
     pm::ProcessManager,
 };
-use ::sys::{
-    error::{
-        Error,
-        ErrorCode,
-    },
-    pm::{
-        Capability,
-        ProcessIdentifier,
-    },
+use ::error::{
+    Error,
+    ErrorCode,
+};
+use ::sys::pm::{
+    Capability,
+    ProcessIdentifier,
 };
 
 //==================================================================================================
@@ -76,13 +74,13 @@ pub fn mcopy(mm: &mut VirtMemoryManager, args: &KcallArgs) -> i32 {
     }
 
     // Unpack kernel call arguments.
-    let src_pid: ProcessIdentifier = ProcessIdentifier::from(args.arg0 as usize);
+    let src_pid: ProcessIdentifier = ProcessIdentifier::from(args.arg0);
     let src_vaddr: PageAligned<VirtualAddress> =
         match PageAligned::from_raw_value(args.arg1 as usize) {
             Ok(vaddr) => vaddr,
             Err(e) => return e.code.into_errno(),
         };
-    let dst_pid: ProcessIdentifier = ProcessIdentifier::from(args.arg2 as usize);
+    let dst_pid: ProcessIdentifier = ProcessIdentifier::from(args.arg2);
     let dst_vaddr: PageAligned<VirtualAddress> =
         match PageAligned::from_raw_value(args.arg3 as usize) {
             Ok(vaddr) => vaddr,

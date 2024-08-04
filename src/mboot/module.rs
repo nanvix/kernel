@@ -9,7 +9,7 @@ use ::core::{
     ffi::CStr,
     mem,
 };
-use ::sys::error::{
+use ::error::{
     Error,
     ErrorCode,
 };

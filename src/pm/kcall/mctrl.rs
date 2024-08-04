@@ -17,15 +17,13 @@ use crate::{
     pm::ProcessManager,
 };
 
-use ::sys::{
-    error::{
-        Error,
-        ErrorCode,
-    },
-    pm::{
-        Capability,
-        ProcessIdentifier,
-    },
+use ::error::{
+    Error,
+    ErrorCode,
+};
+use ::sys::pm::{
+    Capability,
+    ProcessIdentifier,
 };
 
 //==================================================================================================
@@ -55,7 +53,7 @@ pub fn mctrl(pm: &mut ProcessManager, mm: &mut VirtMemoryManager, args: &KcallAr
     }
 
     // Unpack kernel call arguments.
-    let pid: ProcessIdentifier = ProcessIdentifier::from(args.arg0 as usize);
+    let pid: ProcessIdentifier = ProcessIdentifier::from(args.arg0);
     let vaddr: PageAligned<VirtualAddress> = match PageAligned::from_raw_value(args.arg1 as usize) {
         Ok(vaddr) => vaddr,
         Err(e) => return e.code.into_errno(),

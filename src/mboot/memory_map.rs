@@ -7,7 +7,7 @@
 
 use crate::hal::mem::MemoryRegionType;
 use ::core::mem;
-use ::sys::error::{
+use ::error::{
     Error,
     ErrorCode,
 };

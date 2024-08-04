@@ -50,9 +50,9 @@ use ::alloc::{
     vec::Vec,
 };
 use ::core::panic;
+use ::error::Error;
 use ::sys::{
     config,
-    error::Error,
     mm,
 };
 

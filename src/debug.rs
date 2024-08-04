@@ -10,7 +10,7 @@ use crate::{
     kcall::KcallArgs,
     pm::ProcessManager,
 };
-use ::sys::error::{
+use ::error::{
     Error,
     ErrorCode,
 };

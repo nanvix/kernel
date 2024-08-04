@@ -16,7 +16,7 @@ use ::sys::pm::ProcessIdentifier;
 //==================================================================================================
 
 pub fn terminate(pm: &mut ProcessManager, args: &KcallArgs) -> i32 {
-    match pm.terminate(ProcessIdentifier::from(args.arg0 as usize)) {
+    match pm.terminate(ProcessIdentifier::from(args.arg0)) {
         Ok(_) => 0,
         Err(e) => e.code.into_errno(),
     }

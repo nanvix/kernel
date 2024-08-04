@@ -13,7 +13,7 @@ use crate::{
     klib::Alignment,
 };
 use ::core::ops::Deref;
-use ::sys::error::{
+use ::error::{
     Error,
     ErrorCode,
 };

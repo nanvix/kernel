@@ -62,12 +62,12 @@ use ::core::cell::{
     RefCell,
     RefMut,
 };
+use ::error::{
+    Error,
+    ErrorCode,
+};
 use ::sys::{
     config,
-    error::{
-        Error,
-        ErrorCode,
-    },
     event::Event,
     ipc::Message,
     pm::{
@@ -212,7 +212,7 @@ impl ProcessManagerInner {
         )?;
 
         let pid: ProcessIdentifier = self.next_pid;
-        self.next_pid = ProcessIdentifier::from(Into::<usize>::into(pid) + 1);
+        self.next_pid = ProcessIdentifier::from(Into::<u32>::into(pid) + 1);
         let identity: ProcessIdentity = self.get_running().state().identity().clone();
         let process: RunnableProcess = RunnableProcess::new(pid, identity, thread, vmem);
 

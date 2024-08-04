@@ -30,13 +30,11 @@ use crate::{
     },
 };
 use ::alloc::collections::LinkedList;
-use ::sys::{
-    config,
-    error::{
-        Error,
-        ErrorCode,
-    },
+use ::error::{
+    Error,
+    ErrorCode,
 };
+use ::sys::config;
 
 //==================================================================================================
 // Exports

@@ -14,7 +14,7 @@ use ::core::{
         DerefMut,
     },
 };
-use ::sys::error::{
+use ::error::{
     Error,
     ErrorCode,
 };

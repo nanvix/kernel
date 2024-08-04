@@ -13,8 +13,8 @@ use crate::{
     kcall::KcallArgs,
     pm::ProcessManager,
 };
+use ::error::Error;
 use ::sys::{
-    error::Error,
     event::{
         Event,
         EventCtrlRequest,

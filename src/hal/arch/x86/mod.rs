@@ -29,7 +29,7 @@ use crate::hal::{
         IoPortAllocator,
     },
 };
-use ::sys::error::Error;
+use ::error::Error;
 use cpu::madt::MadtInfo;
 
 //==================================================================================================

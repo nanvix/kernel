@@ -50,7 +50,7 @@ use crate::{
     },
 };
 use ::alloc::collections::LinkedList;
-use ::sys::error::Error;
+use ::error::Error;
 
 //==================================================================================================
 // Exports
