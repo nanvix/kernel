@@ -5,20 +5,17 @@
 // Imports
 //==================================================================================================
 
-use crate::{
-    hal::{
-        arch::x86::mem::mmu,
-        mem::types::{
-            access::AccessPermission,
-            address::{
-                Address,
-                PageAligned,
-                PhysicalAddress,
-                VirtualAddress,
-            },
+use crate::hal::{
+    arch::x86::mem::mmu,
+    mem::types::{
+        access::AccessPermission,
+        address::{
+            Address,
+            PageAligned,
+            PhysicalAddress,
+            VirtualAddress,
         },
     },
-    klib,
 };
 use ::alloc::string::{
     String,
@@ -178,7 +175,7 @@ impl<T: Address> TruncatedMemoryRegion<T> {
         perm: AccessPermission,
     ) -> Result<Self, Error> {
         // Truncate the size of the memory region to a multiple of the page size.
-        let size: usize = klib::align_up(size, mmu::PAGE_ALIGNMENT);
+        let size: usize = ::sys::mm::align_up(size, mmu::PAGE_ALIGNMENT);
         Ok(Self(MemoryRegion::new(name, start, size, typ, perm)?))
     }
 

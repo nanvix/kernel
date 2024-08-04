@@ -5,24 +5,22 @@
 // Imports
 //==================================================================================================
 
-use crate::{
-    hal::{
-        arch::x86::mem::mmu,
-        mem::{
-            types::address::{
-                PhysicalAddress,
-                VirtualAddress,
-            },
-            Address,
+use crate::hal::{
+    arch::x86::mem::mmu,
+    mem::{
+        types::address::{
+            PhysicalAddress,
+            VirtualAddress,
         },
+        Address,
     },
-    klib::Alignment,
 };
 use ::core::ops::Deref;
 use ::error::{
     Error,
     ErrorCode,
 };
+use ::sys::mm::Alignment;
 
 //==================================================================================================
 // Structures
