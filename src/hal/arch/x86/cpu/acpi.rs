@@ -5,12 +5,12 @@
 // Imports
 //==================================================================================================
 
-use ::sys::error::{
+use ::arch::cpu::acpi::AcpiSdtHeader;
+use ::core::ffi::CStr;
+use ::error::{
     Error,
     ErrorCode,
 };
-use ::arch::cpu::acpi::AcpiSdtHeader;
-use ::core::ffi::CStr;
 
 //==================================================================================================
 // Imports

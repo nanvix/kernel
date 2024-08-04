@@ -13,11 +13,11 @@ use crate::{
         ProcessManager,
     },
 };
+use ::error::{
+    Error,
+    ErrorCode,
+};
 use ::sys::{
-    error::{
-        Error,
-        ErrorCode,
-    },
     ipc::Message,
     pm::ProcessIdentifier,
 };

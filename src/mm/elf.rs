@@ -33,13 +33,11 @@ use crate::{
         Vmem,
     },
 };
-use ::sys::{
-    config,
-    error::{
-        Error,
-        ErrorCode,
-    },
+use ::error::{
+    Error,
+    ErrorCode,
 };
+use ::sys::config;
 
 //==================================================================================================
 // Constants

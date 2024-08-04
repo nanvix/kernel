@@ -34,7 +34,7 @@ use ::core::ops::{
     Deref,
     DerefMut,
 };
-use ::sys::error::{
+use ::error::{
     Error,
     ErrorCode,
 };

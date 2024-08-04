@@ -43,7 +43,7 @@ use ::alloc::{
     boxed::Box,
     collections::linked_list::LinkedList,
 };
-use ::sys::error::{
+use ::error::{
     Error,
     ErrorCode,
 };

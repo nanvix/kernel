@@ -22,7 +22,7 @@ use crate::{
         ReadWriteIoPort,
     },
 };
-use ::sys::error::{
+use ::error::{
     Error,
     ErrorCode,
 };

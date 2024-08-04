@@ -9,7 +9,7 @@ use crate::klib::{
     bitmap::Bitmap,
     raw_array::RawArray,
 };
-use ::sys::error::{
+use ::error::{
     Error,
     ErrorCode,
 };

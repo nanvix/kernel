@@ -6,12 +6,12 @@
 //==================================================================================================
 
 use crate::hal::arch;
-use ::sys::error::{
+use ::alloc::rc::Rc;
+use ::core::cell::RefCell;
+use ::error::{
     Error,
     ErrorCode,
 };
-use ::alloc::rc::Rc;
-use ::core::cell::RefCell;
 
 //==================================================================================================
 // Structures

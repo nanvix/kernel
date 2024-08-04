@@ -14,7 +14,7 @@ use crate::{
         PhysicalAddress,
     },
 };
-use ::sys::error::Error;
+use ::error::Error;
 
 //==================================================================================================
 // Structures

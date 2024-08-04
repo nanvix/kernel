@@ -18,10 +18,8 @@ use crate::{
     },
     klib,
 };
-use ::sys::{
-    config,
-    error::Error,
-};
+use ::error::Error;
+use ::sys::config;
 
 extern "C" {
     static __TEXT_START: u8;

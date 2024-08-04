@@ -27,7 +27,7 @@ use crate::{
         InterruptNumber,
     },
 };
-use ::sys::error::{
+use ::error::{
     Error,
     ErrorCode,
 };

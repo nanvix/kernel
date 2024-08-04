@@ -8,7 +8,7 @@ use crate::hal::{
     arch,
     cpu::interrupt::InterruptController,
 };
-use ::sys::error::{
+use ::error::{
     Error,
     ErrorCode,
 };

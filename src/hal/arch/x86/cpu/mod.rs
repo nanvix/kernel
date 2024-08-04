@@ -32,10 +32,8 @@ use crate::{
         },
     },
 };
-use ::sys::{
-    config,
-    error::Error,
-};
+use ::error::Error;
+use ::sys::config;
 use madt::MadtInfo;
 
 //==================================================================================================

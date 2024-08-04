@@ -48,13 +48,11 @@ use ::alloc::{
     rc::Rc,
 };
 use ::core::cell::RefCell;
-use ::sys::{
-    config,
-    error::{
-        Error,
-        ErrorCode,
-    },
+use ::error::{
+    Error,
+    ErrorCode,
 };
+use ::sys::config;
 
 //==================================================================================================
 // Constants

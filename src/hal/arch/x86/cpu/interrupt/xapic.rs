@@ -12,7 +12,7 @@ use crate::{
         mem::Address,
     },
 };
-use ::sys::error::{
+use ::error::{
     Error,
     ErrorCode,
 };

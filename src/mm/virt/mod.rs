@@ -45,13 +45,11 @@ use ::alloc::{
     vec::Vec,
 };
 use ::core::cmp::Ordering;
-use ::sys::{
-    config,
-    error::{
-        Error,
-        ErrorCode,
-    },
+use ::error::{
+    Error,
+    ErrorCode,
 };
+use ::sys::config;
 
 //==================================================================================================
 // Exports

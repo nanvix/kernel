@@ -18,7 +18,7 @@ use crate::{
     },
     klib::Alignment,
 };
-use ::sys::error::ErrorCode;
+use ::error::ErrorCode;
 
 //==================================================================================================
 // Standalone Functions

@@ -21,7 +21,7 @@ use ::arch::cpu::{
         MadtLocalApicAddressOverride,
     },
 };
-use ::sys::error::Error;
+use ::error::Error;
 
 pub struct MadtInfo {
     pub sdt: AcpiSdtHeader,

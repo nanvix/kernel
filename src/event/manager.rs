@@ -30,11 +30,11 @@ use ::core::{
     },
     mem,
 };
+use ::error::{
+    Error,
+    ErrorCode,
+};
 use ::sys::{
-    error::{
-        Error,
-        ErrorCode,
-    },
     event::{
         Event,
         EventCtrlRequest,

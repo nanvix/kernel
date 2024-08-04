@@ -9,7 +9,7 @@ use crate::mboot::{
     self,
     info::BootInfo,
 };
-use ::sys::error::Error;
+use ::error::Error;
 
 //==================================================================================================
 // Structures

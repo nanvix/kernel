@@ -37,7 +37,7 @@ use ::alloc::{
     collections::LinkedList,
     vec::Vec,
 };
-use ::sys::error::Error;
+use ::error::Error;
 
 //==================================================================================================
 // Structures

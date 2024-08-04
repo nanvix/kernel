@@ -9,12 +9,10 @@ use crate::{
     kcall::KcallArgs,
     pm::process::ProcessManager,
 };
-use ::sys::{
-    error::Error,
-    pm::{
-        GroupIdentifier,
-        ProcessIdentifier,
-    },
+use ::error::Error;
+use ::sys::pm::{
+    GroupIdentifier,
+    ProcessIdentifier,
 };
 
 //==================================================================================================
