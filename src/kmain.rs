@@ -145,8 +145,6 @@ fn spawn_servers(
 
 #[no_mangle]
 pub extern "C" fn kmain(kargs: &KernelArguments) {
-    assert!(crate::klib::bitmap::test());
-
     info!("initializing the kernel...");
 
     // Initialize the kernel heap.

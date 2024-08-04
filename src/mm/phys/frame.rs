@@ -16,8 +16,8 @@ use crate::{
         PhysicalAddress,
         TruncatedMemoryRegion,
     },
-    klib::bitmap::Bitmap,
 };
+use ::bitmap::Bitmap;
 use ::error::{
     Error,
     ErrorCode,

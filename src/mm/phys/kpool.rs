@@ -14,12 +14,12 @@ use crate::{
         PhysicalAddress,
         TruncatedMemoryRegion,
     },
-    klib::bitmap::Bitmap,
 };
 use ::alloc::{
     rc::Rc,
     vec::Vec,
 };
+use ::bitmap::Bitmap;
 use ::core::{
     cell::RefCell,
     ops::{

@@ -5,7 +5,7 @@
 // Imports
 //==================================================================================================
 
-use crate::klib::bitmap::Bitmap;
+use ::bitmap::Bitmap;
 use ::error::{
     Error,
     ErrorCode,
