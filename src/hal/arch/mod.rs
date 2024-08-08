@@ -103,5 +103,17 @@ pub fn init(
     ioaddresses.register(video_display_memory.clone())?;
     mmio_regions.push_back(video_display_memory);
 
+    // Bios memory.
+    // TODO: we should read this region from the multi-boot information passed by Grub.
+    let bios: TruncatedMemoryRegion<VirtualAddress> = TruncatedMemoryRegion::new(
+        "bios memory",
+        PageAligned::from_raw_value(0xc0000)?,
+        32 * mem::PAGE_SIZE,
+        MemoryRegionType::Mmio,
+        AccessPermission::RDONLY,
+    )?;
+    ioaddresses.register(bios.clone())?;
+    mmio_regions.push_back(bios);
+
     x86::init(ioports, ioaddresses, madt)
 }
