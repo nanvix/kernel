@@ -84,7 +84,7 @@ static mut ALLOCATOR: ArenaAllocator = ArenaAllocator;
 impl Kheap {
     unsafe fn from_raw_parts(addr: usize, size: usize) -> Result<Kheap, Error> {
         // Check if start address is not page aligned.
-        if addr % 4096 != 0 {
+        if addr % mem::PAGE_SIZE != 0 {
             return Err(Error::new(ErrorCode::InvalidArgument, "unaligned start address"));
         }
 
