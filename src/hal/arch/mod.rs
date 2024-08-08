@@ -92,15 +92,28 @@ pub fn init(
     }
 
     // Register video display memory.
+    // TODO: we should read this region from the multi-boot information passed by Grub.
     let video_display_memory: TruncatedMemoryRegion<VirtualAddress> = TruncatedMemoryRegion::new(
         "video display memory",
-        PageAligned::from_raw_value(0xb8000)?,
-        mem::PAGE_SIZE,
+        PageAligned::from_raw_value(0xa0000)?,
+        32 * mem::PAGE_SIZE,
         MemoryRegionType::Mmio,
         AccessPermission::RDWR,
     )?;
     ioaddresses.register(video_display_memory.clone())?;
     mmio_regions.push_back(video_display_memory);
+
+    // Bios memory.
+    // TODO: we should read this region from the multi-boot information passed by Grub.
+    let bios: TruncatedMemoryRegion<VirtualAddress> = TruncatedMemoryRegion::new(
+        "bios memory",
+        PageAligned::from_raw_value(0xc0000)?,
+        32 * mem::PAGE_SIZE,
+        MemoryRegionType::Mmio,
+        AccessPermission::RDONLY,
+    )?;
+    ioaddresses.register(bios.clone())?;
+    mmio_regions.push_back(bios);
 
     x86::init(ioports, ioaddresses, madt)
 }
