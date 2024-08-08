@@ -110,7 +110,11 @@ impl Kheap {
         info!("heap size: {} MB", size / constants::MEGABYTE);
         info!("slab size: {} KB", slab_size / constants::KILOBYTE);
         Ok(Kheap {
-            slab_8_bytes: Slab::from_raw_parts(heap_start_addr, slab_size, 8)?,
+            slab_8_bytes: Slab::from_raw_parts(
+                heap_start_addr,
+                slab_size,
+                SlabSize::Slab8 as usize,
+            )?,
             slab_16_bytes: Slab::from_raw_parts(
                 heap_start_addr.add(slab_size),
                 slab_size,
