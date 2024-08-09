@@ -496,14 +496,12 @@ impl EventManagerInner {
                 None => {
                     let reason: &str = "no owner for scheduling event";
                     error!("notify_process_termination(): reason={:?}", reason);
-                    unimplemented!("terminate process")
+                    return Err(Error::new(ErrorCode::NoSuchProcess, &reason));
                 },
             };
 
-        if let Err(e) = self.get_wait().notify_process(pid) {
-            error!("failed to notify process: {:?}", e);
-            unimplemented!("terminate process")
-        }
+        trace!("notify_process_termination(): pid={:?}, info={:?}", pid, info);
+        self.get_wait().notify_process(pid)?;
 
         Ok(())
     }
