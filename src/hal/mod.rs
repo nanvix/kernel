@@ -29,6 +29,7 @@ use crate::{
             IoPortAllocator,
         },
         mem::{
+            MemoryRegion,
             TruncatedMemoryRegion,
             VirtualAddress,
         },
@@ -70,6 +71,7 @@ pub struct Hal {
 //==================================================================================================
 
 pub fn init(
+    memory_regions: &mut LinkedList<MemoryRegion<VirtualAddress>>,
     mmio_regions: &mut LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
     madt: Option<MadtInfo>,
 ) -> Result<Hal, Error> {
@@ -77,7 +79,8 @@ pub fn init(
 
     let mut ioports: IoPortAllocator = IoPortAllocator::new();
     let mut ioaddresses: IoMemoryAllocator = IoMemoryAllocator::new();
-    let mut arch: Arch = arch::init(&mut ioports, &mut ioaddresses, mmio_regions, madt)?;
+    let mut arch: Arch =
+        arch::init(&mut ioports, &mut ioaddresses, memory_regions, mmio_regions, madt)?;
 
     let uart: Box<Uart> = match Uart::new(&mut ioports, uart::BaudRate::Baud38400) {
         Ok(uart) => Box::new(uart),

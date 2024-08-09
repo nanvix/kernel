@@ -31,6 +31,7 @@ use crate::{
         mem::{
             AccessPermission,
             Address,
+            MemoryRegion,
             MemoryRegionType,
             PageAligned,
             TruncatedMemoryRegion,
@@ -61,6 +62,7 @@ pub use x86::{
 pub fn init(
     ioports: &mut IoPortAllocator,
     ioaddresses: &mut IoMemoryAllocator,
+    memory_regions: &mut LinkedList<MemoryRegion<VirtualAddress>>,
     mmio_regions: &mut LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
     madt: Option<MadtInfo>,
 ) -> Result<Arch, Error> {
@@ -95,7 +97,7 @@ pub fn init(
     // TODO: we should read this region from the multi-boot information passed by Grub.
     let video_display_memory: TruncatedMemoryRegion<VirtualAddress> = TruncatedMemoryRegion::new(
         "video display memory",
-        PageAligned::from_raw_value(0xa0000)?,
+        PageAligned::from_raw_value(0x000a0000)?,
         32 * mem::PAGE_SIZE,
         MemoryRegionType::Mmio,
         AccessPermission::RDWR,
@@ -105,15 +107,14 @@ pub fn init(
 
     // Bios memory.
     // TODO: we should read this region from the multi-boot information passed by Grub.
-    let bios: TruncatedMemoryRegion<VirtualAddress> = TruncatedMemoryRegion::new(
+    let bios: MemoryRegion<VirtualAddress> = MemoryRegion::new(
         "bios memory",
-        PageAligned::from_raw_value(0xc0000)?,
-        32 * mem::PAGE_SIZE,
-        MemoryRegionType::Mmio,
+        VirtualAddress::from_raw_value(0x000c0000)?,
+        48 * mem::PAGE_SIZE,
+        MemoryRegionType::Reserved,
         AccessPermission::RDONLY,
     )?;
-    ioaddresses.register(bios.clone())?;
-    mmio_regions.push_back(bios);
+    memory_regions.push_back(bios);
 
     x86::init(ioports, ioaddresses, madt)
 }
