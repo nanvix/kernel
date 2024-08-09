@@ -121,10 +121,6 @@ pub fn kcall_handler(mut hal: Hal, mut mm: VirtMemoryManager, mut pm: ProcessMan
                 error!("failed to harvest zombies: {:?}", e);
             },
         }
-
-        if let Err(e) = pm.harvest_zombies() {
-            error!("failed to harvest zombies: {:?}", e);
-        }
     }
 
     while let Ok(Some((pid, status))) = pm.harvest_zombies() {
