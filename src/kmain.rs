@@ -249,7 +249,5 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
 pub fn kernel_magic_string() -> ! {
     let magic_string: &str = "PANIC: Hello World!\n";
     unsafe { crate::stdout::puts(magic_string) }
-    loop {
-        core::hint::spin_loop();
-    }
+    hal::arch::shutdown();
 }
