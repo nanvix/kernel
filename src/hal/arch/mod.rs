@@ -110,7 +110,7 @@ pub fn init(
     let bios: MemoryRegion<VirtualAddress> = MemoryRegion::new(
         "bios memory",
         VirtualAddress::from_raw_value(0x000c0000)?,
-        32 * mem::PAGE_SIZE,
+        48 * mem::PAGE_SIZE,
         MemoryRegionType::Reserved,
         AccessPermission::RDONLY,
     )?;
