@@ -118,3 +118,20 @@ pub fn init(
 
     x86::init(ioports, ioaddresses, madt)
 }
+
+///
+/// # Description
+///
+/// Shutdowns the machine.
+///
+/// # Return
+///
+/// This function never returns.
+///
+pub fn shutdown() -> ! {
+    // Note: this works on QEMU only we should move to platform-dependent layer.
+    unsafe { arch::io::out16(0x604, 0x2000) };
+    loop {
+        core::hint::spin_loop();
+    }
+}

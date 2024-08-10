@@ -25,6 +25,7 @@ use ::error::ErrorCode;
 use ::sys::{
     event::ProcessTerminationInfo,
     number::KcallNumber,
+    pm::ProcessIdentifier,
 };
 
 //==================================================================================================
@@ -108,6 +109,11 @@ pub fn kcall_handler(mut hal: Hal, mut mm: VirtMemoryManager, mut pm: ProcessMan
         match pm.harvest_zombies() {
             Ok(None) => {},
             Ok(Some((pid, status))) => {
+                // Check if process daemon was terminated.
+                if pid == ProcessIdentifier::PROCD {
+                    // It was, so we should shutdown.
+                    break;
+                }
                 match EventManager::notify_process_termination(ProcessTerminationInfo::new(
                     pid, status,
                 )) {
@@ -120,10 +126,6 @@ pub fn kcall_handler(mut hal: Hal, mut mm: VirtMemoryManager, mut pm: ProcessMan
             Err(e) => {
                 error!("failed to harvest zombies: {:?}", e);
             },
-        }
-
-        if let Err(e) = pm.harvest_zombies() {
-            error!("failed to harvest zombies: {:?}", e);
         }
     }
 
