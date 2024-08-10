@@ -44,6 +44,7 @@ pub struct Gdt(Pin<Box<[Gdte; 6]>>);
 
 pub struct GdtPtr(Pin<Box<::arch::mem::gdtr::Gdtr>>);
 
+#[inline(never)]
 pub unsafe fn load(ptr: *const ::arch::mem::gdtr::Gdtr) {
     // No data is pushed the stack, or write to the stack red-zone
     arch::asm!(

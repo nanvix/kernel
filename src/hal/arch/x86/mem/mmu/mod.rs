@@ -27,6 +27,7 @@ pub const PGTAB_ALIGNMENT: Alignment = Alignment::Align4194304;
 // Standalone Functions
 //==================================================================================================
 
+#[inline(never)]
 pub unsafe fn load_page_directory(cr3: usize) {
     arch::asm!(
         "mov {0}, %eax",
