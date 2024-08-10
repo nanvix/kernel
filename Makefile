@@ -20,8 +20,8 @@ export RELEASE ?= no
 # Timeout
 export TIMEOUT ?= 10
 
-# FEATURES
-export FEATURES ?=
+# Log Level
+export LOG_LEVEL ?= warn
 
 #===============================================================================
 # Directories
@@ -71,8 +71,8 @@ export BIN := $(NAME).$(EXEC_FORMAT)
 #===============================================================================
 
 # Cargo
-ifneq ($(FEATURES),)
-	export CARGO_FEATURES := --features $(FEATURES)
+ifneq ($(LOG_LEVEL),)
+export CARGO_FEATURES += --features $(LOG_LEVEL)
 endif
 
 #===============================================================================
