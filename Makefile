@@ -71,8 +71,12 @@ export BIN := $(NAME).$(EXEC_FORMAT)
 #===============================================================================
 
 # Cargo
+CARGO_FEATURES := --no-default-features
 ifneq ($(LOG_LEVEL),)
 export CARGO_FEATURES += --features $(LOG_LEVEL)
+endif
+ifneq ($(MACHINE),)
+export CARGO_FEATURES += --features $(MACHINE)
 endif
 
 #===============================================================================
