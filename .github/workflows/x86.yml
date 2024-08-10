@@ -40,7 +40,7 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd kernel
-          make TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 all
+          make TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 LOG_LEVEL=trace all
 
   test-isapc:
     name: Test (isapc)
@@ -56,7 +56,7 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd kernel
-          make TIMEOUT=90 TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 MACHINE=isapc run | tee output.txt
+          make TIMEOUT=90 TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 LOG_LEVEL=trace MACHINE=isapc run | tee output.txt
           echo "Magic String: $(cat output.txt | tail -n 1)"
           [ "$(cat output.txt | tail -n 1)" != "PANIC: Hello World!" ] && exit 1 || exit 0 ;
 
@@ -74,7 +74,7 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd kernel
-          make TIMEOUT=90 TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 MACHINE=pc run | tee output.txt
+          make TIMEOUT=90 TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 LOG_LEVEL=trace MACHINE=pc run | tee output.txt
           echo "Magic String: $(cat output.txt | tail -n 1)"
           [ "$(cat output.txt | tail -n 1)" != "PANIC: Hello World!" ] && exit 1 || exit 0 ;
 
