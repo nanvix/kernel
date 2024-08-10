@@ -14,11 +14,12 @@ macro_rules! info{
 	( $($arg:tt)* ) => ({
 		#[allow(unused_imports)]
 		use ::core::fmt::Write;
-		#[cfg(feature = "info")]
-		let _ = write!(
-			&mut crate::klog::Klog::get(module_path!(), crate::klog::KlogLevel::Info),
-			$($arg)*
-		);
+		if crate::klog::MAX_LEVEL >= crate::klog::KlogLevel::Info {
+			let _ = write!(
+				&mut crate::klog::Klog::get(module_path!(), crate::klog::KlogLevel::Info),
+				$($arg)*
+			);
+		}
 	})
 }
 
@@ -35,11 +36,12 @@ macro_rules! trace{
 	( $($arg:tt)* ) => ({
 		#[allow(unused_imports)]
 		use ::core::fmt::Write;
-		#[cfg(feature = "trace")]
-		let _ = write!(
-			&mut crate::klog::Klog::get(module_path!(), crate::klog::KlogLevel::Trace),
-			$($arg)*
-		);
+		if crate::klog::MAX_LEVEL >= crate::klog::KlogLevel::Trace {
+			let _ = write!(
+				&mut crate::klog::Klog::get(module_path!(), crate::klog::KlogLevel::Trace),
+				$($arg)*
+			);
+		}
 	})
 }
 
@@ -56,11 +58,12 @@ macro_rules! warn{
 	( $($arg:tt)* ) => ({
 		#[allow(unused_imports)]
 		use ::core::fmt::Write;
-		#[cfg(feature = "warn")]
-		let _ = write!(
-			&mut crate::klog::Klog::get(module_path!(), crate::klog::KlogLevel::Warn),
-			$($arg)*
-		);
+		if crate::klog::MAX_LEVEL >= crate::klog::KlogLevel::Warn {
+			let _ = write!(
+				&mut crate::klog::Klog::get(module_path!(), crate::klog::KlogLevel::Warn),
+				$($arg)*
+			);
+		}
 	})
 }
 
@@ -77,11 +80,12 @@ macro_rules! error{
 	( $($arg:tt)* ) => ({
 		#[allow(unused_imports)]
 		use ::core::fmt::Write;
-		#[cfg(feature = "error")]
-		let _ = write!(
-			&mut crate::klog::Klog::get(module_path!(), crate::klog::KlogLevel::Error),
-			$($arg)*
-		);
+		if crate::klog::MAX_LEVEL >= crate::klog::KlogLevel::Error {
+			let _ = write!(
+				&mut crate::klog::Klog::get(module_path!(), crate::klog::KlogLevel::Error),
+				$($arg)*
+			);
+		}
 	})
 }
 
