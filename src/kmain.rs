@@ -34,6 +34,7 @@ use crate::{
             Address,
             MemoryRegion,
             MemoryRegionType,
+            TruncatedMemoryRegion,
             VirtualAddress,
         },
         Hal,
@@ -54,7 +55,6 @@ use ::alloc::{
     string::String,
 };
 use ::sys::pm::ProcessIdentifier;
-use hal::mem::TruncatedMemoryRegion;
 
 //==================================================================================================
 // Modules

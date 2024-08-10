@@ -224,7 +224,6 @@ impl Vmem {
 
         // Get corresponding page table.
         for entry in self.kernel_page_tables.iter_mut() {
-            // let entry = (pt_addr, pt);
             if entry.borrow().0.into_raw_value() == pt_vaddr.into_raw_value() {
                 // Map the page to the target virtual address space.
                 // FIXME: do not be so open about permissions and caching.
