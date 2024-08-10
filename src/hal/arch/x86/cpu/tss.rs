@@ -100,6 +100,7 @@ impl TssRef {
         mem::size_of::<Tss>()
     }
 
+    #[inline(never)]
     pub unsafe fn load(&self, selector: u16) {
         info!("loading tss (selector={:x})", selector);
         arch::asm!("ltr %ax", in("ax") selector, options(nostack, att_syntax));
