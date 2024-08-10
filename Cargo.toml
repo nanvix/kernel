@@ -23,7 +23,9 @@ slab = { git = "https://github.com/nanvix/slab", branch = "releases/v0.0.1" }
 sys = { git = "https://github.com/nanvix/sys", branch = "releases/v1.1.1" }
 
 [features]
-default = ["warn"]
+default = ["pc"]
+pc = ["warn"]
+isapc = ["warn"]
 trace = ["info"]
 info = ["warn"]
 warn = ["error"]

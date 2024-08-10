@@ -48,6 +48,7 @@ use ::error::Error;
 
 pub use x86::{
     forge_user_stack,
+    shutdown,
     ContextInformation,
     ExceptionInformation,
     InterruptController,
@@ -117,21 +118,4 @@ pub fn init(
     memory_regions.push_back(bios);
 
     x86::init(ioports, ioaddresses, madt)
-}
-
-///
-/// # Description
-///
-/// Shutdowns the machine.
-///
-/// # Return
-///
-/// This function never returns.
-///
-pub fn shutdown() -> ! {
-    // Note: this works on QEMU only we should move to platform-dependent layer.
-    unsafe { arch::io::out16(0x604, 0x2000) };
-    loop {
-        core::hint::spin_loop();
-    }
 }

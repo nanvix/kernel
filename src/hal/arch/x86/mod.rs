@@ -7,6 +7,7 @@
 
 pub mod cpu;
 pub mod mem;
+mod platform;
 
 //==================================================================================================
 // Imports
@@ -44,6 +45,7 @@ pub use cpu::{
     InterruptHandler,
     InterruptNumber,
 };
+pub use platform::shutdown;
 
 //==================================================================================================
 // Structures
