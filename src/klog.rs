@@ -23,17 +23,31 @@ pub struct Klog;
 //==================================================================================================
 
 /// Kernel log levels.
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub enum KlogLevel {
-    #[cfg(feature = "trace")]
-    Trace,
-    #[cfg(feature = "info")]
-    Info,
-    #[cfg(feature = "warn")]
-    Warn,
-    #[cfg(feature = "error")]
-    Error,
     Panic,
+    Error,
+    Warn,
+    Info,
+    Trace,
 }
+
+//==================================================================================================
+// Constants
+//==================================================================================================
+
+/// Maximum log level.
+pub const MAX_LEVEL: KlogLevel = if cfg!(feature = "trace") {
+    KlogLevel::Trace
+} else if cfg!(feature = "info") {
+    KlogLevel::Info
+} else if cfg!(feature = "warn") {
+    KlogLevel::Warn
+} else if cfg!(feature = "error") {
+    KlogLevel::Error
+} else {
+    KlogLevel::Panic
+};
 
 //==================================================================================================
 // Implementations
@@ -77,13 +91,9 @@ impl fmt::Write for Klog {
 impl core::fmt::Debug for KlogLevel {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            #[cfg(feature = "trace")]
             KlogLevel::Trace => write!(f, "TRACE"),
-            #[cfg(feature = "info")]
             KlogLevel::Info => write!(f, "INFO"),
-            #[cfg(feature = "warn")]
             KlogLevel::Warn => write!(f, "WARN"),
-            #[cfg(feature = "error")]
             KlogLevel::Error => write!(f, "ERROR"),
             KlogLevel::Panic => write!(f, "PANIC"),
         }
