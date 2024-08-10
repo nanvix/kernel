@@ -26,8 +26,11 @@ pub struct Klog;
 pub enum KlogLevel {
     #[cfg(feature = "trace")]
     Trace,
+    #[cfg(feature = "info")]
     Info,
+    #[cfg(feature = "warn")]
     Warn,
+    #[cfg(feature = "error")]
     Error,
     Panic,
 }
@@ -76,8 +79,11 @@ impl core::fmt::Debug for KlogLevel {
         match self {
             #[cfg(feature = "trace")]
             KlogLevel::Trace => write!(f, "TRACE"),
+            #[cfg(feature = "info")]
             KlogLevel::Info => write!(f, "INFO"),
+            #[cfg(feature = "warn")]
             KlogLevel::Warn => write!(f, "WARN"),
+            #[cfg(feature = "error")]
             KlogLevel::Error => write!(f, "ERROR"),
             KlogLevel::Panic => write!(f, "PANIC"),
         }
