@@ -96,7 +96,7 @@ impl ScoreBoard {
 
     pub fn get_mut() -> Result<&'static mut ScoreBoard, Error> {
         unsafe {
-            if let Some(scoreboard) = &mut SCOREBOARD {
+            if let Some(scoreboard) = SCOREBOARD.as_mut() {
                 Ok(scoreboard)
             } else {
                 let reason: &str = "uninitialized scoreboard";

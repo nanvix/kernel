@@ -60,13 +60,13 @@ pub struct Arch {
     /// Global Descriptor Table (GDT).
     _gdt: Option<Gdt>,
     /// Global Descriptor Table Register (GDTR).
-    pub gdtr: Option<GdtPtr>,
+    pub _gdtr: Option<GdtPtr>,
     /// Task State Segment (TSS).
-    pub tss: Option<TssRef>,
+    pub _tss: Option<TssRef>,
     /// Interrupt controller.
     pub controller: Option<InterruptController>,
     /// Programmable Interval Timer (PIT).
-    pub pit: Option<Pit>,
+    pub _pit: Option<Pit>,
 }
 
 //==================================================================================================
@@ -85,9 +85,9 @@ pub fn init(
 
     Ok(Arch {
         _gdt: Some(gdt),
-        gdtr: Some(gdtr),
-        tss: Some(tss),
+        _gdtr: Some(gdtr),
+        _tss: Some(tss),
         controller: Some(controller),
-        pit: Some(pit),
+        _pit: Some(pit),
     })
 }
