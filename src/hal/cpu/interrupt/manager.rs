@@ -24,7 +24,8 @@ pub struct InterruptManager {
 impl InterruptManager {
     pub fn new(controller: arch::InterruptController) -> Result<Self, Error> {
         let mut intman: InterruptManager = InterruptManager {
-            controller: InterruptController::new(controller)?,
+            // TODO: add notes about unsafe.
+            controller: unsafe { InterruptController::init(controller)? },
         };
 
         intman.init()?;

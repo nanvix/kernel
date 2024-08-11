@@ -17,19 +17,52 @@ use ::error::{
 // Structures
 //==================================================================================================
 
-static mut INTERRUPT_CONTROLLER: Option<InterruptController> = None;
-
 #[derive(Clone)]
 pub struct InterruptController(Rc<RefCell<arch::InterruptController>>);
 
+//==================================================================================================
+// Global Variables
+//==================================================================================================
+
+static mut INTERRUPT_CONTROLLER: Option<InterruptController> = None;
+
+//==================================================================================================
+// Implementations
+//==================================================================================================
+
 impl InterruptController {
-    pub fn new(controller: arch::InterruptController) -> Result<Self, Error> {
+    ///
+    /// # Description
+    ///
+    /// Initializes the interrupt controller.
+    ///
+    /// # Parameters
+    ///
+    /// - `controller`: The interrupt controller.
+    ///
+    /// # Returns
+    ///
+    /// Returns the interrupt controller.
+    ///
+    /// # Safety
+    ///
+    /// This function is unsafe because it mutates global variables.
+    ///
+    pub unsafe fn init(controller: arch::InterruptController) -> Result<Self, Error> {
+        // Check if the interrupt controller was already initialized.
+        if INTERRUPT_CONTROLLER.is_some() {
+            let reason: &str = "interrupt controller already initialized";
+            error!("init(): reason={:?}", reason);
+            return Err(Error::new(
+                ErrorCode::EntryExists,
+                "interrupt controller already initialized",
+            ));
+        }
+
         let controller: InterruptController =
             InterruptController(Rc::new(RefCell::new(controller)));
 
-        unsafe {
-            INTERRUPT_CONTROLLER = Some(controller.clone());
-        }
+        INTERRUPT_CONTROLLER = Some(controller.clone());
 
         Ok(controller)
     }
@@ -56,13 +89,11 @@ impl InterruptController {
     ) -> Result<(), Error> {
         self.0.borrow_mut().set_handler(intnum, handler)
     }
-}
 
-impl InterruptController {
     pub fn try_get() -> Result<InterruptController, Error> {
         unsafe {
-            match &INTERRUPT_CONTROLLER {
-                Some(controller) => Ok(controller.clone()),
+            match INTERRUPT_CONTROLLER.clone() {
+                Some(controller) => Ok(controller),
                 None => {
                     Err(Error::new(ErrorCode::NoSuchDevice, "interrupt controller not initialized"))
                 },
