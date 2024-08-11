@@ -11,7 +11,6 @@
 #![feature(allocator_api)] // kheap uses this.
 #![feature(pointer_is_aligned_to)] // mboot uses this.
 #![feature(asm_const)] // gdt uses this.
-#![feature(const_mut_refs)] // tss uses this.
 #![feature(linked_list_remove)] // vmem uses this.
 #![feature(linked_list_retain)] // vmem uses this.
 #![feature(never_type)] // exit() uses this.
@@ -227,9 +226,10 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
             panic!("failed to mask timer interrupt: {:?}", e);
         }
 
-        kcall::handler(hal, mm, pm)
+        kcall::handler(&mut hal, &mut mm, &mut pm)
     }
 
+    trace!("the system will shutdown now!");
     kernel_magic_string();
 }
 
