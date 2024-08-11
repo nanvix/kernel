@@ -32,18 +32,9 @@ pub type ExceptionHandler = fn(&ExceptionInformation, &ContextInformation);
 ///
 /// # Description
 ///
-/// Inner state of the exception controller.
-///
-struct ExceptionControllerInner {
-    handler: Option<ExceptionHandler>,
-}
-
-///
-/// # Description
-///
 /// A type that represents an exception controller.
 ///
-pub struct ExceptionController(Option<&'static mut ExceptionControllerInner>);
+pub struct ExceptionController;
 
 //==================================================================================================
 // Global Variables
@@ -52,19 +43,16 @@ pub struct ExceptionController(Option<&'static mut ExceptionControllerInner>);
 ///
 /// # Description
 ///
-/// Exception controller. This should be a global variable to enable access from the low-level
-/// exception dispatcher.
+/// Exception handler.
 ///
-static mut CONTROLLER: ExceptionControllerInner = ExceptionControllerInner { handler: None };
+static mut HANDLER: Option<ExceptionHandler> = None;
 
 ///
 /// # Description
 ///
-/// Reference to the exception controller. This enables a single reference to the exception
-/// controller from synchronous path.
+/// Exception controller.
 ///
-static mut CONTROLLER_REF: Option<&'static mut ExceptionControllerInner> =
-    unsafe { Some(&mut CONTROLLER) };
+static mut SINGLETON_CONTROLLER: Option<ExceptionController> = None;
 
 //==================================================================================================
 // Implementations
@@ -78,20 +66,23 @@ impl ExceptionController {
     ///
     /// # Returns
     ///
-    /// Upon successful completion the exception controller is returned. Upon
-    /// failure, an error is returned instead.
+    /// Upon successful completion the exception controller is returned. Upon failure, an error is
+    /// returned instead.
     ///
-    pub fn init() -> Result<Self, Error> {
-        unsafe {
-            match CONTROLLER_REF.take() {
-                Some(controller) => Ok(ExceptionController(Some(controller))),
-                None => {
-                    let reason: &str = "exception controller already initialized";
-                    error!("init(): {}", reason);
-                    Err(Error::new(ErrorCode::ResourceBusy, reason))
-                },
-            }
+    /// # Safety
+    ///
+    /// This function is unsafe because it mutates global variables.
+    ///
+    pub unsafe fn init() -> Result<Self, Error> {
+        if SINGLETON_CONTROLLER.is_some() {
+            let reason: &str = "exception controller already initialized";
+            error!("init(): {}", reason);
+            return Err(Error::new(ErrorCode::ResourceBusy, reason));
         }
+
+        SINGLETON_CONTROLLER = Some(Self);
+
+        Ok(Self)
     }
 
     ///
@@ -103,17 +94,39 @@ impl ExceptionController {
     ///
     /// - `handler`: Exception handler.
     ///
-    pub fn register_handler(&mut self, handler: ExceptionHandler) {
+    /// # Returns
+    ///
+    /// Upon successful completion, empty is returned. Upon failure, an error is returned instead.
+    ///
+    /// # Safety
+    ///
+    /// This function is unsafe because it mutates global variables.
+    ///
+    pub unsafe fn register_handler(&mut self, handler: ExceptionHandler) -> Result<(), Error> {
         trace!("register_handler(): handler={:?}", handler);
-        self.0.as_mut().unwrap().handler = Some(handler);
+
+        // Check if the handler is already set.
+        if HANDLER.is_some() {
+            let reason: &str = "exception handler already set";
+            error!("register_handler(): {}", reason);
+            return Err(Error::new(ErrorCode::ResourceBusy, reason));
+        }
+
+        HANDLER = Some(handler);
+
+        Ok(())
     }
 }
+
+//==================================================================================================
+// Trait Implementations
+//==================================================================================================
 
 impl Drop for ExceptionController {
     fn drop(&mut self) {
         unsafe {
-            // Safety: the following call to unwrap is safe because the controller is not `None`.
-            CONTROLLER_REF = Some(self.0.take().unwrap());
+            SINGLETON_CONTROLLER = None;
+            HANDLER = None;
         }
     }
 }
@@ -132,12 +145,21 @@ impl Drop for ExceptionController {
 /// - `excp` Exception information.
 /// - `ctx`  Context information.
 ///
+/// # Safety
+///
+/// This function is unsafe for the following conditions:
+/// - It dereferences raw pointers.
+/// - It accesses global variables.
+///
 #[no_mangle]
-pub extern "C" fn do_exception(excp: *const ExceptionInformation, ctx: *const ContextInformation) {
-    let excp: &ExceptionInformation = unsafe { &*excp };
-    let ctx: &ContextInformation = unsafe { &*ctx };
+pub unsafe extern "C" fn do_exception(
+    excp: *const ExceptionInformation,
+    ctx: *const ContextInformation,
+) {
+    let excp: &ExceptionInformation = &*excp;
+    let ctx: &ContextInformation = &*ctx;
 
-    match unsafe { CONTROLLER.handler } {
+    match HANDLER {
         Some(handler) => handler(excp, ctx),
         None => {
             info!("{:?}", excp);

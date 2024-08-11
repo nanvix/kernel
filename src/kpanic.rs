@@ -12,7 +12,10 @@ use crate::klog::{
 use ::core::{
     fmt::Write,
     hint,
-    panic::PanicInfo,
+    panic::{
+        PanicInfo,
+        PanicMessage,
+    },
 };
 
 //==================================================================================================
@@ -40,13 +43,8 @@ pub fn kpanic(info: &PanicInfo) -> ! {
         };
 
         // Print panic information.
-        if let Some(m) = info.message() {
-            let _ = write!(klog, "file='{}', line={} :: {}", file, line, m);
-        } else if let Some(m) = info.payload().downcast_ref::<&str>() {
-            let _ = write!(klog, "file='{}', line={} :: {}", file, line, m);
-        } else {
-            let _ = write!(klog, "file='{}', line={} :: ?", file, line);
-        }
+        let m: PanicMessage = info.message();
+        let _ = write!(klog, "file='{}', line={} :: {}", file, line, m);
     }
 
     loop {

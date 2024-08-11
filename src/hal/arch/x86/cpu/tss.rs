@@ -9,10 +9,6 @@ use crate::arch::cpu::tss::Tss;
 use ::core::{
     arch,
     mem,
-    ops::{
-        Deref,
-        DerefMut,
-    },
 };
 use ::error::{
     Error,
@@ -23,8 +19,12 @@ use ::error::{
 // Structures
 //==================================================================================================
 
-/// Holds a reference to the task state segment (TSS).
-pub struct TssRef(&'static mut Tss);
+///
+/// # Description
+///
+/// A type that enables one to access the task state segment (TSS).
+///
+pub struct TssRef;
 
 //==================================================================================================
 // Global Variables
@@ -32,10 +32,10 @@ pub struct TssRef(&'static mut Tss);
 
 /// Task state segment (TSS).
 #[no_mangle]
-pub static mut TSS: Tss = unsafe { mem::zeroed() };
+static mut TSS: Tss = unsafe { mem::zeroed() };
 
 /// Indicates if the TSS was initialized.
-static mut TSS_REF: Option<TssRef> = Some(TssRef(unsafe { &mut TSS }));
+static mut TSS_REF: Option<TssRef> = None;
 
 //==================================================================================================
 // Implementations
@@ -62,16 +62,19 @@ impl TssRef {
     /// - It mutates global variables.
     ///
     pub unsafe fn new(ss0: u32, esp0: u32) -> Result<Self, Error> {
-        let mut tss = TSS_REF
-            .take()
-            .ok_or(Error::new(ErrorCode::OutOfMemory, "tss is already initialized"))?;
-
-        // Initialize TSS.
         info!("initializing tss (ss0={:#02x}, esp0={:#08x})", ss0, esp0);
 
-        tss.init(ss0, esp0);
+        // Check if the TSS was already initialized.
+        if TSS_REF.is_some() {
+            let reason: &str = "tss is already initialized";
+            error!("new(): {}", reason);
+            return Err(Error::new(ErrorCode::OutOfMemory, reason));
+        }
 
-        Ok(tss)
+        Self::init(ss0, esp0);
+        TSS_REF = Some(Self);
+
+        Ok(Self)
     }
 
     ///
@@ -83,8 +86,8 @@ impl TssRef {
     ///
     /// A reference to the task state segment (TSS).
     ///
-    pub fn address(&self) -> usize {
-        self.0 as *const Tss as usize
+    pub unsafe fn address(&self) -> usize {
+        core::ptr::addr_of!(TSS) as usize
     }
 
     ///
@@ -106,50 +109,32 @@ impl TssRef {
         arch::asm!("ltr %ax", in("ax") selector, options(nostack, att_syntax));
     }
 
-    fn init(&mut self, ss0: u32, esp0: u32) {
-        self.link = 0;
-        self.esp0 = esp0;
-        self.ss0 = ss0;
-        self.esp1 = 0;
-        self.ss1 = 0;
-        self.esp2 = 0;
-        self.ss2 = 0;
-        self.cr3 = 0;
-        self.eip = 0;
-        self.eflags = 0;
-        self.eax = 0;
-        self.ecx = 0;
-        self.edx = 0;
-        self.ebx = 0;
-        self.esp = 0;
-        self.ebp = 0;
-        self.esi = 0;
-        self.edi = 0;
-        self.es = 0;
-        self.cs = 0;
-        self.ss = 0;
-        self.ds = 0;
-        self.fs = 0;
-        self.gs = 0;
-        self.ldtr = 0;
-        self.iomap = 0;
-    }
-}
-
-//==================================================================================================
-// Trait Implementations
-//==================================================================================================
-
-impl Deref for TssRef {
-    type Target = Tss;
-
-    fn deref(&self) -> &Self::Target {
-        self.0
-    }
-}
-
-impl DerefMut for TssRef {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self.0
+    unsafe fn init(ss0: u32, esp0: u32) {
+        TSS.link = 0;
+        TSS.esp0 = esp0;
+        TSS.ss0 = ss0;
+        TSS.esp1 = 0;
+        TSS.ss1 = 0;
+        TSS.esp2 = 0;
+        TSS.ss2 = 0;
+        TSS.cr3 = 0;
+        TSS.eip = 0;
+        TSS.eflags = 0;
+        TSS.eax = 0;
+        TSS.ecx = 0;
+        TSS.edx = 0;
+        TSS.ebx = 0;
+        TSS.esp = 0;
+        TSS.ebp = 0;
+        TSS.esi = 0;
+        TSS.edi = 0;
+        TSS.es = 0;
+        TSS.cs = 0;
+        TSS.ss = 0;
+        TSS.ds = 0;
+        TSS.fs = 0;
+        TSS.gs = 0;
+        TSS.ldtr = 0;
+        TSS.iomap = 0;
     }
 }

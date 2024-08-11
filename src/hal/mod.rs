@@ -59,7 +59,7 @@ use ::error::{
 /// A type that describes components of the hardware abstraction layer.
 ///
 pub struct Hal {
-    pub arch: Arch,
+    pub _arch: Arch,
     pub ioports: IoPortAllocator,
     pub ioaddresses: IoMemoryAllocator,
     pub intman: cpu::InterruptManager,
@@ -98,12 +98,13 @@ pub fn init(
     };
 
     // Initialize exception manager.
-    let excpman: ExceptionController = ExceptionController::init()?;
+    // TODO: add comments about safety.
+    let excpman: ExceptionController = unsafe { ExceptionController::init()? };
 
     unsafe { stdout::init(uart) };
 
     Ok(Hal {
-        arch,
+        _arch: arch,
         ioports,
         ioaddresses,
         intman,

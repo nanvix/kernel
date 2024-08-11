@@ -732,7 +732,7 @@ fn exception_handler(info: &ExceptionInformation, _ctx: &ContextInformation) {
     }
 }
 
-pub fn init(hal: &mut Hal) {
+pub fn init(hal: &mut Hal) -> Result<(), Error> {
     let mut pending_interrupts: [LinkedList<EventDescriptor>; usize::BITS as usize] =
         unsafe { mem::zeroed() };
     for list in pending_interrupts.iter_mut() {
@@ -789,7 +789,10 @@ pub fn init(hal: &mut Hal) {
         MANAGER = Some(manager);
     }
 
-    hal.excpman.register_handler(exception_handler);
+    // TODO: add comments about safety.
+    unsafe {
+        hal.excpman.register_handler(exception_handler)?;
+    }
 
     for intnum in InterruptNumber::VALUES {
         if intnum == InterruptNumber::Timer {
@@ -804,4 +807,6 @@ pub fn init(hal: &mut Hal) {
             Err(e) => warn!("failed to register interrupt handler: {:?}", e),
         }
     }
+
+    Ok(())
 }
