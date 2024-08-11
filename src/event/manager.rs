@@ -789,7 +789,10 @@ pub fn init(hal: &mut Hal) -> Result<(), Error> {
         MANAGER = Some(manager);
     }
 
-    hal.excpman.register_handler(exception_handler);
+    // TODO: add comments about safety.
+    unsafe {
+        hal.excpman.register_handler(exception_handler)?;
+    }
 
     for intnum in InterruptNumber::VALUES {
         if intnum == InterruptNumber::Timer {

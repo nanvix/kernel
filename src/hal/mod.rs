@@ -98,7 +98,8 @@ pub fn init(
     };
 
     // Initialize exception manager.
-    let excpman: ExceptionController = ExceptionController::init()?;
+    // TODO: add comments about safety.
+    let excpman: ExceptionController = unsafe { ExceptionController::init()? };
 
     unsafe { stdout::init(uart) };
 
