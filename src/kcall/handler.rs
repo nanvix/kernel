@@ -36,8 +36,8 @@ use ::sys::{
 ///
 /// Kernel call handler.
 ///
-pub fn kcall_handler(mut hal: Hal, mut mm: VirtMemoryManager, mut pm: ProcessManager) {
-    if let Err(e) = event::init(&mut hal) {
+pub fn kcall_handler(hal: &mut Hal, mm: &mut VirtMemoryManager, pm: &mut ProcessManager) {
+    if let Err(e) = event::init(hal) {
         panic!("failed to initialize event manager: {:?}", e);
     }
 
@@ -64,24 +64,24 @@ pub fn kcall_handler(mut hal: Hal, mut mm: VirtMemoryManager, mut pm: ProcessMan
                         KcallNumber::GetGid => pm::getgid(&pm, args),
                         KcallNumber::GetEuid => pm::geteuid(&pm, args),
                         KcallNumber::GetEgid => pm::getegid(&pm, args),
-                        KcallNumber::SetUid => pm::setuid(&mut pm, args),
-                        KcallNumber::SetGid => pm::setgid(&mut pm, args),
-                        KcallNumber::SetEuid => pm::seteuid(&mut pm, args),
-                        KcallNumber::SetEgid => pm::setegid(&mut pm, args),
-                        KcallNumber::CapCtl => pm::capctl(&mut pm, args),
-                        KcallNumber::Terminate => pm::terminate(&mut pm, args),
-                        KcallNumber::EventCtrl => event::evctrl(&mut pm, args),
-                        KcallNumber::MemoryMap => pm::mmap(&mut pm, &mut mm, args),
-                        KcallNumber::MemoryUnmap => pm::munmap(&mut pm, &mut mm, args),
-                        KcallNumber::MemoryCtrl => pm::mctrl(&mut pm, &mut mm, args),
-                        KcallNumber::MemoryCopy => pm::mcopy(&mut mm, args),
-                        KcallNumber::Send => ipc::send(&mut pm, args),
-                        KcallNumber::AllocMmio => io::mmio_alloc(&mut hal, &mut pm, args),
-                        KcallNumber::FreeMmio => io::mmio_free(&mut pm, args),
-                        KcallNumber::AllocPmio => io::pmio_alloc(&mut hal, &mut pm, args),
-                        KcallNumber::FreePmio => io::pmio_free(&mut pm, args),
-                        KcallNumber::ReadPmio => io::pmio_read(&mut pm, args),
-                        KcallNumber::WritePmio => io::pmio_write(&mut pm, args),
+                        KcallNumber::SetUid => pm::setuid(pm, args),
+                        KcallNumber::SetGid => pm::setgid(pm, args),
+                        KcallNumber::SetEuid => pm::seteuid(pm, args),
+                        KcallNumber::SetEgid => pm::setegid(pm, args),
+                        KcallNumber::CapCtl => pm::capctl(pm, args),
+                        KcallNumber::Terminate => pm::terminate(pm, args),
+                        KcallNumber::EventCtrl => event::evctrl(pm, args),
+                        KcallNumber::MemoryMap => pm::mmap(pm, mm, args),
+                        KcallNumber::MemoryUnmap => pm::munmap(pm, mm, args),
+                        KcallNumber::MemoryCtrl => pm::mctrl(pm, mm, args),
+                        KcallNumber::MemoryCopy => pm::mcopy(mm, args),
+                        KcallNumber::Send => ipc::send(pm, args),
+                        KcallNumber::AllocMmio => io::mmio_alloc(hal, pm, args),
+                        KcallNumber::FreeMmio => io::mmio_free(pm, args),
+                        KcallNumber::AllocPmio => io::pmio_alloc(hal, pm, args),
+                        KcallNumber::FreePmio => io::pmio_free(pm, args),
+                        KcallNumber::ReadPmio => io::pmio_read(pm, args),
+                        KcallNumber::WritePmio => io::pmio_write(pm, args),
                         _ => {
                             error!("invalid kernel call");
                             ErrorCode::InvalidSysCall.into_errno()
@@ -134,6 +134,4 @@ pub fn kcall_handler(mut hal: Hal, mut mm: VirtMemoryManager, mut pm: ProcessMan
     while let Ok(Some((pid, status))) = pm.harvest_zombies() {
         info!("harvested zombie process: pid={:?}, status={:?}", pid, status);
     }
-
-    trace!("shutting down");
 }

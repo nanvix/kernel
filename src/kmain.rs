@@ -227,9 +227,10 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
             panic!("failed to mask timer interrupt: {:?}", e);
         }
 
-        kcall::handler(hal, mm, pm)
+        kcall::handler(&mut hal, &mut mm, &mut pm)
     }
 
+    trace!("the system will shutdown now!");
     kernel_magic_string();
 }
 
