@@ -9,7 +9,6 @@
 #![forbid(clippy::large_stack_frames)]
 #![forbid(clippy::large_stack_arrays)]
 #![feature(allocator_api)] // kheap uses this.
-#![feature(ptr_sub_ptr)] // slab uses this.
 #![feature(pointer_is_aligned_to)] // mboot uses this.
 #![feature(asm_const)] // gdt uses this.
 #![feature(const_mut_refs)] // tss uses this.
