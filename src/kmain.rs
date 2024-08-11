@@ -11,7 +11,6 @@
 #![feature(allocator_api)] // kheap uses this.
 #![feature(pointer_is_aligned_to)] // mboot uses this.
 #![feature(asm_const)] // gdt uses this.
-#![feature(const_mut_refs)] // tss uses this.
 #![feature(linked_list_remove)] // vmem uses this.
 #![feature(linked_list_retain)] // vmem uses this.
 #![feature(never_type)] // exit() uses this.
