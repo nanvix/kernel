@@ -15,12 +15,12 @@ name = "kernel"
 path = "src/kmain.rs"
 
 [dependencies]
-arch = { git = "https://github.com/nanvix/arch", branch = "releases/v1.0.0" }
-bitmap = { git = "https://github.com/nanvix/bitmap", branch = "releases/v0.0.1" }
-error = { git = "https://github.com/nanvix/error", branch = "releases/v0.0.1" }
-raw-array = { git = "https://github.com/nanvix/raw-array", branch = "releases/v0.0.1" }
-slab = { git = "https://github.com/nanvix/slab", branch = "releases/v0.0.1" }
-sys = { git = "https://github.com/nanvix/sys", branch = "releases/v1.1.1" }
+arch = { git = "https://github.com/nanvix/arch", branch = "releases/v1.0.1" }
+bitmap = { git = "https://github.com/nanvix/bitmap", branch = "releases/v0.0.2" }
+error = { git = "https://github.com/nanvix/error", branch = "releases/v0.0.2" }
+raw-array = { git = "https://github.com/nanvix/raw-array", branch = "releases/v0.0.2" }
+slab = { git = "https://github.com/nanvix/slab", branch = "releases/v0.0.2" }
+sys = { git = "https://github.com/nanvix/sys", branch = "releases/v1.1.2" }
 
 [features]
 default = ["pc"]
