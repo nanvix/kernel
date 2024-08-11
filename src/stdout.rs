@@ -47,7 +47,7 @@ pub unsafe fn init(debugger: Box<dyn Stdout>) {
 /// - It does not prevent concurrent access to the standard output device.
 ///
 pub unsafe fn puts(s: &str) {
-    if let Some(debugger) = &mut STDOUT {
+    if let Some(debugger) = STDOUT.as_mut() {
         debugger.puts(s);
     } else {
         dbg::puts(s);
