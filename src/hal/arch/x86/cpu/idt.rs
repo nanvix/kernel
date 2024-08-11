@@ -116,11 +116,25 @@ pub const EXCP_OFF: u8 = 0;
 ///
 pub const INT_OFF: u8 = 32;
 
+///
+/// # Description
+///
+/// Length of the IDT.
+///
+pub const IDT_LEN: usize = 256;
+
+///
+/// # Description
+///
+/// Size of the IDT.
+///
+pub const IDT_SIZE: usize = IDT_LEN * mem::size_of::<Idte>();
+
 //==================================================================================================
 // Global Variables
 //==================================================================================================
 
-static mut IDT: [Idte; 256] = unsafe { mem::zeroed() };
+static mut IDT: [Idte; IDT_LEN] = unsafe { mem::zeroed() };
 
 static mut IDTR: Idtr = unsafe { mem::zeroed() };
 
@@ -204,7 +218,10 @@ pub unsafe fn init() {
     IDT[128] = idt_entry!(_do_kcall, DescriptorPrivilegeLevel::Ring3, GateType::Int32);
 
     // Load IDT.
-    info!("loading idt (base={:p}, size={})", IDT.as_ptr(), mem::size_of_val(&IDT));
-    IDTR.init(IDT.as_ptr() as u32, (mem::size_of_val(&IDT)) as u16);
+    info!("loading idt (base={:p}, size={})", IDT.as_ptr(), IDT_SIZE);
+    IDTR.init(
+        IDT.as_ptr() as u32,
+        u16::try_from(IDT_SIZE).expect("wrong idt size, is it corrupted?"),
+    );
     IDTR.load();
 }
