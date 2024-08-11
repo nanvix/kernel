@@ -37,7 +37,9 @@ use ::sys::{
 /// Kernel call handler.
 ///
 pub fn kcall_handler(mut hal: Hal, mut mm: VirtMemoryManager, mut pm: ProcessManager) {
-    event::init(&mut hal);
+    if let Err(e) = event::init(&mut hal) {
+        panic!("failed to initialize event manager: {:?}", e);
+    }
 
     loop {
         // Read kernel call arguments from the scoreboard.

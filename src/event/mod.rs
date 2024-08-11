@@ -18,6 +18,7 @@ use crate::hal::Hal;
 // Exports
 //==================================================================================================
 
+use ::error::Error;
 pub use kcall::*;
 pub use manager::{
     EventManager,
@@ -28,6 +29,6 @@ pub use manager::{
 // Standalone Functions
 //==================================================================================================
 
-pub fn init(hal: &mut Hal) {
-    manager::init(hal);
+pub fn init(hal: &mut Hal) -> Result<(), Error> {
+    manager::init(hal)
 }

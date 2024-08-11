@@ -732,7 +732,7 @@ fn exception_handler(info: &ExceptionInformation, _ctx: &ContextInformation) {
     }
 }
 
-pub fn init(hal: &mut Hal) {
+pub fn init(hal: &mut Hal) -> Result<(), Error> {
     let mut pending_interrupts: [LinkedList<EventDescriptor>; usize::BITS as usize] =
         unsafe { mem::zeroed() };
     for list in pending_interrupts.iter_mut() {
@@ -804,4 +804,6 @@ pub fn init(hal: &mut Hal) {
             Err(e) => warn!("failed to register interrupt handler: {:?}", e),
         }
     }
+
+    Ok(())
 }
