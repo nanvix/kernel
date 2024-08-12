@@ -5,16 +5,14 @@
 // Imports
 //==================================================================================================
 
-use crate::{
-    arch::mem::{
-        self,
-        paging::FrameNumber,
-    },
-    hal::mem::types::address::{
-        Address,
-        FrameAddress,
-        VirtualAddress,
-    },
+use crate::hal::mem::types::address::{
+    Address,
+    FrameAddress,
+    VirtualAddress,
+};
+use ::arch::mem::{
+    self,
+    paging::FrameNumber,
 };
 use ::error::{
     Error,

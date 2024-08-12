@@ -6,10 +6,6 @@
 //==================================================================================================
 
 use crate::{
-    arch::mem::{
-        self,
-        paging::PageDirectoryEntry,
-    },
     hal::{
         arch::x86::mem::mmu::{
             self,
@@ -45,6 +41,10 @@ use crate::{
 use ::alloc::{
     collections::LinkedList,
     rc::Rc,
+};
+use ::arch::mem::{
+    self,
+    paging::PageDirectoryEntry,
 };
 use ::core::cell::RefCell;
 use ::error::{

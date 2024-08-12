@@ -1,15 +1,13 @@
 // Copyright(c) The Maintainers of Nanvix.
 // Licensed under the MIT License.
 
-use crate::{
-    arch::mem,
-    hal::mem::types::address::{
-        Address,
-        PageAligned,
-        PageTableAligned,
-        VirtualAddress,
-    },
+use crate::hal::mem::types::address::{
+    Address,
+    PageAligned,
+    PageTableAligned,
+    VirtualAddress,
 };
+use ::arch::mem;
 
 #[derive(Debug, Clone, Copy)]
 pub struct PageAddress(PageAligned<VirtualAddress>);

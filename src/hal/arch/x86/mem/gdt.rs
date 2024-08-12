@@ -7,27 +7,25 @@
 
 use ::alloc::boxed::Box;
 
-use crate::{
-    arch::mem::gdt::{
-        AccessAccessed,
-        AccessConforming,
-        AccessDescriptorType,
-        AccessDirection,
-        AccessDirectionConforming,
-        AccessExecutable,
-        AccessPresent,
-        AccessReadWrite,
-        AccessReadable,
-        AccessWritable,
-        DescriptorPrivilegeLegel,
-        Gdte,
-        GdteAccessByte,
-        GdteFlags,
-        GdteGranularity,
-        GdteLongMode,
-        GdteProtectedMode,
-    },
-    hal::arch::x86::cpu::tss::TssRef,
+use crate::hal::arch::x86::cpu::tss::TssRef;
+use ::arch::mem::gdt::{
+    AccessAccessed,
+    AccessConforming,
+    AccessDescriptorType,
+    AccessDirection,
+    AccessDirectionConforming,
+    AccessExecutable,
+    AccessPresent,
+    AccessReadWrite,
+    AccessReadable,
+    AccessWritable,
+    DescriptorPrivilegeLegel,
+    Gdte,
+    GdteAccessByte,
+    GdteFlags,
+    GdteGranularity,
+    GdteLongMode,
+    GdteProtectedMode,
 };
 use ::core::{
     arch,

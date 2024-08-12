@@ -5,17 +5,15 @@
 // Imports
 //==================================================================================================
 
-use crate::{
-    arch::mem::{
-        self,
-        paging::FrameNumber,
-    },
-    hal::mem::{
-        FrameAddress,
-        PageAligned,
-        PhysicalAddress,
-        TruncatedMemoryRegion,
-    },
+use crate::hal::mem::{
+    FrameAddress,
+    PageAligned,
+    PhysicalAddress,
+    TruncatedMemoryRegion,
+};
+use ::arch::mem::{
+    self,
+    paging::FrameNumber,
 };
 use ::bitmap::Bitmap;
 use ::error::{

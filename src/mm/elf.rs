@@ -13,7 +13,6 @@
 //==================================================================================================
 
 use crate::{
-    arch::mem,
     hal::{
         arch::x86::mem::mmu,
         mem::{
@@ -29,6 +28,7 @@ use crate::{
         Vmem,
     },
 };
+use ::arch::mem;
 use ::error::{
     Error,
     ErrorCode,

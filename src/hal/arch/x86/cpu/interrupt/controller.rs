@@ -5,27 +5,25 @@
 // Imports
 //==================================================================================================
 
-use crate::{
-    arch::{
-        self,
-        cpu::msr,
+use crate::hal::arch::x86::cpu::interrupt::{
+    ioapic::{
+        Ioapic,
+        UninitIoapic,
     },
-    hal::arch::x86::cpu::interrupt::{
-        ioapic::{
-            Ioapic,
-            UninitIoapic,
-        },
-        map::InterruptMap,
-        pic::{
-            Pic,
-            UninitPic,
-        },
-        xapic::{
-            UninitXapic,
-            Xapic,
-        },
-        InterruptNumber,
+    map::InterruptMap,
+    pic::{
+        Pic,
+        UninitPic,
     },
+    xapic::{
+        UninitXapic,
+        Xapic,
+    },
+    InterruptNumber,
+};
+use ::arch::{
+    self,
+    cpu::msr,
 };
 use ::error::{
     Error,

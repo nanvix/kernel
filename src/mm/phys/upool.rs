@@ -6,7 +6,6 @@
 //==================================================================================================
 
 use crate::{
-    arch::mem,
     hal::mem::FrameAddress,
     mm::phys::frame::FrameAllocator,
 };
@@ -14,6 +13,7 @@ use ::alloc::{
     rc::Rc,
     vec::Vec,
 };
+use ::arch::mem;
 use ::core::{
     cell::RefCell,
     ops::{

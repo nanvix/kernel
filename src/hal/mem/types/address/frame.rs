@@ -5,15 +5,13 @@
 // Imports
 //==================================================================================================
 
-use crate::{
-    arch::mem::paging::FrameNumber,
-    hal::mem::types::address::{
-        Address,
-        PageAddress,
-        PageAligned,
-        PhysicalAddress,
-    },
+use crate::hal::mem::types::address::{
+    Address,
+    PageAddress,
+    PageAligned,
+    PhysicalAddress,
 };
+use ::arch::mem::paging::FrameNumber;
 use ::error::Error;
 
 //==================================================================================================

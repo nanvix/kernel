@@ -14,24 +14,22 @@ mod interrupt;
 // Imports
 //==================================================================================================
 
-use crate::{
-    arch::cpu::cpuid,
-    hal::{
-        arch::x86::{
-            cpu::tss::TssRef,
-            mem::gdt::{
-                self,
-                Gdt,
-                GdtPtr,
-            },
-            pit::Pit,
+use crate::hal::{
+    arch::x86::{
+        cpu::tss::TssRef,
+        mem::gdt::{
+            self,
+            Gdt,
+            GdtPtr,
         },
-        io::{
-            IoMemoryAllocator,
-            IoPortAllocator,
-        },
+        pit::Pit,
+    },
+    io::{
+        IoMemoryAllocator,
+        IoPortAllocator,
     },
 };
+use ::arch::cpu::cpuid;
 use ::error::Error;
 use ::sys::config;
 use madt::MadtInfo;

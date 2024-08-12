@@ -5,32 +5,30 @@
 // Imports
 //==================================================================================================
 
-use crate::{
-    arch::mem::{
-        self,
-        paging::{
-            AccessedFlag,
-            DirtyFlag,
-            FrameNumber,
-            PageCacheDisableFlag,
-            PageTableEntry,
-            PageTableEntryFlags,
-            PageWriteThroughFlag,
-            PresentFlag,
-            ReadWriteFlag,
-            UserSupervisorFlag,
-        },
-    },
-    hal::mem::{
-        AccessPermission,
-        Address,
-        FrameAddress,
-        PageAddress,
-        PageAligned,
-        PhysicalAddress,
-    },
+use crate::hal::mem::{
+    AccessPermission,
+    Address,
+    FrameAddress,
+    PageAddress,
+    PageAligned,
+    PhysicalAddress,
 };
 use ::alloc::boxed::Box;
+use ::arch::mem::{
+    self,
+    paging::{
+        AccessedFlag,
+        DirtyFlag,
+        FrameNumber,
+        PageCacheDisableFlag,
+        PageTableEntry,
+        PageTableEntryFlags,
+        PageWriteThroughFlag,
+        PresentFlag,
+        ReadWriteFlag,
+        UserSupervisorFlag,
+    },
+};
 use ::core::ops::{
     Deref,
     DerefMut,
