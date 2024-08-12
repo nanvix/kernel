@@ -24,6 +24,7 @@ sys = { git = "https://github.com/nanvix/sys", branch = "releases/v1.1.2" }
 
 [features]
 default = ["pc"]
+baremetal = ["warn"]
 pc = ["warn"]
 isapc = ["warn"]
 trace = ["info"]
