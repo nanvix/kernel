@@ -14,36 +14,26 @@ pub mod mem;
 // Imports
 //==================================================================================================
 
-use crate::{
-    hal::{
-        arch::x86::{
-            cpu::{
-                madt::MadtInfo,
-                ExceptionController,
-            },
-            Arch,
+use crate::hal::{
+    arch::x86::{
+        cpu::{
+            madt::MadtInfo,
+            ExceptionController,
         },
-        cpu::InterruptManager,
-        io::{
-            IoMemoryAllocator,
-            IoPortAllocator,
-        },
-        mem::{
-            MemoryRegion,
-            TruncatedMemoryRegion,
-            VirtualAddress,
-        },
+        Arch,
     },
-    stdout,
-    uart::{
-        self,
-        Uart,
+    cpu::InterruptManager,
+    io::{
+        IoMemoryAllocator,
+        IoPortAllocator,
+    },
+    mem::{
+        MemoryRegion,
+        TruncatedMemoryRegion,
+        VirtualAddress,
     },
 };
-use ::alloc::{
-    boxed::Box,
-    collections::linked_list::LinkedList,
-};
+use ::alloc::collections::linked_list::LinkedList;
 use ::error::{
     Error,
     ErrorCode,
@@ -82,11 +72,6 @@ pub fn init(
     let mut arch: Arch =
         arch::init(&mut ioports, &mut ioaddresses, memory_regions, mmio_regions, madt)?;
 
-    let uart: Box<Uart> = match Uart::new(&mut ioports, uart::BaudRate::Baud38400) {
-        Ok(uart) => Box::new(uart),
-        Err(e) => panic!("Failed to initialize UART: {:?}", e),
-    };
-
     // Initialize the interrupt manager.
     let intman: InterruptManager = match arch.controller.take() {
         Some(controller) => InterruptManager::new(controller)?,
@@ -100,8 +85,6 @@ pub fn init(
     // Initialize exception manager.
     // TODO: add comments about safety.
     let excpman: ExceptionController = unsafe { ExceptionController::init()? };
-
-    unsafe { stdout::init(uart) };
 
     Ok(Hal {
         _arch: arch,

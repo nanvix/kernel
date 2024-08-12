@@ -5,30 +5,11 @@
 // Imports
 //==================================================================================================
 
-use ::alloc::boxed::Box;
 use ::arch::dbg;
-
-//==================================================================================================
-// Traits
-//==================================================================================================
-
-pub trait Stdout {
-    fn puts(&mut self, s: &str);
-}
-
-//==================================================================================================
-// Global Variables
-//==================================================================================================
-
-static mut STDOUT: Option<Box<dyn Stdout>> = None;
 
 //==================================================================================================
 // Standalone Functions
 //==================================================================================================
-
-pub unsafe fn init(debugger: Box<dyn Stdout>) {
-    STDOUT = Some(debugger);
-}
 
 ///
 /// # Description
@@ -47,9 +28,5 @@ pub unsafe fn init(debugger: Box<dyn Stdout>) {
 /// - It does not prevent concurrent access to the standard output device.
 ///
 pub unsafe fn puts(s: &str) {
-    if let Some(debugger) = STDOUT.as_mut() {
-        debugger.puts(s);
-    } else {
-        dbg::puts(s);
-    }
+    dbg::puts(s);
 }

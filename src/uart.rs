@@ -12,13 +12,10 @@
 // Imports
 //==================================================================================================
 
-use crate::{
-    hal::io::{
-        IoPortAllocator,
-        ReadOnlyIoPort,
-        ReadWriteIoPort,
-    },
-    stdout::Stdout,
+use crate::hal::io::{
+    IoPortAllocator,
+    ReadOnlyIoPort,
+    ReadWriteIoPort,
 };
 use ::alloc::rc::Rc;
 use ::core::cell::RefCell;
@@ -626,11 +623,5 @@ impl Uart {
         // Disable divisor latch access bit.
         lcr_bits &= !LineControlRegister::UART_LCR_DLA;
         self.lcr.write(lcr_bits);
-    }
-}
-
-impl Stdout for Uart {
-    fn puts(&mut self, s: &str) {
-        self.write(s);
     }
 }
