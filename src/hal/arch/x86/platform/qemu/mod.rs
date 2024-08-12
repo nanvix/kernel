@@ -42,20 +42,5 @@ pub use pc::shutdown;
 /// - It does not prevent concurrent access to the standard output device.
 ///
 pub unsafe fn putb(b: u8) {
-    // Base port for UART device.
-    const UART_BASE: u16 = 0x3f8;
-    // Transmit Holding Register .
-    const UART_THR: u16 = UART_BASE;
-    // Line Status Register.
-    const UART_LSR: u16 = UART_BASE + 5;
-    // Transmitter Holding Register empty.
-    const UART_LSR_THRE: u8 = 0x20;
-
-    // Wait for the transmit buffer to be empty.
-    while (::arch::io::in8(UART_LSR) & UART_LSR_THRE) == 0 {
-        // Do nothing
-    }
-
-    // Write the byte to the transmit buffer.
-    ::arch::io::out8(UART_THR, b);
+    ::arch::io::out8(0xe9, b);
 }
