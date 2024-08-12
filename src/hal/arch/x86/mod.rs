@@ -45,7 +45,10 @@ pub use cpu::{
     InterruptHandler,
     InterruptNumber,
 };
-pub use platform::shutdown;
+pub use platform::{
+    putb,
+    shutdown,
+};
 
 //==================================================================================================
 // Structures
