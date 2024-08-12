@@ -28,10 +28,10 @@ pub struct MbootAcpiTag {
 }
 
 // `MbootAcpiTag` must be 16 bytes long. This must match the multiboot specification.
-static_assert_size!(MbootAcpiTag, 8);
+sys::static_assert_size!(MbootAcpiTag, 8);
 
 // `MbootAcpiTag` must be 8-byte aligned. This must match the multiboot specification.
-static_assert_alignment!(MbootAcpiTag, 8);
+sys::static_assert_alignment!(MbootAcpiTag, 8);
 
 impl core::fmt::Debug for MbootAcpiTag {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
