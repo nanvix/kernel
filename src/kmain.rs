@@ -57,7 +57,6 @@ use ::sys::pm::ProcessIdentifier;
 // Modules
 //==================================================================================================
 
-#[macro_use]
 extern crate arch;
 
 #[macro_use]
