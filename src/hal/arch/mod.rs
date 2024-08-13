@@ -13,7 +13,9 @@ pub mod x86;
 
 use crate::hal::{
     arch::x86::{
+        bios,
         cpu::madt::MadtInfo,
+        mem::mmu,
         Arch,
     },
     io::{
@@ -92,6 +94,17 @@ pub fn init(
     for region in mmio_regions.iter() {
         ioaddresses.register(region.clone())?;
     }
+
+    // Register BIOS data area.
+    let bios_data_area: MemoryRegion<VirtualAddress> = MemoryRegion::new(
+        "bios data area",
+        VirtualAddress::from_raw_value(bios::BiosDataArea::BASE)?
+            .align_down(mmu::PAGE_ALIGNMENT)?,
+        mem::PAGE_SIZE,
+        MemoryRegionType::Reserved,
+        AccessPermission::RDWR,
+    )?;
+    memory_regions.push_back(bios_data_area);
 
     // Register video display memory.
     // TODO: we should read this region from the multi-boot information passed by Grub.
