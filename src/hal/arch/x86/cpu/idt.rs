@@ -5,18 +5,16 @@
 // Imports
 //==================================================================================================
 
-use crate::{
-    arch::cpu::{
-        idt::{
-            DescriptorPrivilegeLevel,
-            Flags,
-            GateType,
-            Idte,
-            PresentBit,
-        },
-        idtr::Idtr,
+use crate::hal::arch::x86::mem::gdt::SegmentSelector;
+use ::arch::cpu::{
+    idt::{
+        DescriptorPrivilegeLevel,
+        Flags,
+        GateType,
+        Idte,
+        PresentBit,
     },
-    hal::arch::x86::mem::gdt::SegmentSelector,
+    idtr::Idtr,
 };
 use ::core::mem;
 

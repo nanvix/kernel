@@ -5,20 +5,18 @@
 // Imports
 //==================================================================================================
 
-use crate::{
-    arch::mem,
-    hal::mem::{
-        Address,
-        FrameAddress,
-        PageAligned,
-        PhysicalAddress,
-        TruncatedMemoryRegion,
-    },
+use crate::hal::mem::{
+    Address,
+    FrameAddress,
+    PageAligned,
+    PhysicalAddress,
+    TruncatedMemoryRegion,
 };
 use ::alloc::{
     rc::Rc,
     vec::Vec,
 };
+use ::arch::mem;
 use ::bitmap::Bitmap;
 use ::core::{
     cell::RefCell,

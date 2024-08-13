@@ -6,7 +6,6 @@
 //==================================================================================================
 
 use crate::{
-    arch::mem,
     event::EventOwnership,
     hal::{
         self,
@@ -57,6 +56,7 @@ use ::alloc::{
     rc::Rc,
     vec::Vec,
 };
+use ::arch::mem;
 use ::core::cell::{
     Ref,
     RefCell,

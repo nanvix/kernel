@@ -5,12 +5,12 @@
 // Imports
 //==================================================================================================
 
-use crate::arch::mem;
 use ::alloc::alloc::{
     AllocError,
     GlobalAlloc,
     Layout,
 };
+use ::arch::mem;
 use ::core::ptr;
 use ::error::{
     Error,

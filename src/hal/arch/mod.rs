@@ -11,35 +11,33 @@ pub mod x86;
 // Imports
 //==================================================================================================
 
-use crate::{
-    arch::{
-        cpu::{
-            pic,
-            pit,
-        },
-        mem,
+use crate::hal::{
+    arch::x86::{
+        cpu::madt::MadtInfo,
+        Arch,
     },
-    hal::{
-        arch::x86::{
-            cpu::madt::MadtInfo,
-            Arch,
-        },
-        io::{
-            IoMemoryAllocator,
-            IoPortAllocator,
-        },
-        mem::{
-            AccessPermission,
-            Address,
-            MemoryRegion,
-            MemoryRegionType,
-            PageAligned,
-            TruncatedMemoryRegion,
-            VirtualAddress,
-        },
+    io::{
+        IoMemoryAllocator,
+        IoPortAllocator,
+    },
+    mem::{
+        AccessPermission,
+        Address,
+        MemoryRegion,
+        MemoryRegionType,
+        PageAligned,
+        TruncatedMemoryRegion,
+        VirtualAddress,
     },
 };
 use ::alloc::collections::linked_list::LinkedList;
+use ::arch::{
+    cpu::{
+        pic,
+        pit,
+    },
+    mem,
+};
 use ::error::Error;
 
 //==================================================================================================

@@ -25,7 +25,6 @@ pub use virt::{
 //==================================================================================================
 
 use crate::{
-    arch::mem,
     hal::{
         arch::x86::mem::mmu::{
             self,
@@ -49,6 +48,7 @@ use ::alloc::{
     collections::LinkedList,
     vec::Vec,
 };
+use ::arch::mem;
 use ::core::panic;
 use ::error::Error;
 use ::sys::{

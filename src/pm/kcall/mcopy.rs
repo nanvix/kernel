@@ -6,7 +6,6 @@
 //==================================================================================================
 
 use crate::{
-    arch::mem,
     hal::mem::{
         Address,
         PageAligned,
@@ -19,6 +18,7 @@ use crate::{
     },
     pm::ProcessManager,
 };
+use ::arch::mem;
 use ::error::{
     Error,
     ErrorCode,

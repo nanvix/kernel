@@ -12,13 +12,11 @@
 // Imports
 //==================================================================================================
 
-use crate::{
-    arch::cpu::pit,
-    hal::io::{
-        IoPortAllocator,
-        ReadWriteIoPort,
-    },
+use crate::hal::io::{
+    IoPortAllocator,
+    ReadWriteIoPort,
 };
+use ::arch::cpu::pit;
 use ::error::Error;
 
 //==================================================================================================

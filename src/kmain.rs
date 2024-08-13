@@ -57,8 +57,6 @@ use ::sys::pm::ProcessIdentifier;
 // Modules
 //==================================================================================================
 
-extern crate arch;
-
 #[macro_use]
 mod macros;
 

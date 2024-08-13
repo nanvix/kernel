@@ -5,13 +5,11 @@
 // Imports
 //==================================================================================================
 
-use crate::{
-    arch::cpu::xapic,
-    hal::{
-        io::IoMemoryRegion,
-        mem::Address,
-    },
+use crate::hal::{
+    io::IoMemoryRegion,
+    mem::Address,
 };
+use ::arch::cpu::xapic;
 use ::error::{
     Error,
     ErrorCode,

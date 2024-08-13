@@ -14,35 +14,33 @@ mod vmem;
 // Imports
 //==================================================================================================
 
-use crate::{
-    arch::mem,
-    hal::{
-        arch::x86::mem::mmu::{
-            self,
-            page_table::{
-                PageTable,
-                PageTableStorage,
-            },
+use crate::hal::{
+    arch::x86::mem::mmu::{
+        self,
+        page_table::{
+            PageTable,
+            PageTableStorage,
         },
-        mem::{
-            AccessPermission,
-            Address,
-            FrameAddress,
-            MemoryRegionType,
-            PageAddress,
-            PageAligned,
-            PageTableAddress,
-            PageTableAligned,
-            PhysicalAddress,
-            TruncatedMemoryRegion,
-            VirtualAddress,
-        },
+    },
+    mem::{
+        AccessPermission,
+        Address,
+        FrameAddress,
+        MemoryRegionType,
+        PageAddress,
+        PageAligned,
+        PageTableAddress,
+        PageTableAligned,
+        PhysicalAddress,
+        TruncatedMemoryRegion,
+        VirtualAddress,
     },
 };
 use ::alloc::{
     collections::LinkedList,
     vec::Vec,
 };
+use ::arch::mem;
 use ::core::cmp::Ordering;
 use ::error::{
     Error,

@@ -5,18 +5,16 @@
 // Imports
 //==================================================================================================
 
-use crate::{
-    arch::mem,
-    hal::{
-        arch::x86::mem::mmu,
-        mem::{
-            Address,
-            PageAligned,
-            PhysicalAddress,
-            VirtualAddress,
-        },
+use crate::hal::{
+    arch::x86::mem::mmu,
+    mem::{
+        Address,
+        PageAligned,
+        PhysicalAddress,
+        VirtualAddress,
     },
 };
+use ::arch::mem;
 use ::error::ErrorCode;
 use ::sys::mm::Alignment;
 

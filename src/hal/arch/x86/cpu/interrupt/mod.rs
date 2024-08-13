@@ -16,40 +16,38 @@ mod xapic;
 // Imports
 //==================================================================================================
 
-use crate::{
-    arch::cpu::{
-        eflags::{
-            self,
-            EflagsRegister,
-        },
-        madt::{
-            MadtEntryIoApicSourceOverride,
-            MadtEntryLocalApic,
-        },
-    },
-    hal::{
-        arch::x86::{
-            cpu::{
-                idt,
-                interrupt::{
-                    ioapic::UninitIoapic,
-                    map::InterruptMap,
-                    pic::UninitPic,
-                    xapic::UninitXapic,
-                },
-                madt::MadtInfo,
+use crate::hal::{
+    arch::x86::{
+        cpu::{
+            idt,
+            interrupt::{
+                ioapic::UninitIoapic,
+                map::InterruptMap,
+                pic::UninitPic,
+                xapic::UninitXapic,
             },
-            mem::gdt,
+            madt::MadtInfo,
         },
-        io::{
-            IoMemoryAllocator,
-            IoMemoryRegion,
-            IoPortAllocator,
-        },
-        mem::VirtualAddress,
+        mem::gdt,
     },
+    io::{
+        IoMemoryAllocator,
+        IoMemoryRegion,
+        IoPortAllocator,
+    },
+    mem::VirtualAddress,
 };
 use ::alloc::collections::LinkedList;
+use ::arch::cpu::{
+    eflags::{
+        self,
+        EflagsRegister,
+    },
+    madt::{
+        MadtEntryIoApicSourceOverride,
+        MadtEntryLocalApic,
+    },
+};
 use ::error::Error;
 
 //==================================================================================================
