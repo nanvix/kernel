@@ -30,7 +30,7 @@ pub struct ExceptionInformation {
 }
 
 // `ExceptionInformation` must be 16 bytes long. This must match low-level assembly dispatcher code.
-static_assert_size!(ExceptionInformation, 16);
+sys::static_assert_size!(ExceptionInformation, 16);
 
 //==================================================================================================
 // Implementations

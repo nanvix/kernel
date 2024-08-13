@@ -39,7 +39,7 @@ struct HeapStorage {
     memory: [u8; MIN_HEAP_SIZE],
 }
 
-static_assert_alignment!(HeapStorage, mem::PAGE_SIZE);
+sys::static_assert_alignment!(HeapStorage, mem::PAGE_SIZE);
 
 static mut HEAP_STORAGE: HeapStorage = HeapStorage {
     memory: [0; MIN_HEAP_SIZE],

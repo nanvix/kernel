@@ -93,10 +93,10 @@ pub struct MbootMemoryMapEntry {
 }
 
 // `MbootMemoryMapEntry` must be 24 bytes long. This must match the multiboot specification.
-static_assert_size!(MbootMemoryMapEntry, 24);
+sys::static_assert_size!(MbootMemoryMapEntry, 24);
 
 // `MbootMemoryMapEntry` must be 8-byte aligned. This must match the multiboot specification.
-static_assert_alignment!(MbootMemoryMapEntry, 8);
+sys::static_assert_alignment!(MbootMemoryMapEntry, 8);
 
 impl MbootMemoryMapEntry {
     ///
@@ -161,10 +161,10 @@ struct MbootMemoryMapTag {
 }
 
 // `MbootMemoryMapTag` must be 16 bytes long. This must match the multiboot specification.
-static_assert_size!(MbootMemoryMapTag, 16);
+sys::static_assert_size!(MbootMemoryMapTag, 16);
 
 // `MbootMemoryMapTag` must be 8-byte aligned. This must match the multiboot specification.
-static_assert_alignment!(MbootMemoryMapTag, 8);
+sys::static_assert_alignment!(MbootMemoryMapTag, 8);
 
 impl core::fmt::Debug for MbootMemoryMapTag {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
