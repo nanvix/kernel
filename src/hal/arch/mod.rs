@@ -46,6 +46,7 @@ use ::error::Error;
 
 pub use x86::{
     forge_user_stack,
+    putb,
     shutdown,
     ContextInformation,
     ExceptionInformation,
