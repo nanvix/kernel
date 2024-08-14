@@ -1,6 +1,25 @@
 // Copyright(c) The Maintainers of Nanvix.
 // Licensed under the MIT License.
 
+//==================================================================================================
+// Imports
+//==================================================================================================
+
+#[cfg(feature = "smp")]
+use crate::pm::sync::spinlock::Spinlock;
+
+//==================================================================================================
+// Global Variables
+//==================================================================================================
+
+/// Lock for the standard output.
+#[cfg(feature = "smp")]
+pub static STDOUT_LOCK: Spinlock = Spinlock::new();
+
+//==================================================================================================
+// Macros
+//==================================================================================================
+
 ///
 /// # Description
 ///
@@ -12,9 +31,12 @@
 ///
 macro_rules! info{
 	( $($arg:tt)* ) => ({
-		#[allow(unused_imports)]
+		#[cfg(feature = "smp")]
+		use crate::macros::STDOUT_LOCK;
 		use ::core::fmt::Write;
 		if crate::klog::MAX_LEVEL >= crate::klog::KlogLevel::Info {
+			#[cfg(feature = "smp")]
+			let _guard: crate::pm::sync::spinlock::SpinlockGuard = STDOUT_LOCK.lock();
 			let _ = write!(
 				&mut crate::klog::Klog::get(module_path!(), crate::klog::KlogLevel::Info),
 				$($arg)*
@@ -34,9 +56,12 @@ macro_rules! info{
 ///
 macro_rules! trace{
 	( $($arg:tt)* ) => ({
-		#[allow(unused_imports)]
+		#[cfg(feature = "smp")]
+		use crate::macros::STDOUT_LOCK;
 		use ::core::fmt::Write;
 		if crate::klog::MAX_LEVEL >= crate::klog::KlogLevel::Trace {
+			#[cfg(feature = "smp")]
+			let _guard: crate::pm::sync::spinlock::SpinlockGuard = STDOUT_LOCK.lock();
 			let _ = write!(
 				&mut crate::klog::Klog::get(module_path!(), crate::klog::KlogLevel::Trace),
 				$($arg)*
@@ -56,9 +81,12 @@ macro_rules! trace{
 ///
 macro_rules! warn{
 	( $($arg:tt)* ) => ({
-		#[allow(unused_imports)]
+		#[cfg(feature = "smp")]
+		use crate::macros::STDOUT_LOCK;
 		use ::core::fmt::Write;
 		if crate::klog::MAX_LEVEL >= crate::klog::KlogLevel::Warn {
+			#[cfg(feature = "smp")]
+			let _guard: crate::pm::sync::spinlock::SpinlockGuard = STDOUT_LOCK.lock();
 			let _ = write!(
 				&mut crate::klog::Klog::get(module_path!(), crate::klog::KlogLevel::Warn),
 				$($arg)*
@@ -78,9 +106,12 @@ macro_rules! warn{
 ///
 macro_rules! error{
 	( $($arg:tt)* ) => ({
-		#[allow(unused_imports)]
+		#[cfg(feature = "smp")]
+		use crate::macros::STDOUT_LOCK;
 		use ::core::fmt::Write;
 		if crate::klog::MAX_LEVEL >= crate::klog::KlogLevel::Error {
+			#[cfg(feature = "smp")]
+			let _guard: crate::pm::sync::spinlock::SpinlockGuard = STDOUT_LOCK.lock();
 			let _ = write!(
 				&mut crate::klog::Klog::get(module_path!(), crate::klog::KlogLevel::Error),
 				$($arg)*
