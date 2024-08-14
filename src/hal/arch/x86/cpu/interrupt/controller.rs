@@ -29,6 +29,7 @@ use ::error::{
     Error,
     ErrorCode,
 };
+use ::sys::mm::VirtualAddress;
 
 //==================================================================================================
 // Interrupt Vector
@@ -157,6 +158,17 @@ impl InterruptController {
                 let intnum: u8 = self.intmap[intnum];
                 ioapic.enable(intnum as u8, 0)
             },
+        }
+    }
+
+    pub fn start_core(&mut self, coreid: u8, entry: VirtualAddress) -> Result<(), Error> {
+        match self.intctrl {
+            InterruptControllerType::Legacy(_) => {
+                let reason: &str = "legacy pic does not support starting cores";
+                error!("start_core(): {}", reason);
+                return Err(Error::new(ErrorCode::OperationNotSupported, reason));
+            },
+            InterruptControllerType::Xapic(ref mut xapic, _) => xapic.start_core(coreid, entry),
         }
     }
 
