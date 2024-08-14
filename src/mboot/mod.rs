@@ -21,12 +21,15 @@ use self::{
 };
 use crate::{
     hal::{
-        arch::x86::cpu::{
-            self,
-            madt::{
+        arch::x86::{
+            cpu::{
                 self,
-                MadtInfo,
+                madt::{
+                    self,
+                    MadtInfo,
+                },
             },
+            mem::mmu,
         },
         mem::{
             AccessPermission,
@@ -338,7 +341,9 @@ fn parse_mmap(
     for entry in mmap {
         let typ: MemoryRegionType = entry.typ().into();
         let start: VirtualAddress = match entry.addr().try_into() {
-            Ok(raw_addr) => VirtualAddress::from_raw_value(raw_addr)?,
+            Ok(raw_addr) => {
+                VirtualAddress::from_raw_value(raw_addr)?.align_down(mmu::PAGE_ALIGNMENT)?
+            },
             Err(_) => {
                 let reason: &'static str = "invalid memory region address";
                 error!("parse_mmap(): {}", reason);
@@ -346,7 +351,13 @@ fn parse_mmap(
             },
         };
         let size: usize = match entry.len().try_into() {
-            Ok(len) => len,
+            Ok(len) => {
+                if len < arch::mem::PAGE_SIZE {
+                    arch::mem::PAGE_SIZE
+                } else {
+                    len
+                }
+            },
             Err(_) => {
                 let reason: &'static str = "invalid memory region size";
                 error!("parse_mmap(): {}", reason);
