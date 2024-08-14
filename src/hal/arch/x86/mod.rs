@@ -46,6 +46,7 @@ pub use cpu::{
     InterruptNumber,
 };
 pub use platform::{
+    bios,
     putb,
     shutdown,
 };
