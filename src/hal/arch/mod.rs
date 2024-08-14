@@ -111,6 +111,16 @@ pub fn init(
     )?;
     memory_regions.push_back(bios_data_area);
 
+    // Trampoline.
+    let trampoline: MemoryRegion<VirtualAddress> = MemoryRegion::new(
+        "trampoline",
+        VirtualAddress::from_raw_value(x86::TRAMPOLINE_ADDRESS.into_raw_value())?,
+        mem::PAGE_SIZE,
+        MemoryRegionType::Reserved,
+        AccessPermission::RDWR,
+    )?;
+    memory_regions.push_back(trampoline);
+
     // Register video display memory.
     // TODO: we should read this region from the multi-boot information passed by Grub.
     let video_display_memory: TruncatedMemoryRegion<VirtualAddress> = TruncatedMemoryRegion::new(
