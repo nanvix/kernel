@@ -88,10 +88,13 @@ fn parse_memory_regions(
         if region.typ() == MemoryRegionType::Reserved || region.typ() == MemoryRegionType::Mmio {
             if PhysicalAddress::from_virtual_address(region.start()).is_ok() {
                 if region.typ() != MemoryRegionType::Usable {
-                    if let Ok(region) =
-                        TruncatedMemoryRegion::from_virtual_memory_region(region.clone())
-                    {
-                        physical_memory_regions.push_back(region);
+                    match TruncatedMemoryRegion::from_virtual_memory_region(region.clone()) {
+                        Ok(region) => physical_memory_regions.push_back(region),
+                        // TODO: make memory regions a truncated list so round logic is handled when region is created.
+                        Err(err) => panic!(
+                            "failed to create physical memory region {:?} (error={:?})",
+                            region, err
+                        ),
                     }
                 }
                 virtual_memory_regions
