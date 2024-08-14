@@ -24,6 +24,10 @@ use crate::hal::{
             GdtPtr,
         },
         pit::Pit,
+        platform::cmos::{
+            Cmos,
+            ShutdownStatus,
+        },
     },
     io::{
         IoMemoryAllocator,
@@ -47,6 +51,7 @@ pub use cpu::{
 };
 pub use platform::{
     bios,
+    cmos,
     putb,
     shutdown,
 };
@@ -61,6 +66,8 @@ pub use platform::{
 /// A type that describes the architecture-specific components.
 ///
 pub struct Arch {
+    /// CMOS memory.
+    _cmos: Cmos,
     /// Global Descriptor Table (GDT).
     _gdt: Option<Gdt>,
     /// Global Descriptor Table Register (GDTR).
@@ -84,10 +91,17 @@ pub fn init(
 ) -> Result<Arch, Error> {
     info!("initializing architecture-specific components...");
 
+    // Enable warm reset. It allows the INIT signal to be asserted without actually causing the
+    // processor to run through its entire BIOS initialization procedure (POST).
+    let mut cmos: Cmos = Cmos::init(ioports)?;
+    cmos.write_shutdown_status(ShutdownStatus::JmpDwordRequestWithoutIntInit);
+
     // Initialize interrupt controller.
     let (gdt, gdtr, tss, controller, pit) = cpu::init(ioports, ioaddresses, madt)?;
 
     Ok(Arch {
+        // Keep CMOS to prevent others from using the same I/O ports.
+        _cmos: cmos,
         _gdt: Some(gdt),
         _gdtr: Some(gdtr),
         _tss: Some(tss),
