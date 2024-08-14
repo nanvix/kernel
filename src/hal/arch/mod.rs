@@ -14,6 +14,7 @@ pub mod x86;
 use crate::hal::{
     arch::x86::{
         bios,
+        cmos,
         cpu::madt::MadtInfo,
         mem::mmu,
         Arch,
@@ -68,6 +69,10 @@ pub fn init(
     mmio_regions: &mut LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
     madt: Option<MadtInfo>,
 ) -> Result<Arch, Error> {
+    // Register ports for the CMOS.
+    ioports.register_read_write(cmos::Cmos::DATA)?;
+    ioports.register_read_write(cmos::Cmos::INDEX)?;
+
     // Register I/O ports for 8259 PIC.
     ioports.register_read_write(pic::PIC_CTRL_MASTER as u16)?;
     ioports.register_read_write(pic::PIC_DATA_MASTER as u16)?;
