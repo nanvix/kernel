@@ -29,6 +29,7 @@
 .extern kmain
 .extern __BSS_START
 .extern __BSS_END
+.extern do_ap_start
 
 /*============================================================================*
  * Exported Symbols                                                           *
@@ -36,6 +37,7 @@
 
 .globl _do_start
 .globl kstack
+.globl _do_ap_start
 
 /*============================================================================*
  * Bootstrap Section                                                          *
@@ -118,6 +120,48 @@ _do_start:
 	1: hlt
        jmp 1b
 
+.align 4
+_do_ap_start:
+    mov $0x10, %ax
+    mov %ax, %ds
+    mov %ax, %es
+    mov %ax, %fs
+    mov %ax, %gs
+    mov %ax, %ss
+
+    /*
+     * Clear all general purpose registers,
+     * so we have a deterministic startup.
+     */
+	xorl %eax, %eax
+    xorl %ebx, %ebx
+    xorl %ecx, %ecx
+    xorl %edx, %edx
+    xorl %esi, %esi
+    xorl %edi, %edi
+
+    /* Setup stack. */
+    movl $kstack, %esp /* Stack pointer. */
+    subl $KSTACK_SIZE, %esp
+    movl %esp, %ebp    /* Frame pointer. */
+
+    /*
+     * Get local APIC ID.
+     * TODO: move this to Rust.
+     */
+    movl  $1, %eax
+    cpuid
+    shrl  $24, %ebx
+
+    /* Call kernel main function. */
+    pushl %ebx
+    call do_ap_start
+    addl $4, %esp
+
+    /* Halt execution. */
+	1: hlt
+       jmp 1b
+
 /*============================================================================*
  * BSS Section                                                                *
  *============================================================================*/
@@ -129,5 +173,6 @@ _do_start:
  *----------------------------------------------------------------------------*/
 
 .align  PAGE_SIZE
-.space KSTACK_SIZE
+/* TODO: allocate stack space for application core on demand. */
+.space 2*KSTACK_SIZE
 kstack:
