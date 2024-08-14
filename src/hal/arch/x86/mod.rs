@@ -16,6 +16,7 @@ mod platform;
 use crate::hal::{
     arch::x86::{
         cpu::{
+            madt::MadtInfo,
             pit,
             tss::TssRef,
         },
@@ -24,9 +25,12 @@ use crate::hal::{
             GdtPtr,
         },
         pit::Pit,
-        platform::cmos::{
-            Cmos,
-            ShutdownStatus,
+        platform::{
+            bios::BiosDataArea,
+            cmos::{
+                Cmos,
+                ShutdownStatus,
+            },
         },
     },
     io::{
@@ -35,7 +39,7 @@ use crate::hal::{
     },
 };
 use ::error::Error;
-use cpu::madt::MadtInfo;
+use ::sys::mm::Address;
 
 //==================================================================================================
 // Exports
@@ -96,6 +100,13 @@ pub fn init(
     // processor to run through its entire BIOS initialization procedure (POST).
     let mut cmos: Cmos = Cmos::init(ioports)?;
     cmos.write_shutdown_status(ShutdownStatus::JmpDwordRequestWithoutIntInit);
+
+    unsafe {
+        // Set warm reset vector.
+        // We intentionally shift the address by 4 bits to get correct segmented address.
+        let vector: u16 = (TRAMPOLINE_ADDRESS.into_raw_value() & 0xFFFF) as u16 >> 4;
+        BiosDataArea::write_reset_vector(vector);
+    }
 
     // Initialize interrupt controller.
     let (gdt, gdtr, tss, controller, pit) = cpu::init(ioports, ioaddresses, madt)?;
