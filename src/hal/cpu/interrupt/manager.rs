@@ -4,6 +4,7 @@
 //==================================================================================================
 // Imports
 //==================================================================================================
+
 use crate::hal::{
     arch,
     cpu::interrupt::InterruptController,
@@ -12,6 +13,7 @@ use ::error::{
     Error,
     ErrorCode,
 };
+use ::sys::mm::VirtualAddress;
 
 //==================================================================================================
 // Structures
@@ -78,6 +80,10 @@ impl InterruptManager {
             self.controller.set_handler(intnum, None)?;
         }
         Ok(())
+    }
+
+    pub fn start_core(&mut self, coreid: u8, entry: VirtualAddress) -> Result<(), Error> {
+        self.controller.start_core(coreid, entry)
     }
 
     ///

@@ -2,6 +2,12 @@
 // Licensed under the MIT License.
 
 //==================================================================================================
+// Imports
+//==================================================================================================
+
+use ::sys::mm::VirtualAddress;
+
+//==================================================================================================
 // Modules
 //==================================================================================================
 
@@ -29,3 +35,14 @@ pub use baremetal::{
     putb,
     shutdown,
 };
+
+///
+/// # Description
+///
+/// Start address of application cores.
+///
+/// # Notes
+///
+/// This address was carefully chosen to avoid conflicts with the kernel.
+///
+pub const TRAMPOLINE_ADDRESS: VirtualAddress = VirtualAddress::new(0x00008000);

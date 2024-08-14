@@ -6,6 +6,7 @@
 //==================================================================================================
 
 use crate::hal::{
+    arch::x86::cpu::clock,
     io::IoMemoryRegion,
     mem::Address,
 };
@@ -14,6 +15,7 @@ use ::error::{
     Error,
     ErrorCode,
 };
+use ::sys::mm::VirtualAddress;
 
 //==================================================================================================
 // Uninitialized xAPIC
@@ -219,6 +221,71 @@ impl Xapic {
     ///
     /// # Description
     ///
+    /// Starts up an application core using the "Universal Startup Algorithm".
+    ///
+    /// # Parameters
+    ///
+    /// - `coreid`: Core ID.
+    /// - `entry`: Entry point.
+    ///
+    pub fn start_core(&mut self, coreid: u8, entry: VirtualAddress) -> Result<(), Error> {
+        // Maximum number of retries when waiting for the xAPIC to become idle.
+        const RETRIES: usize = 1000;
+
+        // Send INIT assert  interrupt to reset other core.
+        let icrhi: xapic::XapicIcrHi = xapic::XapicIcrHi::new(coreid as u32);
+        self.write(xapic::XAPIC_ICRHI, icrhi.to_u32());
+        let icrlo: xapic::XapicIcrLo = xapic::XapicIcrLo::new(
+            0,
+            xapic::XapicIcrDeliveryMode::Init,
+            xapic::XapicIcrDestinationMode::Physical,
+            xapic::XapicIcrLevel::Assert,
+            xapic::XapicIcrTriggerMode::Level,
+            xapic::XapicIcrDestinationShorthand::NoShorthand,
+        );
+        self.write(xapic::XAPIC_ICRLO, icrlo.to_u32());
+        self.wait(RETRIES)?;
+        clock::microdelay(10000);
+
+        // Send INIT de-assert to reset other core.
+        let icrhi: xapic::XapicIcrHi = xapic::XapicIcrHi::new(coreid as u32);
+        self.write(xapic::XAPIC_ICRHI, icrhi.to_u32());
+        let icrlo: xapic::XapicIcrLo = xapic::XapicIcrLo::new(
+            0,
+            xapic::XapicIcrDeliveryMode::Init,
+            xapic::XapicIcrDestinationMode::Physical,
+            xapic::XapicIcrLevel::DeAssert,
+            xapic::XapicIcrTriggerMode::Level,
+            xapic::XapicIcrDestinationShorthand::NoShorthand,
+        );
+        self.write(xapic::XAPIC_ICRLO, icrlo.to_u32());
+        self.wait(RETRIES)?;
+        clock::microdelay(10000);
+
+        // Send SIPI interrupt to reset other core.
+        for _ in 0..2 {
+            let icrhi: xapic::XapicIcrHi = xapic::XapicIcrHi::new(coreid as u32);
+            self.write(xapic::XAPIC_ICRHI, icrhi.to_u32());
+            let icrlo: xapic::XapicIcrLo = xapic::XapicIcrLo::new(
+                (entry.into_raw_value() >> 12) as u32,
+                xapic::XapicIcrDeliveryMode::Startup,
+                xapic::XapicIcrDestinationMode::Physical,
+                xapic::XapicIcrLevel::DeAssert,
+                xapic::XapicIcrTriggerMode::Edge,
+                xapic::XapicIcrDestinationShorthand::NoShorthand,
+            );
+
+            self.write(xapic::XAPIC_ICRLO, icrlo.to_u32());
+            clock::microdelay(200);
+            self.wait(RETRIES)?;
+        }
+
+        Ok(())
+    }
+
+    ///
+    /// # Description
+    ///
     /// Performs a safe write on the target xAPIC.
     ///
     /// # Parameters
@@ -245,5 +312,35 @@ impl Xapic {
     ///
     fn read(&mut self, reg: u32) -> u32 {
         unsafe { self.ptr.read(reg) }
+    }
+
+    ///
+    /// # Description
+    ///
+    /// Polls the target xAPIC until it becomes idle.
+    ///
+    /// # Params
+    ///
+    /// - `retries`: Number of retries.
+    ///
+    /// # Returns
+    ///
+    /// Upon success, empty result is returned. Otherwise, an error is returned.
+    ///
+    fn wait(&mut self, retries: usize) -> Result<(), Error> {
+        for _ in 0..retries {
+            let bits: u32 = self.read(xapic::XAPIC_ICRLO);
+            let icrlo: xapic::XapicIcrLo = xapic::XapicIcrLo::from_u32(bits);
+
+            if icrlo.delivery_status() as u8 == xapic::XapicIcrDeliveryStatus::Idle as u8 {
+                return Ok(());
+            }
+
+            ::arch::cpu::pause();
+        }
+
+        let reason: &str = "maximum number of retries exceeded";
+        error!("wait(): {}", reason);
+        Err(Error::new(ErrorCode::TimerExpired, reason))
     }
 }

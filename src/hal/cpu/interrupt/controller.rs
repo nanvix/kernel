@@ -12,6 +12,7 @@ use ::error::{
     Error,
     ErrorCode,
 };
+use ::sys::mm::VirtualAddress;
 
 //==================================================================================================
 // Structures
@@ -69,6 +70,10 @@ impl InterruptController {
 
     pub fn ack(&self, intnum: arch::InterruptNumber) -> Result<(), Error> {
         self.0.borrow_mut().ack(intnum)
+    }
+
+    pub fn start_core(&self, coreid: u8, entry: VirtualAddress) -> Result<(), Error> {
+        self.0.borrow_mut().start_core(coreid, entry)
     }
 
     pub fn unmask(&self, intnum: arch::InterruptNumber) -> Result<(), Error> {

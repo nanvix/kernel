@@ -216,6 +216,16 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
         },
     };
 
+    // Start application core.
+    // TODO: get core count from the HAL.
+    #[cfg(feature = "smp")]
+    for coreid in 1..=1 {
+        trace!("starting application core {}...", coreid);
+        if let Err(e) = hal.intman.start_core(coreid, hal::arch::TRAMPOLINE_ADDRESS) {
+            panic!("failed to start application core (e={:?}", e);
+        }
+    }
+
     if spawn_servers(&mut mm, &mut pm, &kernel_modules) > 0 {
         // Initialize kernel call dispatcher.
         kcall::init();
@@ -230,6 +240,14 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
 
     trace!("the system will shutdown now!");
     kernel_magic_string();
+}
+
+#[no_mangle]
+pub extern "C" fn do_ap_start(coreid: u32) {
+    trace!("hello from core {}", coreid);
+    loop {
+        core::hint::spin_loop();
+    }
 }
 
 ///

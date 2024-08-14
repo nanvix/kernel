@@ -3,7 +3,7 @@
 
 [package]
 name = "kernel"
-version = "0.0.23"
+version = "0.0.25"
 license-file = "LICENSE.txt"
 edition = "2021"
 authors = ["The Maintainers of Nanvix"]
@@ -25,7 +25,9 @@ sys = { git = "https://github.com/nanvix/sys", branch = "releases/v1.1.2" }
 [features]
 default = ["pc"]
 baremetal = ["warn"]
+baremetal-smp = ["baremetal", "smp", "warn"]
 pc = ["warn"]
+pc-smp = ["pc", "smp", "warn"]
 isapc = ["warn"]
 trace = ["info"]
 info = ["warn"]
