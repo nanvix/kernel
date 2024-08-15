@@ -427,7 +427,10 @@ __context_switch:
     movl 8(%esp), %edx  /* to   */
     movl 12(%esp), %ecx /* tss  */
 
-    /* Save execution context. */
+    /*
+     * Save execution context.
+     * NOTE: we do not save scratch registers (eax, ecx, edx).
+     */
     movl %ebx, CONTEXT_EBX(%eax)
     movl %esi, CONTEXT_ESI(%eax)
     movl %edi, CONTEXT_EDI(%eax)
@@ -440,7 +443,10 @@ __context_switch:
     movl %cr3, %ebx
     movl %ebx, CONTEXT_CR3(%eax)
 
-    /* Restore execution context. */
+    /*
+     * Restore execution context.
+     * NOTE: we do not restore scratch registers (eax, ecx, edx).
+     */
     movl CONTEXT_EBX(%edx), %ebx
     movl CONTEXT_ESI(%edx), %esi
     movl CONTEXT_EDI(%edx), %edi

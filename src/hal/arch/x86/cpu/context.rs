@@ -58,6 +58,26 @@ impl ContextInformation {
         }
     }
 
+    ///
+    /// # Description
+    ///
+    /// Switches to another execution context.
+    ///
+    /// # Parameters
+    ///
+    /// - `from`: Execution context to switch from.
+    /// - `to`: Execution context to switch to.
+    ///
+    /// # Safety
+    ///
+    /// This function leads to undefined behavior if any of the following conditions are violated:
+    /// - `from` and `to` do not point to valid execution contexts.
+    /// - The processor is running with interrupts enabled.
+    ///
+    /// # Notes
+    ///
+    /// When this function returns another execution context is loaded.
+    ///
     pub unsafe fn switch(from: *mut ContextInformation, to: *mut ContextInformation) {
         extern "C" {
             pub fn __context_switch(
