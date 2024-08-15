@@ -11,3 +11,6 @@ pub mod semaphore;
 
 #[cfg(feature = "smp")]
 pub mod spinlock;
+
+#[cfg(feature = "smp")]
+pub mod fence;
