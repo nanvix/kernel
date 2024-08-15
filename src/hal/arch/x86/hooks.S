@@ -256,7 +256,6 @@
 .extern do_exception
 .extern do_kcall
 .extern do_interrupt
-.extern TSS
 
 /* Exception hooks. */
 .globl _do_excp0
@@ -424,8 +423,9 @@ _do_hwint 15
  * Saves the execution context of the calling process.
  */
 __context_switch:
-    movl 4(%esp), %eax /* from */
-    movl 8(%esp), %edx /* to */
+    movl 4(%esp), %eax  /* from */
+    movl 8(%esp), %edx  /* to   */
+    movl 12(%esp), %ecx /* tss  */
 
     /* Save execution context. */
     movl %ebx, CONTEXT_EBX(%eax)
@@ -455,8 +455,7 @@ __context_switch:
 
     /* Update ESP0 on TSS. */
     movl CONTEXT_ESP0(%edx), %eax
-    movl $TSS , %edx
-    movl %eax, TSS_ESP0(%edx)
+    movl %eax, TSS_ESP0(%ecx)
 
     __context_switch.out:
     ret

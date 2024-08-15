@@ -2,6 +2,13 @@
 // Licensed under the MIT License.
 
 //==================================================================================================
+// Imports
+//==================================================================================================
+
+use crate::hal::arch::x86::cpu::tss;
+use ::arch::cpu::tss::Tss;
+
+//==================================================================================================
 // Structures
 //==================================================================================================
 
@@ -53,10 +60,15 @@ impl ContextInformation {
 
     pub unsafe fn switch(from: *mut ContextInformation, to: *mut ContextInformation) {
         extern "C" {
-            pub fn __context_switch(from: *mut ContextInformation, to: *mut ContextInformation);
+            pub fn __context_switch(
+                from: *mut ContextInformation,
+                to: *mut ContextInformation,
+                tss: *const Tss,
+            );
         }
 
-        __context_switch(from, to)
+        let tss: *const Tss = tss::get_curr();
+        __context_switch(from, to, tss);
     }
 }
 
