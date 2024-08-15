@@ -138,3 +138,16 @@ impl TssRef {
         TSS.iomap = 0;
     }
 }
+
+///
+/// # Description
+///
+/// Returns a pointer to the currently active task state segment (TSS).
+///
+/// # Returns
+///
+/// A pointer to the currently active task state segment (TSS).
+///
+pub unsafe fn get_curr() -> *const Tss {
+    core::ptr::addr_of!(TSS)
+}
