@@ -19,7 +19,6 @@ use crate::hal::{
     arch::x86::{
         cpu::tss::TssRef,
         mem::gdt::{
-            self,
             Gdt,
             GdtPtr,
         },
@@ -102,7 +101,7 @@ pub fn init(
     info!("  - has ia64:  {}", cpuid::has_ia64());
     info!("  - has pbe:   {}", cpuid::has_pbe());
 
-    let (gdt, gdtr, tss) = unsafe { gdt::init(&kstack)? };
+    let (gdt, gdtr, tss): (Gdt, GdtPtr, TssRef) = unsafe { Gdt::init(&kstack)? };
     unsafe { idt::init() };
 
     let pit: Pit = Pit::new(ioports, config::kernel::TIMER_FREQ)?;

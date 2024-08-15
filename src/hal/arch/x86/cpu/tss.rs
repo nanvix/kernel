@@ -5,15 +5,15 @@
 // Imports
 //==================================================================================================
 
+use ::alloc::rc::Rc;
 use ::arch::cpu::tss::Tss;
 use ::core::{
     arch,
+    cell::RefCell,
     mem,
+    pin::Pin,
 };
-use ::error::{
-    Error,
-    ErrorCode,
-};
+use ::error::Error;
 
 //==================================================================================================
 // Structures
@@ -24,18 +24,13 @@ use ::error::{
 ///
 /// A type that enables one to access the task state segment (TSS).
 ///
-pub struct TssRef;
+pub struct TssRef(Pin<Rc<RefCell<Tss>>>);
 
 //==================================================================================================
 // Global Variables
 //==================================================================================================
 
-/// Task state segment (TSS).
-#[no_mangle]
-static mut TSS: Tss = unsafe { mem::zeroed() };
-
-/// Indicates if the TSS was initialized.
-static mut TSS_REF: Option<TssRef> = None;
+pub static mut TSS: Option<TssRef> = None;
 
 //==================================================================================================
 // Implementations
@@ -64,17 +59,11 @@ impl TssRef {
     pub unsafe fn new(ss0: u32, esp0: u32) -> Result<Self, Error> {
         info!("initializing tss (ss0={:#02x}, esp0={:#08x})", ss0, esp0);
 
-        // Check if the TSS was already initialized.
-        if TSS_REF.is_some() {
-            let reason: &str = "tss is already initialized";
-            error!("new(): {}", reason);
-            return Err(Error::new(ErrorCode::OutOfMemory, reason));
-        }
+        let tss: Pin<Rc<RefCell<Tss>>> = Pin::new(Rc::new(RefCell::new(Self::init(ss0, esp0))));
 
-        Self::init(ss0, esp0);
-        TSS_REF = Some(Self);
+        unsafe { TSS = Some(Self(tss.clone())) };
 
-        Ok(Self)
+        Ok(Self(tss))
     }
 
     ///
@@ -87,7 +76,7 @@ impl TssRef {
     /// A reference to the task state segment (TSS).
     ///
     pub unsafe fn address(&self) -> usize {
-        core::ptr::addr_of!(TSS) as usize
+        self.0.as_ref().as_ptr() as usize
     }
 
     ///
@@ -109,35 +98,44 @@ impl TssRef {
         arch::asm!("ltr %ax", in("ax") selector, options(nostack, att_syntax));
     }
 
-    unsafe fn init(ss0: u32, esp0: u32) {
-        TSS.link = 0;
-        TSS.esp0 = esp0;
-        TSS.ss0 = ss0;
-        TSS.esp1 = 0;
-        TSS.ss1 = 0;
-        TSS.esp2 = 0;
-        TSS.ss2 = 0;
-        TSS.cr3 = 0;
-        TSS.eip = 0;
-        TSS.eflags = 0;
-        TSS.eax = 0;
-        TSS.ecx = 0;
-        TSS.edx = 0;
-        TSS.ebx = 0;
-        TSS.esp = 0;
-        TSS.ebp = 0;
-        TSS.esi = 0;
-        TSS.edi = 0;
-        TSS.es = 0;
-        TSS.cs = 0;
-        TSS.ss = 0;
-        TSS.ds = 0;
-        TSS.fs = 0;
-        TSS.gs = 0;
-        TSS.ldtr = 0;
-        TSS.iomap = 0;
+    fn init(ss0: u32, esp0: u32) -> Tss {
+        Tss {
+            link: 0,
+            esp0,
+            ss0,
+            esp1: 0,
+            ss1: 0,
+            esp2: 0,
+            ss2: 0,
+            cr3: 0,
+            eip: 0,
+            eflags: 0,
+            eax: 0,
+            ecx: 0,
+            edx: 0,
+            ebx: 0,
+            esp: 0,
+            ebp: 0,
+            esi: 0,
+            edi: 0,
+            es: 0,
+            cs: 0,
+            ss: 0,
+            ds: 0,
+            fs: 0,
+            gs: 0,
+            ldtr: 0,
+            iomap: 0,
+        }
     }
 }
+
+unsafe impl Send for TssRef {}
+unsafe impl Sync for TssRef {}
+
+//==================================================================================================
+// Standalone Functions
+//==================================================================================================
 
 ///
 /// # Description
@@ -149,5 +147,5 @@ impl TssRef {
 /// A pointer to the currently active task state segment (TSS).
 ///
 pub unsafe fn get_curr() -> *const Tss {
-    core::ptr::addr_of!(TSS)
+    TSS.as_ref().unwrap().0.as_ref().as_ptr()
 }
