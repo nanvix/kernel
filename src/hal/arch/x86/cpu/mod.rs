@@ -61,7 +61,7 @@ pub mod tss;
 pub fn init(
     ioports: &mut IoPortAllocator,
     ioaddresses: &mut IoMemoryAllocator,
-    madt: Option<MadtInfo>,
+    madt: &Option<MadtInfo>,
 ) -> Result<(Gdt, GdtPtr, TssRef, InterruptController, Pit), Error> {
     extern "C" {
         static kstack: u8;

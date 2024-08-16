@@ -92,7 +92,7 @@ pub struct Arch {
 pub fn init(
     ioports: &mut IoPortAllocator,
     ioaddresses: &mut IoMemoryAllocator,
-    madt: Option<MadtInfo>,
+    madt: &Option<MadtInfo>,
 ) -> Result<Arch, Error> {
     info!("initializing architecture-specific components...");
 

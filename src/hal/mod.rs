@@ -63,7 +63,7 @@ pub struct Hal {
 pub fn init(
     memory_regions: &mut LinkedList<MemoryRegion<VirtualAddress>>,
     mmio_regions: &mut LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
-    madt: Option<MadtInfo>,
+    madt: &Option<MadtInfo>,
 ) -> Result<Hal, Error> {
     info!("initializing hardware abstraction layer...");
 

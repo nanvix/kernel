@@ -193,7 +193,7 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
         }
     }
 
-    let mut hal: Hal = match hal::init(&mut memory_regions, &mut mmio_regions, madt) {
+    let mut hal: Hal = match hal::init(&mut memory_regions, &mut mmio_regions, &madt) {
         Ok(hal) => hal,
         Err(err) => {
             panic!("failed to initialize hardware abstraction layer: {:?}", err);
