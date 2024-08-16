@@ -10,6 +10,9 @@
 /* Page size. */
 #define PAGE_SIZE 4096
 
+/* Kernel Red Zone Size */
+#define KREDZONE_SIZE 128
+
 /* Kernel stack size. */
 #define KSTACK_SIZE (8 * PAGE_SIZE)
 
@@ -38,6 +41,7 @@
 .globl _do_start
 .globl kstack
 .globl _do_ap_start
+.globl kredzone
 
 /*============================================================================*
  * Bootstrap Section                                                          *
@@ -176,3 +180,10 @@ _do_ap_start:
 /* TODO: allocate stack space for application core on demand. */
 .space 2*KSTACK_SIZE
 kstack:
+
+/*----------------------------------------------------------------------------*
+ * Kernel Red Zone                                                            *
+ *----------------------------------------------------------------------------*/
+
+kredzone:
+.space KREDZONE_SIZE
