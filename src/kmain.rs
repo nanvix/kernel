@@ -140,6 +140,7 @@ static mut CORES_ONLINE: AtomicUsize = AtomicUsize::new(1);
 // Standalone Functions
 //==================================================================================================
 
+#[cfg(test)]
 fn test() {
     if !crate::hal::mem::test() {
         panic!("memory tests failed");
@@ -204,6 +205,7 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
         panic!("failed to initialize kernel heap: {:?}", e);
     }
 
+    #[cfg(test)]
     test();
 
     // Parse kernel arguments.
