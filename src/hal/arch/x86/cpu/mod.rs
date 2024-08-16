@@ -23,6 +23,7 @@ use crate::hal::{
             GdtPtr,
         },
         pit::Pit,
+        MadtInfo,
     },
     io::{
         IoMemoryAllocator,
@@ -32,7 +33,6 @@ use crate::hal::{
 use ::arch::cpu::cpuid;
 use ::error::Error;
 use ::sys::config;
-use madt::MadtInfo;
 
 //==================================================================================================
 // Exports
@@ -67,39 +67,40 @@ pub fn init(
         static kstack: u8;
     }
 
-    // Print CPU features.
-    info!("CPU features:");
-    info!("  - has cpuid: {}", cpuid::has_cpuid());
-    info!("  - has fpu:   {}", cpuid::has_fpu());
-    info!("  - has vme:   {}", cpuid::has_vme());
-    info!("  - has de:    {}", cpuid::has_de());
-    info!("  - has pse:   {}", cpuid::has_pse());
-    info!("  - has tsc:   {}", cpuid::has_tsc());
-    info!("  - has msr:   {}", cpuid::has_msr());
-    info!("  - has pae:   {}", cpuid::has_pae());
-    info!("  - has mce:   {}", cpuid::has_mce());
-    info!("  - has cx8:   {}", cpuid::has_cx8());
-    info!("  - has apic:  {}", cpuid::has_apic());
-    info!("  - has sep:   {}", cpuid::has_sep());
-    info!("  - has mtrr:  {}", cpuid::has_mtrr());
-    info!("  - has pge:   {}", cpuid::has_pge());
-    info!("  - has mca:   {}", cpuid::has_mca());
-    info!("  - has cmov:  {}", cpuid::has_cmov());
-    info!("  - has pat:   {}", cpuid::has_pat());
-    info!("  - has pse36: {}", cpuid::has_pse36());
-    info!("  - has psn:   {}", cpuid::has_psn());
-    info!("  - has clfsh: {}", cpuid::has_clflush());
-    info!("  - has ds:    {}", cpuid::has_ds());
-    info!("  - has acpi:  {}", cpuid::has_acpi());
-    info!("  - has mmx:   {}", cpuid::has_mmx());
-    info!("  - has fxsr:  {}", cpuid::has_fxsr());
-    info!("  - has sse:   {}", cpuid::has_sse());
-    info!("  - has sse2:  {}", cpuid::has_sse2());
-    info!("  - has ss:    {}", cpuid::has_ss());
-    info!("  - has htt:   {}", cpuid::has_htt());
-    info!("  - has tm:    {}", cpuid::has_tm());
-    info!("  - has ia64:  {}", cpuid::has_ia64());
-    info!("  - has pbe:   {}", cpuid::has_pbe());
+    // Check if the CPU has the cpuid instruction.
+    if arch::cpu::cpuid::has_cpuid() {
+        info!("CPU features:");
+        info!("- has fpu:   {}", cpuid::has_fpu());
+        info!("- has vme:   {}", cpuid::has_vme());
+        info!("- has de:    {}", cpuid::has_de());
+        info!("- has pse:   {}", cpuid::has_pse());
+        info!("- has tsc:   {}", cpuid::has_tsc());
+        info!("- has msr:   {}", cpuid::has_msr());
+        info!("- has pae:   {}", cpuid::has_pae());
+        info!("- has mce:   {}", cpuid::has_mce());
+        info!("- has cx8:   {}", cpuid::has_cx8());
+        info!("- has apic:  {}", cpuid::has_apic());
+        info!("- has sep:   {}", cpuid::has_sep());
+        info!("- has mtrr:  {}", cpuid::has_mtrr());
+        info!("- has pge:   {}", cpuid::has_pge());
+        info!("- has mca:   {}", cpuid::has_mca());
+        info!("- has cmov:  {}", cpuid::has_cmov());
+        info!("- has pat:   {}", cpuid::has_pat());
+        info!("- has pse36: {}", cpuid::has_pse36());
+        info!("- has psn:   {}", cpuid::has_psn());
+        info!("- has clfsh: {}", cpuid::has_clflush());
+        info!("- has ds:    {}", cpuid::has_ds());
+        info!("- has acpi:  {}", cpuid::has_acpi());
+        info!("- has mmx:   {}", cpuid::has_mmx());
+        info!("- has fxsr:  {}", cpuid::has_fxsr());
+        info!("- has sse:   {}", cpuid::has_sse());
+        info!("- has sse2:  {}", cpuid::has_sse2());
+        info!("- has ss:    {}", cpuid::has_ss());
+        info!("- has htt:   {}", cpuid::has_htt());
+        info!("- has tm:    {}", cpuid::has_tm());
+        info!("- has ia64:  {}", cpuid::has_ia64());
+        info!("- has pbe:   {}", cpuid::has_pbe());
+    }
 
     let (gdt, gdtr, tss): (Gdt, GdtPtr, TssRef) = unsafe { Gdt::init(&kstack)? };
     unsafe { idt::init() };
