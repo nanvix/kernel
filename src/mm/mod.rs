@@ -19,6 +19,7 @@ pub use virt::{
     VirtMemoryManager,
     Vmem,
 };
+pub mod kredzone;
 pub mod kstack;
 
 //==================================================================================================
