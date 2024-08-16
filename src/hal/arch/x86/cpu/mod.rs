@@ -110,3 +110,10 @@ pub fn init(
 
     Ok((gdt, gdtr, tss, controller, pit))
 }
+
+pub fn initialize_application_core(kstack: *const u8) -> Result<(Gdt, GdtPtr, TssRef), Error> {
+    let (gdt, gdtr, tss): (Gdt, GdtPtr, TssRef) = unsafe { Gdt::init(kstack)? };
+    unsafe { idt::load() };
+
+    Ok((gdt, gdtr, tss))
+}

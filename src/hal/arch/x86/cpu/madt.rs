@@ -23,6 +23,10 @@ use ::arch::cpu::{
 };
 use ::error::Error;
 
+//==================================================================================================
+// Structures
+//==================================================================================================
+
 pub struct MadtInfo {
     pub sdt: AcpiSdtHeader,
     pub local_apic_addr: u32,
@@ -39,6 +43,10 @@ pub enum MadtEntry {
     LocalApicAddressOverride(MadtLocalApicAddressOverride),
     LocalX2Apic(MadtEntryLocalX2Apic),
 }
+
+//==================================================================================================
+// Implementations
+//==================================================================================================
 
 impl MadtInfo {
     pub unsafe fn from_ptr(ptr: *const Madt) -> Result<Self, Error> {
@@ -155,6 +163,22 @@ impl MadtInfo {
         ioapic_source_override
     }
 }
+
+//==================================================================================================
+// Trait Implementations
+//==================================================================================================
+
+impl Iterator for MadtInfo {
+    type Item = MadtEntry;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.entries.pop_front()
+    }
+}
+
+//==================================================================================================
+// Public Standalone Functions
+//==================================================================================================
 
 pub unsafe fn parse(madt: *const Madt) -> Result<MadtInfo, Error> {
     let base: *const u8 = madt as *const u8;

@@ -216,10 +216,18 @@ pub unsafe fn init() {
     IDT[128] = idt_entry!(_do_kcall, DescriptorPrivilegeLevel::Ring3, GateType::Int32);
 
     // Load IDT.
-    info!("loading idt (base={:p}, size={})", IDT.as_ptr(), IDT_SIZE);
     IDTR.init(
         IDT.as_ptr() as u32,
         u16::try_from(IDT_SIZE).expect("wrong idt size, is it corrupted?"),
     );
+    load()
+}
+
+///
+/// # Description
+///
+/// Loads the IDT
+pub unsafe fn load() {
+    info!("loading idt (base={:p}, size={})", IDT.as_ptr(), IDT_SIZE);
     IDTR.load();
 }

@@ -94,3 +94,11 @@ pub fn init(
         excpman,
     })
 }
+
+pub fn initialize_application_core(kstack: *const u8) -> Result<Arch, Error> {
+    info!("initializing application core...");
+
+    let arch: Arch = arch::initialize_application_core(kstack)?;
+
+    Ok(arch)
+}

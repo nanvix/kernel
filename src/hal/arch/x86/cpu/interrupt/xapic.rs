@@ -5,10 +5,13 @@
 // Imports
 //==================================================================================================
 
-use crate::hal::{
-    arch::x86::cpu::clock,
-    io::IoMemoryRegion,
-    mem::Address,
+use crate::{
+    hal::{
+        arch::x86::cpu::clock,
+        io::IoMemoryRegion,
+        mem::Address,
+    },
+    mm::kredzone,
 };
 use ::arch::cpu::xapic;
 use ::error::{
@@ -227,10 +230,24 @@ impl Xapic {
     ///
     /// - `coreid`: Core ID.
     /// - `entry`: Entry point.
+    /// - `kstack`: Kernel stack.
     ///
-    pub fn start_core(&mut self, coreid: u8, entry: VirtualAddress) -> Result<(), Error> {
+    /// # Returns
+    ///
+    /// Upon success, empty result is returned. Otherwise, an error is returned.
+    ///
+    pub fn start_core(
+        &mut self,
+        coreid: u8,
+        entry: VirtualAddress,
+        kstack: *const u8,
+    ) -> Result<(), Error> {
         // Maximum number of retries when waiting for the xAPIC to become idle.
         const RETRIES: usize = 1000;
+
+        // Store the address of the kernel stack in the kernel red zone. When the application core
+        // starts it will read this address from the kernel red zone. To setup its own stack.
+        kredzone::store(0, kstack as usize)?;
 
         // Send INIT assert  interrupt to reset other core.
         let icrhi: xapic::XapicIcrHi = xapic::XapicIcrHi::new(coreid as u32);

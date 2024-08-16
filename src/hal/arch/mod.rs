@@ -149,3 +149,7 @@ pub fn init(
 
     x86::init(ioports, ioaddresses, madt)
 }
+
+pub fn initialize_application_core(kstack: *const u8) -> Result<Arch, Error> {
+    x86::initialize_application_core(kstack)
+}

@@ -161,14 +161,36 @@ impl InterruptController {
         }
     }
 
-    pub fn start_core(&mut self, coreid: u8, entry: VirtualAddress) -> Result<(), Error> {
+    ///
+    /// # Description
+    ///
+    /// Starts up an application core.
+    ///
+    /// # Parameters
+    ///
+    /// - `coreid`: Core ID.
+    /// - `entry`: Entry point.
+    /// - `kstack`: Kernel stack.
+    ///
+    /// # Returns
+    ///
+    /// Upon success, empty result is returned. Otherwise, an error is returned.
+    ///
+    pub fn start_core(
+        &mut self,
+        coreid: u8,
+        entry: VirtualAddress,
+        kstack: *const u8,
+    ) -> Result<(), Error> {
         match self.intctrl {
             InterruptControllerType::Legacy(_) => {
                 let reason: &str = "legacy pic does not support starting cores";
                 error!("start_core(): {}", reason);
                 return Err(Error::new(ErrorCode::OperationNotSupported, reason));
             },
-            InterruptControllerType::Xapic(ref mut xapic, _) => xapic.start_core(coreid, entry),
+            InterruptControllerType::Xapic(ref mut xapic, _) => {
+                xapic.start_core(coreid, entry, kstack)
+            },
         }
     }
 
