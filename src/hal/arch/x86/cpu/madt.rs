@@ -59,6 +59,30 @@ impl MadtInfo {
     ///
     /// # Description
     ///
+    /// Retrieves the number of cores in the system.
+    ///
+    /// # Return Values
+    ///
+    /// The number of cores in the system. This is guaranteed to be at least 1.
+    ///
+    pub fn cores_count(&self) -> usize {
+        let mut count: usize = 0;
+        for entry in self.entries.iter() {
+            if let MadtEntry::LocalApic(e) = entry {
+                if ((e.flags & MadtEntryLocalApic::ENABLED) != 0)
+                    || ((e.flags & MadtEntryLocalApic::ONLINE_CAPABLE) != 0)
+                {
+                    count += 1;
+                }
+            }
+        }
+        assert_ne!(count, 0, "no cores found");
+        count
+    }
+
+    ///
+    /// # Description
+    ///
     /// Checks if the system has a dual-8259 setup.
     ///
     /// # Return Values
