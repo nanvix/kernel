@@ -56,7 +56,7 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd kernel-release
-          make TIMEOUT=90 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-isapc all run | tee output.txt
+          make TIMEOUT=5 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-isapc all run | tee output.txt
           echo "Magic String: $(cat output.txt | tail -n 1)"
           [ "$(cat output.txt | tail -n 1)" != "PANIC: Hello World!" ] && exit 1 || exit 0 ;
 
@@ -74,7 +74,7 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd kernel-release
-          make TIMEOUT=90 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-pc all run | tee output.txt
+          make TIMEOUT=5 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-pc all run | tee output.txt
           echo "Magic String: $(cat output.txt | tail -n 1)"
           [ "$(cat output.txt | tail -n 1)" != "PANIC: Hello World!" ] && exit 1 || exit 0 ;
 
@@ -92,7 +92,7 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd kernel-release
-          make TIMEOUT=90 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-baremetal all run | tee output.txt
+          make TIMEOUT=5 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-baremetal all run | tee output.txt
           echo "Magic String: $(cat output.txt | tail -n 1)"
           [ "$(cat output.txt | tail -n 1)" != "PANIC: Hello World!" ] && exit 1 || exit 0 ;
 
@@ -110,7 +110,7 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd kernel-release
-          make TIMEOUT=90 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-pc-smp all run | tee output.txt
+          make TIMEOUT=5 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-pc-smp all run | tee output.txt
           echo "Magic String: $(cat output.txt | tail -n 1)"
           [ "$(cat output.txt | tail -n 1)" != "PANIC: Hello World!" ] && exit 1 || exit 0 ;
 
@@ -128,7 +128,7 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd kernel-release
-          make TIMEOUT=90 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-baremetal-smp all run | tee output.txt
+          make TIMEOUT=5 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-baremetal-smp all run | tee output.txt
           echo "Magic String: $(cat output.txt | tail -n 1)"
           [ "$(cat output.txt | tail -n 1)" != "PANIC: Hello World!" ] && exit 1 || exit 0 ;
 
