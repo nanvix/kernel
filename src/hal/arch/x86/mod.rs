@@ -16,14 +16,12 @@ use crate::hal::{
     arch::x86::{
         cpu::{
             madt::MadtInfo,
-            pit,
             tss::TssRef,
         },
         mem::gdt::{
             Gdt,
             GdtPtr,
         },
-        pit::Pit,
     },
     io::{
         IoMemoryAllocator,
@@ -63,8 +61,6 @@ pub struct Arch {
     pub _tss: Option<TssRef>,
     /// Interrupt controller.
     pub controller: Option<InterruptController>,
-    /// Programmable Interval Timer (PIT).
-    pub _pit: Option<Pit>,
 }
 //==================================================================================================
 // Standalone Functions
@@ -78,14 +74,13 @@ pub fn init(
     info!("initializing architecture-specific components...");
 
     // Initialize interrupt controller.
-    let (gdt, gdtr, tss, controller, pit) = cpu::init(ioports, ioaddresses, madt)?;
+    let (gdt, gdtr, tss, controller) = cpu::init(ioports, ioaddresses, madt)?;
 
     Ok(Arch {
         _gdt: Some(gdt),
         _gdtr: Some(gdtr),
         _tss: Some(tss),
         controller: Some(controller),
-        _pit: Some(pit),
     })
 }
 
@@ -97,6 +92,5 @@ pub fn initialize_application_core(kstack: *const u8) -> Result<Arch, Error> {
         _gdtr: Some(gdtr),
         _tss: Some(tss),
         controller: None,
-        _pit: None,
     })
 }

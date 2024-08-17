@@ -24,17 +24,18 @@ use crate::hal::{
         TruncatedMemoryRegion,
     },
     platform,
+    platform::pit::Pit,
 };
 use ::alloc::collections::linked_list::LinkedList;
 use ::arch::{
-    cpu::{
-        pic,
-        pit,
-    },
+    cpu::pic,
     mem,
 };
 use ::error::Error;
-use ::sys::mm::VirtualAddress;
+use ::sys::{
+    config,
+    mm::VirtualAddress,
+};
 
 //==================================================================================================
 // Modules
@@ -51,6 +52,9 @@ pub mod bios;
 
 #[cfg(feature = "cmos")]
 pub mod cmos;
+
+#[cfg(feature = "pit")]
+pub mod pit;
 
 //==================================================================================================
 // Exports
@@ -86,6 +90,8 @@ pub const TRAMPOLINE_ADDRESS: VirtualAddress = VirtualAddress::new(0x00008000);
 pub struct Platform {
     #[cfg(feature = "cmos")]
     pub _cmos: cmos::Cmos,
+    #[cfg(feature = "pit")]
+    pub _pit: pit::Pit,
     pub arch: Arch,
 }
 
@@ -130,6 +136,15 @@ fn register_cmos(ioports: &mut IoPortAllocator) -> Result<cmos::Cmos, Error> {
     Ok(cmos)
 }
 
+#[cfg(feature = "pit")]
+fn register_pit(ioports: &mut IoPortAllocator) -> Result<Pit, Error> {
+    // Register ports for the PIT.
+    ioports.register_read_write(::arch::cpu::pit::PIT_CTRL)?;
+    ioports.register_read_write(::arch::cpu::pit::PIT_DATA)?;
+
+    Ok(Pit::new(ioports, config::kernel::TIMER_FREQ)?)
+}
+
 pub fn init(
     ioports: &mut IoPortAllocator,
     ioaddresses: &mut IoMemoryAllocator,
@@ -154,10 +169,6 @@ pub fn init(
             ioports.register_read_only(base + p)?;
         }
     }
-
-    // Register ports for the PIT.
-    ioports.register_read_write(pit::PIT_CTRL)?;
-    ioports.register_read_write(pit::PIT_DATA)?;
 
     // Register memory mapped I/O regions.
     for region in mmio_regions.iter() {
@@ -203,6 +214,8 @@ pub fn init(
 
     Ok(Platform {
         arch: x86::init(ioports, ioaddresses, madt)?,
+        #[cfg(feature = "pit")]
+        _pit: register_pit(ioports)?,
         #[cfg(feature = "cmos")]
         _cmos: register_cmos(ioports)?,
     })

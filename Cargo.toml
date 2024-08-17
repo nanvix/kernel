@@ -26,16 +26,17 @@ sys = { git = "https://github.com/nanvix/sys", branch = "releases/v1.1.2" }
 default = ["qemu-pc"]
 
 # Machine Types
-qemu-pc = ["bios", "cmos", "warn"]
+qemu-pc = ["bios", "cmos", "pit", "warn"]
 qemu-pc-smp = ["qemu-pc", "smp"]
-qemu-baremetal = ["bios", "cmos", "warn"]
+qemu-baremetal = ["bios", "cmos", "pit", "warn"]
 qemu-baremetal-smp = ["qemu-baremetal", "smp"]
-qemu-isapc = ["bios", "cmos", "warn"]
+qemu-isapc = ["bios", "cmos", "pit", "warn"]
 
 # Machine Features
 smp = []
 bios = []
 cmos = []
+pit = []
 
 # Logging Features
 trace = ["info"]
