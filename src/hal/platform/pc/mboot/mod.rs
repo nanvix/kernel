@@ -6,7 +6,6 @@
 //==================================================================================================
 
 mod acpi;
-pub mod info;
 mod memory_map;
 mod module;
 
@@ -43,7 +42,6 @@ use crate::{
         },
     },
     kmod::KernelModule,
-    mboot::info::BootInfo,
 };
 use ::alloc::{
     collections::LinkedList,
@@ -54,9 +52,12 @@ use ::alloc::{
 };
 use ::arch::{
     self,
-    cpu::acpi::{
-        AcpiSdtHeader,
-        Rsdp,
+    cpu::{
+        acpi::{
+            AcpiSdtHeader,
+            Rsdp,
+        },
+        madt::Madt,
     },
 };
 use ::core::mem;
@@ -64,7 +65,8 @@ use ::error::{
     Error,
     ErrorCode,
 };
-use arch::cpu::madt::Madt;
+
+use crate::hal::platform::bootinfo::BootInfo;
 
 //==================================================================================================
 // Constants

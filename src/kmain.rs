@@ -78,7 +78,6 @@ mod kimage;
 mod klog;
 mod kmod;
 mod kpanic;
-mod mboot;
 mod mm;
 mod pm;
 mod stdout;

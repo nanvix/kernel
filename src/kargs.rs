@@ -5,10 +5,7 @@
 // Imports
 //==================================================================================================
 
-use crate::mboot::{
-    self,
-    info::BootInfo,
-};
+use crate::hal::platform::bootinfo::BootInfo;
 use ::error::Error;
 
 //==================================================================================================
@@ -40,8 +37,15 @@ sys::static_assert_alignment!(KernelArguments, 4);
 
 impl KernelArguments {
     /// Parses kernel arguments.
+    #[cfg(feature = "mboot")]
     pub fn parse(&self) -> Result<BootInfo, Error> {
-        mboot::parse(self.mboot_magic, self.mboot_info)
+        crate::hal::platform::mboot::parse(self.mboot_magic, self.mboot_info)
+    }
+
+    /// Parses kernel arguments.
+    #[cfg(not(feature = "mboot"))]
+    pub fn parse(&self) -> Result<BootInfo, Error> {
+        Ok(BootInfo::default())
     }
 }
 
