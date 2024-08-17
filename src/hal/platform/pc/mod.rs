@@ -41,10 +41,10 @@ use ::sys::mm::VirtualAddress;
 // Modules
 //==================================================================================================
 
-#[cfg(feature = "baremetal")]
+#[cfg(feature = "qemu-baremetal")]
 mod baremetal;
 
-#[cfg(any(feature = "isapc", feature = "pc"))]
+#[cfg(any(feature = "qemu-isapc", feature = "qemu-pc"))]
 mod qemu;
 
 pub mod bios;
@@ -54,13 +54,13 @@ pub mod cmos;
 // Exports
 //==================================================================================================
 
-#[cfg(any(feature = "isapc", feature = "pc"))]
+#[cfg(any(feature = "qemu-isapc", feature = "qemu-pc"))]
 pub use qemu::{
     putb,
     shutdown,
 };
 
-#[cfg(feature = "baremetal")]
+#[cfg(feature = "qemu-baremetal")]
 pub use baremetal::{
     putb,
     shutdown,

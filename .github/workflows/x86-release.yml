@@ -42,8 +42,8 @@ jobs:
           cd kernel-release
           make TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace all
 
-  test-isapc:
-    name: Test (isapc)
+  test-qemu-isapc:
+    name: Test (qemu-isapc)
     needs: [build]
     runs-on: ubuntu-latest
     steps:
@@ -56,13 +56,13 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd kernel-release
-          make TIMEOUT=90 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=isapc all run | tee output.txt
+          make TIMEOUT=90 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-isapc all run | tee output.txt
           echo "Magic String: $(cat output.txt | tail -n 1)"
           [ "$(cat output.txt | tail -n 1)" != "PANIC: Hello World!" ] && exit 1 || exit 0 ;
 
-  test-pc:
-    name: Test (pc)
-    needs: [test-isapc]
+  test-qemu-pc:
+    name: Test (qemu-pc)
+    needs: [test-qemu-isapc]
     runs-on: ubuntu-latest
     steps:
     - name: Test
@@ -74,13 +74,13 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd kernel-release
-          make TIMEOUT=90 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=pc all run | tee output.txt
+          make TIMEOUT=90 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-pc all run | tee output.txt
           echo "Magic String: $(cat output.txt | tail -n 1)"
           [ "$(cat output.txt | tail -n 1)" != "PANIC: Hello World!" ] && exit 1 || exit 0 ;
 
-  test-baremetal:
-    name: Test (baremetal)
-    needs: [test-pc]
+  test-qemu-baremetal:
+    name: Test (qemu-baremetal)
+    needs: [test-qemu-pc]
     runs-on: ubuntu-latest
     steps:
     - name: Test
@@ -92,13 +92,13 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd kernel-release
-          make TIMEOUT=90 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=baremetal all run | tee output.txt
+          make TIMEOUT=90 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-baremetal all run | tee output.txt
           echo "Magic String: $(cat output.txt | tail -n 1)"
           [ "$(cat output.txt | tail -n 1)" != "PANIC: Hello World!" ] && exit 1 || exit 0 ;
 
-  test-pc-smp:
-    name: Test (pc-smp)
-    needs: [test-baremetal]
+  test-qemu-pc-smp:
+    name: Test (qemu-pc-smp)
+    needs: [test-qemu-baremetal]
     runs-on: ubuntu-latest
     steps:
     - name: Test
@@ -110,13 +110,13 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd kernel-release
-          make TIMEOUT=90 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=pc-smp all run | tee output.txt
+          make TIMEOUT=90 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-pc-smp all run | tee output.txt
           echo "Magic String: $(cat output.txt | tail -n 1)"
           [ "$(cat output.txt | tail -n 1)" != "PANIC: Hello World!" ] && exit 1 || exit 0 ;
 
-  test-baremetal-smp:
-    name: Test (baremetal-smp)
-    needs: [test-pc-smp]
+  test-qemu-baremetal-smp:
+    name: Test (qemu-baremetal-smp)
+    needs: [test-qemu-pc-smp]
     runs-on: ubuntu-latest
     steps:
     - name: Test
@@ -128,13 +128,13 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd kernel-release
-          make TIMEOUT=90 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=baremetal-smp all run | tee output.txt
+          make TIMEOUT=90 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-baremetal-smp all run | tee output.txt
           echo "Magic String: $(cat output.txt | tail -n 1)"
           [ "$(cat output.txt | tail -n 1)" != "PANIC: Hello World!" ] && exit 1 || exit 0 ;
 
   cleanup:
     name: Cleanup
-    needs: test-baremetal-smp
+    needs: test-qemu-baremetal-smp
     if: always()
     runs-on: ubuntu-latest
     steps:
