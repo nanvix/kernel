@@ -145,9 +145,8 @@ _do_ap_start:
     xorl %edi, %edi
 
     /* Setup stack. */
-    movl $kstack, %esp /* Stack pointer. */
-    subl $KSTACK_SIZE, %esp
-    movl %esp, %ebp    /* Frame pointer. */
+    movl (kredzone), %esp /* Stack pointer. */
+    movl %esp, %ebp        /* Frame pointer. */
 
     /*
      * Get local APIC ID.
@@ -177,8 +176,7 @@ _do_ap_start:
  *----------------------------------------------------------------------------*/
 
 .align  PAGE_SIZE
-/* TODO: allocate stack space for application core on demand. */
-.space 2*KSTACK_SIZE
+.space KSTACK_SIZE
 kstack:
 
 /*----------------------------------------------------------------------------*

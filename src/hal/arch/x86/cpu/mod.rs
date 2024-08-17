@@ -61,7 +61,7 @@ pub mod tss;
 pub fn init(
     ioports: &mut IoPortAllocator,
     ioaddresses: &mut IoMemoryAllocator,
-    madt: Option<MadtInfo>,
+    madt: &Option<MadtInfo>,
 ) -> Result<(Gdt, GdtPtr, TssRef, InterruptController, Pit), Error> {
     extern "C" {
         static kstack: u8;
@@ -109,4 +109,11 @@ pub fn init(
     let controller: InterruptController = interrupt::init(ioports, ioaddresses, madt)?;
 
     Ok((gdt, gdtr, tss, controller, pit))
+}
+
+pub fn initialize_application_core(kstack: *const u8) -> Result<(Gdt, GdtPtr, TssRef), Error> {
+    let (gdt, gdtr, tss): (Gdt, GdtPtr, TssRef) = unsafe { Gdt::init(kstack)? };
+    unsafe { idt::load() };
+
+    Ok((gdt, gdtr, tss))
 }

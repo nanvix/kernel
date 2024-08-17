@@ -70,7 +70,7 @@ pub fn init(
     ioaddresses: &mut IoMemoryAllocator,
     memory_regions: &mut LinkedList<MemoryRegion<VirtualAddress>>,
     mmio_regions: &mut LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
-    madt: Option<MadtInfo>,
+    madt: &Option<MadtInfo>,
 ) -> Result<Arch, Error> {
     // Register ports for the CMOS.
     ioports.register_read_write(cmos::Cmos::DATA)?;
@@ -148,4 +148,8 @@ pub fn init(
     memory_regions.push_back(bios);
 
     x86::init(ioports, ioaddresses, madt)
+}
+
+pub fn initialize_application_core(kstack: *const u8) -> Result<Arch, Error> {
+    x86::initialize_application_core(kstack)
 }

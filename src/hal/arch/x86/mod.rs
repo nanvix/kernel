@@ -72,7 +72,7 @@ pub use platform::{
 ///
 pub struct Arch {
     /// CMOS memory.
-    _cmos: Cmos,
+    _cmos: Option<Cmos>,
     /// Global Descriptor Table (GDT).
     _gdt: Option<Gdt>,
     /// Global Descriptor Table Register (GDTR).
@@ -92,7 +92,7 @@ pub struct Arch {
 pub fn init(
     ioports: &mut IoPortAllocator,
     ioaddresses: &mut IoMemoryAllocator,
-    madt: Option<MadtInfo>,
+    madt: &Option<MadtInfo>,
 ) -> Result<Arch, Error> {
     info!("initializing architecture-specific components...");
 
@@ -113,11 +113,24 @@ pub fn init(
 
     Ok(Arch {
         // Keep CMOS to prevent others from using the same I/O ports.
-        _cmos: cmos,
+        _cmos: Some(cmos),
         _gdt: Some(gdt),
         _gdtr: Some(gdtr),
         _tss: Some(tss),
         controller: Some(controller),
         _pit: Some(pit),
+    })
+}
+
+pub fn initialize_application_core(kstack: *const u8) -> Result<Arch, Error> {
+    let (gdt, gdtr, tss): (Gdt, GdtPtr, TssRef) = cpu::initialize_application_core(kstack)?;
+
+    Ok(Arch {
+        _cmos: None,
+        _gdt: Some(gdt),
+        _gdtr: Some(gdtr),
+        _tss: Some(tss),
+        controller: None,
+        _pit: None,
     })
 }

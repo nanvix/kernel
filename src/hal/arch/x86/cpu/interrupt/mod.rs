@@ -140,7 +140,7 @@ fn build_interrupt_map(madt: &MadtInfo) -> InterruptMap {
 pub fn init(
     ioports: &mut IoPortAllocator,
     ioaddresses: &mut IoMemoryAllocator,
-    madt: Option<MadtInfo>,
+    madt: &Option<MadtInfo>,
 ) -> Result<InterruptController, Error> {
     info!("initializing interrupt controller...");
     match madt {

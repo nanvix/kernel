@@ -120,6 +120,7 @@ macro_rules! error{
 	})
 }
 
+#[cfg(test)]
 macro_rules! run_test {
     ($test_func:ident) => {{
         let result: bool = $test_func();

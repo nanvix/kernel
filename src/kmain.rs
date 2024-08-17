@@ -44,6 +44,7 @@ use crate::{
     mm::{
         elf::Elf32Fhdr,
         kheap,
+        kredzone,
         VirtMemoryManager,
         Vmem,
     },
@@ -52,6 +53,10 @@ use crate::{
 use ::alloc::{
     collections::LinkedList,
     string::String,
+};
+use ::core::sync::atomic::{
+    AtomicUsize,
+    Ordering,
 };
 use ::sys::pm::ProcessIdentifier;
 
@@ -80,9 +85,62 @@ mod stdout;
 mod uart;
 
 //==================================================================================================
+// Global Variables
+//==================================================================================================
+
+/// Use for synchronizing the startup of application cores.
+#[cfg(feature = "smp")]
+mod startup {
+    use crate::pm::sync::fence::Fence;
+    use ::error::Error;
+    use error::ErrorCode;
+
+    static mut STARTUP_FENCE: Option<Fence> = None;
+
+    pub fn init(ncores: usize) {
+        unsafe {
+            STARTUP_FENCE = Some(Fence::new(ncores));
+        }
+    }
+
+    pub fn wait() -> Result<(), Error> {
+        unsafe {
+            match STARTUP_FENCE.as_ref() {
+                Some(fence) => fence.wait(),
+                None => {
+                    let reason: &str = "startup fence not initialized";
+                    error!("wait(): {:?}", reason);
+                    return Err(Error::new(ErrorCode::NoSuchEntry, reason));
+                },
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn signal() -> Result<(), Error> {
+        unsafe {
+            match STARTUP_FENCE.as_ref() {
+                Some(fence) => fence.signal(),
+                None => {
+                    let reason: &str = "startup fence not initialized";
+                    error!("signal(): {:?}", reason);
+                    return Err(Error::new(ErrorCode::NoSuchEntry, reason));
+                },
+            }
+        }
+        Ok(())
+    }
+}
+
+/// Counts the number of cores online.
+static mut CORES_ONLINE: AtomicUsize = AtomicUsize::new(1);
+
+//==================================================================================================
 // Standalone Functions
 //==================================================================================================
 
+#[cfg(test)]
 fn test() {
     if !crate::hal::mem::test() {
         panic!("memory tests failed");
@@ -147,6 +205,7 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
         panic!("failed to initialize kernel heap: {:?}", e);
     }
 
+    #[cfg(test)]
     test();
 
     // Parse kernel arguments.
@@ -193,7 +252,7 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
         }
     }
 
-    let mut hal: Hal = match hal::init(&mut memory_regions, &mut mmio_regions, madt) {
+    let mut hal: Hal = match hal::init(&mut memory_regions, &mut mmio_regions, &madt) {
         Ok(hal) => hal,
         Err(err) => {
             panic!("failed to initialize hardware abstraction layer: {:?}", err);
@@ -216,15 +275,80 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
         },
     };
 
-    // Start application core.
-    // TODO: get core count from the HAL.
+    // Start application cores.
     #[cfg(feature = "smp")]
-    for coreid in 1..=1 {
-        trace!("starting application core {}...", coreid);
-        if let Err(e) = hal.intman.start_core(coreid, hal::arch::TRAMPOLINE_ADDRESS) {
-            panic!("failed to start application core (e={:?}", e);
+    if let Some(madt) = &madt {
+        use crate::{
+            hal::arch::x86::cpu::madt::MadtEntry,
+            mm::kstack::KernelStack,
+        };
+        use ::arch::cpu::madt::MadtEntryLocalApic;
+        use ::core::mem;
+
+        // Report number of application cores.
+        let ncores: usize = madt.cores_count() - 1;
+        startup::init(ncores - 1);
+
+        // Traverse all cores.
+        for e in madt.entries.iter() {
+            // Check if entry is a local APIC.
+            if let MadtEntry::LocalApic(entry) = e {
+                let coreid: u8 = entry.apic_id;
+
+                // Check if core is enabled or online capable.
+                if (entry.flags
+                    & (MadtEntryLocalApic::ENABLED | MadtEntryLocalApic::ONLINE_CAPABLE))
+                    == 0
+                {
+                    continue;
+                }
+
+                // Check if core is the bootstrap core.
+                if coreid == 0 {
+                    continue;
+                }
+
+                info!("starting application core {}...", coreid);
+
+                // Allocate a kernel stack for the application core.
+                let kstack: KernelStack = match KernelStack::new(&mut mm) {
+                    Ok(kstack) => kstack,
+                    Err(err) => {
+                        panic!(
+                            "failed to allocate kernel stack for application core (error={:?})",
+                            err
+                        );
+                    },
+                };
+
+                // Obtain a cached version of the number of cores online.
+                let cores_online: usize = unsafe { CORES_ONLINE.load(Ordering::Acquire) };
+
+                // Start core.
+                if let Err(e) = hal.intman.start_core(
+                    coreid as u8,
+                    hal::arch::TRAMPOLINE_ADDRESS,
+                    kstack.top().into_raw_value() as *const u8,
+                ) {
+                    panic!("failed to start application core (e={:?}", e);
+                }
+
+                // Wait for application core to come online.
+                info!("waiting for core {} to come online...", coreid);
+                while unsafe { CORES_ONLINE.load(Ordering::Acquire) } == cores_online {
+                    ::arch::cpu::pause();
+                }
+
+                // Prevent the kernel stack from being deallocated.
+                // TODO: instead of forgetting we should store this in a per-core structure.
+                mem::forget(kstack);
+            }
         }
     }
+
+    // Print number of cores online.
+    let cores_online: usize = unsafe { CORES_ONLINE.load(Ordering::Acquire) };
+    info!("number of cores online: {}", cores_online);
 
     if spawn_servers(&mut mm, &mut pm, &kernel_modules) > 0 {
         // Initialize kernel call dispatcher.
@@ -238,15 +362,39 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
         kcall::handler(&mut hal, &mut mm, &mut pm)
     }
 
+    #[cfg(feature = "smp")]
+    startup::wait().expect("failed to synchronize application cores");
+
     trace!("the system will shutdown now!");
     kernel_magic_string();
 }
 
 #[no_mangle]
 pub extern "C" fn do_ap_start(coreid: u32) {
-    trace!("hello from core {}", coreid);
-    loop {
-        core::hint::spin_loop();
+    // Load address of the kernel stack from the red zone.
+    let kstack: *const u8 = match kredzone::load(0) {
+        Ok(kstack) => kstack as *const u8,
+        Err(err) => {
+            panic!("failed to load kernel stack address from the kernel's red zone: {:?}", err);
+        },
+    };
+
+    match hal::initialize_application_core(kstack) {
+        Ok(_arch) => {
+            unsafe { CORES_ONLINE.fetch_add(1, Ordering::Acquire) };
+
+            trace!("core {} is now online (kstack={:?})", coreid, kstack);
+
+            #[cfg(feature = "smp")]
+            startup::signal().expect("failed to signal main core");
+
+            loop {
+                core::hint::spin_loop();
+            }
+        },
+        Err(err) => {
+            panic!("failed to initialize application core: {:?}", err);
+        },
     }
 }
 

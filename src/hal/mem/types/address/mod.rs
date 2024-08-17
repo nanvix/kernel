@@ -9,6 +9,8 @@ mod aligned;
 mod frame;
 mod page;
 mod phys;
+
+#[cfg(test)]
 mod test;
 
 //==================================================================================================
@@ -28,6 +30,7 @@ pub use phys::*;
 // Standalone Functions
 //==================================================================================================
 
+#[cfg(test)]
 pub fn test() -> bool {
     let mut passed = true;
 

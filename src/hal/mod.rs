@@ -63,7 +63,7 @@ pub struct Hal {
 pub fn init(
     memory_regions: &mut LinkedList<MemoryRegion<VirtualAddress>>,
     mmio_regions: &mut LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
-    madt: Option<MadtInfo>,
+    madt: &Option<MadtInfo>,
 ) -> Result<Hal, Error> {
     info!("initializing hardware abstraction layer...");
 
@@ -93,4 +93,12 @@ pub fn init(
         intman,
         excpman,
     })
+}
+
+pub fn initialize_application_core(kstack: *const u8) -> Result<Arch, Error> {
+    info!("initializing application core...");
+
+    let arch: Arch = arch::initialize_application_core(kstack)?;
+
+    Ok(arch)
 }

@@ -23,6 +23,10 @@ use ::arch::cpu::{
 };
 use ::error::Error;
 
+//==================================================================================================
+// Structures
+//==================================================================================================
+
 pub struct MadtInfo {
     pub sdt: AcpiSdtHeader,
     pub local_apic_addr: u32,
@@ -40,6 +44,10 @@ pub enum MadtEntry {
     LocalX2Apic(MadtEntryLocalX2Apic),
 }
 
+//==================================================================================================
+// Implementations
+//==================================================================================================
+
 impl MadtInfo {
     pub unsafe fn from_ptr(ptr: *const Madt) -> Result<Self, Error> {
         Ok(Self {
@@ -54,6 +62,30 @@ impl MadtInfo {
         info!("MADT:");
         info!("  Local APIC Address: 0x{:x}", self.local_apic_addr);
         info!("  Flags: 0x{:x}", self.flags);
+    }
+
+    ///
+    /// # Description
+    ///
+    /// Retrieves the number of cores in the system.
+    ///
+    /// # Return Values
+    ///
+    /// The number of cores in the system. This is guaranteed to be at least 1.
+    ///
+    pub fn cores_count(&self) -> usize {
+        let mut count: usize = 0;
+        for entry in self.entries.iter() {
+            if let MadtEntry::LocalApic(e) = entry {
+                if ((e.flags & MadtEntryLocalApic::ENABLED) != 0)
+                    || ((e.flags & MadtEntryLocalApic::ONLINE_CAPABLE) != 0)
+                {
+                    count += 1;
+                }
+            }
+        }
+        assert_ne!(count, 0, "no cores found");
+        count
     }
 
     ///
@@ -131,6 +163,22 @@ impl MadtInfo {
         ioapic_source_override
     }
 }
+
+//==================================================================================================
+// Trait Implementations
+//==================================================================================================
+
+impl Iterator for MadtInfo {
+    type Item = MadtEntry;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.entries.pop_front()
+    }
+}
+
+//==================================================================================================
+// Public Standalone Functions
+//==================================================================================================
 
 pub unsafe fn parse(madt: *const Madt) -> Result<MadtInfo, Error> {
     let base: *const u8 = madt as *const u8;

@@ -26,7 +26,9 @@ use ::error::{
 ///
 /// # Returns
 ///
-/// Upon successful completion, a pointer to the table is returned. Upon failure, `None` is returned instead.
+/// Upon successful completion, a pointer to the table is returned. Upon failure, an error is
+/// returned instead.
+///
 pub unsafe fn find_table_by_sig(
     rsdt: *const AcpiSdtHeader,
     sig: &str,
@@ -39,9 +41,7 @@ pub unsafe fn find_table_by_sig(
     let ptr: *const u32 = rsdt.offset(1) as *const u32;
 
     for i in 0..entries {
-        info!("ptr: {:p}", ptr);
         let ptr = ptr.add(i);
-        info!("ptr: {:p}", ptr);
 
         let table = (ptr.read_unaligned()) as *const AcpiSdtHeader;
 

@@ -72,8 +72,13 @@ impl InterruptController {
         self.0.borrow_mut().ack(intnum)
     }
 
-    pub fn start_core(&self, coreid: u8, entry: VirtualAddress) -> Result<(), Error> {
-        self.0.borrow_mut().start_core(coreid, entry)
+    pub fn start_core(
+        &self,
+        coreid: u8,
+        entry: VirtualAddress,
+        kstack: *const u8,
+    ) -> Result<(), Error> {
+        self.0.borrow_mut().start_core(coreid, entry, kstack)
     }
 
     pub fn unmask(&self, intnum: arch::InterruptNumber) -> Result<(), Error> {
