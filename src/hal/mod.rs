@@ -17,10 +17,7 @@ pub mod platform;
 
 use crate::hal::{
     arch::x86::{
-        cpu::{
-            madt::MadtInfo,
-            ExceptionController,
-        },
+        cpu::ExceptionController,
         Arch,
     },
     cpu::InterruptManager,
@@ -33,7 +30,10 @@ use crate::hal::{
         TruncatedMemoryRegion,
         VirtualAddress,
     },
-    platform::Platform,
+    platform::{
+        madt::MadtInfo,
+        Platform,
+    },
 };
 use ::alloc::collections::linked_list::LinkedList;
 use ::error::{

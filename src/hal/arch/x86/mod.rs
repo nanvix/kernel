@@ -14,10 +14,7 @@ pub mod mem;
 
 use crate::hal::{
     arch::x86::{
-        cpu::{
-            madt::MadtInfo,
-            tss::TssRef,
-        },
+        cpu::tss::TssRef,
         mem::gdt::{
             Gdt,
             GdtPtr,
@@ -27,6 +24,7 @@ use crate::hal::{
         IoMemoryAllocator,
         IoPortAllocator,
     },
+    platform::madt::MadtInfo,
 };
 use ::error::Error;
 

@@ -47,8 +47,6 @@ pub use interrupt::{
     InterruptHandler,
     InterruptNumber,
 };
-pub mod acpi;
-pub mod madt;
 pub mod tss;
 
 //==================================================================================================

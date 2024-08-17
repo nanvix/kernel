@@ -8,7 +8,6 @@
 use crate::hal::{
     arch::x86::{
         self,
-        cpu::madt::MadtInfo,
         Arch,
     },
     io::{
@@ -23,8 +22,11 @@ use crate::hal::{
         PageAligned,
         TruncatedMemoryRegion,
     },
-    platform,
-    platform::pit::Pit,
+    platform::{
+        self,
+        madt::MadtInfo,
+        pit::Pit,
+    },
 };
 use ::alloc::collections::linked_list::LinkedList;
 use ::arch::{

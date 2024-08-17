@@ -20,16 +20,7 @@ use self::{
 };
 use crate::{
     hal::{
-        arch::x86::{
-            cpu::{
-                self,
-                madt::{
-                    self,
-                    MadtInfo,
-                },
-            },
-            mem::mmu,
-        },
+        arch::x86::mem::mmu,
         mem::{
             AccessPermission,
             Address,
@@ -39,6 +30,10 @@ use crate::{
             PhysicalAddress,
             TruncatedMemoryRegion,
             VirtualAddress,
+        },
+        platform::{
+            madt,
+            madt::MadtInfo,
         },
     },
     kmod::KernelModule,
@@ -413,8 +408,12 @@ fn parse_acpiold(
         MbootAcpi::from_raw(ptr as *const u8)?
     };
     let rsdp: Rsdp = unsafe { Rsdp::from_ptr(acpi.rsdp()).unwrap() };
-    let ptr: *const AcpiSdtHeader =
-        unsafe { cpu::acpi::find_table_by_sig(rsdp.rsdt_addr as *const AcpiSdtHeader, "APIC")? };
+    let ptr: *const AcpiSdtHeader = unsafe {
+        crate::hal::platform::acpi::find_table_by_sig(
+            rsdp.rsdt_addr as *const AcpiSdtHeader,
+            "APIC",
+        )?
+    };
     let madt: Option<MadtInfo> = match unsafe { madt::parse(ptr as *const Madt) } {
         Ok(madt) => {
             madt.display();

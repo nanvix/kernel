@@ -26,7 +26,6 @@ use crate::hal::{
                 pic::UninitPic,
                 xapic::UninitXapic,
             },
-            madt::MadtInfo,
         },
         mem::gdt,
     },
@@ -36,6 +35,7 @@ use crate::hal::{
         IoPortAllocator,
     },
     mem::VirtualAddress,
+    platform::madt::MadtInfo,
 };
 use ::alloc::collections::LinkedList;
 use ::arch::cpu::{

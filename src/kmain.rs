@@ -27,7 +27,6 @@ extern crate alloc;
 
 use crate::{
     hal::{
-        arch::x86::cpu::madt::MadtInfo,
         mem::{
             AccessPermission,
             Address,
@@ -36,6 +35,7 @@ use crate::{
             TruncatedMemoryRegion,
             VirtualAddress,
         },
+        platform::madt::MadtInfo,
         Hal,
     },
     kargs::KernelArguments,
@@ -278,7 +278,7 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
     #[cfg(feature = "smp")]
     if let Some(madt) = &madt {
         use crate::{
-            hal::arch::x86::cpu::madt::MadtEntry,
+            hal::platform::madt::MadtEntry,
             mm::kstack::KernelStack,
         };
         use ::arch::cpu::madt::MadtEntryLocalApic;

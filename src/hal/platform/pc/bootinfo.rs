@@ -7,12 +7,12 @@
 
 use crate::{
     hal::{
-        arch::x86::cpu::madt::MadtInfo,
         mem::{
             MemoryRegion,
             TruncatedMemoryRegion,
             VirtualAddress,
         },
+        platform::madt::MadtInfo,
     },
     kmod::KernelModule,
 };
