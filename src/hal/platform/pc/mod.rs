@@ -9,7 +9,6 @@ use crate::hal::{
     arch::x86::{
         self,
         cpu::madt::MadtInfo,
-        mem::mmu,
         Arch,
     },
     io::{
@@ -47,6 +46,7 @@ mod baremetal;
 #[cfg(any(feature = "qemu-isapc", feature = "qemu-pc"))]
 mod qemu;
 
+#[cfg(feature = "bios")]
 pub mod bios;
 pub mod cmos;
 
@@ -80,6 +80,29 @@ pub const TRAMPOLINE_ADDRESS: VirtualAddress = VirtualAddress::new(0x00008000);
 //==================================================================================================
 // Standalone Functions
 //==================================================================================================
+
+#[cfg(feature = "bios")]
+fn register_bios_data_area(
+    memory_regions: &mut LinkedList<MemoryRegion<VirtualAddress>>,
+) -> Result<(), Error> {
+    let bios_data_area: MemoryRegion<VirtualAddress> = MemoryRegion::new(
+        "bios data area",
+        VirtualAddress::from_raw_value(bios::BiosDataArea::BASE)?
+            .align_down(x86::mem::mmu::PAGE_ALIGNMENT)?,
+        mem::PAGE_SIZE,
+        MemoryRegionType::Reserved,
+        AccessPermission::RDWR,
+    )?;
+    memory_regions.push_back(bios_data_area);
+
+    unsafe {
+        // Set warm reset vector.
+        // We intentionally shift the address by 4 bits to get correct segmented address.
+        let vector: u16 = (TRAMPOLINE_ADDRESS.into_raw_value() & 0xFFFF) as u16 >> 4;
+        bios::BiosDataArea::write_reset_vector(vector);
+    }
+    Ok(())
+}
 
 pub fn init(
     ioports: &mut IoPortAllocator,
@@ -120,15 +143,8 @@ pub fn init(
     }
 
     // Register BIOS data area.
-    let bios_data_area: MemoryRegion<VirtualAddress> = MemoryRegion::new(
-        "bios data area",
-        VirtualAddress::from_raw_value(bios::BiosDataArea::BASE)?
-            .align_down(mmu::PAGE_ALIGNMENT)?,
-        mem::PAGE_SIZE,
-        MemoryRegionType::Reserved,
-        AccessPermission::RDWR,
-    )?;
-    memory_regions.push_back(bios_data_area);
+    #[cfg(feature = "bios")]
+    register_bios_data_area(memory_regions)?;
 
     // Trampoline.
     let trampoline: MemoryRegion<VirtualAddress> = MemoryRegion::new(
