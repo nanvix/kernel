@@ -48,6 +48,8 @@ mod qemu;
 
 #[cfg(feature = "bios")]
 pub mod bios;
+
+#[cfg(feature = "cmos")]
 pub mod cmos;
 
 //==================================================================================================
@@ -78,6 +80,16 @@ pub use baremetal::{
 pub const TRAMPOLINE_ADDRESS: VirtualAddress = VirtualAddress::new(0x00008000);
 
 //==================================================================================================
+// Structures
+//==================================================================================================
+
+pub struct Platform {
+    #[cfg(feature = "cmos")]
+    pub _cmos: cmos::Cmos,
+    pub arch: Arch,
+}
+
+//==================================================================================================
 // Standalone Functions
 //==================================================================================================
 
@@ -104,17 +116,27 @@ fn register_bios_data_area(
     Ok(())
 }
 
+#[cfg(feature = "cmos")]
+fn register_cmos(ioports: &mut IoPortAllocator) -> Result<cmos::Cmos, Error> {
+    // Register ports for the CMOS.
+    ioports.register_read_write(cmos::Cmos::DATA)?;
+    ioports.register_read_write(cmos::Cmos::INDEX)?;
+
+    // Enable warm reset. It allows the INIT signal to be asserted without actually causing the
+    // processor to run through its entire BIOS initialization procedure (POST).
+    let mut cmos: cmos::Cmos = cmos::Cmos::init(ioports)?;
+    cmos.write_shutdown_status(cmos::ShutdownStatus::JmpDwordRequestWithoutIntInit);
+
+    Ok(cmos)
+}
+
 pub fn init(
     ioports: &mut IoPortAllocator,
     ioaddresses: &mut IoMemoryAllocator,
     memory_regions: &mut LinkedList<MemoryRegion<VirtualAddress>>,
     mmio_regions: &mut LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
     madt: &Option<MadtInfo>,
-) -> Result<Arch, Error> {
-    // Register ports for the CMOS.
-    ioports.register_read_write(cmos::Cmos::DATA)?;
-    ioports.register_read_write(cmos::Cmos::INDEX)?;
-
+) -> Result<Platform, Error> {
     // Register I/O ports for 8259 PIC.
     ioports.register_read_write(pic::PIC_CTRL_MASTER as u16)?;
     ioports.register_read_write(pic::PIC_DATA_MASTER as u16)?;
@@ -179,5 +201,9 @@ pub fn init(
     )?;
     memory_regions.push_back(bios);
 
-    x86::init(ioports, ioaddresses, madt)
+    Ok(Platform {
+        arch: x86::init(ioports, ioaddresses, madt)?,
+        #[cfg(feature = "cmos")]
+        _cmos: register_cmos(ioports)?,
+    })
 }

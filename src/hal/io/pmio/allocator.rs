@@ -159,6 +159,7 @@ impl IoPortAllocator {
         for entry in self.ports.iter() {
             if let Ok(e) = entry.try_borrow() {
                 if e.port.number() == port.number() {
+                    error!("register(): io port {:#06x} is already registered", port.number());
                     return Err(Error::new(
                         ErrorCode::AddressInUse,
                         "io port is already registered",
