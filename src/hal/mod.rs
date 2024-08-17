@@ -9,6 +9,7 @@ pub mod arch;
 pub mod cpu;
 pub mod io;
 pub mod mem;
+pub mod platform;
 
 //==================================================================================================
 // Imports
@@ -70,7 +71,7 @@ pub fn init(
     let mut ioports: IoPortAllocator = IoPortAllocator::new();
     let mut ioaddresses: IoMemoryAllocator = IoMemoryAllocator::new();
     let mut arch: Arch =
-        arch::init(&mut ioports, &mut ioaddresses, memory_regions, mmio_regions, madt)?;
+        platform::init(&mut ioports, &mut ioaddresses, memory_regions, mmio_regions, madt)?;
 
     // Initialize the interrupt manager.
     let intman: InterruptManager = match arch.controller.take() {

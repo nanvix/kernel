@@ -327,7 +327,7 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
                 // Start core.
                 if let Err(e) = hal.intman.start_core(
                     coreid as u8,
-                    hal::arch::TRAMPOLINE_ADDRESS,
+                    hal::platform::TRAMPOLINE_ADDRESS,
                     kstack.top().into_raw_value() as *const u8,
                 ) {
                     panic!("failed to start application core (e={:?}", e);
@@ -412,5 +412,5 @@ pub extern "C" fn do_ap_start(coreid: u32) {
 pub fn kernel_magic_string() -> ! {
     let magic_string: &str = "PANIC: Hello World!\n";
     unsafe { crate::stdout::puts(magic_string) }
-    hal::arch::shutdown();
+    hal::platform::shutdown();
 }

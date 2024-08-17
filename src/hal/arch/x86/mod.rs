@@ -7,7 +7,6 @@
 
 pub mod cpu;
 pub mod mem;
-mod platform;
 
 //==================================================================================================
 // Imports
@@ -25,17 +24,18 @@ use crate::hal::{
             GdtPtr,
         },
         pit::Pit,
-        platform::{
-            bios::BiosDataArea,
-            cmos::{
-                Cmos,
-                ShutdownStatus,
-            },
-        },
     },
     io::{
         IoMemoryAllocator,
         IoPortAllocator,
+    },
+    platform::{
+        bios::BiosDataArea,
+        cmos::{
+            Cmos,
+            ShutdownStatus,
+        },
+        TRAMPOLINE_ADDRESS,
     },
 };
 use ::error::Error;
@@ -52,13 +52,6 @@ pub use cpu::{
     InterruptController,
     InterruptHandler,
     InterruptNumber,
-};
-pub use platform::{
-    bios,
-    cmos,
-    putb,
-    shutdown,
-    TRAMPOLINE_ADDRESS,
 };
 
 //==================================================================================================
