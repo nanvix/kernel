@@ -52,6 +52,13 @@ export IMAGE := nanvix.iso
 
 include $(BUILD_DIR)/makefile
 
+# Set platform flag for ASM files.
+ifeq ($(MACHINE),microvm)
+export CFLAGS += -D__microvm__
+else
+export CFLAGS += -D__pc__
+endif
+
 #===============================================================================
 # Build Artifacts
 #===============================================================================
