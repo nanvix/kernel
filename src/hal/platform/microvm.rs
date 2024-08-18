@@ -60,6 +60,26 @@ pub unsafe fn putb(b: u8) {
 ///
 /// # Description
 ///
+/// Reads an 8-bit value from the platform's standard input device.
+///
+/// # Return
+///
+/// The 8-bit value read from the standard input device.
+///
+/// # Safety
+///
+/// This function is unsafe for multiple reasons:
+/// - It assumes that the standard input device is present.
+/// - It assumes that the standard input device was properly initialized.
+/// - It does not prevent concurrent access to the standard input device.
+///
+pub unsafe fn getb() -> u8 {
+    ::arch::io::in8(0xe9)
+}
+
+///
+/// # Description
+///
 /// Shutdowns the machine.
 ///
 /// # Return
