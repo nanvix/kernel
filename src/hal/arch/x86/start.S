@@ -25,6 +25,12 @@
 /* Multiboot2 header tag types. */
 #define MBOOT2_HEADER_TAG_END 0
 
+/* Check if compiling for a PC platform */
+#ifdef __pc__
+/* Enable multiboot header. */
+#define __multiboot__
+#endif
+
 /*============================================================================*
  * Imported Symbols                                                           *
  *============================================================================*/
@@ -53,6 +59,9 @@
  * mboot_header                                                           *
  *----------------------------------------------------------------------------*/
 
+/* Check if multiboot header must be enabled. */
+#if defined(__multiboot__)
+
 /*
  *  Multiboot2 header.
  */
@@ -69,6 +78,8 @@ mboot_header:
         .long 8
 mboot_header_end:
 
+#endif
+
 /*----------------------------------------------------------------------------*
  * _do_start()                                                                *
  *----------------------------------------------------------------------------*/
@@ -78,6 +89,14 @@ mboot_header_end:
  */
 .align 4
 _do_start:
+
+    /*
+     * EAX and EBX registers store boot information.
+     *
+     * Multiboot:
+     *  - EAX: Magic value.
+     *  - EBX: Address of multiboot2 structure.
+     */
 
     /*
      * Fill BSS section with zeros.
@@ -97,9 +116,9 @@ _do_start:
     movl $kstack, %esp /* Stack pointer. */
     movl %esp, %ebp    /* Frame pointer. */
 
-    /* Save multiboot parameters on the stack. */
-    push %ebx /* Address of multiboot2 structure. */
-    push %eax /* Magic value.                     */
+    /* Save boot information on the stack. */
+    push %ebx
+    push %eax
 
     /*
      * Clear all general purpose registers,
@@ -117,7 +136,7 @@ _do_start:
     call kmain
     addl $4, %esp
 
-    /* Cleanup multiboot parameters. */
+    /* Cleanup boot information. */
     addl $8, %esp
 
     /* Halt execution. */
