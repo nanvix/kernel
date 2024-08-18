@@ -5,25 +5,41 @@
 // Imports
 //==================================================================================================
 
-use crate::hal::{
-    arch::x86::{
-        self,
-        Arch,
+use crate::{
+    hal::{
+        arch::x86::{
+            self,
+            Arch,
+        },
+        io::{
+            IoMemoryAllocator,
+            IoPortAllocator,
+        },
+        mem::{
+            MemoryRegion,
+            PhysicalAddress,
+            TruncatedMemoryRegion,
+        },
+        platform::{
+            bootinfo::BootInfo,
+            madt::MadtInfo,
+        },
     },
-    io::{
-        IoMemoryAllocator,
-        IoPortAllocator,
-    },
-    mem::{
-        MemoryRegion,
-        TruncatedMemoryRegion,
-    },
-    platform::madt::MadtInfo,
+    kmod::KernelModule,
 };
-use ::alloc::collections::linked_list::LinkedList;
-use ::arch::cpu::pic;
+use ::alloc::{
+    collections::linked_list::LinkedList,
+    string::ToString,
+};
+use ::arch::{
+    cpu::pic,
+    mem,
+};
 use ::error::Error;
-use ::sys::mm::VirtualAddress;
+use ::sys::mm::{
+    Address,
+    VirtualAddress,
+};
 
 //==================================================================================================
 // Structures
@@ -32,6 +48,13 @@ use ::sys::mm::VirtualAddress;
 pub struct Platform {
     pub arch: Arch,
 }
+
+//==================================================================================================
+// Constants
+//==================================================================================================
+
+/// Bootloader magic number.
+pub const MICROVM_BOOT_MAGIC: u32 = 0x0c00ffee;
 
 //==================================================================================================
 // Standalone Functions
@@ -91,6 +114,57 @@ pub fn shutdown() -> ! {
     loop {
         core::hint::spin_loop();
     }
+}
+
+///
+/// # Description
+///
+/// Parses boot information.
+///
+/// # Parameters
+///
+/// - `magic`: Magic number.
+/// - `info`:  Address of the boot information.
+///
+/// # Returns
+///
+/// A new boot information structure.
+///
+pub fn parse_bootinfo(magic: u32, info: usize) -> Result<BootInfo, Error> {
+    // Check if magic number matches what we expect.
+    if magic != MICROVM_BOOT_MAGIC {
+        let reason: &str = "invalid boot magic number";
+        error!("parse_bootinfo(): magic={:#010x}, info={:#010x} (error={})", magic, info, reason);
+        return Err(Error::new(error::ErrorCode::InvalidArgument, reason));
+    }
+
+    trace!("parse_bootinfo(): magic={:#010x}, info={:#010x}", magic, info);
+
+    // Retrieve initrd information.
+    // - Lower 12 bits encode the size of the initrd.
+    // - Higher bits encode the base address of the initrd.
+    let initrd_size: usize = info & 0xfff;
+    let initrd_base: usize = info & !0xfff;
+
+    let mut kernel_modules: LinkedList<KernelModule> = LinkedList::new();
+
+    // Register initrd as a kernel module.
+    if initrd_size != 0 {
+        info!(
+            "parse_bootinfo(): initrd_base={:#010x}, initrd_size={:#010x}",
+            initrd_base, initrd_size
+        );
+
+        // Add kernel module to the list of kernel modules.
+        let module: KernelModule = KernelModule::new(
+            PhysicalAddress::from_raw_value(initrd_base)?,
+            initrd_size * mem::PAGE_SIZE,
+            "initrd".to_string(),
+        );
+        kernel_modules.push_back(module);
+    }
+
+    Ok(BootInfo::new(None, LinkedList::new(), LinkedList::new(), kernel_modules))
 }
 
 pub fn init(
