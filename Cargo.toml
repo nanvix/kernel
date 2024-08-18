@@ -26,6 +26,7 @@ sys = { git = "https://github.com/nanvix/sys", branch = "releases/v1.1.2" }
 default = ["qemu-pc"]
 
 # Machine Types
+microvm = []
 qemu-pc = ["bios", "cmos", "mboot", "pit", "warn"]
 qemu-pc-smp = ["qemu-pc", "smp"]
 qemu-baremetal = ["bios", "cmos", "mboot", "pit", "warn"]
