@@ -45,7 +45,7 @@ impl KernelArguments {
     /// Parses kernel arguments.
     #[cfg(not(feature = "mboot"))]
     pub fn parse(&self) -> Result<BootInfo, Error> {
-        Ok(BootInfo::default())
+        crate::hal::platform::parse_bootinfo(self.mboot_magic, self.mboot_info)
     }
 }
 
