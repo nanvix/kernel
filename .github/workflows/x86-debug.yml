@@ -137,9 +137,28 @@ jobs:
           echo "Magic String: $(cat output.txt | tail -n 1)"
           [ "$(cat output.txt | tail -n 1)" != "PANIC: Hello World!" ] && exit 1 || exit 0 ;
 
+  test-microvm:
+    name: Test (microvm)
+    needs: [test-qemu-baremetal-smp]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Test
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.hostname }}
+        username: ${{ secrets.username }}
+        key: ${{ secrets.sshkey }}
+        port: ${{ secrets.portnum }}
+        script: |
+          cd kernel-debug
+          make TIMEOUT=5 TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 LOG_LEVEL=trace MACHINE=microvm all
+          sudo -E $HOME/microvm/bin/microvm.elf -protected -kernel bin/kernel.elf -mem 256M | tee output.txt
+          echo "Magic String: $(cat output.txt | tail -n 2 | head -n 1)"
+          [ "$(cat output.txt | tail -n 2 | head -n 1)" != "PANIC: Hello World!" ] && exit 1 || exit 0 ;
+
   cleanup:
     name: Cleanup
-    needs: test-qemu-baremetal-smp
+    needs: test-microvm
     if: always()
     runs-on: ubuntu-latest
     steps:
