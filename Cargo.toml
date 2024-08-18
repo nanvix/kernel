@@ -3,7 +3,7 @@
 
 [package]
 name = "kernel"
-version = "0.0.30"
+version = "0.0.31"
 license-file = "LICENSE.txt"
 edition = "2021"
 authors = ["The Maintainers of Nanvix"]
