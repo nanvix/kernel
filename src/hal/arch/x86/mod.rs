@@ -7,7 +7,6 @@
 
 pub mod cpu;
 pub mod mem;
-mod platform;
 
 //==================================================================================================
 // Imports
@@ -15,31 +14,19 @@ mod platform;
 
 use crate::hal::{
     arch::x86::{
-        cpu::{
-            madt::MadtInfo,
-            pit,
-            tss::TssRef,
-        },
+        cpu::tss::TssRef,
         mem::gdt::{
             Gdt,
             GdtPtr,
-        },
-        pit::Pit,
-        platform::{
-            bios::BiosDataArea,
-            cmos::{
-                Cmos,
-                ShutdownStatus,
-            },
         },
     },
     io::{
         IoMemoryAllocator,
         IoPortAllocator,
     },
+    platform::madt::MadtInfo,
 };
 use ::error::Error;
-use ::sys::mm::Address;
 
 //==================================================================================================
 // Exports
@@ -53,13 +40,6 @@ pub use cpu::{
     InterruptHandler,
     InterruptNumber,
 };
-pub use platform::{
-    bios,
-    cmos,
-    putb,
-    shutdown,
-    TRAMPOLINE_ADDRESS,
-};
 
 //==================================================================================================
 // Structures
@@ -71,8 +51,6 @@ pub use platform::{
 /// A type that describes the architecture-specific components.
 ///
 pub struct Arch {
-    /// CMOS memory.
-    _cmos: Option<Cmos>,
     /// Global Descriptor Table (GDT).
     _gdt: Option<Gdt>,
     /// Global Descriptor Table Register (GDTR).
@@ -81,10 +59,7 @@ pub struct Arch {
     pub _tss: Option<TssRef>,
     /// Interrupt controller.
     pub controller: Option<InterruptController>,
-    /// Programmable Interval Timer (PIT).
-    pub _pit: Option<Pit>,
 }
-
 //==================================================================================================
 // Standalone Functions
 //==================================================================================================
@@ -96,29 +71,14 @@ pub fn init(
 ) -> Result<Arch, Error> {
     info!("initializing architecture-specific components...");
 
-    // Enable warm reset. It allows the INIT signal to be asserted without actually causing the
-    // processor to run through its entire BIOS initialization procedure (POST).
-    let mut cmos: Cmos = Cmos::init(ioports)?;
-    cmos.write_shutdown_status(ShutdownStatus::JmpDwordRequestWithoutIntInit);
-
-    unsafe {
-        // Set warm reset vector.
-        // We intentionally shift the address by 4 bits to get correct segmented address.
-        let vector: u16 = (TRAMPOLINE_ADDRESS.into_raw_value() & 0xFFFF) as u16 >> 4;
-        BiosDataArea::write_reset_vector(vector);
-    }
-
     // Initialize interrupt controller.
-    let (gdt, gdtr, tss, controller, pit) = cpu::init(ioports, ioaddresses, madt)?;
+    let (gdt, gdtr, tss, controller) = cpu::init(ioports, ioaddresses, madt)?;
 
     Ok(Arch {
-        // Keep CMOS to prevent others from using the same I/O ports.
-        _cmos: Some(cmos),
         _gdt: Some(gdt),
         _gdtr: Some(gdtr),
         _tss: Some(tss),
         controller: Some(controller),
-        _pit: Some(pit),
     })
 }
 
@@ -126,11 +86,9 @@ pub fn initialize_application_core(kstack: *const u8) -> Result<Arch, Error> {
     let (gdt, gdtr, tss): (Gdt, GdtPtr, TssRef) = cpu::initialize_application_core(kstack)?;
 
     Ok(Arch {
-        _cmos: None,
         _gdt: Some(gdt),
         _gdtr: Some(gdtr),
         _tss: Some(tss),
         controller: None,
-        _pit: None,
     })
 }

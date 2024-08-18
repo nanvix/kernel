@@ -5,7 +5,7 @@
 // Imports
 //==================================================================================================
 
-use crate::hal::arch;
+use crate::hal::platform;
 
 //==================================================================================================
 // Standalone Functions
@@ -31,6 +31,6 @@ use crate::hal::arch;
 pub unsafe fn puts(s: &str) {
     // Write each byte of the string to the standard output device.
     for b in s.bytes() {
-        arch::putb(b);
+        platform::putb(b);
     }
 }

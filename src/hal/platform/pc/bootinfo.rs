@@ -7,12 +7,12 @@
 
 use crate::{
     hal::{
-        arch::x86::cpu::madt::MadtInfo,
         mem::{
             MemoryRegion,
             TruncatedMemoryRegion,
             VirtualAddress,
         },
+        platform::madt::MadtInfo,
     },
     kmod::KernelModule,
 };
@@ -27,6 +27,7 @@ use ::alloc::collections::LinkedList;
 ///
 /// A type that represents information collected by the bootloader.
 ///
+#[derive(Default)]
 pub struct BootInfo {
     /// ACPI MADT information.
     pub madt: Option<MadtInfo>,

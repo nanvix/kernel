@@ -22,7 +22,6 @@ use crate::hal::{
             Gdt,
             GdtPtr,
         },
-        pit::Pit,
         MadtInfo,
     },
     io::{
@@ -32,7 +31,6 @@ use crate::hal::{
 };
 use ::arch::cpu::cpuid;
 use ::error::Error;
-use ::sys::config;
 
 //==================================================================================================
 // Exports
@@ -49,9 +47,6 @@ pub use interrupt::{
     InterruptHandler,
     InterruptNumber,
 };
-pub mod acpi;
-pub mod madt;
-pub mod pit;
 pub mod tss;
 
 //==================================================================================================
@@ -62,7 +57,7 @@ pub fn init(
     ioports: &mut IoPortAllocator,
     ioaddresses: &mut IoMemoryAllocator,
     madt: &Option<MadtInfo>,
-) -> Result<(Gdt, GdtPtr, TssRef, InterruptController, Pit), Error> {
+) -> Result<(Gdt, GdtPtr, TssRef, InterruptController), Error> {
     extern "C" {
         static kstack: u8;
     }
@@ -105,11 +100,9 @@ pub fn init(
     let (gdt, gdtr, tss): (Gdt, GdtPtr, TssRef) = unsafe { Gdt::init(&kstack)? };
     unsafe { idt::init() };
 
-    let pit: Pit = Pit::new(ioports, config::kernel::TIMER_FREQ)?;
-
     let controller: InterruptController = interrupt::init(ioports, ioaddresses, madt)?;
 
-    Ok((gdt, gdtr, tss, controller, pit))
+    Ok((gdt, gdtr, tss, controller))
 }
 
 pub fn initialize_application_core(kstack: *const u8) -> Result<(Gdt, GdtPtr, TssRef), Error> {

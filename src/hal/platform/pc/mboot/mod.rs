@@ -6,7 +6,6 @@
 //==================================================================================================
 
 mod acpi;
-pub mod info;
 mod memory_map;
 mod module;
 
@@ -21,16 +20,7 @@ use self::{
 };
 use crate::{
     hal::{
-        arch::x86::{
-            cpu::{
-                self,
-                madt::{
-                    self,
-                    MadtInfo,
-                },
-            },
-            mem::mmu,
-        },
+        arch::x86::mem::mmu,
         mem::{
             AccessPermission,
             Address,
@@ -41,9 +31,12 @@ use crate::{
             TruncatedMemoryRegion,
             VirtualAddress,
         },
+        platform::{
+            madt,
+            madt::MadtInfo,
+        },
     },
     kmod::KernelModule,
-    mboot::info::BootInfo,
 };
 use ::alloc::{
     collections::LinkedList,
@@ -54,9 +47,12 @@ use ::alloc::{
 };
 use ::arch::{
     self,
-    cpu::acpi::{
-        AcpiSdtHeader,
-        Rsdp,
+    cpu::{
+        acpi::{
+            AcpiSdtHeader,
+            Rsdp,
+        },
+        madt::Madt,
     },
 };
 use ::core::mem;
@@ -64,7 +60,8 @@ use ::error::{
     Error,
     ErrorCode,
 };
-use arch::cpu::madt::Madt;
+
+use crate::hal::platform::bootinfo::BootInfo;
 
 //==================================================================================================
 // Constants
@@ -411,8 +408,12 @@ fn parse_acpiold(
         MbootAcpi::from_raw(ptr as *const u8)?
     };
     let rsdp: Rsdp = unsafe { Rsdp::from_ptr(acpi.rsdp()).unwrap() };
-    let ptr: *const AcpiSdtHeader =
-        unsafe { cpu::acpi::find_table_by_sig(rsdp.rsdt_addr as *const AcpiSdtHeader, "APIC")? };
+    let ptr: *const AcpiSdtHeader = unsafe {
+        crate::hal::platform::acpi::find_table_by_sig(
+            rsdp.rsdt_addr as *const AcpiSdtHeader,
+            "APIC",
+        )?
+    };
     let madt: Option<MadtInfo> = match unsafe { madt::parse(ptr as *const Madt) } {
         Ok(madt) => {
             madt.display();

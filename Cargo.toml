@@ -3,7 +3,7 @@
 
 [package]
 name = "kernel"
-version = "0.0.30"
+version = "0.0.31"
 license-file = "LICENSE.txt"
 edition = "2021"
 authors = ["The Maintainers of Nanvix"]
@@ -23,17 +23,27 @@ slab = { git = "https://github.com/nanvix/slab", branch = "releases/v0.0.2" }
 sys = { git = "https://github.com/nanvix/sys", branch = "releases/v1.1.2" }
 
 [features]
-default = ["pc"]
-baremetal = ["warn"]
-baremetal-smp = ["baremetal", "smp", "warn"]
-pc = ["warn"]
-pc-smp = ["pc", "smp", "warn"]
-isapc = ["warn"]
+default = ["qemu-pc"]
+
+# Machine Types
+qemu-pc = ["bios", "cmos", "mboot", "pit", "warn"]
+qemu-pc-smp = ["qemu-pc", "smp"]
+qemu-baremetal = ["bios", "cmos", "mboot", "pit", "warn"]
+qemu-baremetal-smp = ["qemu-baremetal", "smp"]
+qemu-isapc = ["bios", "cmos", "mboot", "pit", "warn"]
+
+# Machine Features
+smp = []
+bios = []
+cmos = []
+mboot = []
+pit = []
+
+# Logging Features
 trace = ["info"]
 info = ["warn"]
 warn = ["error"]
 error = []
-smp = []
 
 [profile.release]
 opt-level = 3

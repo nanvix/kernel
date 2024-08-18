@@ -9,6 +9,7 @@ pub mod arch;
 pub mod cpu;
 pub mod io;
 pub mod mem;
+pub mod platform;
 
 //==================================================================================================
 // Imports
@@ -16,10 +17,7 @@ pub mod mem;
 
 use crate::hal::{
     arch::x86::{
-        cpu::{
-            madt::MadtInfo,
-            ExceptionController,
-        },
+        cpu::ExceptionController,
         Arch,
     },
     cpu::InterruptManager,
@@ -31,6 +29,10 @@ use crate::hal::{
         MemoryRegion,
         TruncatedMemoryRegion,
         VirtualAddress,
+    },
+    platform::{
+        madt::MadtInfo,
+        Platform,
     },
 };
 use ::alloc::collections::linked_list::LinkedList;
@@ -49,7 +51,7 @@ use ::error::{
 /// A type that describes components of the hardware abstraction layer.
 ///
 pub struct Hal {
-    pub _arch: Arch,
+    pub _platform: Platform,
     pub ioports: IoPortAllocator,
     pub ioaddresses: IoMemoryAllocator,
     pub intman: cpu::InterruptManager,
@@ -69,11 +71,11 @@ pub fn init(
 
     let mut ioports: IoPortAllocator = IoPortAllocator::new();
     let mut ioaddresses: IoMemoryAllocator = IoMemoryAllocator::new();
-    let mut arch: Arch =
-        arch::init(&mut ioports, &mut ioaddresses, memory_regions, mmio_regions, madt)?;
+    let mut platform: Platform =
+        platform::init(&mut ioports, &mut ioaddresses, memory_regions, mmio_regions, madt)?;
 
     // Initialize the interrupt manager.
-    let intman: InterruptManager = match arch.controller.take() {
+    let intman: InterruptManager = match platform.arch.controller.take() {
         Some(controller) => InterruptManager::new(controller)?,
         None => {
             let reason: &str = "no interrupt controller found";
@@ -87,7 +89,7 @@ pub fn init(
     let excpman: ExceptionController = unsafe { ExceptionController::init()? };
 
     Ok(Hal {
-        _arch: arch,
+        _platform: platform,
         ioports,
         ioaddresses,
         intman,

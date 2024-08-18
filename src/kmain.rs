@@ -27,7 +27,6 @@ extern crate alloc;
 
 use crate::{
     hal::{
-        arch::x86::cpu::madt::MadtInfo,
         mem::{
             AccessPermission,
             Address,
@@ -36,6 +35,7 @@ use crate::{
             TruncatedMemoryRegion,
             VirtualAddress,
         },
+        platform::madt::MadtInfo,
         Hal,
     },
     kargs::KernelArguments,
@@ -78,7 +78,6 @@ mod kimage;
 mod klog;
 mod kmod;
 mod kpanic;
-mod mboot;
 mod mm;
 mod pm;
 mod stdout;
@@ -279,7 +278,7 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
     #[cfg(feature = "smp")]
     if let Some(madt) = &madt {
         use crate::{
-            hal::arch::x86::cpu::madt::MadtEntry,
+            hal::platform::madt::MadtEntry,
             mm::kstack::KernelStack,
         };
         use ::arch::cpu::madt::MadtEntryLocalApic;
@@ -327,7 +326,7 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
                 // Start core.
                 if let Err(e) = hal.intman.start_core(
                     coreid as u8,
-                    hal::arch::TRAMPOLINE_ADDRESS,
+                    hal::platform::TRAMPOLINE_ADDRESS,
                     kstack.top().into_raw_value() as *const u8,
                 ) {
                     panic!("failed to start application core (e={:?}", e);
@@ -412,5 +411,5 @@ pub extern "C" fn do_ap_start(coreid: u32) {
 pub fn kernel_magic_string() -> ! {
     let magic_string: &str = "PANIC: Hello World!\n";
     unsafe { crate::stdout::puts(magic_string) }
-    hal::arch::shutdown();
+    hal::platform::shutdown();
 }
