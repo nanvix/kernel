@@ -40,7 +40,12 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd kernel-release
-          make TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace all
+          make TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace all MACHINE=qemu-isapc
+          make TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace all MACHINE=qemu-pc
+          make TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace all MACHINE=qemu-baremetal
+          make TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace all MACHINE=qemu-pc-smp
+          make TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace all MACHINE=qemu-baremetal-smp
+          make TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace all MACHINE=microvm
 
   test-qemu-isapc:
     name: Test (qemu-isapc)
