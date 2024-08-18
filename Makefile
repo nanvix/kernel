@@ -83,7 +83,9 @@ endif
 # Build Rules
 #===============================================================================
 
-all: make-dirs | $(OBJS)
+# Builds everything.
+# We intentionally cleanup object files not managed by Cargo to ensure correctness.
+all: make-dirs clean-objs | $(OBJS)
 	@PATH=$(GCC_HOME):"$(PATH)" $(CARGO) build --all $(CARGO_FLAGS) $(CARGO_FEATURES)
 ifeq ($(RELEASE), yes)
 	cp --preserve target/$(TARGET)/release/$(BIN) $(BINARIES_DIR)/$(BIN)
@@ -91,11 +93,16 @@ else
 	cp --preserve target/$(TARGET)/debug/$(BIN) $(BINARIES_DIR)/$(BIN)
 endif
 
+# Cleans up everything.
 clean:
 	$(CARGO) clean
 	rm -rf Cargo.lock
 	rm -rf $(OBJS)
 	rm -rf $(BINARIES_DIR)/$(BIN)
+
+# Cleans up object files.
+clean-objs:
+	rm -rf $(OBJS)
 
 # Creates build directories.
 make-dirs:
