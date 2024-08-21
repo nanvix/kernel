@@ -80,7 +80,6 @@ pub fn init(
     // Identity map memory regions.
     while let Some(region) = regions.pop_front() {
         info!("booking: {:?}", region);
-        assert!(region.size() <= mem::PGTAB_SIZE);
 
         let raw_vaddr: usize = region.start().into_raw_value();
 
