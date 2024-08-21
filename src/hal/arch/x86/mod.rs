@@ -78,7 +78,7 @@ pub fn init(
         _gdt: Some(gdt),
         _gdtr: Some(gdtr),
         _tss: Some(tss),
-        controller: Some(controller),
+        controller,
     })
 }
 

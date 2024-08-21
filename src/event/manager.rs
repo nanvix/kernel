@@ -106,6 +106,7 @@ impl Drop for EventOwnership {
 }
 
 struct EventManagerInner {
+    interrupt_capable: bool,
     nevents: usize,
     wait: Option<Rc<Condvar>>,
     interrupt_ownership: [Option<ProcessIdentifier>; usize::BITS as usize],
@@ -414,6 +415,13 @@ impl EventManagerInner {
     }
 
     fn wakeup_interrupt(&mut self, interrupts: usize) -> Result<(), Error> {
+        // Check if an spurious interrupt was received.
+        if self.interrupt_capable {
+            let reason: &str = "interrupt manager is not capable of handlin ginterrupts";
+            error!("wakeup_interrupt(): reason={:?}", reason);
+            return Err(Error::new(ErrorCode::OperationNotSupported, &reason));
+        }
+
         self.nevents += 1;
         let idx: usize = interrupts.trailing_zeros() as usize;
         let ev = Event::from(sys::event::InterruptEvent::try_from(idx)?);
@@ -597,6 +605,12 @@ impl EventManager {
 
         match ev {
             Event::Interrupt(interrupt_event) => {
+                // Check if the interrupt manager is capable of handling interrupts.
+                if !em.try_borrow_mut()?.interrupt_capable {
+                    let reason: &str = "interrupt manager is not capable of handlin ginterrupts";
+                    error!("do_evctrl(): {:?} (reason={:?})", reason, req);
+                    return Err(Error::new(ErrorCode::OperationNotSupported, &reason));
+                }
                 em.try_borrow_mut()?
                     .do_evctrl_interrupt(Some(pid), interrupt_event, req)?;
             },
@@ -772,7 +786,34 @@ pub fn init(hal: &mut Hal) -> Result<(), Error> {
         *entry = None;
     }
 
+    let mut interrupt_capable: bool = true;
+
+    // TODO: add comments about safety.
+    unsafe {
+        hal.excpman.register_handler(exception_handler)?;
+    }
+
+    if let Some(intman) = &mut hal.intman {
+        for intnum in InterruptNumber::VALUES {
+            if intnum == InterruptNumber::Timer {
+                continue;
+            }
+            match intman.register_handler(intnum, interrupt_handler) {
+                Ok(()) => {
+                    if let Err(e) = intman.unmask(intnum) {
+                        warn!("failed to mask interrupt: {:?}", e);
+                    }
+                },
+                Err(e) => warn!("failed to register interrupt handler: {:?}", e),
+            }
+        }
+    } else {
+        warn!("no interrupt manager found, disabling interrupt support");
+        interrupt_capable = false;
+    }
+
     let em: RefCell<EventManagerInner> = RefCell::new(EventManagerInner {
+        interrupt_capable,
         nevents: 0,
         pending_interrupts,
         interrupt_ownership,
@@ -787,25 +828,6 @@ pub fn init(hal: &mut Hal) -> Result<(), Error> {
 
     unsafe {
         MANAGER = Some(manager);
-    }
-
-    // TODO: add comments about safety.
-    unsafe {
-        hal.excpman.register_handler(exception_handler)?;
-    }
-
-    for intnum in InterruptNumber::VALUES {
-        if intnum == InterruptNumber::Timer {
-            continue;
-        }
-        match hal.intman.register_handler(intnum, interrupt_handler) {
-            Ok(()) => {
-                if let Err(e) = hal.intman.unmask(intnum) {
-                    warn!("failed to mask interrupt: {:?}", e);
-                }
-            },
-            Err(e) => warn!("failed to register interrupt handler: {:?}", e),
-        }
     }
 
     Ok(())

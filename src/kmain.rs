@@ -324,11 +324,16 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
                 let cores_online: usize = unsafe { CORES_ONLINE.load(Ordering::Acquire) };
 
                 // Start core.
-                if let Err(e) = hal.intman.start_core(
-                    coreid as u8,
-                    hal::platform::TRAMPOLINE_ADDRESS,
-                    kstack.top().into_raw_value() as *const u8,
-                ) {
+                if let Err(e) = hal
+                    .intman
+                    .as_mut()
+                    .expect("interrupts must be supported")
+                    .start_core(
+                        coreid as u8,
+                        hal::platform::TRAMPOLINE_ADDRESS,
+                        kstack.top().into_raw_value() as *const u8,
+                    )
+                {
                     panic!("failed to start application core (e={:?}", e);
                 }
 
@@ -353,9 +358,11 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
         // Initialize kernel call dispatcher.
         kcall::init();
 
-        // Enable timer interrupts.
-        if let Err(e) = hal.intman.unmask(hal::arch::InterruptNumber::Timer) {
-            panic!("failed to mask timer interrupt: {:?}", e);
+        // Enable timer interrupts, if they are supported.
+        if let Some(intman) = &mut hal.intman {
+            if let Err(e) = intman.unmask(hal::arch::InterruptNumber::Timer) {
+                panic!("failed to mask timer interrupt: {:?}", e);
+            }
         }
 
         kcall::handler(&mut hal, &mut mm, &mut pm)

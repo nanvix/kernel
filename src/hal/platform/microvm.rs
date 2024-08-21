@@ -31,10 +31,7 @@ use ::alloc::{
     collections::linked_list::LinkedList,
     string::ToString,
 };
-use ::arch::{
-    cpu::pic,
-    mem,
-};
+use ::arch::mem;
 use ::error::Error;
 use ::sys::mm::{
     Address,
@@ -174,12 +171,6 @@ pub fn init(
     _mmio_regions: &mut LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
     madt: &Option<MadtInfo>,
 ) -> Result<Platform, Error> {
-    // Register I/O ports for 8259 PIC.
-    ioports.register_read_write(pic::PIC_CTRL_MASTER as u16)?;
-    ioports.register_read_write(pic::PIC_DATA_MASTER as u16)?;
-    ioports.register_read_write(pic::PIC_CTRL_SLAVE as u16)?;
-    ioports.register_read_write(pic::PIC_DATA_SLAVE as u16)?;
-
     Ok(Platform {
         arch: x86::init(ioports, ioaddresses, madt)?,
     })

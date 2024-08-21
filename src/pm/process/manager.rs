@@ -89,6 +89,9 @@ use ::sys::{
 /// A type that represents the process manager.
 ///
 struct ProcessManagerInner {
+    /// Is this platform interrupt capable?
+    interrupt_capable: bool,
+    /// Reason for the last interrupt.
     interrupt_reason: Option<InterruptReason>,
     /// Next process identifier.
     next_pid: ProcessIdentifier,
@@ -108,7 +111,12 @@ struct ProcessManagerInner {
 
 impl ProcessManagerInner {
     /// Initializes the process manager.
-    pub fn new(kernel: ReadyThread, root: Vmem, tm: ThreadManager) -> Self {
+    pub fn new(
+        interrupt_capable: bool,
+        kernel: ReadyThread,
+        root: Vmem,
+        tm: ThreadManager,
+    ) -> Self {
         let kernel: RunnableProcess = RunnableProcess::new(
             ProcessIdentifier::from(0),
             ProcessIdentity::new(UserIdentifier::ROOT, GroupIdentifier::ROOT),
@@ -119,6 +127,7 @@ impl ProcessManagerInner {
         let (kernel, _): (RunningProcess, *mut ContextInformation) = kernel.run();
 
         Self {
+            interrupt_capable,
             interrupt_reason: None,
             next_pid: ProcessIdentifier::from(1),
             ready: LinkedList::new(),
@@ -136,6 +145,7 @@ impl ProcessManagerInner {
         user_func: VirtualAddress,
         kernel_func: VirtualAddress,
         kernel_stack: VirtualAddress,
+        enable_interrupts: bool,
     ) -> Result<ContextInformation, Error> {
         let cr3: u32 = vmem.pgdir().physical_address()?.into_raw_value() as u32;
         let esp: u32 = unsafe {
@@ -144,6 +154,7 @@ impl ProcessManagerInner {
                 user_stack.into_raw_value(),
                 user_func.into_raw_value(),
                 kernel_func.into_raw_value(),
+                enable_interrupts,
             )
         } as u32;
         let esp0: u32 = kernel_stack.into_raw_value() as u32;
@@ -169,8 +180,14 @@ impl ProcessManagerInner {
         let top = unsafe { (base.into_raw_value() as *mut u8).add(size) };
         let kernel_stack = VirtualAddress::from_raw_value(top as usize)?;
 
-        let context: ContextInformation =
-            Self::forge_user_context(vmem, user_stack, user_func, kernel_func, kernel_stack)?;
+        let context: ContextInformation = Self::forge_user_context(
+            vmem,
+            user_stack,
+            user_func,
+            kernel_func,
+            kernel_stack,
+            self.interrupt_capable,
+        )?;
 
         while let Some(kpage) = kpages.pop() {
             vmem.add_private_kernel_page(kpage);
@@ -933,11 +950,16 @@ impl ProcessManager {
 //==================================================================================================
 
 /// Initializes the process manager.
-pub fn init(kernel: ReadyThread, root: Vmem, tm: ThreadManager) -> ProcessManager {
+pub fn init(
+    interrupt_capable: bool,
+    kernel: ReadyThread,
+    root: Vmem,
+    tm: ThreadManager,
+) -> ProcessManager {
     // TODO: check for double initialization.
 
     let pm: Rc<RefCell<ProcessManagerInner>> =
-        Rc::new(RefCell::new(ProcessManagerInner::new(kernel, root, tm)));
+        Rc::new(RefCell::new(ProcessManagerInner::new(interrupt_capable, kernel, root, tm)));
 
     unsafe { PROCESS_MANAGER = Some(ProcessManager(pm.clone())) };
 

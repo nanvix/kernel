@@ -75,6 +75,7 @@ pub use number::InterruptNumber;
 /// - `user_stack_top`: Top address of user stack.
 /// - `user_func`: User function.
 /// - `kernel_func`: Kernel function.
+/// - `enable_interrupts`: Enable interrupts?
 ///
 /// # Returns
 ///
@@ -91,6 +92,7 @@ pub unsafe fn forge_user_stack(
     user_stack_top: usize,
     user_func: usize,
     kernel_func: usize,
+    enable_interrupts: bool,
 ) -> *mut u8 {
     let mut stackp: *mut u32 = kernel_stack_top as *mut u32;
 
@@ -104,7 +106,11 @@ pub unsafe fn forge_user_stack(
 
     // EFLAGS
     let mut eflags: EflagsRegister = eflags::EflagsRegister::default();
-    eflags.interrupt = eflags::InterruptFlag::Set;
+    eflags.interrupt = if enable_interrupts {
+        eflags::InterruptFlag::Set
+    } else {
+        eflags::InterruptFlag::Clear
+    };
     stackp = stackp.offset(-1);
     *stackp = eflags.into_raw_value();
 
@@ -222,9 +228,16 @@ pub fn init(
         // MADT is not present.
         None => {
             info!("madt not present, falling back to 8259 pic");
-            let pic: UninitPic = UninitPic::new(ioports, idt::INT_OFF)?;
-            let intmap: InterruptMap = InterruptMap::new();
-            Ok(InterruptController::new(Some(pic), None, None, intmap)?)
+            match UninitPic::new(ioports, idt::INT_OFF) {
+                Ok(pic) => {
+                    let intmap: InterruptMap = InterruptMap::new();
+                    Ok(InterruptController::new(Some(pic), None, None, intmap)?)
+                },
+                Err(e) => {
+                    warn!("failed to initialize 8259 pic (error={:?})", e);
+                    Ok(InterruptController::new(None, None, None, InterruptMap::new())?)
+                },
+            }
         },
     }
 }

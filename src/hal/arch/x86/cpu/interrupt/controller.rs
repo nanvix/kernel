@@ -140,7 +140,7 @@ impl InterruptController {
 
         let reason: &str = "no interrupt controller found";
         error!("{}", reason);
-        Err(Error::new(ErrorCode::InvalidArgument, reason))
+        Err(Error::new(ErrorCode::NoSuchDevice, reason))
     }
 
     pub fn ack(&mut self, intnum: InterruptNumber) -> Result<(), Error> {
