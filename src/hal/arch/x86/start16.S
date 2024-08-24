@@ -4,32 +4,8 @@
  */
 
 /*============================================================================*
- * Imported Symbols                                                           *
+ * Constants                                                                  *
  *============================================================================*/
-
-.extern _do_ap_start
-
-/*============================================================================*
- * Exported Symbols                                                           *
- *============================================================================*/
-
-.globl _ap_trampoline
-
-/*----------------------------------------------------------------------------*
- * _ap_trampoline()                                                           *
- *----------------------------------------------------------------------------*/
-
-.section .trampoline,"ax",@progbits
-
-/*
- * AP Entry point.
- *
- * This is the initial boot code for the application processors.
- * It is responsible for setting up the stack and jumping to the
- * C entry point.
- * This code is copied to MP_BOOT_ADDR which is not linked,
- * thus we must write explicit addresses.
- */
 
 #define SEG_NULLASM                                             \
         .word 0, 0;                                             \
@@ -46,8 +22,25 @@
 #define STA_W     0x2       // Writeable (non-executable segments)
 #define STA_R     0x2       // Readable (executable segments)
 
-.align 4
+/*============================================================================*
+ * Imported Symbols                                                           *
+ *============================================================================*/
+
+.extern _do_ap_start
+
+/*============================================================================*
+ * Trampoline Section                                                         *
+ *============================================================================*/
+
+.section .trampoline,"ax",@progbits
+
+/*----------------------------------------------------------------------------*
+ * _ap_trampoline()                                                           *
+ *----------------------------------------------------------------------------*/
+
 .code16
+.align 4
+.globl _ap_trampoline
 _ap_trampoline:
   cli
 
