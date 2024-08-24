@@ -79,8 +79,19 @@ mboot_header_end:
  * Entry point.
  */
 .align 4
+#if defined(__multiboot__)
 .globl _do_start
 _do_start:
+#else
+.globl _do_start2
+_do_start2:
+    mov $0x10, %dx
+    mov %dx, %ds
+    mov %dx, %es
+    mov %dx, %fs
+    mov %dx, %gs
+    mov %dx, %ss
+#endif
 
     /*
      * EAX and EBX registers store boot information.

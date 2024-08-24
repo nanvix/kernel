@@ -22,6 +22,12 @@
 #define STA_W     0x2       // Writeable (non-executable segments)
 #define STA_R     0x2       // Readable (executable segments)
 
+/* Check if compiling for a PC platform */
+#ifdef __pc__
+/* Enable multiboot header. */
+#define __multiboot__
+#endif
+
 /*============================================================================*
  * Imported Symbols                                                           *
  *============================================================================*/
@@ -37,6 +43,32 @@
 /*----------------------------------------------------------------------------*
  * _ap_trampoline()                                                           *
  *----------------------------------------------------------------------------*/
+
+/*
+ * Entry point.
+ */
+#if !defined(__multiboot__)
+.code16
+.align 4
+.globl _do_start
+_do_start:
+
+    # Zero data segment registers DS, ES, and SS.
+    xorw  %dx,%dx
+    movw  %dx,%ds
+    movw  %dx,%es
+    movw  %dx,%fs
+    movw  %dx,%gs
+    movw  %dx,%ss
+
+    lgdt  gdtptr
+    movl  %cr0, %edx
+    orl   $1, %edx
+    mov   %edx, %cr0
+
+    .extern _do_start2
+    jmpl $0x8, $_do_start2
+#endif
 
 .code16
 .align 4
