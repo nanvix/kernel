@@ -44,7 +44,11 @@ export TOOLCHAIN_DIR ?= $(ROOT_DIR)/toolchain
 export KERNEL := nanvix.$(EXEC_FORMAT)
 
 # Image
+ifeq ($(MACHINE),microvm)
+export IMAGE := $(BINARIES_DIR)/kernel.elf
+else
 export IMAGE := nanvix.iso
+endif
 
 #===============================================================================
 # Toolchain
