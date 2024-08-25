@@ -15,7 +15,7 @@ name = "kernel"
 path = "src/kmain.rs"
 
 [dependencies]
-arch = { git = "https://github.com/nanvix/arch", branch = "releases/v1.2.0" }
+arch = { git = "https://github.com/nanvix/arch", branch = "releases/v1.2.1" }
 bitmap = { git = "https://github.com/nanvix/bitmap", branch = "releases/v0.0.2" }
 error = { git = "https://github.com/nanvix/error", branch = "releases/v0.0.2" }
 raw-array = { git = "https://github.com/nanvix/raw-array", branch = "releases/v0.0.2" }
