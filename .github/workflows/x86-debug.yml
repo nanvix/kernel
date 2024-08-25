@@ -152,9 +152,9 @@ jobs:
         script: |
           cd kernel-debug
           make TIMEOUT=5 TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 LOG_LEVEL=trace MACHINE=microvm all
-          sudo -E $HOME/toolchain/microvm/bin/microvm -protected -kernel bin/kernel.elf -mem 256M | tee output.txt
-          echo "Magic String: $(cat output.txt | tail -n 2 | head -n 1)"
-          [ "$(cat output.txt | tail -n 2 | head -n 1)" != "PANIC: Hello World!" ] && exit 1 || exit 0 ;
+          sudo -E $HOME/toolchain/microvm/bin/microvm -kernel bin/kernel.elf -memory 256M | tee output.txt
+          echo "Magic String: $(cat output.txt | tail -n 1)"
+          [ "$(cat output.txt | tail -n 1)" != "PANIC: Hello World!" ] && exit 1 || exit 0 ;
 
   cleanup:
     name: Cleanup

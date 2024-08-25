@@ -4,32 +4,8 @@
  */
 
 /*============================================================================*
- * Imported Symbols                                                           *
+ * Constants                                                                  *
  *============================================================================*/
-
-.extern _do_ap_start
-
-/*============================================================================*
- * Exported Symbols                                                           *
- *============================================================================*/
-
-.globl _ap_trampoline
-
-/*----------------------------------------------------------------------------*
- * _ap_trampoline()                                                           *
- *----------------------------------------------------------------------------*/
-
-.section .trampoline,"ax",@progbits
-
-/*
- * AP Entry point.
- *
- * This is the initial boot code for the application processors.
- * It is responsible for setting up the stack and jumping to the
- * C entry point.
- * This code is copied to MP_BOOT_ADDR which is not linked,
- * thus we must write explicit addresses.
- */
 
 #define SEG_NULLASM                                             \
         .word 0, 0;                                             \
@@ -46,8 +22,57 @@
 #define STA_W     0x2       // Writeable (non-executable segments)
 #define STA_R     0x2       // Readable (executable segments)
 
-.align 4
+/* Check if compiling for a PC platform */
+#ifdef __pc__
+/* Enable multiboot header. */
+#define __multiboot__
+#endif
+
+/*============================================================================*
+ * Imported Symbols                                                           *
+ *============================================================================*/
+
+.extern _do_ap_start
+
+/*============================================================================*
+ * Trampoline Section                                                         *
+ *============================================================================*/
+
+.section .trampoline,"ax",@progbits
+
+/*----------------------------------------------------------------------------*
+ * _ap_trampoline()                                                           *
+ *----------------------------------------------------------------------------*/
+
+/*
+ * Entry point.
+ */
+#if !defined(__multiboot__)
 .code16
+.align 4
+.globl _do_start
+_do_start:
+
+    # Zero data segment registers DS, ES, and SS.
+    xorw  %dx,%dx
+    movw  %dx,%ds
+    movw  %dx,%es
+    movw  %dx,%fs
+    movw  %dx,%gs
+    movw  %dx,%ss
+
+    lgdt  gdtptr
+    movl  %cr0, %edx
+    orl   $1, %edx
+    mov   %edx, %cr0
+
+    .extern _do_start2
+    jmpl $0x8, $_do_start2
+#endif
+
+.code16
+.align 4
+.globl _ap_trampoline
 _ap_trampoline:
   cli
 

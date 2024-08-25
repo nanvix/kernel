@@ -41,15 +41,6 @@
 .extern do_ap_start
 
 /*============================================================================*
- * Exported Symbols                                                           *
- *============================================================================*/
-
-.globl _do_start
-.globl kstack
-.globl _do_ap_start
-.globl kredzone
-
-/*============================================================================*
  * Bootstrap Section                                                          *
  *============================================================================*/
 
@@ -88,7 +79,19 @@ mboot_header_end:
  * Entry point.
  */
 .align 4
+#if defined(__multiboot__)
+.globl _do_start
 _do_start:
+#else
+.globl _do_start2
+_do_start2:
+    mov $0x10, %dx
+    mov %dx, %ds
+    mov %dx, %es
+    mov %dx, %fs
+    mov %dx, %gs
+    mov %dx, %ss
+#endif
 
     /*
      * EAX and EBX registers store boot information.
@@ -144,6 +147,7 @@ _do_start:
        jmp 1b
 
 .align 4
+.globl _do_ap_start
 _do_ap_start:
     mov $0x10, %ax
     mov %ax, %ds
@@ -196,11 +200,13 @@ _do_ap_start:
 
 .align  PAGE_SIZE
 .space KSTACK_SIZE
+.globl kstack
 kstack:
 
 /*----------------------------------------------------------------------------*
  * Kernel Red Zone                                                            *
  *----------------------------------------------------------------------------*/
 
+.globl kredzone
 kredzone:
 .space KREDZONE_SIZE
