@@ -96,15 +96,18 @@ pub fn init(hal: &mut Hal, root: Vmem) -> Result<ProcessManager, Error> {
 
     check_config();
 
-    // Register the timer handler.
-    info!("registering timer interrupt handler...");
-    hal.intman
-        .register_handler(InterruptNumber::Timer, timer_handler)?;
+    let interrupt_capable: bool = hal.intman.is_some();
+
+    // Register timer handler, if interrupts are supported.
+    if let Some(intman) = &mut hal.intman {
+        info!("registering timer interrupt handler...");
+        intman.register_handler(InterruptNumber::Timer, timer_handler)?;
+    }
 
     // Initialize the thread manager.
     info!("initializing the thread manager...");
     let (kernel, tm): (ReadyThread, ThreadManager) = thread::init();
-    let pm: ProcessManager = process::init(kernel, root, tm);
+    let pm: ProcessManager = process::init(interrupt_capable, kernel, root, tm);
 
     Ok(pm)
 }

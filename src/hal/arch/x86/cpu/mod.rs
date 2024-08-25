@@ -57,7 +57,7 @@ pub fn init(
     ioports: &mut IoPortAllocator,
     ioaddresses: &mut IoMemoryAllocator,
     madt: &Option<MadtInfo>,
-) -> Result<(Gdt, GdtPtr, TssRef, InterruptController), Error> {
+) -> Result<(Gdt, GdtPtr, TssRef, Option<InterruptController>), Error> {
     extern "C" {
         static kstack: u8;
     }
@@ -100,7 +100,14 @@ pub fn init(
     let (gdt, gdtr, tss): (Gdt, GdtPtr, TssRef) = unsafe { Gdt::init(&kstack)? };
     unsafe { idt::init() };
 
-    let controller: InterruptController = interrupt::init(ioports, ioaddresses, madt)?;
+    let controller: Option<InterruptController> = match interrupt::init(ioports, ioaddresses, madt)
+    {
+        Ok(controller) => Some(controller),
+        Err(e) => {
+            error!("failed to initialize interrupt controller (error={:?})", e);
+            None
+        },
+    };
 
     Ok((gdt, gdtr, tss, controller))
 }

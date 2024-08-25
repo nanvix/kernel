@@ -36,10 +36,7 @@ use crate::hal::{
     },
 };
 use ::alloc::collections::linked_list::LinkedList;
-use ::error::{
-    Error,
-    ErrorCode,
-};
+use ::error::Error;
 
 //==================================================================================================
 // Structures
@@ -54,7 +51,7 @@ pub struct Hal {
     pub _platform: Platform,
     pub ioports: IoPortAllocator,
     pub ioaddresses: IoMemoryAllocator,
-    pub intman: cpu::InterruptManager,
+    pub intman: Option<cpu::InterruptManager>,
     pub excpman: ExceptionController,
 }
 
@@ -75,12 +72,11 @@ pub fn init(
         platform::init(&mut ioports, &mut ioaddresses, memory_regions, mmio_regions, madt)?;
 
     // Initialize the interrupt manager.
-    let intman: InterruptManager = match platform.arch.controller.take() {
-        Some(controller) => InterruptManager::new(controller)?,
+    let intman: Option<InterruptManager> = match platform.arch.controller.take() {
+        Some(controller) => Some(InterruptManager::new(controller)?),
         None => {
-            let reason: &str = "no interrupt controller found";
-            error!("{}", reason);
-            return Err(Error::new(ErrorCode::NoSuchDevice, reason));
+            warn!("no interrupt controller found");
+            None
         },
     };
 
