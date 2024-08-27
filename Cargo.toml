@@ -15,30 +15,39 @@ name = "kernel"
 path = "src/kmain.rs"
 
 [dependencies]
-arch = { git = "https://github.com/nanvix/arch", branch = "releases/v1.2.1" }
+arch = { git = "https://github.com/nanvix/arch", branch = "releases/v1.3.0", features = [
+    "acpi",
+    "cpuid",
+    "ioapic",
+    "madt",
+    "msr",
+    "pic",
+    "xapic",
+] }
 bitmap = { git = "https://github.com/nanvix/bitmap", branch = "releases/v0.0.3" }
 error = { git = "https://github.com/nanvix/error", branch = "releases/v0.0.3" }
 raw-array = { git = "https://github.com/nanvix/raw-array", branch = "releases/v0.0.3" }
 slab = { git = "https://github.com/nanvix/slab", branch = "releases/v0.0.3" }
-sys = { git = "https://github.com/nanvix/sys", branch = "releases/v1.1.3" }
+sys = { git = "https://github.com/nanvix/sys", branch = "releases/v1.2.0" }
 
 [features]
-default = ["qemu-pc"]
+default = ["microvm"]
 
 # Machine Types
 microvm = []
-qemu-pc = ["bios", "cmos", "mboot", "pit", "warn"]
+pc = ["bios", "cmos", "mboot", "pit", "warn"]
+qemu-pc = ["pc"]
 qemu-pc-smp = ["qemu-pc", "smp"]
-qemu-baremetal = ["bios", "cmos", "mboot", "pit", "warn"]
+qemu-baremetal = ["pc"]
 qemu-baremetal-smp = ["qemu-baremetal", "smp"]
-qemu-isapc = ["bios", "cmos", "mboot", "pit", "warn"]
+qemu-isapc = ["pc"]
 
 # Machine Features
 smp = []
 bios = []
 cmos = []
 mboot = []
-pit = []
+pit = ["arch/pit"]
 
 # Logging Features
 trace = ["info"]
