@@ -80,7 +80,6 @@ mod kmod;
 mod kpanic;
 mod mm;
 mod pm;
-mod stdout;
 mod uart;
 
 //==================================================================================================
@@ -417,6 +416,6 @@ pub extern "C" fn do_ap_start(coreid: u32) {
 ///
 pub fn kernel_magic_string() -> ! {
     let magic_string: &str = "PANIC: Hello World!\n";
-    unsafe { crate::stdout::puts(magic_string) }
+    unsafe { crate::klog::puts(magic_string) }
     hal::platform::shutdown();
 }

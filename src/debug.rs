@@ -28,7 +28,7 @@ fn do_debug(buf: &[u8]) -> Result<(), Error> {
             return Err(Error::new(ErrorCode::InvalidArgument, reason));
         },
     };
-    unsafe { crate::stdout::puts(message) }
+    unsafe { crate::klog::puts(message) }
 
     Ok(())
 }
