@@ -93,7 +93,7 @@ pub unsafe fn putb(b: u8) {
 /// - It assumes that the standard input device was properly initialized.
 /// - It does not prevent concurrent access to the standard input device.
 ///
-pub unsafe fn get32() -> u32 {
+pub unsafe fn in32() -> u32 {
     ::arch::io::in32(0xe9)
 }
 
