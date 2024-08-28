@@ -3,7 +3,7 @@
 
 [package]
 name = "kernel"
-version = "0.1.3"
+version = "0.1.4"
 license-file = "LICENSE.txt"
 edition = "2021"
 authors = ["The Maintainers of Nanvix"]
@@ -24,11 +24,11 @@ arch = { git = "https://github.com/nanvix/arch", branch = "releases/v1.3.0", fea
     "pic",
     "xapic",
 ] }
-bitmap = { git = "https://github.com/nanvix/bitmap", branch = "releases/v0.0.3" }
-error = { git = "https://github.com/nanvix/error", branch = "releases/v0.0.3" }
-raw-array = { git = "https://github.com/nanvix/raw-array", branch = "releases/v0.0.3" }
-slab = { git = "https://github.com/nanvix/slab", branch = "releases/v0.0.3" }
-sys = { git = "https://github.com/nanvix/sys", branch = "releases/v1.2.0" }
+bitmap = { git = "https://github.com/nanvix/bitmap", branch = "releases/v0.0.4" }
+error = { git = "https://github.com/nanvix/error", branch = "releases/v0.0.4" }
+raw-array = { git = "https://github.com/nanvix/raw-array", branch = "releases/v0.0.4" }
+slab = { git = "https://github.com/nanvix/slab", branch = "releases/v0.0.4" }
+sys = { git = "https://github.com/nanvix/sys", branch = "releases/v1.2.1" }
 
 [features]
 default = ["microvm"]
