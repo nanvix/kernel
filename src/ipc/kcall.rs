@@ -18,7 +18,10 @@ use ::error::{
     ErrorCode,
 };
 use ::sys::{
-    ipc::Message,
+    ipc::{
+        Message,
+        MessageType,
+    },
     pm::ProcessIdentifier,
 };
 
@@ -53,10 +56,33 @@ pub fn send(pm: &mut ProcessManager, args: &KcallArgs) -> i32 {
 
     // TODO: Check if source process has permission to send message to destination process.
 
-    // Post message.
-    match do_send(pm, src, message) {
-        Ok(_) => 0,
-        Err(e) => e.code.into_errno(),
+    // Route message based on its type.
+    match message.message_type {
+        // Inter-kernel communication.
+        MessageType::Ikc => {
+            cfg_if::cfg_if! {
+                // Check if standard input/output is available.
+                if #[cfg(feature = "stdio")] {
+                    // It is, so write message to standard output.
+                    match crate::stdio::write(message) {
+                        Ok(_) => 0,
+                        Err(e) => e.code.into_errno(),
+                    }
+                } else {
+                    // Standard input/output is not available.
+                    error!("send(): stdio is not available");
+                    ErrorCode::ProtocolNotSupported.into_errno()
+                }
+            }
+        },
+        // Local-host communication.
+        _ => {
+            // Post message.
+            match do_send(pm, src, message) {
+                Ok(_) => 0,
+                Err(e) => e.code.into_errno(),
+            }
+        },
     }
 }
 

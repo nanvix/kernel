@@ -24,6 +24,7 @@ arch = { git = "https://github.com/nanvix/arch", branch = "releases/v1.3.0", fea
     "pic",
     "xapic",
 ] }
+cfg-if = "1.0.0"
 bitmap = { git = "https://github.com/nanvix/bitmap", branch = "releases/v0.0.4" }
 error = { git = "https://github.com/nanvix/error", branch = "releases/v0.0.4" }
 raw-array = { git = "https://github.com/nanvix/raw-array", branch = "releases/v0.0.4" }

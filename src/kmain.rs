@@ -16,6 +16,7 @@
 #![feature(linked_list_remove)] // vmem uses this.
 #![feature(linked_list_retain)] // vmem uses this.
 #![feature(never_type)] // exit() uses this.
+#![feature(stmt_expr_attributes)] // stdio uses this.
 #![no_std]
 #![no_main]
 
@@ -80,6 +81,8 @@ mod kmod;
 mod kpanic;
 mod mm;
 mod pm;
+#[cfg(feature = "stdio")]
+mod stdio;
 mod uart;
 
 //==================================================================================================
