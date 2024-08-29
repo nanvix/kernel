@@ -139,7 +139,7 @@ impl InterruptController {
         }
 
         let reason: &str = "no interrupt controller found";
-        error!("{}", reason);
+        warn!("new(): {}", reason);
         Err(Error::new(ErrorCode::NoSuchDevice, reason))
     }
 
