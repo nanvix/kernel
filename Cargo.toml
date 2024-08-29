@@ -3,7 +3,7 @@
 
 [package]
 name = "kernel"
-version = "0.2.0"
+version = "0.3.0"
 license-file = "LICENSE.txt"
 edition = "2021"
 authors = ["The Maintainers of Nanvix"]
@@ -24,6 +24,7 @@ arch = { git = "https://github.com/nanvix/arch", branch = "releases/v1.3.0", fea
     "pic",
     "xapic",
 ] }
+cfg-if = "1.0.0"
 bitmap = { git = "https://github.com/nanvix/bitmap", branch = "releases/v0.0.4" }
 error = { git = "https://github.com/nanvix/error", branch = "releases/v0.0.4" }
 raw-array = { git = "https://github.com/nanvix/raw-array", branch = "releases/v0.0.4" }
@@ -34,7 +35,7 @@ sys = { git = "https://github.com/nanvix/sys", branch = "releases/v1.3.0" }
 default = ["qemu-pc"]
 
 # Machine Types
-microvm = []
+microvm = ["stdio"]
 pc = ["bios", "cmos", "mboot", "pit", "warn"]
 qemu-pc = ["pc"]
 qemu-pc-smp = ["qemu-pc", "smp"]
@@ -42,12 +43,13 @@ qemu-baremetal = ["pc"]
 qemu-baremetal-smp = ["qemu-baremetal", "smp"]
 qemu-isapc = ["pc"]
 
-# Machine Features
+# Platform Features
 smp = []
 bios = []
 cmos = []
 mboot = []
 pit = ["arch/pit"]
+stdio = []
 
 # Logging Features
 trace = ["info"]

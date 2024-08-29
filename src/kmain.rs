@@ -16,6 +16,7 @@
 #![feature(linked_list_remove)] // vmem uses this.
 #![feature(linked_list_retain)] // vmem uses this.
 #![feature(never_type)] // exit() uses this.
+#![feature(stmt_expr_attributes)] // stdio uses this.
 #![no_std]
 #![no_main]
 
@@ -80,7 +81,8 @@ mod kmod;
 mod kpanic;
 mod mm;
 mod pm;
-mod stdout;
+#[cfg(feature = "stdio")]
+mod stdio;
 mod uart;
 
 //==================================================================================================
@@ -417,6 +419,6 @@ pub extern "C" fn do_ap_start(coreid: u32) {
 ///
 pub fn kernel_magic_string() -> ! {
     let magic_string: &str = "PANIC: Hello World!\n";
-    unsafe { crate::stdout::puts(magic_string) }
+    unsafe { crate::klog::puts(magic_string) }
     hal::platform::shutdown();
 }

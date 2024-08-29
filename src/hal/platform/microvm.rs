@@ -80,6 +80,27 @@ pub unsafe fn putb(b: u8) {
 ///
 /// # Description
 ///
+/// Writes the 32 bit value `val` to the platform's standard output device.
+///
+/// # Parameters
+///
+/// - `val`: Value to write.
+///
+/// # Safety
+///
+/// This function is unsafe for multiple reasons:
+/// - It assumes that the standard output device is present.
+/// - It assumes that the standard output device was properly initialized.
+/// - It does not prevent concurrent access to the standard output device.
+///
+#[cfg(feature = "stdio")]
+pub unsafe fn out32(val: u32) {
+    ::arch::io::out32(0xe9, val);
+}
+
+///
+/// # Description
+///
 /// Reads a 32-bit value from the platform's standard input device.
 ///
 /// # Return
@@ -93,7 +114,8 @@ pub unsafe fn putb(b: u8) {
 /// - It assumes that the standard input device was properly initialized.
 /// - It does not prevent concurrent access to the standard input device.
 ///
-pub unsafe fn get32() -> u32 {
+#[cfg(feature = "stdio")]
+pub unsafe fn in32() -> u32 {
     ::arch::io::in32(0xe9)
 }
 

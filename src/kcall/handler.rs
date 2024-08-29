@@ -108,6 +108,26 @@ pub fn kcall_handler(hal: &mut Hal, mm: &mut VirtMemoryManager, pm: &mut Process
             },
         };
 
+        // Attempt to read an inter-kernel communication message from the kernel's standard input.
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "stdio")] {
+                match crate::stdio::read() {
+                    // No message is available.
+                    Ok(None) => {},
+                    // A message is available.
+                    Ok(Some(message)) => {
+                        if let Err(e) = EventManager::post_message(pm, message.destination, message) {
+                            warn!("failed to post message (error={:?})", e);
+                        }
+                    }
+                    // Failed to read message.
+                    Err(e) => {
+                        warn!("failed to read message (error={:?})", e);
+                    }
+                }
+            }
+        }
+
         match pm.harvest_zombies() {
             Ok(None) => {},
             Ok(Some((pid, status))) => {
