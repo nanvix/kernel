@@ -73,6 +73,31 @@ macro_rules! trace{
 ///
 /// # Description
 ///
+/// Logs a DEBUG-level formatted message.
+///
+/// # Parameters
+///
+/// - `$($arg:tt)*`: Formatted message to be logged.
+///
+macro_rules! debug{
+	( $($arg:tt)* ) => ({
+		#[cfg(feature = "smp")]
+		use crate::macros::STDOUT_LOCK;
+		use ::core::fmt::Write;
+		if crate::klog::MAX_LEVEL >= crate::klog::KlogLevel::Debug {
+			#[cfg(feature = "smp")]
+			let _guard: crate::pm::sync::spinlock::SpinlockGuard = STDOUT_LOCK.lock();
+			let _ = write!(
+				&mut crate::klog::Klog::get(module_path!(), crate::klog::KlogLevel::Debug),
+				$($arg)*
+			);
+		}
+	})
+}
+
+///
+/// # Description
+///
 /// Logs a WARN-level formatted message.
 ///
 /// # Parameters

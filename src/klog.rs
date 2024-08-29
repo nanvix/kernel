@@ -29,6 +29,7 @@ pub enum KlogLevel {
     Error,
     Warn,
     Info,
+    Debug,
     Trace,
 }
 
@@ -39,6 +40,8 @@ pub enum KlogLevel {
 /// Maximum log level.
 pub const MAX_LEVEL: KlogLevel = if cfg!(feature = "trace") {
     KlogLevel::Trace
+} else if cfg!(feature = "debug") {
+    KlogLevel::Debug
 } else if cfg!(feature = "info") {
     KlogLevel::Info
 } else if cfg!(feature = "warn") {
@@ -92,6 +95,7 @@ impl core::fmt::Debug for KlogLevel {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             KlogLevel::Trace => write!(f, "TRACE"),
+            KlogLevel::Debug => write!(f, "DEBUG"),
             KlogLevel::Info => write!(f, "INFO"),
             KlogLevel::Warn => write!(f, "WARN"),
             KlogLevel::Error => write!(f, "ERROR"),
