@@ -418,7 +418,6 @@ pub extern "C" fn do_ap_start(coreid: u32) {
 /// This function never returns.
 ///
 pub fn kernel_magic_string() -> ! {
-    let magic_string: &str = "PANIC: Hello World!\n";
-    unsafe { crate::klog::puts(magic_string) }
+    debug!("hello, world!");
     hal::platform::shutdown();
 }
