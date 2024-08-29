@@ -104,7 +104,7 @@ pub fn init(
     {
         Ok(controller) => Some(controller),
         Err(e) => {
-            error!("failed to initialize interrupt controller (error={:?})", e);
+            warn!("failed to initialize interrupt controller (error={:?})", e);
             None
         },
     };
