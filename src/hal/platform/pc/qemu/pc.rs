@@ -15,7 +15,9 @@
 /// This function never returns.
 ///
 pub fn shutdown() -> ! {
-    unsafe { arch::io::out16(0x604, 0x2000) };
+    unsafe {
+        arch::cpu::halt();
+    };
     loop {
         core::hint::spin_loop();
     }
