@@ -32,7 +32,7 @@ slab = { git = "https://github.com/nanvix/slab", branch = "releases/v0.0.4" }
 sys = { git = "https://github.com/nanvix/sys", branch = "releases/v1.3.0" }
 
 [features]
-default = ["qemu-pc"]
+default = ["qemu-pc", "enable-pic"]
 
 # Machine Types
 microvm = ["stdio"]
@@ -46,10 +46,12 @@ qemu-isapc = ["pc"]
 # Platform Features
 smp = []
 bios = []
+disable-pic = []
 cmos = []
 mboot = []
 pit = ["arch/pit"]
 stdio = []
+enable-pic = []
 
 # Logging Features
 trace = ["debug"]

@@ -72,12 +72,19 @@ pub fn init(
         platform::init(&mut ioports, &mut ioaddresses, memory_regions, mmio_regions, madt)?;
 
     // Initialize the interrupt manager.
+    #[cfg(feature = "enable-pic")]
     let intman: Option<InterruptManager> = match platform.arch.controller.take() {
         Some(controller) => Some(InterruptManager::new(controller)?),
         None => {
             warn!("no interrupt controller found");
             None
         },
+    };
+
+    #[cfg(not(feature = "enable-pic"))]
+    let intman: Option<InterruptManager> = {
+        info!("PIC support is disabled by feature flag");
+        None
     };
 
     // Initialize exception manager.
