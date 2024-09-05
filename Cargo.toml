@@ -15,7 +15,7 @@ name = "kernel"
 path = "src/kmain.rs"
 
 [dependencies]
-arch = { git = "https://github.com/nanvix/arch", branch = "releases/v1.3.0", features = [
+arch = { git = "https://github.com/nanvix/arch", branch = "releases/v1.3.1", features = [
     "acpi",
     "cpuid",
     "ioapic",
