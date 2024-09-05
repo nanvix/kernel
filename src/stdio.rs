@@ -5,6 +5,7 @@
 // Imports
 //==================================================================================================
 
+use crate::hal::platform;
 use ::core::mem;
 use ::error::{
     Error,
@@ -14,13 +15,6 @@ use ::sys::ipc::{
     Message,
     MessageType,
 };
-
-//==================================================================================================
-// Constants
-//==================================================================================================
-
-/// End of file flag.
-const EOF_FLAG: u32 = 1 << 31;
 
 //==================================================================================================
 // Standalone Functions
@@ -59,11 +53,8 @@ pub fn write(message: Message) -> Result<(), Error> {
     // Write message to the kernel's standard output.
     // SAFETY: The standard output is present, initialized and thread-safe to write.
     unsafe {
-        for b in bytes {
-            crate::hal::platform::out32(b as u32);
-        }
-        let eof: u32 = EOF_FLAG;
-        crate::hal::platform::out32(eof);
+        // NOTE: we assume that page is tagged as writethrough-enabled and cache-disabled.
+        platform::vmbus_write(&bytes as *const u8);
     }
 
     Ok(())
@@ -80,37 +71,30 @@ pub fn write(message: Message) -> Result<(), Error> {
 /// messages.  Upon failure, an error is returned instead.
 ///
 pub fn read() -> Result<Option<Message>, Error> {
-    // Read first byte.
-    let value: u32 = unsafe { crate::hal::platform::in32() };
-
-    // Check for EOF.
-    if value & EOF_FLAG != 0 {
-        return Ok(None);
-    }
-
-    // NOTE: trace command after reading the first byte, to avoid flooding the log.
-    trace!("read()");
-
     const NBYTES: usize = core::mem::size_of::<Message>();
     let mut message: [u8; NBYTES] = [0; NBYTES];
 
-    message[0] = (value & 0xff) as u8;
-
-    // Read message from platform.
-    for byte in message[1..].iter_mut() {
-        let value: u32 = unsafe { crate::hal::platform::in32() };
-
-        // Check for EOF.
-        if value & EOF_FLAG != 0 {
-            break;
-        }
-
-        *byte = (value & 0xff) as u8;
-    }
+    // Read message from the kernel's standard input.
+    // SAFETY: The standard input is present, initialized and thread-safe to read.
+    unsafe {
+        // NOTE: we assume that page is tagged as writethrough-enabled and cache-disabled.
+        platform::vmbus_read(&mut message as *mut u8);
+    };
 
     // Convert message to Message struct.
     match Message::try_from_bytes(message) {
-        Ok(message) => Ok(Some(message)),
+        Ok(message) => {
+            // Check if message is empty.
+            if message.message_type == MessageType::Empty {
+                Ok(None)
+            } else {
+                // NOTE: trace command after reading the first byte, to avoid flooding the log.
+                trace!("read()");
+                Ok(Some(message))
+            }
+        },
+        // No message available.
+        Err(e) if e.code == ErrorCode::NoMessageAvailable => Ok(None),
         Err(e) => {
             warn!("read(): {:?} ", e);
             Err(e)
