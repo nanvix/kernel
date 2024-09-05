@@ -3,7 +3,7 @@
 
 [package]
 name = "kernel"
-version = "0.3.2"
+version = "0.3.3"
 license-file = "LICENSE.txt"
 edition = "2021"
 authors = ["The Maintainers of Nanvix"]
@@ -15,7 +15,7 @@ name = "kernel"
 path = "src/kmain.rs"
 
 [dependencies]
-arch = { git = "https://github.com/nanvix/arch", branch = "releases/v1.3.0", features = [
+arch = { git = "https://github.com/nanvix/arch", branch = "releases/v1.3.1", features = [
     "acpi",
     "cpuid",
     "ioapic",
