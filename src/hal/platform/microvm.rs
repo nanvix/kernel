@@ -53,6 +53,14 @@ pub struct Platform {
 /// Bootloader magic number.
 pub const MICROVM_BOOT_MAGIC: u32 = 0x0c00ffee;
 
+/// Port number used for write requests to the standard output.
+#[cfg(feature = "stdio")]
+const STDOUT_PORT: u16 = 0xe9;
+
+/// Port number used read requests from the standard input.
+#[cfg(feature = "stdio")]
+const STDIN_PORT: u16 = 0xea;
+
 //==================================================================================================
 // Standalone Functions
 //==================================================================================================
@@ -80,11 +88,11 @@ pub unsafe fn putb(b: u8) {
 ///
 /// # Description
 ///
-/// Writes the 32 bit value `val` to the platform's standard output device.
+/// Places a write request to the platform's standard output device.
 ///
 /// # Parameters
 ///
-/// - `val`: Value to write.
+/// - `addr`: Address where data should be written from.
 ///
 /// # Safety
 ///
@@ -94,18 +102,20 @@ pub unsafe fn putb(b: u8) {
 /// - It does not prevent concurrent access to the standard output device.
 ///
 #[cfg(feature = "stdio")]
-pub unsafe fn out32(val: u32) {
-    ::arch::io::out32(0xe9, val);
+pub unsafe fn vmbus_write(addr: *const u8) {
+    use core::hint;
+
+    hint::black_box(::arch::io::out32(STDOUT_PORT, addr as u32));
 }
 
 ///
 /// # Description
 ///
-/// Reads a 32-bit value from the platform's standard input device.
+/// Places a read request to the platform's standard input device.
 ///
-/// # Return
+/// # Parameters
 ///
-/// The 32-bit value read from the standard input device.
+/// - `addr`: Address where data should be read into.
 ///
 /// # Safety
 ///
@@ -115,8 +125,10 @@ pub unsafe fn out32(val: u32) {
 /// - It does not prevent concurrent access to the standard input device.
 ///
 #[cfg(feature = "stdio")]
-pub unsafe fn in32() -> u32 {
-    ::arch::io::in32(0xe9)
+pub unsafe fn vmbus_read(addr: *mut u8) {
+    use core::hint;
+
+    hint::black_box(::arch::io::out32(STDIN_PORT, addr as u32))
 }
 
 ///
