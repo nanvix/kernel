@@ -16,7 +16,7 @@
 ///
 pub fn shutdown() -> ! {
     unsafe {
-        arch::cpu::halt();
+        arch::io::out16(0x604, 0x2000);
     };
     loop {
         core::hint::spin_loop();
