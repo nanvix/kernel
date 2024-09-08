@@ -27,7 +27,7 @@ use crate::{
         thread::ReadyThread,
     },
 };
-use ::error::Error;
+use ::sys::error::Error;
 use ::sys::pm::ProcessIdentifier;
 
 //==================================================================================================

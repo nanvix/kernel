@@ -29,12 +29,14 @@ use crate::{
 };
 use ::alloc::collections::LinkedList;
 use ::arch::mem;
-use ::error::{
-    Error,
-    ErrorCode,
+use ::sys::{
+    collections::RawArray,
+    config,
+    error::{
+        Error,
+        ErrorCode,
+    },
 };
-use ::raw_array::RawArray;
-use ::sys::config;
 
 //==================================================================================================
 // Exports

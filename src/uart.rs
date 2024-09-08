@@ -19,7 +19,7 @@ use crate::hal::io::{
 };
 use ::alloc::rc::Rc;
 use ::core::cell::RefCell;
-use ::error::Error;
+use ::sys::error::Error;
 
 //==================================================================================================
 // Constants

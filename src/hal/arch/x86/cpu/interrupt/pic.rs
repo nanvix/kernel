@@ -20,7 +20,7 @@ use ::arch::{
     cpu::pic,
     io,
 };
-use ::error::{
+use ::sys::error::{
     Error,
     ErrorCode,
 };

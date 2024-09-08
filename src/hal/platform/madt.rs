@@ -27,7 +27,7 @@ use ::arch::cpu::{
         MadtLocalApicAddressOverride,
     },
 };
-use ::error::Error;
+use ::sys::error::Error;
 
 //==================================================================================================
 // Structures

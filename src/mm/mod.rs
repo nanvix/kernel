@@ -52,7 +52,7 @@ use ::alloc::{
 };
 use ::arch::mem;
 use ::core::panic;
-use ::error::Error;
+use ::sys::error::Error;
 use ::sys::{
     config,
     mm,

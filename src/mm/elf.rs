@@ -29,7 +29,7 @@ use crate::{
     },
 };
 use ::arch::mem;
-use ::error::{
+use ::sys::error::{
     Error,
     ErrorCode,
 };

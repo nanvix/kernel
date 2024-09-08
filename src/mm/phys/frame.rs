@@ -15,13 +15,17 @@ use ::arch::mem::{
     self,
     paging::FrameNumber,
 };
-use ::bitmap::Bitmap;
-use ::error::{
-    Error,
-    ErrorCode,
+use ::sys::{
+    collections::{
+        Bitmap,
+        RawArray,
+    },
+    constants,
+    error::{
+        Error,
+        ErrorCode,
+    },
 };
-use ::raw_array::RawArray;
-use ::sys::constants;
 
 //==================================================================================================
 // Structures

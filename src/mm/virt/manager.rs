@@ -37,7 +37,7 @@ use ::alloc::{
     vec::Vec,
 };
 use ::arch::mem;
-use ::error::Error;
+use ::sys::error::Error;
 
 //==================================================================================================
 // Structures

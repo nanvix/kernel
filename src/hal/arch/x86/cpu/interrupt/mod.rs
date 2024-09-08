@@ -48,7 +48,7 @@ use ::arch::cpu::{
         MadtEntryLocalApic,
     },
 };
-use ::error::Error;
+use ::sys::error::Error;
 
 //==================================================================================================
 // Exports

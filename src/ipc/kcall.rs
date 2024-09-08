@@ -13,7 +13,7 @@ use crate::{
         ProcessManager,
     },
 };
-use ::error::{
+use ::sys::error::{
     Error,
     ErrorCode,
 };

@@ -21,7 +21,7 @@ use ::core::{
         DerefMut,
     },
 };
-use ::error::Error;
+use ::sys::error::Error;
 
 //==================================================================================================
 // User Frame Pool Inner

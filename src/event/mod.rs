@@ -18,7 +18,7 @@ use crate::hal::Hal;
 // Exports
 //==================================================================================================
 
-use ::error::Error;
+use ::sys::error::Error;
 pub use kcall::*;
 pub use manager::{
     EventManager,

@@ -14,7 +14,7 @@ use crate::{
     mm::kredzone,
 };
 use ::arch::cpu::xapic;
-use ::error::{
+use ::sys::error::{
     Error,
     ErrorCode,
 };

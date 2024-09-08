@@ -14,7 +14,7 @@ use crate::{
     kcall::KcallArgs,
     pm::ProcessManager,
 };
-use ::error::{
+use ::sys::error::{
     Error,
     ErrorCode,
 };

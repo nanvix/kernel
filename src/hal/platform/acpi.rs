@@ -13,7 +13,7 @@
 
 use ::arch::cpu::acpi::AcpiSdtHeader;
 use ::core::ffi::CStr;
-use ::error::{
+use ::sys::error::{
     Error,
     ErrorCode,
 };
