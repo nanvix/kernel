@@ -10,6 +10,10 @@ authors = ["The Maintainers of Nanvix"]
 description = "Nanvix Kernel"
 homepage = "https://github.com/nanvix"
 
+[lib]
+name = "sys"
+path = "src/lib.rs"
+
 [[bin]]
 name = "kernel"
 path = "src/kmain.rs"
@@ -25,7 +29,6 @@ arch = { git = "https://github.com/nanvix/arch", branch = "releases/v1.3.1", fea
     "xapic",
 ] }
 cfg-if = "1.0.0"
-sys = { git = "https://github.com/nanvix/sys", branch = "releases/v2.0.0" }
 
 [build-dependencies]
 cc = "1.1.18"
