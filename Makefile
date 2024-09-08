@@ -37,45 +37,30 @@ export SOURCES_DIR   := $(ROOT_DIR)/src
 export TOOLCHAIN_DIR ?= $(ROOT_DIR)/toolchain
 
 #===============================================================================
-# Libraries and Binaries
-#===============================================================================
-
-# Binary
-export KERNEL := nanvix.$(EXEC_FORMAT)
-
-# Image
-ifeq ($(MACHINE),microvm)
-export IMAGE := $(BINARIES_DIR)/kernel.elf
-else
-export IMAGE := nanvix.iso
-endif
-
-#===============================================================================
 # Toolchain
 #===============================================================================
 
-include $(BUILD_DIR)/makefile
-
-# Set platform flag for ASM files.
-ifeq ($(MACHINE),microvm)
-export CFLAGS += -D__microvm__
-else
-export CFLAGS += -D__pc__
-endif
+# Toolchain
+export CARGO := $(HOME)/.cargo/bin/cargo
+export RUSTC := $(HOME)/.cargo/bin/rustc
 
 #===============================================================================
 # Build Artifacts
 #===============================================================================
 
-# Asembly Source Files
-ASM = $(wildcard src/hal/arch/x86/*.S)
-
-# Object Files
-OBJS = $(ASM:.S=.$(TARGET).o)
-
-# Objects
+# Binary
+export EXEC_FORMAT := elf
 export NAME := kernel
 export BIN := $(NAME).$(EXEC_FORMAT)
+
+# Image
+ifeq ($(MACHINE),microvm)
+export IMAGE_FORMAT := $(EXEC_FORMAT)
+export IMAGE := $(BINARIES_DIR)/$(BIN)
+else
+export IMAGE_FORMAT := iso
+export IMAGE := nanvix.iso
+endif
 
 #===============================================================================
 # Toolchain Configuration
@@ -90,14 +75,21 @@ ifneq ($(MACHINE),)
 export CARGO_FEATURES += --features $(MACHINE)
 endif
 
+# Cargo Options
+ifeq ($(RELEASE), yes)
+export CARGO_FLAGS := --release
+endif
+
 #===============================================================================
 # Build Rules
 #===============================================================================
 
+export DEFAULT_GOAL := all
+
 # Builds everything.
 # We intentionally cleanup object files not managed by Cargo to ensure correctness.
-all: make-dirs clean-objs | $(OBJS)
-	@PATH=$(GCC_HOME):"$(PATH)" $(CARGO) build --all $(CARGO_FLAGS) $(CARGO_FEATURES)
+all: make-dirs
+	$(CARGO) build --all $(CARGO_FLAGS) $(CARGO_FEATURES)
 ifeq ($(RELEASE), yes)
 	cp --preserve target/$(TARGET)/release/$(BIN) $(BINARIES_DIR)/$(BIN)
 else
@@ -111,20 +103,22 @@ clean:
 	rm -rf $(OBJS)
 	rm -rf $(BINARIES_DIR)/$(BIN)
 
-# Cleans up object files.
-clean-objs:
-	rm -rf $(OBJS)
-
 # Creates build directories.
 make-dirs:
 	@mkdir -p $(BINARIES_DIR)
 	@mkdir -p $(LIBRARIES_DIR)
 
-# Builds an assembly source file.
-%.$(TARGET).o: %.S
-ifeq ($(VERBOSE), no)
-	@echo [CC] $@
-	@$(CC) $(CFLAGS) $< -c -o $@
-else
-	$(CC) $(CFLAGS) $< -c -o $@
+# Builds the system image.
+image: all
+ifeq ($(IMAGE), $(filter %.iso, $(IMAGE)))
+	cp -f $(BINARIES_DIR)/*.$(EXEC_FORMAT) $(IMAGE_DIR)/
+	grub-mkrescue  $(IMAGE_DIR) -o $(IMAGE)
 endif
+
+# Runs system in release mode.
+run: image
+	bash $(SCRIPTS_DIR)/run.sh $(TARGET) $(MACHINE) $(IMAGE) --no-debug $(TIMEOUT)
+
+# Runs system in debug mode.
+debug: image
+	bash $(SCRIPTS_DIR)/run.sh $(TARGET) $(MACHINE) $(IMAGE) --debug $(TIMEOUT)

@@ -3,7 +3,7 @@
 
 [package]
 name = "kernel"
-version = "0.4.1"
+version = "0.4.2"
 license-file = "LICENSE.txt"
 edition = "2021"
 authors = ["The Maintainers of Nanvix"]
@@ -30,6 +30,10 @@ error = { git = "https://github.com/nanvix/error", branch = "releases/v0.0.5" }
 raw-array = { git = "https://github.com/nanvix/raw-array", branch = "releases/v0.0.5" }
 slab = { git = "https://github.com/nanvix/slab", branch = "releases/v0.0.5" }
 sys = { git = "https://github.com/nanvix/sys", branch = "releases/v1.4.0" }
+
+[build-dependencies]
+cc = "1.1.18"
+cfg-if = "1.0.0"
 
 [features]
 default = ["qemu-pc"]
