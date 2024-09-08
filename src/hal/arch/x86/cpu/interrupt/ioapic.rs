@@ -10,7 +10,7 @@ use crate::hal::{
     mem::Address,
 };
 use ::arch::cpu::ioapic;
-use ::error::{
+use ::sys::error::{
     Error,
     ErrorCode,
 };

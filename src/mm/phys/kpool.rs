@@ -17,7 +17,7 @@ use ::alloc::{
     vec::Vec,
 };
 use ::arch::mem;
-use ::bitmap::Bitmap;
+use ::sys::collections::Bitmap;
 use ::core::{
     cell::RefCell,
     ops::{
@@ -25,7 +25,7 @@ use ::core::{
         DerefMut,
     },
 };
-use ::error::Error;
+use ::sys::error::Error;
 
 //==================================================================================================
 // Kernel Page Pool Inner

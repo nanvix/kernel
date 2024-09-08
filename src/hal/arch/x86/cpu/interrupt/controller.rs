@@ -25,7 +25,7 @@ use ::arch::{
     self,
     cpu::msr,
 };
-use ::error::{
+use ::sys::error::{
     Error,
     ErrorCode,
 };

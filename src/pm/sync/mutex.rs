@@ -8,7 +8,7 @@
 use crate::pm::sync::condvar::Condvar;
 use ::alloc::sync::Arc;
 use ::core::cell::RefCell;
-use ::error::Error;
+use ::sys::error::Error;
 
 //==================================================================================================
 // Structures

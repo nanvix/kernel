@@ -16,7 +16,7 @@ use crate::{
     },
 };
 use ::alloc::vec::Vec;
-use ::error::Error;
+use ::sys::error::Error;
 use ::sys::{
     config,
     mm::{

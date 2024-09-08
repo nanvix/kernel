@@ -62,7 +62,7 @@ use ::core::cell::{
     RefCell,
     RefMut,
 };
-use ::error::{
+use ::sys::error::{
     Error,
     ErrorCode,
 };

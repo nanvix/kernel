@@ -9,7 +9,7 @@ use crate::hal::io::{
     IoPortAllocator,
     ReadWriteIoPort,
 };
-use ::error::Error;
+use ::sys::error::Error;
 
 //==================================================================================================
 // Structures

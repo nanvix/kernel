@@ -12,12 +12,14 @@ use ::alloc::alloc::{
 };
 use ::arch::mem;
 use ::core::ptr;
-use ::error::{
-    Error,
-    ErrorCode,
+use ::sys::{
+    constants,
+    error::{
+        Error,
+        ErrorCode,
+    },
 };
-use ::slab::Slab;
-use ::sys::constants;
+use sys::collections::Slab;
 
 //==================================================================================================
 // Constants

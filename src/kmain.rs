@@ -93,8 +93,10 @@ mod uart;
 #[cfg(feature = "smp")]
 mod startup {
     use crate::pm::sync::fence::Fence;
-    use ::error::Error;
-    use error::ErrorCode;
+    use ::sys::error::{
+        Error,
+        ErrorCode,
+    };
 
     static mut STARTUP_FENCE: Option<Fence> = None;
 

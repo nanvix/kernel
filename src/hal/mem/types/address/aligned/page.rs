@@ -16,7 +16,7 @@ use crate::hal::{
     },
 };
 use ::core::ops::Deref;
-use ::error::{
+use ::sys::error::{
     Error,
     ErrorCode,
 };

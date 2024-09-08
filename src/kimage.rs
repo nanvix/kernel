@@ -15,8 +15,10 @@ use crate::hal::{
         VirtualAddress,
     },
 };
-use ::error::Error;
-use ::sys::config;
+use ::sys::{
+    config,
+    error::Error,
+};
 
 extern "C" {
     static __TEXT_START: u8;

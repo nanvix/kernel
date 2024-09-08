@@ -8,7 +8,7 @@
 use crate::pm::ProcessManager;
 use ::alloc::collections::LinkedList;
 use ::core::cell::RefCell;
-use ::error::Error;
+use ::sys::error::Error;
 use ::sys::pm::{
     ProcessIdentifier,
     ThreadIdentifier,

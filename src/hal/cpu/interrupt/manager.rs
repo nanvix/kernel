@@ -9,7 +9,7 @@ use crate::hal::{
     arch,
     cpu::interrupt::InterruptController,
 };
-use ::error::{
+use ::sys::error::{
     Error,
     ErrorCode,
 };

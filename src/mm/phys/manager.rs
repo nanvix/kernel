@@ -16,7 +16,7 @@ use crate::mm::phys::{
     },
 };
 use ::alloc::vec::Vec;
-use ::error::Error;
+use ::sys::error::Error;
 
 //==================================================================================================
 // Standalone Functions

@@ -21,7 +21,7 @@ use crate::{
         ProcessManager,
     },
 };
-use ::error::ErrorCode;
+use ::sys::error::ErrorCode;
 use ::sys::{
     event::ProcessTerminationInfo,
     number::KcallNumber,

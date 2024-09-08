@@ -32,7 +32,7 @@ use ::core::ops::{
     Deref,
     DerefMut,
 };
-use ::error::{
+use ::sys::error::{
     Error,
     ErrorCode,
 };

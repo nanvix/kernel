@@ -19,7 +19,7 @@ use crate::{
     pm::ProcessManager,
 };
 use ::arch::mem;
-use ::error::{
+use ::sys::error::{
     Error,
     ErrorCode,
 };

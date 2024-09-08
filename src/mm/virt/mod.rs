@@ -42,7 +42,7 @@ use ::alloc::{
 };
 use ::arch::mem;
 use ::core::cmp::Ordering;
-use ::error::{
+use ::sys::error::{
     Error,
     ErrorCode,
 };

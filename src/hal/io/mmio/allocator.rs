@@ -13,7 +13,7 @@ use crate::hal::{
     },
 };
 use ::alloc::collections::linked_list::LinkedList;
-use ::error::{
+use ::sys::error::{
     Error,
     ErrorCode,
 };

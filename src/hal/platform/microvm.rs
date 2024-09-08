@@ -32,10 +32,15 @@ use ::alloc::{
     string::ToString,
 };
 use ::arch::mem;
-use ::error::Error;
-use ::sys::mm::{
-    Address,
-    VirtualAddress,
+use ::sys::{
+    error::{
+        Error,
+        ErrorCode,
+    },
+    mm::{
+        Address,
+        VirtualAddress,
+    },
 };
 
 //==================================================================================================
@@ -166,7 +171,7 @@ pub fn parse_bootinfo(magic: u32, info: usize) -> Result<BootInfo, Error> {
     if magic != MICROVM_BOOT_MAGIC {
         let reason: &str = "invalid boot magic number";
         error!("parse_bootinfo(): magic={:#010x}, info={:#010x} (error={})", magic, info, reason);
-        return Err(Error::new(error::ErrorCode::InvalidArgument, reason));
+        return Err(Error::new(ErrorCode::InvalidArgument, reason));
     }
 
     trace!("parse_bootinfo(): magic={:#010x}, info={:#010x}", magic, info);

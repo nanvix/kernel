@@ -7,7 +7,7 @@
 
 use crate::pm::sync::condvar::Condvar;
 use ::core::cell::RefCell;
-use ::error::{
+use ::sys::error::{
     Error,
     ErrorCode,
 };

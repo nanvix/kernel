@@ -12,7 +12,7 @@ use crate::hal::mem::types::address::{
     PhysicalAddress,
 };
 use ::arch::mem::paging::FrameNumber;
-use ::error::Error;
+use ::sys::error::Error;
 
 //==================================================================================================
 // Structures

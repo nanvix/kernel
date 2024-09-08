@@ -7,13 +7,15 @@
 
 use crate::hal::platform;
 use ::core::mem;
-use ::error::{
-    Error,
-    ErrorCode,
-};
-use ::sys::ipc::{
-    Message,
-    MessageType,
+use ::sys::{
+    error::{
+        Error,
+        ErrorCode,
+    },
+    ipc::{
+        Message,
+        MessageType,
+    },
 };
 
 //==================================================================================================

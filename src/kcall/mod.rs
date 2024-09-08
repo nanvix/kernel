@@ -23,7 +23,7 @@ use crate::pm::{
     ProcessManager,
 };
 use ::core::fmt::Debug;
-use ::error::{
+use ::sys::error::{
     Error,
     ErrorCode,
 };

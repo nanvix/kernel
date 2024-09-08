@@ -15,7 +15,7 @@ use crate::hal::{
     },
 };
 use ::arch::mem;
-use ::error::ErrorCode;
+use ::sys::error::ErrorCode;
 use ::sys::mm::Alignment;
 
 //==================================================================================================

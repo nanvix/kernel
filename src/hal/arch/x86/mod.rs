@@ -26,7 +26,7 @@ use crate::hal::{
     },
     platform::madt::MadtInfo,
 };
-use ::error::Error;
+use ::sys::error::Error;
 
 //==================================================================================================
 // Exports

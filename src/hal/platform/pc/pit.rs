@@ -17,7 +17,7 @@ use crate::hal::io::{
     ReadWriteIoPort,
 };
 use ::arch::cpu::pit;
-use ::error::Error;
+use ::sys::error::Error;
 
 //==================================================================================================
 // Structures

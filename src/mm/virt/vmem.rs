@@ -47,7 +47,7 @@ use ::arch::mem::{
     paging::PageDirectoryEntry,
 };
 use ::core::cell::RefCell;
-use ::error::{
+use ::sys::error::{
     Error,
     ErrorCode,
 };

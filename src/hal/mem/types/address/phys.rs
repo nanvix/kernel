@@ -14,7 +14,7 @@ use ::arch::mem::{
     self,
     paging::FrameNumber,
 };
-use ::error::{
+use ::sys::error::{
     Error,
     ErrorCode,
 };
