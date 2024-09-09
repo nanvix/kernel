@@ -6,6 +6,7 @@
 //==================================================================================================
 
 mod acpi;
+mod basic_mem_info;
 mod memory_map;
 mod module;
 
@@ -15,6 +16,7 @@ mod module;
 
 use self::{
     acpi::MbootAcpi,
+    basic_mem_info::MbootBasicMeminfo,
     memory_map::MbootMemoryMap,
     module::MbootModule,
 };
@@ -484,6 +486,31 @@ fn parse_acpinew(tag: &MbootTag) -> Result<MbootAcpi, Error> {
 ///
 /// # Description
 ///
+/// Parse Basic Memory Information from Multiboot tag.
+///
+/// # Parameters
+///
+/// - `tag`: Mboot tag for parse.
+///
+/// # Returns
+///
+/// Upon success, returns BasicMeminfo structure. Otherwise, it returns an error.
+///
+fn parse_basicmeminfo(
+    tag: &MbootTag,
+    ) -> Result<MbootBasicMeminfo, Error> {
+    let basicmeminfo: MbootBasicMeminfo = unsafe {
+        // Safety: `MbootBasicMeminfo` is a prefix of `MbootTag`.
+        let ptr: *const MbootTag = tag as *const MbootTag;
+        // Safety: `ptr` points to a valid MbootBasicMeminfo.
+        MbootBasicMeminfo::from_raw(ptr as *const u8)?
+    };
+    Ok(basicmeminfo)
+}
+
+///
+/// # Description
+///
 /// Parse Multiboot tags.
 ///
 /// # Parameters
@@ -513,6 +540,8 @@ pub fn parse(bootloader_magic: u32, addr: usize) -> Result<BootInfo, Error> {
     let mut mmio_regions: LinkedList<TruncatedMemoryRegion<VirtualAddress>> = LinkedList::new();
     // Machine information.
     let mut madt: Option<MadtInfo> = None;
+    // Lower memory size.
+    let mut mem_lower: Option<usize> = None;
 
     while tag.typ != MbootTagType::End as u16 {
         match tag.typ.into() {
@@ -526,7 +555,9 @@ pub fn parse(bootloader_magic: u32, addr: usize) -> Result<BootInfo, Error> {
                 kernel_modules = parse_module(tag, kernel_modules)?;
             },
             MbootTagType::BasicMeminfo => {
-                info!("basic_mem_info: {:?}", tag);
+                let basicmeminfo = parse_basicmeminfo(tag)?;
+                basicmeminfo.display();
+                mem_lower = Some(basicmeminfo.mem_lower_tobytes()?);
             },
             MbootTagType::Bootdev => {
                 info!("boot_device: {:?}", tag);
@@ -608,5 +639,5 @@ pub fn parse(bootloader_magic: u32, addr: usize) -> Result<BootInfo, Error> {
         return Err(Error::new(ErrorCode::BadAddress, "invalid multiboot size"));
     }
 
-    Ok(BootInfo::new(madt, memory_regions, mmio_regions, kernel_modules))
+    Ok(BootInfo::new(madt, mem_lower, memory_regions, mmio_regions, kernel_modules))
 }
