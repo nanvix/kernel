@@ -11,6 +11,8 @@ set confirm off
 focus cmd
 set detach-on-fork
 b _do_start
+b _do_ap_start
+b _ap_trampoline
 b kmain
 
 define hook-stop
