@@ -57,8 +57,10 @@ fn main() {
         "-nostdlib",
         "-ffreestanding",
         "-march=pentiumpro",
+        "-Wa,-march=pentiumpro",
         "-Wstack-usage=4096",
         "-Wall",
+        "-m32",
         "-Wextra",
         "-Werror",
     ];
