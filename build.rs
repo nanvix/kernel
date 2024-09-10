@@ -132,7 +132,7 @@ fn main() {
     //==============================================================================================
 
     let status: ExitStatus = Command::new("ar")
-        .args(&["crus", "libkernel.a"])
+        .args(&["rcs", "libkernel.a"])
         .args(&object_files)
         .current_dir(&Path::new(&out_dir))
         .status()
