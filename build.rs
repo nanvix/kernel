@@ -29,36 +29,20 @@ fn main() {
         Err(_) => panic!("failed to get OUT_DIR environment variable"),
     };
 
-    // Get PATH environment variable.
-    let path: String = match env::var("PATH") {
-        Ok(path) => path,
-        Err(_) => panic!("failed to get PATH environment variable"),
-    };
-
-    // Get TOOLCHAIN_DIR environment variable.
-    let toolchain_dir: String = match env::var("TOOLCHAIN_DIR") {
-        Ok(toolchain_dir) => toolchain_dir,
-        Err(_) => panic!("failed to get TOOLCHAIN_DIR environment variable"),
-    };
-
-    // Add cross-compiler toolchain to PATH as `targets/*.json` relies on this.
-    let gcc_home: String = format!("{}/i486/bin", toolchain_dir);
-    let path: String = format!("{}:{}", gcc_home, path);
-    println!("cargo::rustc-env=PATH={}", path);
-    println!("cargo::rerun-if-env-changed=TOOLCHAIN_DIR");
-
     //==============================================================================================
     // Configure Toolchain
     //==============================================================================================
 
-    let cc: String = format!("{}/i486-elf-gcc", gcc_home);
+    let cc: String = format!("gcc");
 
     let mut cflags: Vec<&str> = vec![
         "-nostdlib",
         "-ffreestanding",
         "-march=pentiumpro",
+        "-Wa,-march=pentiumpro",
         "-Wstack-usage=4096",
         "-Wall",
+        "-m32",
         "-Wextra",
         "-Werror",
     ];
@@ -132,7 +116,7 @@ fn main() {
     //==============================================================================================
 
     let status: ExitStatus = Command::new("ar")
-        .args(&["crus", "libkernel.a"])
+        .args(&["rcs", "libkernel.a"])
         .args(&object_files)
         .current_dir(&Path::new(&out_dir))
         .status()
