@@ -6,6 +6,7 @@ target remote tcp::1234
 file bin/kernel.elf
 symbol-file bin/kernel.elf
 handle SIGSEGV nostop noprint nopass
+set scheduler-locking step
 set confirm off
 focus cmd
 set detach-on-fork
