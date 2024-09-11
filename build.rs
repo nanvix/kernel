@@ -130,5 +130,4 @@ fn main() {
     //==============================================================================================
 
     println!("cargo::rustc-link-search=native={}", out_dir);
-    println!("cargo::rustc-link-lib=static:+whole-archive=kernel");
 }
