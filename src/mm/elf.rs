@@ -29,6 +29,7 @@ use crate::{
     },
 };
 use ::arch::mem;
+use ::core::cmp::max;
 use ::sys::{
     config,
     error::{
@@ -215,11 +216,30 @@ fn do_elf32_load(
         // Compute access permissions.
         let access: AccessPermission = if phdr.p_flags == (PF_R | PF_X) {
             AccessPermission::EXEC
-        } else if phdr.p_flags == (PF_R | PF_W) {
+        } else if (phdr.p_flags & PF_W) != 0 {
             AccessPermission::RDWR
         } else {
             AccessPermission::RDONLY
         };
+
+        // Allocate segment.
+        let size: usize = max(phdr.p_filesz as usize, phdr.p_memsz as usize);
+        let virt_addr_end: usize = ::sys::mm::align_down(virt_addr + size, mmu::PAGE_ALIGNMENT);
+        for vaddr in (virt_addr..=virt_addr_end).step_by(mem::PAGE_SIZE) {
+            let vaddr: VirtualAddress = VirtualAddress::new(vaddr);
+            // Check if address lies in user space.
+            if vaddr < config::memory_layout::USER_BASE {
+                let reason: &str = "invalid load address";
+                error!("do_elf32_load: {}", reason);
+                return Err(Error::new(ErrorCode::BadFile, reason));
+            }
+
+            let vaddr: PageAligned<VirtualAddress> = PageAligned::from_address(vaddr)?;
+
+            if !dry_run {
+                mm.alloc_upage(vmem, vaddr, access)?;
+            }
+        }
 
         let phys_addr_base: usize = unsafe {
             (elf as *const Elf32Fhdr as *const u8).offset(phdr.p_offset as isize) as usize
@@ -242,8 +262,6 @@ fn do_elf32_load(
             let vaddr: PageAligned<VirtualAddress> = PageAligned::from_address(vaddr)?;
 
             if !dry_run {
-                mm.alloc_upage(vmem, vaddr, access)?;
-
                 // TODO: write a detailed comment about this.
                 unsafe { vmem.physcopy(vaddr, paddr)? };
             }
