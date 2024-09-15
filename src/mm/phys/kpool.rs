@@ -5,12 +5,15 @@
 // Imports
 //==================================================================================================
 
-use crate::hal::mem::{
-    Address,
-    FrameAddress,
-    PageAligned,
-    PhysicalAddress,
-    TruncatedMemoryRegion,
+use crate::{
+    collections::Bitmap,
+    hal::mem::{
+        Address,
+        FrameAddress,
+        PageAligned,
+        PhysicalAddress,
+        TruncatedMemoryRegion,
+    },
 };
 use ::alloc::{
     rc::Rc,
@@ -24,10 +27,7 @@ use ::core::{
         DerefMut,
     },
 };
-use ::sys::{
-    collections::Bitmap,
-    error::Error,
-};
+use ::sys::error::Error;
 
 //==================================================================================================
 // Kernel Page Pool Inner

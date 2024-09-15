@@ -15,6 +15,7 @@ mod upool;
 //==================================================================================================
 
 use crate::{
+    collections::RawArray,
     hal::mem::{
         Address,
         PageAligned,
@@ -30,7 +31,6 @@ use crate::{
 use ::alloc::collections::LinkedList;
 use ::arch::mem;
 use ::sys::{
-    collections::RawArray,
     config,
     error::{
         Error,

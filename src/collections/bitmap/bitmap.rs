@@ -5,12 +5,10 @@
 // Imports
 //==================================================================================================
 
-use crate::{
-    collections::raw_array::RawArray,
-    error::{
-        Error,
-        ErrorCode,
-    },
+use crate::collections::raw_array::RawArray;
+use ::sys::error::{
+    Error,
+    ErrorCode,
 };
 
 //==================================================================================================
