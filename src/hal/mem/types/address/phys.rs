@@ -14,12 +14,12 @@ use ::arch::mem::{
     self,
     paging::FrameNumber,
 };
-use ::sys::error::{
-    Error,
-    ErrorCode,
-};
 use ::sys::{
     config,
+    error::{
+        Error,
+        ErrorCode,
+    },
     mm::Alignment,
 };
 

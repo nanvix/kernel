@@ -42,11 +42,13 @@ use ::alloc::{
 };
 use ::arch::mem;
 use ::core::cmp::Ordering;
-use ::sys::error::{
-    Error,
-    ErrorCode,
+use ::sys::{
+    config,
+    error::{
+        Error,
+        ErrorCode,
+    },
 };
-use ::sys::config;
 
 //==================================================================================================
 // Exports

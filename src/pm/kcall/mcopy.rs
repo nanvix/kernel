@@ -19,13 +19,15 @@ use crate::{
     pm::ProcessManager,
 };
 use ::arch::mem;
-use ::sys::error::{
-    Error,
-    ErrorCode,
-};
-use ::sys::pm::{
-    Capability,
-    ProcessIdentifier,
+use ::sys::{
+    error::{
+        Error,
+        ErrorCode,
+    },
+    pm::{
+        Capability,
+        ProcessIdentifier,
+    },
 };
 
 //==================================================================================================

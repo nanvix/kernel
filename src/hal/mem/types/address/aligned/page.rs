@@ -16,11 +16,13 @@ use crate::hal::{
     },
 };
 use ::core::ops::Deref;
-use ::sys::error::{
-    Error,
-    ErrorCode,
+use ::sys::{
+    error::{
+        Error,
+        ErrorCode,
+    },
+    mm::Alignment,
 };
-use ::sys::mm::Alignment;
 
 //==================================================================================================
 // Structures

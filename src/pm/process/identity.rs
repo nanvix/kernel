@@ -5,13 +5,15 @@
 // Imports
 //==================================================================================================
 
-use ::sys::error::{
-    Error,
-    ErrorCode,
-};
-use ::sys::pm::{
-    GroupIdentifier,
-    UserIdentifier,
+use ::sys::{
+    error::{
+        Error,
+        ErrorCode,
+    },
+    pm::{
+        GroupIdentifier,
+        UserIdentifier,
+    },
 };
 
 //==================================================================================================

@@ -16,13 +16,15 @@ use crate::{
     kcall::KcallArgs,
     pm::ProcessManager,
 };
-use ::sys::error::{
-    Error,
-    ErrorCode,
-};
-use ::sys::pm::{
-    Capability,
-    ProcessIdentifier,
+use ::sys::{
+    error::{
+        Error,
+        ErrorCode,
+    },
+    pm::{
+        Capability,
+        ProcessIdentifier,
+    },
 };
 
 //==================================================================================================

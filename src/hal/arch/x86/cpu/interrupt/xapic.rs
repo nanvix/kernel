@@ -14,11 +14,13 @@ use crate::{
     mm::kredzone,
 };
 use ::arch::cpu::xapic;
-use ::sys::error::{
-    Error,
-    ErrorCode,
+use ::sys::{
+    error::{
+        Error,
+        ErrorCode,
+    },
+    mm::VirtualAddress,
 };
-use ::sys::mm::VirtualAddress;
 
 //==================================================================================================
 // Uninitialized xAPIC

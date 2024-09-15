@@ -9,11 +9,13 @@ use crate::hal::{
     arch,
     cpu::interrupt::InterruptController,
 };
-use ::sys::error::{
-    Error,
-    ErrorCode,
+use ::sys::{
+    error::{
+        Error,
+        ErrorCode,
+    },
+    mm::VirtualAddress,
 };
-use ::sys::mm::VirtualAddress;
 
 //==================================================================================================
 // Structures

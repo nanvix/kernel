@@ -29,12 +29,12 @@ use crate::{
     },
 };
 use ::arch::mem;
-use ::sys::error::{
-    Error,
-    ErrorCode,
-};
 use ::sys::{
     config,
+    error::{
+        Error,
+        ErrorCode,
+    },
     mm::Alignment,
 };
 

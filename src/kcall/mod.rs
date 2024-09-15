@@ -23,13 +23,15 @@ use crate::pm::{
     ProcessManager,
 };
 use ::core::fmt::Debug;
-use ::sys::error::{
-    Error,
-    ErrorCode,
-};
-use ::sys::pm::{
-    ProcessIdentifier,
-    ThreadIdentifier,
+use ::sys::{
+    error::{
+        Error,
+        ErrorCode,
+    },
+    pm::{
+        ProcessIdentifier,
+        ThreadIdentifier,
+    },
 };
 
 //==================================================================================================

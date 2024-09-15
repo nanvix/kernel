@@ -33,9 +33,9 @@ use ::arch::{
     cpu::pic,
     mem,
 };
-use ::sys::error::Error;
 use ::sys::{
     config,
+    error::Error,
     mm::VirtualAddress,
 };
 
