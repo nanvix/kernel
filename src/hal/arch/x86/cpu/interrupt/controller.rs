@@ -25,11 +25,13 @@ use ::arch::{
     self,
     cpu::msr,
 };
-use ::sys::error::{
-    Error,
-    ErrorCode,
+use ::sys::{
+    error::{
+        Error,
+        ErrorCode,
+    },
+    mm::VirtualAddress,
 };
-use ::sys::mm::VirtualAddress;
 
 //==================================================================================================
 // Interrupt Vector

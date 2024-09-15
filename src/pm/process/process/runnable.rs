@@ -27,8 +27,10 @@ use crate::{
         thread::ReadyThread,
     },
 };
-use ::sys::error::Error;
-use ::sys::pm::ProcessIdentifier;
+use ::sys::{
+    error::Error,
+    pm::ProcessIdentifier,
+};
 
 //==================================================================================================
 // Runnable Process

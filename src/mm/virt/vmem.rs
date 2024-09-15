@@ -47,11 +47,13 @@ use ::arch::mem::{
     paging::PageDirectoryEntry,
 };
 use ::core::cell::RefCell;
-use ::sys::error::{
-    Error,
-    ErrorCode,
+use ::sys::{
+    config,
+    error::{
+        Error,
+        ErrorCode,
+    },
 };
-use ::sys::config;
 
 //==================================================================================================
 // Constants

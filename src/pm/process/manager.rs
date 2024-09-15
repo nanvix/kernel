@@ -62,12 +62,12 @@ use ::core::cell::{
     RefCell,
     RefMut,
 };
-use ::sys::error::{
-    Error,
-    ErrorCode,
-};
 use ::sys::{
     config,
+    error::{
+        Error,
+        ErrorCode,
+    },
     event::Event,
     ipc::Message,
     pm::{

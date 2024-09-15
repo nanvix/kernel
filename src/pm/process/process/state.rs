@@ -26,11 +26,11 @@ use crate::{
     },
 };
 use ::alloc::collections::LinkedList;
-use ::sys::error::{
-    Error,
-    ErrorCode,
-};
 use ::sys::{
+    error::{
+        Error,
+        ErrorCode,
+    },
     event::Event,
     ipc::Message,
     pm::{

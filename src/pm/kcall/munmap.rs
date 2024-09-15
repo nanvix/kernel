@@ -15,13 +15,15 @@ use crate::{
     mm::VirtMemoryManager,
     pm::ProcessManager,
 };
-use ::sys::error::{
-    Error,
-    ErrorCode,
-};
-use ::sys::pm::{
-    Capability,
-    ProcessIdentifier,
+use ::sys::{
+    error::{
+        Error,
+        ErrorCode,
+    },
+    pm::{
+        Capability,
+        ProcessIdentifier,
+    },
 };
 
 //==================================================================================================

@@ -8,11 +8,13 @@
 use crate::hal::arch;
 use ::alloc::rc::Rc;
 use ::core::cell::RefCell;
-use ::sys::error::{
-    Error,
-    ErrorCode,
+use ::sys::{
+    error::{
+        Error,
+        ErrorCode,
+    },
+    mm::VirtualAddress,
 };
-use ::sys::mm::VirtualAddress;
 
 //==================================================================================================
 // Structures
