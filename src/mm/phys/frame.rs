@@ -5,21 +5,23 @@
 // Imports
 //==================================================================================================
 
-use crate::hal::mem::{
-    FrameAddress,
-    PageAligned,
-    PhysicalAddress,
-    TruncatedMemoryRegion,
+use crate::{
+    collections::{
+        Bitmap,
+        RawArray,
+    },
+    hal::mem::{
+        FrameAddress,
+        PageAligned,
+        PhysicalAddress,
+        TruncatedMemoryRegion,
+    },
 };
 use ::arch::mem::{
     self,
     paging::FrameNumber,
 };
 use ::sys::{
-    collections::{
-        Bitmap,
-        RawArray,
-    },
     constants,
     error::{
         Error,

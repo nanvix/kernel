@@ -5,15 +5,13 @@
 // Imports
 //==================================================================================================
 
-use crate::{
-    collections::{
-        bitmap::Bitmap,
-        raw_array::RawArray,
-    },
-    error::{
-        Error,
-        ErrorCode,
-    },
+use crate::collections::{
+    bitmap::Bitmap,
+    raw_array::RawArray,
+};
+use ::sys::error::{
+    Error,
+    ErrorCode,
 };
 
 //==================================================================================================
