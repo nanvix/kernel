@@ -215,7 +215,7 @@ fn do_elf32_load(
         // Compute access permissions.
         let access: AccessPermission = if phdr.p_flags == (PF_R | PF_X) {
             AccessPermission::EXEC
-        } else if phdr.p_flags == (PF_R | PF_W) {
+        } else if (phdr.p_flags & PF_W) != 0 {
             AccessPermission::RDWR
         } else {
             AccessPermission::RDONLY
