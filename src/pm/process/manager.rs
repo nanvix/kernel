@@ -196,7 +196,20 @@ impl ProcessManagerInner {
         self.tm.create_thread(context)
     }
 
+    ///
+    /// # Description
+    ///
     /// Creates a new process.
+    ///
+    /// # Parameters
+    ///
+    /// - `mm`: Memory manager to use.
+    ///
+    /// # Returns
+    ///
+    /// Upon successful completion, the process identifier of the new process is returned.
+    /// Otherwise, an error is returned instead.
+    ///
     fn create_process(&mut self, mm: &mut VirtMemoryManager) -> Result<ProcessIdentifier, Error> {
         extern "C" {
             pub fn __leave_kernel_to_user_mode();
@@ -207,6 +220,7 @@ impl ProcessManagerInner {
         // Create a new memory address space for the process.
         let mut vmem: Vmem = mm.new_vmem(self.get_running().state().vmem())?;
 
+        // Create a new thread.
         let user_stack_top_addr: VirtualAddress = mm::user_stack_top().into_inner();
         let user_func: VirtualAddress = ::sys::config::memory_layout::USER_BASE;
         let kernel_func: VirtualAddress =
@@ -225,11 +239,13 @@ impl ProcessManagerInner {
             AccessPermission::RDWR,
         )?;
 
+        // Create process.
         let pid: ProcessIdentifier = self.next_pid;
         self.next_pid = ProcessIdentifier::from(Into::<u32>::into(pid) + 1);
         let identity: ProcessIdentity = self.get_running().state().identity().clone();
         let process: RunnableProcess = RunnableProcess::new(pid, identity, thread, vmem);
 
+        // Add process to the queue of ready processes.
         self.ready.push_back(process);
 
         Ok(pid)
