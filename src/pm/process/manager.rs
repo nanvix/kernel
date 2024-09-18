@@ -163,29 +163,53 @@ impl ProcessManagerInner {
         Ok(ContextInformation::new(cr3, esp, esp0))
     }
 
+    ///
+    /// # Description
+    ///
     /// Creates a new thread.
-    pub fn create_thread(
+    ///
+    /// # Parameters
+    ///
+    /// - `mm`: Memory manager to use.
+    /// - `vmem`: Virtual memory to use.
+    /// - `user_stack_top_addr`: User stack top address.
+    /// - `user_func`: User function.
+    /// - `kernel_func`: Kernel function.
+    ///
+    /// # Returns
+    ///
+    /// Upon successful completion, the new thread is returned. Otherwise, an error is returned
+    /// instead.
+    ///
+    fn create_thread(
         &mut self,
         mm: &mut VirtMemoryManager,
         vmem: &mut Vmem,
-        user_stack: VirtualAddress,
+        user_stack_top_addr: VirtualAddress,
         user_func: VirtualAddress,
         kernel_func: VirtualAddress,
     ) -> Result<ReadyThread, Error> {
+        trace!(
+            "create_thread(): user_stack_top_addr={:?}, user_func={:?}, kernel_func={:?}",
+            user_stack_top_addr,
+            user_func,
+            kernel_func
+        );
+
         let mut kpages: Vec<KernelPage> =
             mm.alloc_kpages(true, config::kernel::KSTACK_SIZE / mem::PAGE_SIZE)?;
 
         let base: PageAddress = kpages[0].base();
         let size: usize = config::kernel::KSTACK_SIZE;
-        let top = unsafe { (base.into_raw_value() as *mut u8).add(size) };
-        let kernel_stack = VirtualAddress::from_raw_value(top as usize)?;
+        let top: *mut u8 = unsafe { (base.into_raw_value() as *mut u8).add(size) };
+        let kernel_stack_top_addr: VirtualAddress = VirtualAddress::from_raw_value(top as usize)?;
 
         let context: ContextInformation = Self::forge_user_context(
             vmem,
-            user_stack,
+            user_stack_top_addr,
             user_func,
             kernel_func,
-            kernel_stack,
+            kernel_stack_top_addr,
             self.interrupt_capable,
         )?;
 
@@ -196,11 +220,21 @@ impl ProcessManagerInner {
         self.tm.create_thread(context)
     }
 
+    ///
+    /// # Description
+    ///
     /// Creates a new process.
-    pub fn create_process(
-        &mut self,
-        mm: &mut VirtMemoryManager,
-    ) -> Result<ProcessIdentifier, Error> {
+    ///
+    /// # Parameters
+    ///
+    /// - `mm`: Memory manager to use.
+    ///
+    /// # Returns
+    ///
+    /// Upon successful completion, the process identifier of the new process is returned.
+    /// Otherwise, an error is returned instead.
+    ///
+    fn create_process(&mut self, mm: &mut VirtMemoryManager) -> Result<ProcessIdentifier, Error> {
         extern "C" {
             pub fn __leave_kernel_to_user_mode();
         }
@@ -210,29 +244,32 @@ impl ProcessManagerInner {
         // Create a new memory address space for the process.
         let mut vmem: Vmem = mm.new_vmem(self.get_running().state().vmem())?;
 
-        let user_stack: VirtualAddress = mm::user_stack_top().into_inner();
+        // Create a new thread.
+        let user_stack_top_addr: VirtualAddress = mm::user_stack_top().into_inner();
         let user_func: VirtualAddress = ::sys::config::memory_layout::USER_BASE;
         let kernel_func: VirtualAddress =
             VirtualAddress::from_raw_value(__leave_kernel_to_user_mode as usize)?;
         let thread: ReadyThread =
-            self.create_thread(mm, &mut vmem, user_stack, user_func, kernel_func)?;
+            self.create_thread(mm, &mut vmem, user_stack_top_addr, user_func, kernel_func)?;
 
         // Alloc user stack.
-        let vaddr: PageAligned<VirtualAddress> = PageAligned::from_raw_value(
-            mm::user_stack_top().into_raw_value() - config::kernel::USTACK_SIZE - mem::PAGE_SIZE,
+        let user_stack_base_addr: PageAligned<VirtualAddress> = PageAligned::from_raw_value(
+            user_stack_top_addr.into_raw_value() - config::kernel::USTACK_SIZE,
         )?;
         mm.alloc_upages(
             &mut vmem,
-            vaddr,
+            user_stack_base_addr,
             config::kernel::USTACK_SIZE / mem::PAGE_SIZE,
             AccessPermission::RDWR,
         )?;
 
+        // Create process.
         let pid: ProcessIdentifier = self.next_pid;
         self.next_pid = ProcessIdentifier::from(Into::<u32>::into(pid) + 1);
         let identity: ProcessIdentity = self.get_running().state().identity().clone();
         let process: RunnableProcess = RunnableProcess::new(pid, identity, thread, vmem);
 
+        // Add process to the queue of ready processes.
         self.ready.push_back(process);
 
         Ok(pid)
