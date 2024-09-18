@@ -51,7 +51,9 @@ impl Bitmap {
     pub fn new(len: usize) -> Result<Self, Error> {
         // Check if the length is invalid.
         if len == 0 || len >= i32::MAX as usize {
-            return Err(Error::new(ErrorCode::InvalidArgument, "invalid length"));
+            let reason: &str = "invalid length";
+            trace!("new(): {reason} (len={len})");
+            return Err(Error::new(ErrorCode::InvalidArgument, reason));
         }
 
         // Allocate the bitmap.
@@ -141,7 +143,9 @@ impl Bitmap {
             }
         }
 
-        Err(Error::new(ErrorCode::OutOfMemory, "bitmap is full"))
+        let reason: &str = "bitmap is full";
+        trace!("alloc(): {reason}");
+        Err(Error::new(ErrorCode::OutOfMemory, reason))
     }
 
     ///
@@ -161,12 +165,16 @@ impl Bitmap {
     pub fn alloc_range(&mut self, size: usize) -> Result<usize, Error> {
         // Check if the size is invalid.
         if (size == 0) || (size > u8::BITS as usize) {
-            return Err(Error::new(ErrorCode::InvalidArgument, "invalid size"));
+            let reason: &str = "invalid size";
+            trace!("alloc_range(): {reason} (size={size})");
+            return Err(Error::new(ErrorCode::InvalidArgument, reason));
         }
 
         // Check if the size is out of bounds.
         if size > self.number_of_bits {
-            return Err(Error::new(ErrorCode::InvalidArgument, "size out of bounds"));
+            let reason: &str = "size out of bounds";
+            trace!("alloc_range(): {reason} (size={size})");
+            return Err(Error::new(ErrorCode::InvalidArgument, reason));
         }
 
         // Compute mask.
@@ -194,7 +202,9 @@ impl Bitmap {
             }
         }
 
-        Err(Error::new(ErrorCode::OutOfMemory, "bitmap is full"))
+        let reason: &str = "bitmap is full";
+        trace!("alloc_range(): {reason}");
+        Err(Error::new(ErrorCode::OutOfMemory, reason))
     }
 
     ///
@@ -213,7 +223,9 @@ impl Bitmap {
     pub fn set(&mut self, index: usize) -> Result<(), Error> {
         // Check if the bit is already set.
         if self.test(index)? {
-            return Err(Error::new(ErrorCode::ResourceBusy, "bit is already set"));
+            let reason: &str = "bit is already set";
+            trace!("set(): {reason} (index={index})");
+            return Err(Error::new(ErrorCode::ResourceBusy, reason));
         }
         let (word, bit): (usize, usize) = self.index(index)?;
         self.bits[word] |= 1 << bit;
@@ -237,7 +249,9 @@ impl Bitmap {
     pub fn clear(&mut self, index: usize) -> Result<(), Error> {
         // Check if the bit is already cleared.
         if !self.test(index)? {
-            return Err(Error::new(ErrorCode::BadAddress, "bit is already cleared"));
+            let reason: &str = "bit is already cleared";
+            trace!("clear(): {reason} (index={index})");
+            return Err(Error::new(ErrorCode::BadAddress, reason));
         }
         let (word, bit): (usize, usize) = self.index(index)?;
         self.bits[word] &= !(1 << bit);
@@ -281,7 +295,9 @@ impl Bitmap {
     fn index(&self, index: usize) -> Result<(usize, usize), Error> {
         // Check if the index is out of bounds.
         if index >= self.bits.len() * u8::BITS as usize {
-            return Err(Error::new(ErrorCode::InvalidArgument, "index out of bounds"));
+            let reason: &str = "index out of bounds";
+            trace!("index(): {reason} (index={index})");
+            return Err(Error::new(ErrorCode::InvalidArgument, reason));
         }
 
         let word: usize = index / u8::BITS as usize;
