@@ -163,7 +163,24 @@ impl ProcessManagerInner {
         Ok(ContextInformation::new(cr3, esp, esp0))
     }
 
+    ///
+    /// # Description
+    ///
     /// Creates a new thread.
+    ///
+    /// # Parameters
+    ///
+    /// - `mm`: Memory manager to use.
+    /// - `vmem`: Virtual memory to use.
+    /// - `user_stack_top_addr`: User stack top address.
+    /// - `user_func`: User function.
+    /// - `kernel_func`: Kernel function.
+    ///
+    /// # Returns
+    ///
+    /// Upon successful completion, the new thread is returned. Otherwise, an error is returned
+    /// instead.
+    ///
     fn create_thread(
         &mut self,
         mm: &mut VirtMemoryManager,
