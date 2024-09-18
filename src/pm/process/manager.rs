@@ -177,8 +177,8 @@ impl ProcessManagerInner {
 
         let base: PageAddress = kpages[0].base();
         let size: usize = config::kernel::KSTACK_SIZE;
-        let top = unsafe { (base.into_raw_value() as *mut u8).add(size) };
-        let kernel_stack = VirtualAddress::from_raw_value(top as usize)?;
+        let top: *mut u8 = unsafe { (base.into_raw_value() as *mut u8).add(size) };
+        let kernel_stack: VirtualAddress = VirtualAddress::from_raw_value(top as usize)?;
 
         let context: ContextInformation = Self::forge_user_context(
             vmem,
