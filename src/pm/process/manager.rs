@@ -164,7 +164,7 @@ impl ProcessManagerInner {
     }
 
     /// Creates a new thread.
-    pub fn create_thread(
+    fn create_thread(
         &mut self,
         mm: &mut VirtMemoryManager,
         vmem: &mut Vmem,
