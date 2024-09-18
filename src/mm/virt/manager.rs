@@ -140,8 +140,8 @@ impl VirtMemoryManager {
         // FIXME: check if range is not busy.
 
         for uframe in uframes {
-            vaddr = PageAligned::from_raw_value(vaddr.into_raw_value() + mem::PAGE_SIZE)?;
             vmem.map(uframe, vaddr, access)?;
+            vaddr = PageAligned::from_raw_value(vaddr.into_raw_value() + mem::PAGE_SIZE)?;
         }
 
         Ok(())
