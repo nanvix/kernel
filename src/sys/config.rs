@@ -43,6 +43,17 @@ pub mod kernel {
     ///
     /// # Description
     ///
+    /// User stack size (in bytes).
+    ///
+    /// # Notes
+    ///
+    /// - This size should be a multiple of a page size.
+    ///
+    pub const USTACK_SIZE: usize = 8 * 4 * constants::KILOBYTE;
+
+    ///
+    /// # Description
+    ///
     /// Timer frequency (in Hz).
     ///
     pub const TIMER_FREQ: u32 = 100;

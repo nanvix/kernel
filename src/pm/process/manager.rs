@@ -219,12 +219,12 @@ impl ProcessManagerInner {
 
         // Alloc user stack.
         let vaddr: PageAligned<VirtualAddress> = PageAligned::from_raw_value(
-            mm::user_stack_top().into_raw_value() - config::kernel::KSTACK_SIZE - mem::PAGE_SIZE,
+            mm::user_stack_top().into_raw_value() - config::kernel::USTACK_SIZE - mem::PAGE_SIZE,
         )?;
         mm.alloc_upages(
             &mut vmem,
             vaddr,
-            config::kernel::KSTACK_SIZE / mem::PAGE_SIZE,
+            config::kernel::USTACK_SIZE / mem::PAGE_SIZE,
             AccessPermission::RDWR,
         )?;
 
