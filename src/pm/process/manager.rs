@@ -168,24 +168,31 @@ impl ProcessManagerInner {
         &mut self,
         mm: &mut VirtMemoryManager,
         vmem: &mut Vmem,
-        user_stack: VirtualAddress,
+        user_stack_top_addr: VirtualAddress,
         user_func: VirtualAddress,
         kernel_func: VirtualAddress,
     ) -> Result<ReadyThread, Error> {
+        trace!(
+            "create_thread(): user_stack_top_addr={:?}, user_func={:?}, kernel_func={:?}",
+            user_stack_top_addr,
+            user_func,
+            kernel_func
+        );
+
         let mut kpages: Vec<KernelPage> =
             mm.alloc_kpages(true, config::kernel::KSTACK_SIZE / mem::PAGE_SIZE)?;
 
         let base: PageAddress = kpages[0].base();
         let size: usize = config::kernel::KSTACK_SIZE;
         let top: *mut u8 = unsafe { (base.into_raw_value() as *mut u8).add(size) };
-        let kernel_stack: VirtualAddress = VirtualAddress::from_raw_value(top as usize)?;
+        let kernel_stack_top_addr: VirtualAddress = VirtualAddress::from_raw_value(top as usize)?;
 
         let context: ContextInformation = Self::forge_user_context(
             vmem,
-            user_stack,
+            user_stack_top_addr,
             user_func,
             kernel_func,
-            kernel_stack,
+            kernel_stack_top_addr,
             self.interrupt_capable,
         )?;
 
