@@ -210,20 +210,20 @@ impl ProcessManagerInner {
         // Create a new memory address space for the process.
         let mut vmem: Vmem = mm.new_vmem(self.get_running().state().vmem())?;
 
-        let user_stack: VirtualAddress = mm::user_stack_top().into_inner();
+        let user_stack_top_addr: VirtualAddress = mm::user_stack_top().into_inner();
         let user_func: VirtualAddress = ::sys::config::memory_layout::USER_BASE;
         let kernel_func: VirtualAddress =
             VirtualAddress::from_raw_value(__leave_kernel_to_user_mode as usize)?;
         let thread: ReadyThread =
-            self.create_thread(mm, &mut vmem, user_stack, user_func, kernel_func)?;
+            self.create_thread(mm, &mut vmem, user_stack_top_addr, user_func, kernel_func)?;
 
         // Alloc user stack.
-        let vaddr: PageAligned<VirtualAddress> = PageAligned::from_raw_value(
-            mm::user_stack_top().into_raw_value() - config::kernel::USTACK_SIZE,
+        let user_stack_base_addr: PageAligned<VirtualAddress> = PageAligned::from_raw_value(
+            user_stack_top_addr.into_raw_value() - config::kernel::USTACK_SIZE,
         )?;
         mm.alloc_upages(
             &mut vmem,
-            vaddr,
+            user_stack_base_addr,
             config::kernel::USTACK_SIZE / mem::PAGE_SIZE,
             AccessPermission::RDWR,
         )?;
