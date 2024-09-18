@@ -197,10 +197,7 @@ impl ProcessManagerInner {
     }
 
     /// Creates a new process.
-    pub fn create_process(
-        &mut self,
-        mm: &mut VirtMemoryManager,
-    ) -> Result<ProcessIdentifier, Error> {
+    fn create_process(&mut self, mm: &mut VirtMemoryManager) -> Result<ProcessIdentifier, Error> {
         extern "C" {
             pub fn __leave_kernel_to_user_mode();
         }
