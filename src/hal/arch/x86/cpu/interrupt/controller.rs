@@ -25,13 +25,13 @@ use ::arch::{
     self,
     cpu::msr,
 };
-use ::sys::{
-    error::{
-        Error,
-        ErrorCode,
-    },
-    mm::VirtualAddress,
+use ::sys::error::{
+    Error,
+    ErrorCode,
 };
+
+#[cfg(feature = "smp")]
+use ::sys::mm::VirtualAddress;
 
 //==================================================================================================
 // Interrupt Vector
@@ -178,6 +178,7 @@ impl InterruptController {
     ///
     /// Upon success, empty result is returned. Otherwise, an error is returned.
     ///
+    #[cfg(feature = "smp")]
     pub fn start_core(
         &mut self,
         coreid: u8,

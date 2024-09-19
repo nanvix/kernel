@@ -19,8 +19,10 @@ pub use virt::{
     VirtMemoryManager,
     Vmem,
 };
-pub mod kredzone;
 pub mod kstack;
+
+#[cfg(feature = "smp")]
+pub mod kredzone;
 
 //==================================================================================================
 // Imports

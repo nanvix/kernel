@@ -9,13 +9,13 @@ use crate::hal::{
     arch,
     cpu::interrupt::InterruptController,
 };
-use ::sys::{
-    error::{
-        Error,
-        ErrorCode,
-    },
-    mm::VirtualAddress,
+use ::sys::error::{
+    Error,
+    ErrorCode,
 };
+
+#[cfg(feature = "smp")]
+pub use ::sys::mm::VirtualAddress;
 
 //==================================================================================================
 // Structures
@@ -84,6 +84,7 @@ impl InterruptManager {
         Ok(())
     }
 
+    #[cfg(feature = "smp")]
     pub fn start_core(
         &mut self,
         coreid: u8,
