@@ -468,7 +468,7 @@ impl EventManagerInner {
             None => {
                 let reason: &str = "no owner for exception";
                 error!("wakeup_exception(): reason={:?}", reason);
-                return Err(Error::new(ErrorCode::NoSuchProcess, &reason));
+                unimplemented!("terminate process")
             },
         };
 
