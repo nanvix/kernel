@@ -49,7 +49,7 @@ pub mod kernel {
     ///
     /// - This size should be a multiple of a page size.
     ///
-    pub const USTACK_SIZE: usize = 8 * 4 * constants::KILOBYTE;
+    pub const USTACK_SIZE: usize = 16 * 4 * constants::KILOBYTE;
 
     ///
     /// # Description
