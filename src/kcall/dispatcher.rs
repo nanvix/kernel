@@ -11,7 +11,10 @@ use crate::{
     kcall::ScoreBoard,
     pm::ProcessManager,
 };
-use ::sys::number::KcallNumber;
+use ::sys::{
+    error::Error,
+    number::KcallNumber,
+};
 
 //==================================================================================================
 //  Standalone Functions
@@ -44,9 +47,9 @@ pub extern "C" fn do_kcall(number: u32, arg0: u32, arg1: u32, arg2: u32, arg3: u
             Ok(tid) => tid.into(),
             Err(e) => e.code.into_errno(),
         },
-        KcallNumber::Exit => match ProcessManager::exit(arg0 as i32) {
-            Ok(_) => unsafe { core::hint::unreachable_unchecked() },
-            Err(e) => e.code.into_errno(),
+        KcallNumber::Exit => {
+            let e: Error = ProcessManager::exit(arg0 as i32).unwrap_err();
+            e.code.into_errno()
         },
         KcallNumber::Recv => ipc::recv(arg0 as usize),
         KcallNumber::Resume => event::resume(arg0 as usize),
