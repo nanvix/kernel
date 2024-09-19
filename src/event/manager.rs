@@ -472,9 +472,11 @@ impl EventManagerInner {
             },
         };
 
-        // TODO: Maintain a list of waiting process and just call wake up when required.
-
-        let _ = self.get_wait().notify_process(pid);
+        // Notify exception owner.
+        if let Err(e) = self.get_wait().notify_process(pid) {
+            warn!("wakeup_exception(): {:?}", e);
+            unimplemented!("terminate process")
+        }
 
         Ok(resume)
     }
