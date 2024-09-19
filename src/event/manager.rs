@@ -468,13 +468,15 @@ impl EventManagerInner {
             None => {
                 let reason: &str = "no owner for exception";
                 error!("wakeup_exception(): reason={:?}", reason);
-                return Err(Error::new(ErrorCode::NoSuchProcess, &reason));
+                unimplemented!("terminate process")
             },
         };
 
-        // TODO: Maintain a list of waiting process and just call wake up when required.
-
-        let _ = self.get_wait().notify_process(pid);
+        // Notify exception owner.
+        if let Err(e) = self.get_wait().notify_process(pid) {
+            warn!("wakeup_exception(): {:?}", e);
+            unimplemented!("terminate process")
+        }
 
         Ok(resume)
     }
