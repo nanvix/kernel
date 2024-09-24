@@ -58,7 +58,7 @@ pub fn debug(args: &KcallArgs) -> i32 {
 
     let buf: &[u8] = unsafe { core::slice::from_raw_parts(kernel_buffer.as_ptr(), size) };
 
-    match do_debug(&buf) {
+    match do_debug(buf) {
         Ok(()) => 0,
         Err(e) => e.code.into_errno(),
     }

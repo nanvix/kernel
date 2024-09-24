@@ -89,7 +89,7 @@ extern "C" {
 macro_rules! idt_entry {
     ( $handler:expr, $dpl:expr, $type:expr) => {
         Idte::new(
-            $handler as u32,
+            $handler as usize as u32,
             SegmentSelector::KernelCode as u16,
             Flags::new(PresentBit::Present, $dpl, $type),
         )

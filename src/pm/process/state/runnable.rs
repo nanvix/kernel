@@ -18,8 +18,8 @@ use crate::{
     pm::{
         process::{
             identity::ProcessIdentity,
-            process::{
-                state::ProcessState,
+            state::{
+                ProcessState,
                 RunningProcess,
                 ZombieProcess,
             },

@@ -49,7 +49,7 @@ fn do_pmio_alloc(
     if !ProcessManager::has_capability(pid, Capability::IoManagement)? {
         let reason: &'static str = "process does not have io management capabilities";
         error!("do_pmio_alloc(): {}", reason);
-        return Err(Error::new(ErrorCode::PermissionDenied, &reason));
+        return Err(Error::new(ErrorCode::PermissionDenied, reason));
     }
 
     let port: AnyIoPort = match port_type {

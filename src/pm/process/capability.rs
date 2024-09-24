@@ -11,7 +11,7 @@ use ::sys::pm::Capability;
 // Structures
 //==================================================================================================
 
-#[derive(Clone, Copy)]
+#[derive(Default, Clone, Copy)]
 pub struct Capabilities(u8);
 
 //==================================================================================================
@@ -29,11 +29,5 @@ impl Capabilities {
 
     pub fn has(&self, capability: Capability) -> bool {
         (self.0 & (1 << capability as u8)) != 0
-    }
-}
-
-impl Default for Capabilities {
-    fn default() -> Self {
-        Self(0)
     }
 }

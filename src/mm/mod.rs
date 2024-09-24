@@ -65,16 +65,12 @@ use ::sys::{
 //==================================================================================================
 
 // Splits memory regions into virtual and physical.
+type VirtMemRegion = LinkedList<TruncatedMemoryRegion<VirtualAddress>>;
+type PhysMemRegion = LinkedList<TruncatedMemoryRegion<PhysicalAddress>>;
+
 fn parse_memory_regions(
     memory_regions: LinkedList<MemoryRegion<VirtualAddress>>,
-) -> Result<
-    (
-        LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
-        LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
-        LinkedList<TruncatedMemoryRegion<PhysicalAddress>>,
-    ),
-    Error,
-> {
+) -> Result<(VirtMemRegion, VirtMemRegion, PhysMemRegion), Error> {
     let mut memory_regions: LinkedList<MemoryRegion<VirtualAddress>> = {
         let mut memory_regions: Vec<_> = memory_regions.into_iter().collect();
         memory_regions.sort();
@@ -189,10 +185,13 @@ pub fn init(
 
     check_config();
 
+    type VirtMemRegions = LinkedList<TruncatedMemoryRegion<VirtualAddress>>;
+    type PhysMemRegions = LinkedList<TruncatedMemoryRegion<PhysicalAddress>>;
+
     let (mut other_virtual_memory_regions, virtual_memory_regions, physical_memory_regions): (
-        LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
-        LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
-        LinkedList<TruncatedMemoryRegion<PhysicalAddress>>,
+        VirtMemRegions,
+        VirtMemRegions,
+        PhysMemRegions,
     ) = parse_memory_regions(memory_regions)?;
 
     let physman: PhysMemoryManager = phys::init(

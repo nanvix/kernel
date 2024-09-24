@@ -2,6 +2,12 @@
 // Licensed under the MIT License.
 
 //==================================================================================================
+// Configuration
+//==================================================================================================
+
+#![deny(clippy::all)]
+
+//==================================================================================================
 // Imports
 //==================================================================================================
 
@@ -33,7 +39,7 @@ fn main() {
     // Configure Toolchain
     //==============================================================================================
 
-    let cc: String = format!("gcc");
+    let cc: String = "gcc".to_string();
 
     let mut cflags: Vec<&str> = vec![
         "-nostdlib",
@@ -99,7 +105,7 @@ fn main() {
 
         let status: ExitStatus = Command::new(cc.clone())
             .args(&cflags)
-            .args(&["-c", asm, "-o", &obj])
+            .args(["-c", asm, "-o", &obj])
             .status()
             .unwrap();
 
@@ -116,9 +122,9 @@ fn main() {
     //==============================================================================================
 
     let status: ExitStatus = Command::new("ar")
-        .args(&["rcs", "libkernel.a"])
+        .args(["rcs", "libkernel.a"])
         .args(&object_files)
-        .current_dir(&Path::new(&out_dir))
+        .current_dir(Path::new(&out_dir))
         .status()
         .unwrap();
     if !status.success() {

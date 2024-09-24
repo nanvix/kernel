@@ -110,6 +110,7 @@ pub unsafe fn putb(b: u8) {
 pub unsafe fn vmbus_write(addr: *const u8) {
     use core::hint;
 
+    #[allow(clippy::unit_arg)]
     hint::black_box(::arch::io::out32(STDOUT_PORT, addr as u32));
 }
 
@@ -133,6 +134,7 @@ pub unsafe fn vmbus_write(addr: *const u8) {
 pub unsafe fn vmbus_read(addr: *mut u8) {
     use core::hint;
 
+    #[allow(clippy::unit_arg)]
     hint::black_box(::arch::io::out32(STDIN_PORT, addr as u32))
 }
 

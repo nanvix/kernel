@@ -50,7 +50,7 @@ impl IoMemoryAllocator {
             if reg.base() == region.start() {
                 let reason: &str = "address already registered";
                 error!("register(): {}", reason);
-                return Err(Error::new(ErrorCode::EntryExists, &reason));
+                return Err(Error::new(ErrorCode::EntryExists, reason));
             }
         }
 
@@ -66,7 +66,7 @@ impl IoMemoryAllocator {
                 if region.ref_count() > 1 {
                     let reason: &str = "region already allocated";
                     error!("allocate(): {}", reason);
-                    return Err(Error::new(ErrorCode::EntryExists, &reason));
+                    return Err(Error::new(ErrorCode::EntryExists, reason));
                 }
 
                 return Ok(region.clone());
@@ -75,6 +75,6 @@ impl IoMemoryAllocator {
 
         let reason: &str = "region not registered";
         error!("allocate(): {}", reason);
-        Err(Error::new(ErrorCode::NoSuchEntry, &reason))
+        Err(Error::new(ErrorCode::NoSuchEntry, reason))
     }
 }

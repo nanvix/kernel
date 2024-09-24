@@ -84,7 +84,7 @@ impl UninitIoapic {
         if ioapic::IoapicId::id(ioapic.deref_mut()) != self.id {
             let reason: &str = "id mismatch";
             error!("init(): {}", reason);
-            return Err(Error::new(ErrorCode::InvalidArgument, &reason));
+            return Err(Error::new(ErrorCode::InvalidArgument, reason));
         }
 
         ioapic.print_info();
@@ -140,14 +140,14 @@ impl Ioapic {
         if irq >= ioapic::IoapicVersion::maxredirect(self.deref_mut()) {
             let reason: &str = "invalid irq number";
             error!("enable(): {}", reason);
-            return Err(Error::new(ErrorCode::InvalidArgument, &reason));
+            return Err(Error::new(ErrorCode::InvalidArgument, reason));
         }
 
         // Check CPU number lies in a valid range.
         if cpunum > MAXIMUM_NUMBER_CPUS {
             let reason: &str = "invalid cpu number";
             error!("enable(): {}", reason);
-            return Err(Error::new(ErrorCode::InvalidArgument, &reason));
+            return Err(Error::new(ErrorCode::InvalidArgument, reason));
         }
 
         // Set physical destination mode to cpunum; set high activate; set

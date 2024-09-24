@@ -96,6 +96,10 @@ else
 	cp --preserve target/$(TARGET)/debug/$(BIN) $(BINARIES_DIR)/$(BIN)
 endif
 
+# Runs clippy.
+clippy:
+	$(CARGO) clippy $(CARGO_FLAGS) $(CARGO_FEATURES) -- -D warnings
+
 # Cleans up everything.
 clean:
 	$(CARGO) clean

@@ -25,7 +25,7 @@ use ::sys::{
 ///
 /// A type that represents the identity of a process.
 ///
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct ProcessIdentity {
     /// Real user identifier.
     uid: UserIdentifier,

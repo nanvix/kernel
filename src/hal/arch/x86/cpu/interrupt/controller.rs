@@ -147,18 +147,27 @@ impl InterruptController {
 
     pub fn ack(&mut self, intnum: InterruptNumber) -> Result<(), Error> {
         match self.intctrl {
-            InterruptControllerType::Legacy(ref mut pic) => Ok(pic.ack(intnum as u32)),
-            InterruptControllerType::Xapic(ref mut xapic, _) => Ok(xapic.ack()),
+            InterruptControllerType::Legacy(ref mut pic) => {
+                pic.ack(intnum as u32);
+                Ok(())
+            },
+            InterruptControllerType::Xapic(ref mut xapic, _) => {
+                xapic.ack();
+                Ok(())
+            },
         }
     }
 
     pub fn unmask(&mut self, intnum: InterruptNumber) -> Result<(), Error> {
         match self.intctrl {
-            InterruptControllerType::Legacy(ref mut pic) => Ok(pic.unmask(intnum as u16)),
+            InterruptControllerType::Legacy(ref mut pic) => {
+                pic.unmask(intnum as u16);
+                Ok(())
+            },
             // FIXME: enable interrupt on right CPU.
             InterruptControllerType::Xapic(_, ref mut ioapic) => {
                 let intnum: u8 = self.intmap[intnum];
-                ioapic.enable(intnum as u8, 0)
+                ioapic.enable(intnum, 0)
             },
         }
     }
@@ -189,7 +198,7 @@ impl InterruptController {
             InterruptControllerType::Legacy(_) => {
                 let reason: &str = "legacy pic does not support starting cores";
                 error!("start_core(): {}", reason);
-                return Err(Error::new(ErrorCode::OperationNotSupported, reason));
+                Err(Error::new(ErrorCode::OperationNotSupported, reason))
             },
             InterruptControllerType::Xapic(ref mut xapic, _) => {
                 xapic.start_core(coreid, entry, kstack)

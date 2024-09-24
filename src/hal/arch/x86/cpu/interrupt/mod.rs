@@ -196,12 +196,10 @@ pub fn init(
                             // This should not happen if MADT is consistent to the spec.
                             unreachable!("xapic is malfunctioning")
                         }
+                    } else if (local_apic_info.flags & MadtEntryLocalApic::ONLINE_CAPABLE) != 0 {
+                        info!("cpu is online capable")
                     } else {
-                        if (local_apic_info.flags & MadtEntryLocalApic::ONLINE_CAPABLE) != 0 {
-                            info!("cpu is online capable")
-                        } else {
-                            info!("cpu is disabled")
-                        }
+                        info!("cpu is disabled")
                     }
 
                     // TODO: remove the following assert when we handle multiple local APICs.
@@ -221,7 +219,7 @@ pub fn init(
                 },
             };
 
-            let intmap: InterruptMap = build_interrupt_map(&madt);
+            let intmap: InterruptMap = build_interrupt_map(madt);
             InterruptController::new(pic, xapic, ioapic, intmap)
         },
 

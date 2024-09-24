@@ -60,10 +60,10 @@ pub fn kcall_handler(hal: &mut Hal, mm: &mut VirtMemoryManager, pm: &mut Process
                             error!("cannot handle gettid()");
                             ErrorCode::InvalidSysCall.into_errno()
                         },
-                        KcallNumber::GetUid => pm::getuid(&pm, args),
-                        KcallNumber::GetGid => pm::getgid(&pm, args),
-                        KcallNumber::GetEuid => pm::geteuid(&pm, args),
-                        KcallNumber::GetEgid => pm::getegid(&pm, args),
+                        KcallNumber::GetUid => pm::getuid(pm, args),
+                        KcallNumber::GetGid => pm::getgid(pm, args),
+                        KcallNumber::GetEuid => pm::geteuid(pm, args),
+                        KcallNumber::GetEgid => pm::getegid(pm, args),
                         KcallNumber::SetUid => pm::setuid(pm, args),
                         KcallNumber::SetGid => pm::setgid(pm, args),
                         KcallNumber::SetEuid => pm::seteuid(pm, args),

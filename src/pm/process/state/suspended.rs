@@ -6,13 +6,13 @@
 //==================================================================================================
 
 use crate::pm::{
-    process::process::{
+    process::state::{
         interrupted::{
             InterruptReason,
             InterruptedProcess,
         },
         runnable::RunnableProcess,
-        state::ProcessState,
+        ProcessState,
     },
     thread::SleepingThread,
 };

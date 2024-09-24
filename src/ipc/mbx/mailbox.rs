@@ -12,6 +12,7 @@ use ::sys::ipc::Message;
 //  Structures
 //==================================================================================================
 
+#[derive(Default)]
 pub struct Mailbox {
     buffer: LinkedList<Message>,
 }
@@ -27,13 +28,5 @@ impl Mailbox {
 
     pub fn receive(&mut self) -> Option<Message> {
         self.buffer.pop_front()
-    }
-}
-
-impl Default for Mailbox {
-    fn default() -> Self {
-        Self {
-            buffer: LinkedList::new(),
-        }
     }
 }
