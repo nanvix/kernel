@@ -742,9 +742,8 @@ fn exception_handler(info: &ExceptionInformation, _ctx: &ContextInformation) {
     };
 
     if let Err(_) = resume.wait() {
-        if let Err(e) = ProcessManager::exit(-1) {
-            unreachable!("failed to terminate process (error={:?})", e);
-        }
+        let e = ProcessManager::exit(-1);
+        unreachable!("failed to terminate process (error={:?})", e);
     }
 }
 

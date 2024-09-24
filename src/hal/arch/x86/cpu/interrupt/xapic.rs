@@ -5,22 +5,25 @@
 // Imports
 //==================================================================================================
 
-use crate::{
-    hal::{
-        arch::x86::cpu::clock,
-        io::IoMemoryRegion,
-        mem::Address,
-    },
-    mm::kredzone,
+use crate::hal::{
+    io::IoMemoryRegion,
+    mem::Address,
 };
 use ::arch::cpu::xapic;
-use ::sys::{
-    error::{
-        Error,
-        ErrorCode,
-    },
-    mm::VirtualAddress,
+use ::sys::error::{
+    Error,
+    ErrorCode,
 };
+
+#[cfg(feature = "smp")]
+#[path = ""]
+mod smp_feature_imports {
+    pub use crate::mm::kredzone;
+    pub use ::sys::mm::VirtualAddress;
+}
+
+#[cfg(feature = "smp")]
+use smp_feature_imports::*;
 
 //==================================================================================================
 // Uninitialized xAPIC
@@ -238,12 +241,15 @@ impl Xapic {
     ///
     /// Upon success, empty result is returned. Otherwise, an error is returned.
     ///
+    #[cfg(feature = "smp")]
     pub fn start_core(
         &mut self,
         coreid: u8,
         entry: VirtualAddress,
         kstack: *const u8,
     ) -> Result<(), Error> {
+        use crate::hal::arch::x86::cpu::clock;
+
         // Maximum number of retries when waiting for the xAPIC to become idle.
         const RETRIES: usize = 1000;
 
@@ -346,6 +352,7 @@ impl Xapic {
     ///
     /// Upon success, empty result is returned. Otherwise, an error is returned.
     ///
+    #[cfg(feature = "smp")]
     fn wait(&mut self, retries: usize) -> Result<(), Error> {
         for _ in 0..retries {
             let bits: u32 = self.read(xapic::XAPIC_ICRLO);

@@ -11,13 +11,19 @@ pub mod x86;
 // Imports
 //==================================================================================================
 
-use ::sys::error::Error;
+#[cfg(feature = "smp")]
+#[path = ""]
+mod smp_feature_imports {
+    pub use super::x86::Arch;
+    pub use ::sys::error::Error;
+}
+#[cfg(feature = "smp")]
+use smp_feature_imports::*;
 
 //==================================================================================================
 // Exports
 //==================================================================================================
 
-use x86::Arch;
 pub use x86::{
     forge_user_stack,
     ContextInformation,
@@ -31,6 +37,7 @@ pub use x86::{
 // Standalone Functions
 //==================================================================================================
 
+#[cfg(feature = "smp")]
 pub fn initialize_application_core(kstack: *const u8) -> Result<Arch, Error> {
     x86::initialize_application_core(kstack)
 }

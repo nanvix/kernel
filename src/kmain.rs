@@ -12,7 +12,6 @@
 #![feature(core_intrinsics)] // bios require this.
 #![feature(allocator_api)] // kheap uses this.
 #![feature(pointer_is_aligned_to)] // mboot uses this.
-#![feature(asm_const)] // gdt uses this.
 #![feature(linked_list_remove)] // vmem uses this.
 #![feature(linked_list_retain)] // vmem uses this.
 #![feature(never_type)] // exit() uses this.
@@ -46,7 +45,6 @@ use crate::{
     mm::{
         elf::Elf32Fhdr,
         kheap,
-        kredzone,
         VirtMemoryManager,
         Vmem,
     },
@@ -61,6 +59,9 @@ use ::core::sync::atomic::{
     Ordering,
 };
 use ::sys::pm::ProcessIdentifier;
+
+#[cfg(feature = "smp")]
+use crate::mm::kredzone;
 
 //==================================================================================================
 // Modules
@@ -384,6 +385,7 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
 }
 
 #[no_mangle]
+#[cfg(feature = "smp")]
 pub extern "C" fn do_ap_start(coreid: u32) {
     // Load address of the kernel stack from the red zone.
     let kstack: *const u8 = match kredzone::load(0) {
@@ -410,6 +412,12 @@ pub extern "C" fn do_ap_start(coreid: u32) {
             panic!("failed to initialize application core: {:?}", err);
         },
     }
+}
+
+#[no_mangle]
+#[cfg(not(feature = "smp"))]
+pub extern "C" fn do_ap_start(_coreid: u32) {
+    unreachable!("application cores are not supported");
 }
 
 ///

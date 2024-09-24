@@ -99,6 +99,7 @@ impl IoPortAllocator {
     /// - `Err(Error::ENOMEM)` if the allocator is full.
     /// - `Err(Error::EADDRINUSE)` if the I/O port is already registered.
     ///
+    #[allow(dead_code)] // TODO: Remove this attribute.
     pub fn register_read_only(&mut self, number: u16) -> Result<(), Error> {
         let info: IoPortInfo = IoPortInfo::new(number);
         let entry: IoPort = IoPort::new_read_only(info);
@@ -136,6 +137,7 @@ impl IoPortAllocator {
     /// - `Err(Error::ENOMEM)` if the allocator is full.
     /// - `Err(Error::EADDRINUSE)` if the I/O port is already registered.
     ///
+    #[allow(dead_code)] // TODO: Remove this attribute.
     pub fn register_read_write(&mut self, number: u16) -> Result<(), Error> {
         let info: IoPortInfo = IoPortInfo::new(number);
         let entry: IoPort = IoPort::new_read_write(info);

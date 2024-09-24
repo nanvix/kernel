@@ -38,6 +38,7 @@ impl IoPort {
     /// **Returns**
     /// A read-only I/O port.
     ///
+    #[allow(dead_code)] // TODO: Remove this attribute.
     pub(super) fn new_read_only(info: IoPortInfo) -> Self {
         Self {
             info,
@@ -72,6 +73,7 @@ impl IoPort {
     /// **Returns**
     /// A read-write I/O port.
     ///
+    #[allow(dead_code)] // TODO: Remove this attribute.
     pub(super) fn new_read_write(info: IoPortInfo) -> Self {
         Self {
             info,

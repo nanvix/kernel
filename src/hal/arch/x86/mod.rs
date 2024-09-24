@@ -82,6 +82,7 @@ pub fn init(
     })
 }
 
+#[cfg(feature = "smp")]
 pub fn initialize_application_core(kstack: *const u8) -> Result<Arch, Error> {
     let (gdt, gdtr, tss): (Gdt, GdtPtr, TssRef) = cpu::initialize_application_core(kstack)?;
 

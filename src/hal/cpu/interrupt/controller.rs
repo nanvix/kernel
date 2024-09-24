@@ -8,13 +8,13 @@
 use crate::hal::arch;
 use ::alloc::rc::Rc;
 use ::core::cell::RefCell;
-use ::sys::{
-    error::{
-        Error,
-        ErrorCode,
-    },
-    mm::VirtualAddress,
+use ::sys::error::{
+    Error,
+    ErrorCode,
 };
+
+#[cfg(feature = "smp")]
+pub use ::sys::mm::VirtualAddress;
 
 //==================================================================================================
 // Structures
@@ -74,6 +74,7 @@ impl InterruptController {
         self.0.borrow_mut().ack(intnum)
     }
 
+    #[cfg(feature = "smp")]
     pub fn start_core(
         &self,
         coreid: u8,

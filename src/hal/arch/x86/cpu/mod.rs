@@ -5,11 +5,13 @@
 // Modules
 //==================================================================================================
 
-mod clock;
 mod context;
 mod exception;
 mod idt;
 mod interrupt;
+
+#[cfg(feature = "smp")]
+mod clock;
 
 //==================================================================================================
 // Imports
@@ -112,6 +114,7 @@ pub fn init(
     Ok((gdt, gdtr, tss, controller))
 }
 
+#[cfg(feature = "smp")]
 pub fn initialize_application_core(kstack: *const u8) -> Result<(Gdt, GdtPtr, TssRef), Error> {
     let (gdt, gdtr, tss): (Gdt, GdtPtr, TssRef) = unsafe { Gdt::init(kstack)? };
     unsafe { idt::load() };

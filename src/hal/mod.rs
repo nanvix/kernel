@@ -16,10 +16,7 @@ pub mod platform;
 //==================================================================================================
 
 use crate::hal::{
-    arch::x86::{
-        cpu::ExceptionController,
-        Arch,
-    },
+    arch::x86::cpu::ExceptionController,
     cpu::InterruptManager,
     io::{
         IoMemoryAllocator,
@@ -37,6 +34,14 @@ use crate::hal::{
 };
 use ::alloc::collections::linked_list::LinkedList;
 use ::sys::error::Error;
+
+#[cfg(feature = "smp")]
+#[path = ""]
+mod feature_smp_imports {
+    pub use crate::hal::arch::x86::Arch;
+}
+#[cfg(feature = "smp")]
+use feature_smp_imports::*;
 
 //==================================================================================================
 // Structures
@@ -93,6 +98,7 @@ pub fn init(
     })
 }
 
+#[cfg(feature = "smp")]
 pub fn initialize_application_core(kstack: *const u8) -> Result<Arch, Error> {
     info!("initializing application core...");
 
