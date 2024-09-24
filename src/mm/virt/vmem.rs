@@ -250,7 +250,7 @@ impl Vmem {
 
         let reason: &str = "page table not found";
         error!("lookup_kernel_page_table(): {}", reason);
-        return Err(Error::new(ErrorCode::NoSuchEntry, reason));
+        Err(Error::new(ErrorCode::NoSuchEntry, reason))
     }
 
     /// Maps a page to the target virtual address space.

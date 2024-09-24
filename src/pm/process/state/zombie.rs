@@ -6,7 +6,7 @@
 //==================================================================================================
 
 use crate::pm::{
-    process::process::state::ProcessState,
+    process::state::ProcessState,
     thread::ZombieThread,
 };
 

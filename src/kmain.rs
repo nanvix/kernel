@@ -218,12 +218,15 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
 
     // Parse kernel arguments.
     info!("parsing kernel arguments...");
-    let (madt, mut memory_regions, mut mmio_regions, kernel_modules): (
+    type KernelArgs = (
         Option<MadtInfo>,
         LinkedList<MemoryRegion<VirtualAddress>>,
         LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
         LinkedList<KernelModule>,
-    ) = match kargs.parse() {
+    );
+    let (madt, mut memory_regions, mut mmio_regions, kernel_modules): KernelArgs = match kargs
+        .parse()
+    {
         Ok(bootinfo) => {
             (bootinfo.madt, bootinfo.memory_regions, bootinfo.mmio_regions, bootinfo.kernel_modules)
         },
@@ -338,7 +341,7 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
                     .as_mut()
                     .expect("interrupts must be supported")
                     .start_core(
-                        coreid as u8,
+                        coreid,
                         hal::platform::TRAMPOLINE_ADDRESS,
                         kstack.top().into_raw_value() as *const u8,
                     )

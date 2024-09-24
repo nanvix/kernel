@@ -69,7 +69,7 @@ impl UninitXapic {
         if apic_id.id() != xapic.id as u32 {
             let reason: &str = "id mismatch";
             error!("init(): {}", reason);
-            return Err(Error::new(ErrorCode::InvalidArgument, &reason));
+            return Err(Error::new(ErrorCode::InvalidArgument, reason));
         }
         // Setup spurious interrupt vector.
         let svr: xapic::XapicSvr =

@@ -133,7 +133,7 @@ impl EventManagerInner {
         if self.interrupt_ownership[idx].is_some() {
             let reason: &str = "interrupt is already owned by another process";
             error!("do_evctrl_interrupt(): reason={:?}", reason);
-            return Err(Error::new(ErrorCode::ResourceBusy, &reason));
+            return Err(Error::new(ErrorCode::ResourceBusy, reason));
         }
 
         // Handle request.
@@ -145,14 +145,14 @@ impl EventManagerInner {
                     if !ProcessManager::has_capability(pid, Capability::InterruptControl)? {
                         let reason: &str = "process does not have interrupt control capability";
                         error!("do_evctrl_interrupt(): reason={:?}", reason);
-                        return Err(Error::new(ErrorCode::PermissionDenied, &reason));
+                        return Err(Error::new(ErrorCode::PermissionDenied, reason));
                     }
 
                     // Check if target interrupt is already owned by another process.
                     if self.interrupt_ownership[idx].is_some() {
                         let reason: &str = "interrupt is already owned by another process";
                         error!("do_evctrl_interrupt(): reason={:?}", reason);
-                        return Err(Error::new(ErrorCode::ResourceBusy, &reason));
+                        return Err(Error::new(ErrorCode::ResourceBusy, reason));
                     }
 
                     // Register interrupt.
@@ -163,7 +163,7 @@ impl EventManagerInner {
 
                 let reason: &str = "invalid process identifier";
                 error!("do_evctrl_interrupt(): reason={:?}", reason);
-                Err(Error::new(ErrorCode::InvalidArgument, &reason))
+                Err(Error::new(ErrorCode::InvalidArgument, reason))
             },
             EventCtrlRequest::Unregister => {
                 // If PID was supplied, check if it matches the current owner.
@@ -171,7 +171,7 @@ impl EventManagerInner {
                     if self.interrupt_ownership[idx] != Some(pid) {
                         let reason: &str = "process does not own interrupt";
                         error!("do_evctrl_interrupt(): reason={:?}", reason);
-                        return Err(Error::new(ErrorCode::PermissionDenied, &reason));
+                        return Err(Error::new(ErrorCode::PermissionDenied, reason));
                     }
                 }
 
@@ -200,14 +200,14 @@ impl EventManagerInner {
                     if !ProcessManager::has_capability(pid, Capability::ExceptionControl)? {
                         let reason: &str = "process does not have exception control capability";
                         error!("do_evctrl_exception(): reason={:?}", reason);
-                        return Err(Error::new(ErrorCode::PermissionDenied, &reason));
+                        return Err(Error::new(ErrorCode::PermissionDenied, reason));
                     }
 
                     // Check if target exception is already owned by another process.
                     if self.exception_ownership[idx].is_some() {
                         let reason: &str = "exception is already owned by another process";
                         error!("do_evctrl_exception(): reason={:?}", reason);
-                        return Err(Error::new(ErrorCode::ResourceBusy, &reason));
+                        return Err(Error::new(ErrorCode::ResourceBusy, reason));
                     }
 
                     // Register exception.
@@ -218,7 +218,7 @@ impl EventManagerInner {
 
                 let reason: &str = "invalid process identifier";
                 error!("do_evctrl_exception(): reason={:?}", reason);
-                Err(Error::new(ErrorCode::InvalidArgument, &reason))
+                Err(Error::new(ErrorCode::InvalidArgument, reason))
             },
             EventCtrlRequest::Unregister => {
                 // If PID was supplied, check if it matches the current owner.
@@ -226,7 +226,7 @@ impl EventManagerInner {
                     if self.exception_ownership[idx] != Some(pid) {
                         let reason: &str = "process does not own exception";
                         error!("do_evctrl_exception(): reason={:?}", reason);
-                        return Err(Error::new(ErrorCode::PermissionDenied, &reason));
+                        return Err(Error::new(ErrorCode::PermissionDenied, reason));
                     }
                 }
 
@@ -255,14 +255,14 @@ impl EventManagerInner {
                     if !ProcessManager::has_capability(pid, Capability::ProcessManagement)? {
                         let reason: &str = "process does not have scheduling control capability";
                         error!("do_evctrl_scheduling(): reason={:?}", reason);
-                        return Err(Error::new(ErrorCode::PermissionDenied, &reason));
+                        return Err(Error::new(ErrorCode::PermissionDenied, reason));
                     }
 
                     // Check if target scheduling event is already owned by another process.
                     if self.scheduling_ownership[idx].is_some() {
                         let reason: &str = "scheduling event is already owned by another process";
                         error!("do_evctrl_scheduling(): reason={:?}", reason);
-                        return Err(Error::new(ErrorCode::ResourceBusy, &reason));
+                        return Err(Error::new(ErrorCode::ResourceBusy, reason));
                     }
 
                     // Register scheduling event.
@@ -273,7 +273,7 @@ impl EventManagerInner {
 
                 let reason: &str = "invalid process identifier";
                 error!("do_evctrl_scheduling(): reason={:?}", reason);
-                Err(Error::new(ErrorCode::InvalidArgument, &reason))
+                Err(Error::new(ErrorCode::InvalidArgument, reason))
             },
             EventCtrlRequest::Unregister => {
                 // If PID was supplied, check if it matches the current owner.
@@ -281,7 +281,7 @@ impl EventManagerInner {
                     if self.scheduling_ownership[idx] != Some(pid) {
                         let reason: &str = "process does not own scheduling event";
                         error!("do_evctrl_scheduling(): reason={:?}", reason);
-                        return Err(Error::new(ErrorCode::PermissionDenied, &reason));
+                        return Err(Error::new(ErrorCode::PermissionDenied, reason));
                     }
                 }
 
@@ -308,10 +308,12 @@ impl EventManagerInner {
                     if (interrupts & (1 << i)) != 0 {
                         let idx: usize = i as usize;
                         if let Some(_event) = self.pending_interrupts[idx].pop_front() {
-                            let mut message: Message = Message::default();
-                            message.source = ProcessIdentifier::KERNEL;
-                            message.destination = pid;
-                            message.message_type = MessageType::Interrupt;
+                            let message: Message = Message {
+                                source: ProcessIdentifier::KERNEL,
+                                destination: pid,
+                                message_type: MessageType::Interrupt,
+                                ..Message::default()
+                            };
                             return Ok(Some(message));
                         }
                     }
@@ -349,15 +351,19 @@ impl EventManagerInner {
             if ((self.nevents + i) % Self::NUMBER_EVENTS) == 2 {
                 for i in 0..SchedulingEvent::NUMBER_EVENTS {
                     if (scheduling & (1 << i)) != 0 {
-                        let idx: usize = i as usize;
-                        if let Some((_ev, info)) = self.pending_scheduling[idx].pop_front() {
-                            let mut message: Message = Message::default();
-                            message.source = ProcessIdentifier::KERNEL;
-                            message.destination = pid;
-                            message.message_type = MessageType::SchedulingEvent;
-
-                            message.payload[0..core::mem::size_of::<ProcessTerminationInfo>()]
-                                .copy_from_slice(&info.to_ne_bytes());
+                        if let Some((_ev, info)) = self.pending_scheduling[i].pop_front() {
+                            let message: Message = Message {
+                                source: ProcessIdentifier::KERNEL,
+                                destination: pid,
+                                message_type: MessageType::SchedulingEvent,
+                                payload: {
+                                    let mut payload: [u8; Message::PAYLOAD_SIZE] =
+                                        [0u8; Message::PAYLOAD_SIZE];
+                                    payload[0..core::mem::size_of::<ProcessTerminationInfo>()]
+                                        .copy_from_slice(&info.to_ne_bytes());
+                                    payload
+                                },
+                            };
 
                             return Ok(Some(message));
                         }
@@ -419,7 +425,7 @@ impl EventManagerInner {
         if self.interrupt_capable {
             let reason: &str = "interrupt manager is not capable of handlin ginterrupts";
             error!("wakeup_interrupt(): reason={:?}", reason);
-            return Err(Error::new(ErrorCode::OperationNotSupported, &reason));
+            return Err(Error::new(ErrorCode::OperationNotSupported, reason));
         }
 
         self.nevents += 1;
@@ -434,7 +440,7 @@ impl EventManagerInner {
             None => {
                 let reason: &str = "no owner for interrupt";
                 error!("wakeup_interrupt(): reason={:?}", reason);
-                return Err(Error::new(ErrorCode::NoSuchProcess, &reason));
+                return Err(Error::new(ErrorCode::NoSuchProcess, reason));
             },
         };
 
@@ -506,7 +512,7 @@ impl EventManagerInner {
                 None => {
                     let reason: &str = "no owner for scheduling event";
                     error!("notify_process_termination(): reason={:?}", reason);
-                    return Err(Error::new(ErrorCode::NoSuchProcess, &reason));
+                    return Err(Error::new(ErrorCode::NoSuchProcess, reason));
                 },
             };
 
@@ -536,9 +542,7 @@ impl EventManager {
                 // No further action is required for interrupts.
                 Ok(())
             },
-            Event::Exception(ev) => {
-                return EventManager::get()?.try_borrow_mut()?.resume_exception(ev);
-            },
+            Event::Exception(ev) => EventManager::get()?.try_borrow_mut()?.resume_exception(ev),
             Event::Scheduling(_ev) => {
                 // No further action is required for scheduling events.
                 Ok(())
@@ -611,7 +615,7 @@ impl EventManager {
                 if !em.try_borrow_mut()?.interrupt_capable {
                     let reason: &str = "interrupt manager is not capable of handlin ginterrupts";
                     error!("do_evctrl(): {:?} (reason={:?})", reason, req);
-                    return Err(Error::new(ErrorCode::OperationNotSupported, &reason));
+                    return Err(Error::new(ErrorCode::OperationNotSupported, reason));
                 }
                 em.try_borrow_mut()?
                     .do_evctrl_interrupt(Some(pid), interrupt_event, req)?;
@@ -654,7 +658,7 @@ impl EventManager {
             Err(e) => {
                 let reason: &str = "failed to borrow event manager";
                 error!("try_borrow_mut(): {:?} (error={:?})", reason, e);
-                Err(Error::new(ErrorCode::PermissionDenied, &reason))
+                Err(Error::new(ErrorCode::PermissionDenied, reason))
             },
         }
     }
@@ -706,7 +710,6 @@ fn interrupt_handler(intnum: InterruptNumber) {
         },
         Err(e) => {
             error!("failed to get event manager: {:?}", e);
-            return;
         },
     }
 }
@@ -741,7 +744,7 @@ fn exception_handler(info: &ExceptionInformation, _ctx: &ContextInformation) {
         },
     };
 
-    if let Err(_) = resume.wait() {
+    if resume.wait().is_err() {
         let e = ProcessManager::exit(-1);
         unreachable!("failed to terminate process (error={:?})", e);
     }

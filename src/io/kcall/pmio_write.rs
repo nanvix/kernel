@@ -44,7 +44,7 @@ fn do_pmio_write(
     if !ProcessManager::has_capability(pid, Capability::IoManagement)? {
         let reason: &'static str = "process does not have io management capabilities";
         error!("do_pmio_write(): {}", reason);
-        return Err(Error::new(ErrorCode::PermissionDenied, &reason));
+        return Err(Error::new(ErrorCode::PermissionDenied, reason));
     }
 
     pm.write_pmio(pid, port_number, port_width, value)
@@ -58,7 +58,7 @@ pub fn pmio_write(pm: &mut ProcessManager, args: &KcallArgs) -> i32 {
         Ok(port_width) => port_width,
         Err(_) => return ErrorCode::InvalidArgument.into_errno(),
     };
-    let value: u32 = args.arg2 as u32;
+    let value: u32 = args.arg2;
 
     // Execute kernel call.
     match do_pmio_write(pm, pid, port_number, port_width, value) {

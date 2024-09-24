@@ -106,7 +106,7 @@ impl Message {
     pub fn try_from_bytes(
         bytes: [u8; Self::HEADER_SIZE + Self::PAYLOAD_SIZE],
     ) -> Result<Self, Error> {
-        Ok(unsafe { mem::transmute(bytes) })
+        Ok(unsafe { mem::transmute::<[u8; 64], Message>(bytes) })
     }
 }
 

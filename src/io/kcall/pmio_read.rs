@@ -42,7 +42,7 @@ fn do_pmio_read(
     if !ProcessManager::has_capability(pid, Capability::IoManagement)? {
         let reason: &'static str = "process does not have io management capabilities";
         error!("do_pmio_read(): {}", reason);
-        return Err(Error::new(ErrorCode::PermissionDenied, &reason));
+        return Err(Error::new(ErrorCode::PermissionDenied, reason));
     }
 
     pm.read_pmio(pid, port_number, port_width)

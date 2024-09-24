@@ -45,7 +45,7 @@ fn do_mmio_alloc(
     if !ProcessManager::has_capability(pid, Capability::IoManagement)? {
         let reason: &'static str = "process does not have I/O management capabilities";
         error!("do_mmio_alloc(): {}", reason);
-        return Err(Error::new(ErrorCode::PermissionDenied, &reason));
+        return Err(Error::new(ErrorCode::PermissionDenied, reason));
     }
 
     // Attempt to allocate I/O memory region.

@@ -120,9 +120,8 @@ impl MadtInfo {
     pub fn get_ioapic_info(&self) -> Option<&MadtEntryIoApic> {
         // TODO: handle multiple I/O APICs.
         for entry in self.entries.iter() {
-            match entry {
-                MadtEntry::IoApic(ioapic_info) => return Some(ioapic_info),
-                _ => (),
+            if let MadtEntry::IoApic(ioapic_info) = entry {
+                return Some(ioapic_info);
             }
         }
         None
@@ -141,9 +140,8 @@ impl MadtInfo {
     pub fn get_lapic_info(&self) -> Option<&MadtEntryLocalApic> {
         // TODO: handle multiple local APICs.
         for entry in self.entries.iter() {
-            match entry {
-                MadtEntry::LocalApic(local_apic_info) => return Some(local_apic_info),
-                _ => (),
+            if let MadtEntry::LocalApic(local_apic_info) = entry {
+                return Some(local_apic_info);
             }
         }
         None
@@ -194,7 +192,7 @@ pub unsafe fn parse(madt: *const Madt) -> Result<MadtInfo, Error> {
 
     let mut madt: MadtInfo = MadtInfo::from_ptr(madt)?;
 
-    while offset < madt_len as usize {
+    while offset < madt_len {
         let ptr: *const MadtEntryHeader = unsafe { base.add(offset) as *const MadtEntryHeader };
         let header: MadtEntryHeader = MadtEntryHeader::from_ptr(ptr);
 

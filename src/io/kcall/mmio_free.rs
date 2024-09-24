@@ -40,7 +40,7 @@ fn do_mmio_free(
     if !ProcessManager::has_capability(pid, Capability::IoManagement)? {
         let reason: &'static str = "process does not have I/O management capabilities";
         error!("do_mmio_free(): {}", reason);
-        return Err(Error::new(ErrorCode::PermissionDenied, &reason));
+        return Err(Error::new(ErrorCode::PermissionDenied, reason));
     }
 
     // Detached I/O memory region from the process.

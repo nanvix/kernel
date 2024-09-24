@@ -39,8 +39,8 @@ impl InterruptMap {
     ///
     pub fn new() -> Self {
         let mut map = [0; Self::LENGTH];
-        for i in 0..Self::LENGTH {
-            map[i] = i as u8;
+        for (i, item) in map.iter_mut().enumerate() {
+            *item = i as u8;
         }
         Self(map)
     }

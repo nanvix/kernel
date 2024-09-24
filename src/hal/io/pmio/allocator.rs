@@ -338,7 +338,7 @@ impl AnyIoPort {
             AnyIoPort::WriteOnly(_) => {
                 let reason: &'static str = "write-only io port";
                 error!("read(): {:?}", reason);
-                Err(Error::new(ErrorCode::OperationNotSupported, &reason))
+                Err(Error::new(ErrorCode::OperationNotSupported, reason))
             },
             AnyIoPort::ReadWrite(port) => match port_width {
                 IoPortWidth::Bits8 => Ok(port.read8() as u32),
@@ -353,7 +353,7 @@ impl AnyIoPort {
             AnyIoPort::ReadOnly(_) => {
                 let reason: &'static str = "read-only io port";
                 error!("write(): {:?}", reason);
-                return Err(Error::new(ErrorCode::OperationNotSupported, &reason));
+                return Err(Error::new(ErrorCode::OperationNotSupported, reason));
             },
             AnyIoPort::WriteOnly(port) => match port_width {
                 IoPortWidth::Bits8 => port.write8(value as u8),

@@ -36,7 +36,7 @@ fn do_pmio_free(
     if !ProcessManager::has_capability(pid, Capability::IoManagement)? {
         let reason: &'static str = "process does not have io management capabilities";
         error!("do_pmio_free(): {}", reason);
-        return Err(Error::new(ErrorCode::PermissionDenied, &reason));
+        return Err(Error::new(ErrorCode::PermissionDenied, reason));
     }
 
     let _port: AnyIoPort = pm.detach_pmio(pid, port_number)?;

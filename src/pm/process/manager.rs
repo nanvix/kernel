@@ -33,7 +33,7 @@ use crate::{
     pm::{
         process::{
             identity::ProcessIdentity,
-            process::{
+            state::{
                 InterruptReason,
                 InterruptedProcess,
                 ProcessRef,
@@ -287,7 +287,7 @@ impl ProcessManagerInner {
             let (next_process, reason, next_context) = next_process.resume();
             self.interrupt_reason = Some(reason);
             self.running = Some(next_process);
-            return (previous_context, next_context);
+            (previous_context, next_context)
         } else {
             let next_process: RunnableProcess = self.take_ready();
             let (next_process, next_context): (RunningProcess, *mut ContextInformation) =
@@ -585,7 +585,7 @@ impl ProcessManager {
         &mut self,
         mm: &mut VirtMemoryManager,
     ) -> Result<ProcessIdentifier, Error> {
-        Ok(self.try_borrow_mut()?.create_process(mm)?)
+        self.try_borrow_mut()?.create_process(mm)
     }
 
     pub fn exec(
@@ -594,7 +594,7 @@ impl ProcessManager {
         pid: ProcessIdentifier,
         elf: &Elf32Fhdr,
     ) -> Result<(), Error> {
-        Ok(self.try_borrow_mut()?.exec(mm, pid, elf)?)
+        self.try_borrow_mut()?.exec(mm, pid, elf)
     }
 
     pub fn getuid(&self, pid: ProcessIdentifier) -> Result<UserIdentifier, Error> {
@@ -602,11 +602,10 @@ impl ProcessManager {
     }
 
     pub fn setuid(&mut self, pid: ProcessIdentifier, uid: UserIdentifier) -> Result<(), Error> {
-        Ok(self
-            .try_borrow_mut()?
+        self.try_borrow_mut()?
             .find_process_mut(pid)?
             .state_mut()
-            .set_uid(uid)?)
+            .set_uid(uid)
     }
 
     pub fn geteuid(&self, pid: ProcessIdentifier) -> Result<UserIdentifier, Error> {
@@ -614,11 +613,10 @@ impl ProcessManager {
     }
 
     pub fn seteuid(&mut self, pid: ProcessIdentifier, euid: UserIdentifier) -> Result<(), Error> {
-        Ok(self
-            .try_borrow_mut()?
+        self.try_borrow_mut()?
             .find_process_mut(pid)?
             .state_mut()
-            .set_euid(euid)?)
+            .set_euid(euid)
     }
 
     pub fn getgid(&self, pid: ProcessIdentifier) -> Result<GroupIdentifier, Error> {
@@ -626,11 +624,10 @@ impl ProcessManager {
     }
 
     pub fn setgid(&mut self, pid: ProcessIdentifier, gid: GroupIdentifier) -> Result<(), Error> {
-        Ok(self
-            .try_borrow_mut()?
+        self.try_borrow_mut()?
             .find_process_mut(pid)?
             .state_mut()
-            .set_gid(gid)?)
+            .set_gid(gid)
     }
 
     pub fn getegid(&self, pid: ProcessIdentifier) -> Result<GroupIdentifier, Error> {
@@ -638,11 +635,10 @@ impl ProcessManager {
     }
 
     pub fn setegid(&mut self, pid: ProcessIdentifier, egid: GroupIdentifier) -> Result<(), Error> {
-        Ok(self
-            .try_borrow_mut()?
+        self.try_borrow_mut()?
             .find_process_mut(pid)?
             .state_mut()
-            .set_egid(egid)?)
+            .set_egid(egid)
     }
 
     pub fn capctl(
@@ -651,7 +647,7 @@ impl ProcessManager {
         capability: Capability,
         value: bool,
     ) -> Result<(), Error> {
-        Ok(self.try_borrow_mut()?.capctl(pid, capability, value)?)
+        self.try_borrow_mut()?.capctl(pid, capability, value)
     }
 
     pub fn has_capability(pid: ProcessIdentifier, capability: Capability) -> Result<bool, Error> {
@@ -674,7 +670,7 @@ impl ProcessManager {
     }
 
     pub fn terminate(&mut self, pid: ProcessIdentifier) -> Result<(), Error> {
-        Ok(self.try_borrow_mut()?.terminate(pid)?)
+        self.try_borrow_mut()?.terminate(pid)
     }
 
     pub fn vmcopy_from_user(

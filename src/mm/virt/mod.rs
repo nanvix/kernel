@@ -151,7 +151,7 @@ pub fn init(
             if raw_vaddr == (config::kernel::MEMORY_SIZE - mem::PAGE_SIZE) {
                 break;
             }
-            raw_vaddr = raw_vaddr + mem::PAGE_SIZE;
+            raw_vaddr += mem::PAGE_SIZE;
             paddr = match region.typ() {
                 MemoryRegionType::Mmio => {
                     let mmio_addr: VirtualAddress = region.start().into_inner();

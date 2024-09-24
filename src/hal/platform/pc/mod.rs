@@ -147,7 +147,7 @@ fn register_pit(ioports: &mut IoPortAllocator) -> Result<Pit, Error> {
     ioports.register_read_write(::arch::cpu::pit::PIT_CTRL)?;
     ioports.register_read_write(::arch::cpu::pit::PIT_DATA)?;
 
-    Ok(Pit::new(ioports, config::kernel::TIMER_FREQ)?)
+    Pit::new(ioports, config::kernel::TIMER_FREQ)
 }
 
 pub fn init(

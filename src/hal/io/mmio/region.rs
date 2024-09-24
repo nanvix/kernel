@@ -59,7 +59,7 @@ impl Eq for IoMemoryRegion {}
 
 impl PartialOrd for IoMemoryRegion {
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
-        self.base().partial_cmp(&other.base())
+        Some(self.cmp(other))
     }
 }
 
