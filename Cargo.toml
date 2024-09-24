@@ -3,7 +3,7 @@
 
 [package]
 name = "kernel"
-version = "0.6.8"
+version = "0.7.0"
 license-file = "LICENSE.txt"
 edition = "2021"
 authors = ["The Maintainers of Nanvix"]
@@ -53,6 +53,9 @@ cmos = []
 mboot = []
 pit = ["arch/pit"]
 stdio = []
+
+# Interface Features
+kcall = []
 
 # Logging Features
 trace = ["debug"]

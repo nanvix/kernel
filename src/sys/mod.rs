@@ -5,6 +5,9 @@
 // Modules
 //==================================================================================================
 
+/// Architecture-specific definitions.
+pub use ::arch;
+
 /// System configuration constants.
 pub mod config;
 
@@ -19,6 +22,10 @@ pub mod event;
 
 /// Inter process communication.
 pub mod ipc;
+
+/// Kernel calls.
+#[cfg(feature = "kcall")]
+pub mod kcall;
 
 /// Helper macros.
 pub mod macros;
