@@ -37,6 +37,7 @@ impl IoMemoryAllocator {
         }
     }
 
+    #[allow(dead_code)] // TODO: Remove this attribute.
     pub fn register(&mut self, region: TruncatedMemoryRegion<VirtualAddress>) -> Result<(), Error> {
         trace!("register(): region={:?}", region);
 
