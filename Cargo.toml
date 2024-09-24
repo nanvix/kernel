@@ -54,6 +54,9 @@ mboot = []
 pit = ["arch/pit"]
 stdio = []
 
+# Interface Features
+kcall = []
+
 # Logging Features
 trace = ["debug"]
 debug = ["info"]
