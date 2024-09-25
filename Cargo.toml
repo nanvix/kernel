@@ -19,15 +19,7 @@ name = "kernel"
 path = "src/kmain.rs"
 
 [dependencies]
-arch = { git = "https://github.com/nanvix/arch", branch = "releases/v1.3.1", features = [
-    "acpi",
-    "cpuid",
-    "ioapic",
-    "madt",
-    "msr",
-    "pic",
-    "xapic",
-] }
+arch = { git = "https://github.com/nanvix/arch", branch = "releases/v1.3.1", default-features = false }
 cfg-if = "1.0.0"
 
 [build-dependencies]
@@ -38,8 +30,30 @@ cfg-if = "1.0.0"
 default = ["qemu-pc"]
 
 # Machine Types
-microvm = ["stdio"]
-pc = ["bios", "cmos", "mboot", "pit", "warn"]
+microvm = [
+    "stdio",
+    "arch/acpi",
+    "arch/cpuid",
+    "arch/ioapic",
+    "arch/madt",
+    "arch/msr",
+    "arch/pic",
+    "arch/xapic",
+]
+pc = [
+    "bios",
+    "cmos",
+    "mboot",
+    "pit",
+    "warn",
+    "arch/acpi",
+    "arch/cpuid",
+    "arch/ioapic",
+    "arch/madt",
+    "arch/msr",
+    "arch/pic",
+    "arch/xapic",
+]
 qemu-pc = ["pc"]
 qemu-pc-smp = ["qemu-pc", "smp"]
 qemu-baremetal = ["pc"]
