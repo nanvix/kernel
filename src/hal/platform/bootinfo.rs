@@ -31,6 +31,8 @@ use ::alloc::collections::LinkedList;
 pub struct BootInfo {
     /// ACPI MADT information.
     pub madt: Option<MadtInfo>,
+    /// Lower memory size.
+    pub mem_lower: Option<usize>,
     /// General-purpose memory regions.
     pub memory_regions: LinkedList<MemoryRegion<VirtualAddress>>,
     /// Memory-mapped I/O regions.
@@ -52,6 +54,7 @@ impl BootInfo {
     /// # Parameters
     ///
     /// - `madt`: ACPI MADT information.
+    /// - `mem_lower`: Available Lower memory.
     /// - `memory_regions`: General-purpose memory regions.
     /// - `mmio_regions`: Memory-mapped I/O regions.
     /// - `kernel_modules`: Kernel modules.
@@ -62,12 +65,14 @@ impl BootInfo {
     ///
     pub fn new(
         madt: Option<MadtInfo>,
+        mem_lower: Option<usize>,
         memory_regions: LinkedList<MemoryRegion<VirtualAddress>>,
         mmio_regions: LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
         kernel_modules: LinkedList<KernelModule>,
     ) -> Self {
         Self {
             madt,
+            mem_lower,
             memory_regions,
             mmio_regions,
             kernel_modules,

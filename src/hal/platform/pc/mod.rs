@@ -33,10 +33,14 @@ use ::arch::{
     cpu::pic,
     mem,
 };
+
 use ::sys::{
     config,
-    error::Error,
     mm::VirtualAddress,
+    error::{
+        Error,
+        ErrorCode,
+    },
 };
 
 //==================================================================================================
@@ -107,7 +111,19 @@ pub struct Platform {
 #[cfg(feature = "bios")]
 fn register_bios_data_area(
     memory_regions: &mut LinkedList<MemoryRegion<VirtualAddress>>,
+    mem_lower_size: usize,
 ) -> Result<(), Error> {
+
+    // Check if the memory region for the Bios Data Area fits in the 
+    // lower memory regions available.
+    // NOTE: This is possible because mem_lower_size start at address 0x0.
+    if mem_lower_size < bios::BiosDataArea::BASE + mem::PAGE_SIZE {
+        let reason: &str = 
+            "bios data memory region doesn't fit in lower memory available";
+        error!("register_bios_data_area(): {:?}", reason);
+        return Err(Error::new(ErrorCode::OutOfMemory, reason));
+    }
+
     let bios_data_area: MemoryRegion<VirtualAddress> = MemoryRegion::new(
         "bios data area",
         VirtualAddress::from_raw_value(bios::BiosDataArea::BASE)?
@@ -156,6 +172,7 @@ pub fn init(
     memory_regions: &mut LinkedList<MemoryRegion<VirtualAddress>>,
     mmio_regions: &mut LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
     madt: &Option<MadtInfo>,
+    mem_lower: Option<usize>,
 ) -> Result<Platform, Error> {
     // Register I/O ports for 8259 PIC.
     ioports.register_read_write(pic::PIC_CTRL_MASTER as u16)?;
@@ -182,8 +199,28 @@ pub fn init(
 
     // Register BIOS data area.
     #[cfg(feature = "bios")]
-    register_bios_data_area(memory_regions)?;
+    let mem_lower_size = match mem_lower {
+        Some(mem_lower_size) => {
+            mem_lower_size
+        },
+        None => {
+            let reason: &str = "availability of lower memory is not known";
+            error!("init(): {:?}", reason);
+            return Err(Error::new(ErrorCode::InvalidArgument, reason));
+        }
+    };
 
+    register_bios_data_area(memory_regions, mem_lower_size)?;
+
+    // Check if the memory region for the Trampoline fits in the 
+    // lower memory regions available.
+    // NOTE: This is possible because mem_lower_size start at address 0x0.
+    if mem_lower_size < platform::TRAMPOLINE_ADDRESS.into_raw_value() + mem::PAGE_SIZE {
+        let reason: &str = 
+            "Trampoline memory region doesn't fit in lower memory available";
+        error!("init(): {:?}", reason);
+        return Err(Error::new(ErrorCode::OutOfMemory, reason));
+    }
     // Trampoline.
     let trampoline: MemoryRegion<VirtualAddress> = MemoryRegion::new(
         "trampoline",
@@ -195,7 +232,7 @@ pub fn init(
     memory_regions.push_back(trampoline);
 
     // Register video display memory.
-    // TODO: we should read this region from the multi-boot information passed by Grub.
+    // FIXME: https://github.com/nanvix/kernel/issues/435
     let video_display_memory: TruncatedMemoryRegion<VirtualAddress> = TruncatedMemoryRegion::new(
         "video display memory",
         PageAligned::from_raw_value(0x000a0000)?,
@@ -207,7 +244,7 @@ pub fn init(
     mmio_regions.push_back(video_display_memory);
 
     // Bios memory.
-    // TODO: we should read this region from the multi-boot information passed by Grub.
+    // FIXME: https://github.com/nanvix/kernel/issues/435
     let bios: MemoryRegion<VirtualAddress> = MemoryRegion::new(
         "bios memory",
         VirtualAddress::from_raw_value(0x000c0000)?,
