@@ -68,13 +68,20 @@ pub fn init(
     memory_regions: &mut LinkedList<MemoryRegion<VirtualAddress>>,
     mmio_regions: &mut LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
     madt: &Option<MadtInfo>,
+    mem_lower: Option<usize>,
 ) -> Result<Hal, Error> {
     info!("initializing hardware abstraction layer...");
 
     let mut ioports: IoPortAllocator = IoPortAllocator::new();
     let mut ioaddresses: IoMemoryAllocator = IoMemoryAllocator::new();
     let mut platform: Platform =
-        platform::init(&mut ioports, &mut ioaddresses, memory_regions, mmio_regions, madt)?;
+        platform::init(
+            &mut ioports, 
+            &mut ioaddresses, 
+            memory_regions, 
+            mmio_regions, 
+            madt,
+            mem_lower)?;
 
     // Initialize the interrupt manager.
     let intman: Option<InterruptManager> = match platform.arch.controller.take() {

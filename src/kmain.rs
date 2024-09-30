@@ -220,15 +220,20 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
     info!("parsing kernel arguments...");
     type KernelArgs = (
         Option<MadtInfo>,
+        Option<usize>,
         LinkedList<MemoryRegion<VirtualAddress>>,
         LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
         LinkedList<KernelModule>,
     );
-    let (madt, mut memory_regions, mut mmio_regions, kernel_modules): KernelArgs = match kargs
+    let (madt, mem_lower, mut memory_regions, mut mmio_regions, kernel_modules): KernelArgs = match kargs
         .parse()
     {
         Ok(bootinfo) => {
-            (bootinfo.madt, bootinfo.memory_regions, bootinfo.mmio_regions, bootinfo.kernel_modules)
+            (bootinfo.madt, 
+             bootinfo.mem_lower, 
+             bootinfo.memory_regions, 
+             bootinfo.mmio_regions, 
+             bootinfo.kernel_modules)
         },
         Err(err) => {
             panic!("failed to parse kernel arguments: {:?}", err);
@@ -263,7 +268,12 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
         }
     }
 
-    let mut hal: Hal = match hal::init(&mut memory_regions, &mut mmio_regions, &madt) {
+    let mut hal: Hal = match hal::init(
+        &mut memory_regions,
+        &mut mmio_regions,
+        &madt,
+        mem_lower)
+    {
         Ok(hal) => hal,
         Err(err) => {
             panic!("failed to initialize hardware abstraction layer: {:?}", err);

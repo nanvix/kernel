@@ -202,7 +202,7 @@ pub fn parse_bootinfo(magic: u32, info: usize) -> Result<BootInfo, Error> {
         kernel_modules.push_back(module);
     }
 
-    Ok(BootInfo::new(None, LinkedList::new(), LinkedList::new(), kernel_modules))
+    Ok(BootInfo::new(None, None, LinkedList::new(), LinkedList::new(), kernel_modules))
 }
 
 pub fn init(
@@ -211,6 +211,7 @@ pub fn init(
     _memory_regions: &mut LinkedList<MemoryRegion<VirtualAddress>>,
     _mmio_regions: &mut LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
     madt: &Option<MadtInfo>,
+    _mem_lower: Option<usize>
 ) -> Result<Platform, Error> {
     Ok(Platform {
         arch: x86::init(ioports, ioaddresses, madt)?,
