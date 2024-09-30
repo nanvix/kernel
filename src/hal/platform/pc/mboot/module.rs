@@ -5,6 +5,7 @@
 // Imports
 //==================================================================================================
 
+use crate::hal::platform::mboot::MbootTagType;
 use ::core::{
     ffi::CStr,
     mem,
@@ -26,7 +27,7 @@ use ::sys::error::{
 #[repr(C, align(8))]
 pub struct MbootModuleTag {
     /// Type.
-    typ: u32,
+    typ: MbootTagType,
     /// Size.
     size: u32,
     /// Start.
@@ -45,7 +46,7 @@ impl core::fmt::Debug for MbootModuleTag {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(
             f,
-            "mboot_module_tag: typ={:#010x}, size={}, start={:#010x}, end={:#010x}",
+            "mboot_module_tag: typ={:?}, size={}, start={:#010x}, end={:#010x}",
             self.typ, self.size, self.start, self.end
         )
     }

@@ -5,6 +5,7 @@
 // Imports
 //==================================================================================================
 
+use crate::hal::platform::mboot::MbootTagType;
 use ::sys::error::{
     Error,
     ErrorCode,
@@ -22,7 +23,7 @@ use ::sys::error::{
 #[repr(C, align(8))]
 pub struct MbootAcpiTag {
     /// Type.
-    typ: u32,
+    typ: MbootTagType,
     /// Size.
     size: u32,
 }

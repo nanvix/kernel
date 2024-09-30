@@ -8,6 +8,7 @@
 mod acpi;
 mod basic_mem_info;
 mod memory_map;
+mod mboot_tag;
 mod module;
 
 //==================================================================================================
@@ -17,6 +18,7 @@ mod module;
 use self::{
     acpi::MbootAcpi,
     basic_mem_info::MbootBasicMeminfo,
+    mboot_tag::MbootTagType,
     memory_map::MbootMemoryMap,
     module::MbootModule,
 };
@@ -73,66 +75,6 @@ use crate::hal::platform::bootinfo::BootInfo;
 const MBOOT_BOOTLOADER_MAGIC: u32 = 0x36d76289;
 
 //==================================================================================================
-// Multiboot Tag Type
-//==================================================================================================
-
-#[repr(u16)]
-enum MbootTagType {
-    End = 0,
-    Cmdline = 1,
-    BootLoaderName = 2,
-    Module = 3,
-    BasicMeminfo = 4,
-    Bootdev = 5,
-    Mmap = 6,
-    Vbe = 7,
-    Framebuffer = 8,
-    ElfSections = 9,
-    Apm = 10,
-    Efi32 = 11,
-    Efi64 = 12,
-    Smbios = 13,
-    AcpiOld = 14,
-    AcpiNew = 15,
-    Network = 16,
-    EfiMmap = 17,
-    EfiBs = 18,
-    Efi32Ih = 19,
-    Efi64Ih = 20,
-    LoadBaseAddr = 21,
-}
-
-impl From<u16> for MbootTagType {
-    fn from(value: u16) -> Self {
-        match value {
-            0 => MbootTagType::End,
-            1 => MbootTagType::Cmdline,
-            2 => MbootTagType::BootLoaderName,
-            3 => MbootTagType::Module,
-            4 => MbootTagType::BasicMeminfo,
-            5 => MbootTagType::Bootdev,
-            6 => MbootTagType::Mmap,
-            7 => MbootTagType::Vbe,
-            8 => MbootTagType::Framebuffer,
-            9 => MbootTagType::ElfSections,
-            10 => MbootTagType::Apm,
-            11 => MbootTagType::Efi32,
-            12 => MbootTagType::Efi64,
-            13 => MbootTagType::Smbios,
-            14 => MbootTagType::AcpiOld,
-            15 => MbootTagType::AcpiNew,
-            16 => MbootTagType::Network,
-            17 => MbootTagType::EfiMmap,
-            18 => MbootTagType::EfiBs,
-            19 => MbootTagType::Efi32Ih,
-            20 => MbootTagType::Efi64Ih,
-            21 => MbootTagType::LoadBaseAddr,
-            _ => panic!("invalid multiboot tag type {}", value),
-        }
-    }
-}
-
-//==================================================================================================
 // Multiboot Tag
 //==================================================================================================
 
@@ -144,7 +86,7 @@ impl From<u16> for MbootTagType {
 #[repr(C, align(8))]
 struct MbootTag {
     /// Type.
-    typ: u16,
+    typ: MbootTagType,
     /// Flags
     flags: u16,
     /// Size.
@@ -543,7 +485,7 @@ pub fn parse(bootloader_magic: u32, addr: usize) -> Result<BootInfo, Error> {
     // Lower memory size.
     let mut mem_lower: Option<usize> = None;
 
-    while tag.typ != MbootTagType::End as u16 {
+    while tag.typ != MbootTagType::End {
         match tag.typ.into() {
             MbootTagType::Cmdline => {
                 info!("command_line: {:?}", tag);

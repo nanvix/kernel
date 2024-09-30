@@ -5,6 +5,7 @@
 // Imports
 //==================================================================================================
 
+use crate::hal::platform::mboot::MbootTagType;
 use crate::hal::mem::MemoryRegionType;
 use ::core::mem;
 use ::sys::error::{
@@ -26,7 +27,7 @@ pub enum MbootMemoryType {
     Available = 1,
     /// Reserved.
     Reserved = 2,
-    /// ACPI reclaimable.
+   /// ACPI reclaimable.
     AcpiReclaimable = 3,
     /// NVS.
     Nvs = 4,
@@ -151,7 +152,7 @@ impl core::fmt::Debug for MbootMemoryMapEntry {
 #[repr(C, align(8))]
 struct MbootMemoryMapTag {
     /// Type.
-    typ: u32,
+    typ: MbootTagType,
     /// Total size including the header.
     size: u32,
     /// Size of each entry.
