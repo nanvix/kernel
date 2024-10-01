@@ -482,6 +482,22 @@ impl Vmem {
         Ok(())
     }
 
+    ///
+    /// # Description
+    ///
+    /// Copies data from kernel space to user space. The source and destination addresses do not
+    /// have to be aligned, but the destination address range must lie in user space, and the source
+    /// address range must lie in kernel space.
+    ///
+    /// # Parameters
+    ///
+    /// - `dst`: Destination address in user space.
+    /// - `src`: Source address in kernel space.
+    ///
+    /// # Returns
+    ///
+    /// Upon success, empty is returned. Upon failure, an error code is returned instead.
+    ///
     pub fn copy_to_user_unaligned(
         &self,
         dst: VirtualAddress,
@@ -492,49 +508,92 @@ impl Vmem {
             fn __physcopy(dst: *mut u8, src: *const u8, size: usize);
         }
 
-        // Checks if destination address does not lie in kernel space.
-        if !Self::is_kernel_addr(src) {
-            let reason: &str = "source address does not lie in kernel space";
-            error!("copy_unaligned(): {}", reason);
-            return Err(Error::new(ErrorCode::BadAddress, reason));
-        }
-
-        // Check if source address does not lie in user space.
-        if !Self::is_user_addr(dst) {
-            let reason: &str = "destination address does not lie in user space";
+        // Check if size is invalid.
+        if size == 0 {
+            let reason: &str = "zero-length copy";
             error!("copy_to_user_unaligned(): {}", reason);
-            return Err(Error::new(ErrorCode::BadAddress, reason));
-        }
-
-        // Check if size is too big.
-        if size > mem::PAGE_SIZE {
-            let reason: &str = "size is too big";
-            error!("copy_unaligned(): {}", reason);
             return Err(Error::new(ErrorCode::InvalidArgument, reason));
         }
 
-        let vaddr: PageAligned<VirtualAddress> =
-            PageAligned::from_address(dst.align_down(mmu::PAGE_ALIGNMENT)?)?;
+        let _copy_to_user_unaligned = |dry_run: bool,
+                                       mut dst: VirtualAddress,
+                                       mut src: VirtualAddress,
+                                       mut size: usize|
+         -> Result<(), Error> {
+            while size > 0 {
+                // Checks if start source address does not lie in kernel space.
+                if !Self::is_kernel_addr(src) {
+                    let reason: &str = "start source address does not lie in kernel space";
+                    error!(
+                        "copy_to_user_unaligned(): {} (dst={:?}, src={:?}, size={:?})",
+                        reason, dst, src, size
+                    );
+                    return Err(Error::new(ErrorCode::BadAddress, reason));
+                }
 
-        let offset: usize = dst.into_raw_value() - vaddr.into_raw_value();
+                // Check if start destination address does not lie in user space.
+                if !Self::is_user_addr(dst) {
+                    let reason: &str = "start destination address does not lie in user space";
+                    error!(
+                        "copy_to_user_unaligned(): {} (dst={:?}, src={:?}, size={:?})",
+                        reason, dst, src, size
+                    );
+                    return Err(Error::new(ErrorCode::BadAddress, reason));
+                }
 
-        // Check if area spans across pages.
-        if offset + size > mem::PAGE_SIZE {
-            let reason: &str = "area spans across pages";
-            error!("copy_unaligned(): {}", reason);
-            return Err(Error::new(ErrorCode::InvalidArgument, reason));
-        }
+                let vaddr: PageAligned<VirtualAddress> =
+                    PageAligned::from_address(dst.align_down(mmu::PAGE_ALIGNMENT)?)?;
 
-        let dst: &AttachedUserPage = self.find_page(vaddr)?;
-        let dst_frame: FrameAddress = dst.frame_address();
+                let offset: usize = dst.into_raw_value() - vaddr.into_raw_value();
+                let copy_size: usize = usize::min(mem::PAGE_SIZE - offset, size);
 
-        unsafe {
-            __physcopy(
-                (dst_frame.into_raw_value() + offset) as *mut u8,
-                src.into_raw_value() as *const u8,
-                size,
-            )
+                // Check if end source address does not lie in kernel space.
+                if !Self::is_kernel_addr(VirtualAddress::new(src.into_raw_value() + copy_size - 1))
+                {
+                    let reason: &str = "end source address does not lie in kernel space";
+                    error!(
+                        "copy_to_user_unaligned(): {} (dst={:?}, src={:?}, size={:?})",
+                        reason, dst, src, size
+                    );
+                    return Err(Error::new(ErrorCode::BadAddress, reason));
+                }
+
+                // Check if end destination address does not lie in user space.
+                if !Self::is_user_addr(VirtualAddress::new(dst.into_raw_value() + copy_size - 1)) {
+                    let reason: &str = "end destination address does not lie in user space";
+                    error!(
+                        "copy_to_user_unaligned(): {} (dst={:?}, src={:?}, size={:?})",
+                        reason, dst, src, size
+                    );
+                    return Err(Error::new(ErrorCode::BadAddress, reason));
+                }
+
+                let dst_page: &AttachedUserPage = self.find_page(vaddr)?;
+                let dst_frame: FrameAddress = dst_page.frame_address();
+
+                // Check if we are not in dry-run mode.
+                if !dry_run {
+                    // Copy data.
+                    unsafe {
+                        __physcopy(
+                            (dst_frame.into_raw_value() + offset) as *mut u8,
+                            src.into_raw_value() as *const u8,
+                            copy_size,
+                        )
+                    };
+                }
+
+                size -= copy_size;
+                dst = VirtualAddress::new(dst.into_raw_value() + copy_size);
+                src = VirtualAddress::new(src.into_raw_value() + copy_size);
+            }
+            Ok(())
         };
+
+        // Run in dry-run mode first to check for errors.
+        _copy_to_user_unaligned(true, dst, src, size)?;
+        // Run in normal mode to effectively copy data.
+        _copy_to_user_unaligned(false, dst, src, size)?;
 
         Ok(())
     }
@@ -746,7 +805,7 @@ impl Drop for Vmem {
             let vaddr = self
                 .user_pages
                 .front()
-                .unwrap()
+                .expect("user page must exist")
                 .vaddr()
                 .into_virtual_address();
 
