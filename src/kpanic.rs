@@ -5,13 +5,15 @@
 // Imports
 //==================================================================================================
 
-use crate::klog::{
-    Klog,
-    KlogLevel,
+use crate::{
+    hal::platform,
+    klog::{
+        Klog,
+        KlogLevel,
+    },
 };
 use ::core::{
     fmt::Write,
-    hint,
     panic::{
         PanicInfo,
         PanicMessage,
@@ -47,7 +49,5 @@ pub fn kpanic(info: &PanicInfo) -> ! {
         let _ = write!(klog, "file='{}', line={} :: {}", file, line, m);
     }
 
-    loop {
-        hint::spin_loop();
-    }
+    platform::shutdown();
 }
