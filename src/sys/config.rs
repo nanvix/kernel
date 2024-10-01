@@ -68,6 +68,18 @@ pub mod kernel {
     /// - This should be a power of two.
     ///
     pub const SCHEDULER_FREQ: usize = 128;
+
+    ///
+    /// # Description
+    ///
+    /// Maximum number of messages that can be buffered by the kernel.
+    ///
+    /// # Notes
+    ///
+    /// - When this threshold is reached, inter-kernel communication is blocked.
+    /// - This value should be set according to the amount of memory available in the kernel heap.
+    ///
+    pub const MAX_IKC_MESSAGES: usize = 128;
 }
 
 //==================================================================================================
