@@ -107,6 +107,8 @@ struct ProcessManagerInner {
     zombies: LinkedList<ZombieProcess>,
     /// Thread manager.
     tm: ThreadManager,
+    /// Number of messages buffered (not yet consumed).
+    number_buffered_messages: usize,
 }
 
 impl ProcessManagerInner {
@@ -136,6 +138,7 @@ impl ProcessManagerInner {
             zombies: LinkedList::new(),
             running: Some(kernel),
             tm,
+            number_buffered_messages: 0,
         }
     }
 
@@ -913,20 +916,63 @@ impl ProcessManager {
         Ok(())
     }
 
+    ///
+    /// # Description
+    ///
+    /// Sends a message to a process.
+    ///
+    /// # Parameters
+    ///
+    /// - `pid`: ID of the target process.
+    /// - `message`: Message to send.
+    ///
+    /// # Returns
+    ///
+    /// Upon successful completion, empty is returned. Otherwise, an error code is returned instead.
+    ///
     pub fn post_message(&mut self, pid: ProcessIdentifier, message: Message) -> Result<(), Error> {
         let mut pm: RefMut<ProcessManagerInner> = self.try_borrow_mut()?;
         let mut process: ProcessRefMut = pm.find_process_mut(pid)?;
         process.state_mut().post_message(message);
-
+        pm.number_buffered_messages += 1;
         Ok(())
     }
 
+    ///
+    /// # Description
+    ///
+    /// Attempts to receive a message.
+    ///
+    /// # Returns
+    ///
+    /// Upon successful completion, the message is returned. Otherwise, an error code is returned
+    /// instead.
+    ///
     pub fn try_recv() -> Result<Option<Message>, Error> {
-        Ok(Self::get_mut()?
-            .try_borrow_mut()?
-            .get_running_mut()
-            .state_mut()
-            .receive_message())
+        let mut pm: RefMut<ProcessManagerInner> = Self::get_mut()?.try_borrow_mut()?;
+        let running: &mut RunningProcess = pm.get_running_mut();
+        match running.state_mut().receive_message() {
+            Some(message) => {
+                pm.number_buffered_messages -= 1;
+                Ok(Some(message))
+            },
+            None => Ok(None),
+        }
+    }
+
+    ///
+    /// # Description
+    ///
+    /// Returns the number of buffered messages.
+    ///
+    /// # Returns
+    ///
+    /// Upon successful completion, the number of buffered messages is returned. Otherwise, an error
+    /// code is returned instead.
+    ///
+    #[cfg(feature = "stdio")]
+    pub fn number_buffered_messages(&self) -> Result<usize, Error> {
+        Ok(self.try_borrow()?.number_buffered_messages)
     }
 
     fn try_borrow(&self) -> Result<Ref<ProcessManagerInner>, Error> {
