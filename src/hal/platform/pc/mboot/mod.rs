@@ -7,8 +7,8 @@
 
 mod acpi;
 mod basic_mem_info;
-mod memory_map;
 mod mboot_tag;
+mod memory_map;
 mod module;
 
 //==================================================================================================
@@ -438,9 +438,7 @@ fn parse_acpinew(tag: &MbootTag) -> Result<MbootAcpi, Error> {
 ///
 /// Upon success, returns BasicMeminfo structure. Otherwise, it returns an error.
 ///
-fn parse_basicmeminfo(
-    tag: &MbootTag,
-    ) -> Result<MbootBasicMeminfo, Error> {
+fn parse_basicmeminfo(tag: &MbootTag) -> Result<MbootBasicMeminfo, Error> {
     let basicmeminfo: MbootBasicMeminfo = unsafe {
         // Safety: `MbootBasicMeminfo` is a prefix of `MbootTag`.
         let ptr: *const MbootTag = tag as *const MbootTag;
