@@ -486,7 +486,7 @@ pub fn parse(bootloader_magic: u32, addr: usize) -> Result<BootInfo, Error> {
     let mut mem_lower: Option<usize> = None;
 
     while tag.typ != MbootTagType::End {
-        match tag.typ.into() {
+        match tag.typ {
             MbootTagType::Cmdline => {
                 info!("command_line: {:?}", tag);
             },
