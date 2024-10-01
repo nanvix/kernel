@@ -24,7 +24,7 @@ pub mod event;
 pub mod ipc;
 
 /// Kernel calls.
-#[cfg(feature = "kcall")]
+#[cfg(all(target_os = "none", feature = "kcall"))]
 pub mod kcall;
 
 /// Helper macros.
