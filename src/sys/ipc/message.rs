@@ -24,6 +24,10 @@ use ::core::mem;
 ///
 /// A structure that represents a message that can be sent between processes.
 ///
+/// # Notes
+///
+/// - All fields in this structure are intentionally public to enable zero-copy message parsing.
+///
 #[derive(Debug)]
 #[repr(C)]
 pub struct Message {
