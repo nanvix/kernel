@@ -43,7 +43,7 @@ pub struct Message {
     /// Payload of the message.
     pub payload: [u8; Self::PAYLOAD_SIZE],
 }
-crate::static_assert_size!(Message, config::kernel::TOTAL_SIZE);
+crate::static_assert_size!(Message, config::kernel::IPC_MESSAGE_SIZE);
 
 //==================================================================================================
 //  Implementations
@@ -54,7 +54,7 @@ impl Message {
     pub const HEADER_SIZE: usize =
         2 * mem::size_of::<ProcessIdentifier>() + MessageType::SIZE + mem::size_of::<i32>();
     /// The size of the message's payload.
-    pub const PAYLOAD_SIZE: usize = config::kernel::TOTAL_SIZE - Self::HEADER_SIZE;
+    pub const PAYLOAD_SIZE: usize = config::kernel::IPC_MESSAGE_SIZE - Self::HEADER_SIZE;
 
     ///
     /// # Description

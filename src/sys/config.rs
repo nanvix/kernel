@@ -91,7 +91,7 @@ pub mod kernel {
     /// - The value of this function has direct impact on IPC performance.
     /// - The default value is set to match the size of a cache line in x86 processors.
     ///
-    pub const TOTAL_SIZE: usize = 64;
+    pub const IPC_MESSAGE_SIZE: usize = 64;
 }
 
 //==================================================================================================
