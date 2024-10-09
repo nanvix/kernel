@@ -80,6 +80,18 @@ pub mod kernel {
     /// - This value should be set according to the amount of memory available in the kernel heap.
     ///
     pub const MAX_IKC_MESSAGES: usize = 128;
+
+    ///
+    /// # Description
+    ///
+    /// Size of an IPC message.
+    ///
+    /// # Notes
+    ///
+    /// - The value of this function has direct impact on IPC performance.
+    /// - The default value is set to match the size of a cache line in x86 processors.
+    ///
+    pub const IPC_MESSAGE_SIZE: usize = 64;
 }
 
 //==================================================================================================
