@@ -139,8 +139,8 @@ pub fn kcall_handler(hal: &mut Hal, mm: &mut VirtMemoryManager, pm: &mut Process
         match pm.harvest_zombies() {
             Ok(None) => {},
             Ok(Some((pid, status))) => {
-                // Check if process daemon was terminated.
-                if pid == ProcessIdentifier::PROCD {
+                // Check if init daemon process terminated.
+                if pid == ProcessIdentifier::INITD {
                     // It was, so we should shutdown.
                     break;
                 }
