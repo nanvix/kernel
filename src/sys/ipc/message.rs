@@ -6,7 +6,10 @@
 //==================================================================================================
 
 use crate::{
-    error::Error,
+    error::{
+        Error,
+        ErrorCode,
+    },
     ipc::typ::MessageType,
     pm::ProcessIdentifier,
 };
@@ -30,6 +33,8 @@ pub struct Message {
     pub source: ProcessIdentifier,
     /// Process that should receive the message.
     pub destination: ProcessIdentifier,
+    /// Message status.
+    pub status: i32,
     /// Payload of the message.
     pub payload: [u8; Self::PAYLOAD_SIZE],
 }
@@ -43,7 +48,8 @@ impl Message {
     /// Total Size of a message.
     pub const TOTAL_SIZE: usize = 64;
     /// The size of the message header fields (source, destination and type).
-    pub const HEADER_SIZE: usize = 2 * mem::size_of::<ProcessIdentifier>() + MessageType::SIZE;
+    pub const HEADER_SIZE: usize =
+        2 * mem::size_of::<ProcessIdentifier>() + MessageType::SIZE + mem::size_of::<i32>();
     /// The size of the message's payload.
     pub const PAYLOAD_SIZE: usize = Self::TOTAL_SIZE - Self::HEADER_SIZE;
 
@@ -57,6 +63,7 @@ impl Message {
     /// - `source`: The source process.
     /// - `destination`: The destination process.
     /// - `message_type`: The type of the message.
+    /// - `status`: Error status of the message (`None` for success).
     /// - `payload`: The message payload.
     ///
     /// # Returns
@@ -67,12 +74,18 @@ impl Message {
         source: ProcessIdentifier,
         destination: ProcessIdentifier,
         message_type: MessageType,
+        status: Option<ErrorCode>,
         payload: [u8; Self::PAYLOAD_SIZE],
     ) -> Self {
         Self {
             message_type,
             source,
             destination,
+            status: if let Some(status) = status {
+                status.into_errno()
+            } else {
+                0
+            },
             payload,
         }
     }
@@ -116,6 +129,7 @@ impl Default for Message {
             message_type: MessageType::Empty,
             source: ProcessIdentifier::KERNEL,
             destination: ProcessIdentifier::KERNEL,
+            status: 0,
             payload: [0; Self::PAYLOAD_SIZE],
         }
     }

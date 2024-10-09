@@ -65,7 +65,7 @@ impl From<EventInformation> for Message {
                 .copy_from_slice(&instruction.to_ne_bytes());
         }
 
-        Message::new(info.pid, info.pid, MessageType::Exception, payload)
+        Message::new(info.pid, info.pid, MessageType::Exception, None, payload)
     }
 }
 

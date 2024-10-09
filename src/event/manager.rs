@@ -356,6 +356,7 @@ impl EventManagerInner {
                                 source: ProcessIdentifier::KERNEL,
                                 destination: pid,
                                 message_type: MessageType::SchedulingEvent,
+                                status: 0,
                                 payload: {
                                     let mut payload: [u8; Message::PAYLOAD_SIZE] =
                                         [0u8; Message::PAYLOAD_SIZE];
