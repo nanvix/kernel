@@ -40,11 +40,11 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd kernel-release
-          make TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-isapc clippy
-          make TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-pc clippy
-          make TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-baremetal clippy
-          make TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-pc-smp clippy
-          make TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-baremetal-smp clippy
+          make TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-isapc clippy
+          make TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-pc clippy
+          make TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-baremetal clippy
+          make TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-pc-smp clippy
+          make TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-baremetal-smp clippy
           make TOOLCHAIN_DIR=$HOME/toolchain TARGET=x86 LOG_LEVEL=trace MACHINE=microvm clippy
 
   build:
@@ -61,11 +61,11 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd kernel-release
-          make TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace all MACHINE=qemu-isapc
-          make TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace all MACHINE=qemu-pc
-          make TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace all MACHINE=qemu-baremetal
-          make TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace all MACHINE=qemu-pc-smp
-          make TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace all MACHINE=qemu-baremetal-smp
+          make RELEASE=yes TARGET=x86 LOG_LEVEL=trace all MACHINE=qemu-isapc
+          make RELEASE=yes TARGET=x86 LOG_LEVEL=trace all MACHINE=qemu-pc
+          make RELEASE=yes TARGET=x86 LOG_LEVEL=trace all MACHINE=qemu-baremetal
+          make RELEASE=yes TARGET=x86 LOG_LEVEL=trace all MACHINE=qemu-pc-smp
+          make RELEASE=yes TARGET=x86 LOG_LEVEL=trace all MACHINE=qemu-baremetal-smp
           make TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace all MACHINE=microvm
 
   test-qemu-isapc:
@@ -82,7 +82,7 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd kernel-release
-          make TIMEOUT=5 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-isapc all run | tee output.txt
+          make TIMEOUT=5 RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-isapc all run | tee output.txt
           echo "Magic String: $(cat output.txt | tail -n 1)"
           [ "$(cat output.txt | tail -n 1)" != "[DEBUG][kernel] hello, world!" ] && exit 1 || exit 0 ;
 
@@ -100,7 +100,7 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd kernel-release
-          make TIMEOUT=5 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-pc all run | tee output.txt
+          make TIMEOUT=5 RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-pc all run | tee output.txt
           echo "Magic String: $(cat output.txt | tail -n 1)"
           [ "$(cat output.txt | tail -n 1)" != "[DEBUG][kernel] hello, world!" ] && exit 1 || exit 0 ;
 
@@ -118,7 +118,7 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd kernel-release
-          make TIMEOUT=5 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-baremetal all run | tee output.txt
+          make TIMEOUT=5 RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-baremetal all run | tee output.txt
           echo "Magic String: $(cat output.txt | tail -n 1)"
           [ "$(cat output.txt | tail -n 1)" != "[DEBUG][kernel] hello, world!" ] && exit 1 || exit 0 ;
 
@@ -136,7 +136,7 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd kernel-release
-          make TIMEOUT=5 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-pc-smp all run | tee output.txt
+          make TIMEOUT=5 RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-pc-smp all run | tee output.txt
           echo "Magic String: $(cat output.txt | tail -n 1)"
           [ "$(cat output.txt | tail -n 1)" != "[DEBUG][kernel] hello, world!" ] && exit 1 || exit 0 ;
 
@@ -154,7 +154,7 @@ jobs:
         port: ${{ secrets.portnum }}
         script: |
           cd kernel-release
-          make TIMEOUT=5 TOOLCHAIN_DIR=$HOME/toolchain RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-baremetal-smp all run | tee output.txt
+          make TIMEOUT=5 RELEASE=yes TARGET=x86 LOG_LEVEL=trace MACHINE=qemu-baremetal-smp all run | tee output.txt
           echo "Magic String: $(cat output.txt | tail -n 1)"
           [ "$(cat output.txt | tail -n 1)" != "[DEBUG][kernel] hello, world!" ] && exit 1 || exit 0 ;
 
