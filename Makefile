@@ -44,6 +44,9 @@ export TOOLCHAIN_DIR ?= $(ROOT_DIR)/toolchain
 export CARGO := $(HOME)/.cargo/bin/cargo
 export RUSTC := $(HOME)/.cargo/bin/rustc
 
+# Microvm path
+export MICROVM_PATH ?= $(TOOLCHAIN_DIR)/microvm/bin
+
 #===============================================================================
 # Build Artifacts
 #===============================================================================
