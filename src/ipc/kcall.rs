@@ -30,10 +30,10 @@ use ::sys::{
 //==================================================================================================
 
 fn do_send(pm: &mut ProcessManager, src: ProcessIdentifier, message: Message) -> Result<(), Error> {
-    trace!("do_send(): src={:?}, dst={:?}", src, message.destination);
+    trace!("do_send(): src={:?}, dst={:?}", src, { message.destination });
 
     // Sanity check message source.
-    if message.source != src {
+    if { message.source } != src {
         let reason: &str = "invalid message source";
         error!("do_send(): {}", reason);
         return Err(Error::new(ErrorCode::InvalidArgument, reason));

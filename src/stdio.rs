@@ -39,8 +39,8 @@ pub fn write(message: Message) -> Result<(), Error> {
     trace!(
         "write(): message.type={:?}, message.source={:?}, message.destination={:?}",
         message.message_type,
-        message.source,
-        message.destination
+        { message.source },
+        { message.destination }
     );
 
     // Checks if message type is not supported.
