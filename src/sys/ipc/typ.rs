@@ -24,7 +24,7 @@ use ::core::{
 /// Type that describes what the message is about.
 ///
 #[derive(Copy, Clone, PartialEq, Eq)]
-#[repr(u32)]
+#[repr(u8)]
 pub enum MessageType {
     /// The message is empty.
     Empty,
@@ -39,7 +39,7 @@ pub enum MessageType {
     /// The message carries information sent from one kernel to another.
     Ikc,
 }
-crate::static_assert_size!(MessageType, 4);
+crate::static_assert_size!(MessageType, 1);
 
 //==================================================================================================
 //  Structures
@@ -47,7 +47,7 @@ crate::static_assert_size!(MessageType, 4);
 
 impl MessageType {
     /// The size of a message type.
-    pub const SIZE: usize = mem::size_of::<u32>();
+    pub const SIZE: usize = mem::size_of::<u8>();
 
     ///
     /// # Description
@@ -60,12 +60,12 @@ impl MessageType {
     ///
     pub fn to_bytes(&self) -> [u8; Self::SIZE] {
         match self {
-            MessageType::Empty => 0u32.to_ne_bytes(),
-            MessageType::Interrupt => 1u32.to_ne_bytes(),
-            MessageType::Exception => 2u32.to_ne_bytes(),
-            MessageType::Ipc => 3u32.to_ne_bytes(),
-            MessageType::SchedulingEvent => 4u32.to_ne_bytes(),
-            MessageType::Ikc => 5u32.to_ne_bytes(),
+            MessageType::Empty => [0],
+            MessageType::Interrupt => [1],
+            MessageType::Exception => [2],
+            MessageType::Ipc => [3],
+            MessageType::SchedulingEvent => [4],
+            MessageType::Ikc => [5],
         }
     }
 
@@ -84,13 +84,13 @@ impl MessageType {
     /// returned instead.
     ///
     pub fn try_from_bytes(bytes: [u8; Self::SIZE]) -> Result<Self, Error> {
-        match u32::from_ne_bytes(bytes) {
-            0 => Ok(MessageType::Empty),
-            1 => Ok(MessageType::Interrupt),
-            2 => Ok(MessageType::Exception),
-            3 => Ok(MessageType::Ipc),
-            4 => Ok(MessageType::SchedulingEvent),
-            5 => Ok(MessageType::Ikc),
+        match bytes {
+            [0] => Ok(MessageType::Empty),
+            [1] => Ok(MessageType::Interrupt),
+            [2] => Ok(MessageType::Exception),
+            [3] => Ok(MessageType::Ipc),
+            [4] => Ok(MessageType::SchedulingEvent),
+            [5] => Ok(MessageType::Ikc),
             _ => Err(Error::new(ErrorCode::InvalidMessage, "invalid message type")),
         }
     }
