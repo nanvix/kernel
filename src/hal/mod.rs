@@ -74,14 +74,14 @@ pub fn init(
 
     let mut ioports: IoPortAllocator = IoPortAllocator::new();
     let mut ioaddresses: IoMemoryAllocator = IoMemoryAllocator::new();
-    let mut platform: Platform =
-        platform::init(
-            &mut ioports, 
-            &mut ioaddresses, 
-            memory_regions, 
-            mmio_regions, 
-            madt,
-            mem_lower)?;
+    let mut platform: Platform = platform::init(
+        &mut ioports,
+        &mut ioaddresses,
+        memory_regions,
+        mmio_regions,
+        madt,
+        mem_lower,
+    )?;
 
     // Initialize the interrupt manager.
     let intman: Option<InterruptManager> = match platform.arch.controller.take() {

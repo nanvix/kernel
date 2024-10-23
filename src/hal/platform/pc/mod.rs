@@ -36,11 +36,11 @@ use ::arch::{
 
 use ::sys::{
     config,
-    mm::VirtualAddress,
     error::{
         Error,
         ErrorCode,
     },
+    mm::VirtualAddress,
 };
 
 //==================================================================================================
@@ -113,13 +113,11 @@ fn register_bios_data_area(
     memory_regions: &mut LinkedList<MemoryRegion<VirtualAddress>>,
     mem_lower_size: usize,
 ) -> Result<(), Error> {
-
-    // Check if the memory region for the Bios Data Area fits in the 
+    // Check if the memory region for the Bios Data Area fits in the
     // lower memory regions available.
     // NOTE: This is possible because mem_lower_size start at address 0x0.
     if mem_lower_size < bios::BiosDataArea::BASE + mem::PAGE_SIZE {
-        let reason: &str = 
-            "bios data memory region doesn't fit in lower memory available";
+        let reason: &str = "bios data memory region doesn't fit in lower memory available";
         error!("register_bios_data_area(): {:?}", reason);
         return Err(Error::new(ErrorCode::OutOfMemory, reason));
     }
@@ -200,24 +198,21 @@ pub fn init(
     // Register BIOS data area.
     #[cfg(feature = "bios")]
     let mem_lower_size = match mem_lower {
-        Some(mem_lower_size) => {
-            mem_lower_size
-        },
+        Some(mem_lower_size) => mem_lower_size,
         None => {
             let reason: &str = "availability of lower memory is not known";
             error!("init(): {:?}", reason);
             return Err(Error::new(ErrorCode::InvalidArgument, reason));
-        }
+        },
     };
 
     register_bios_data_area(memory_regions, mem_lower_size)?;
 
-    // Check if the memory region for the Trampoline fits in the 
+    // Check if the memory region for the Trampoline fits in the
     // lower memory regions available.
     // NOTE: This is possible because mem_lower_size start at address 0x0.
     if mem_lower_size < platform::TRAMPOLINE_ADDRESS.into_raw_value() + mem::PAGE_SIZE {
-        let reason: &str = 
-            "Trampoline memory region doesn't fit in lower memory available";
+        let reason: &str = "Trampoline memory region doesn't fit in lower memory available";
         error!("init(): {:?}", reason);
         return Err(Error::new(ErrorCode::OutOfMemory, reason));
     }

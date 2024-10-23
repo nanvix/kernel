@@ -211,7 +211,7 @@ pub fn init(
     _memory_regions: &mut LinkedList<MemoryRegion<VirtualAddress>>,
     _mmio_regions: &mut LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
     madt: &Option<MadtInfo>,
-    _mem_lower: Option<usize>
+    _mem_lower: Option<usize>,
 ) -> Result<Platform, Error> {
     Ok(Platform {
         arch: x86::init(ioports, ioaddresses, madt)?,

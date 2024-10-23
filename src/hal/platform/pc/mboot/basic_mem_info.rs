@@ -55,7 +55,7 @@ impl core::fmt::Debug for MbootBasicMeminfoTag {
 ///
 /// mem_upper: Size of the first contiguos memory region above 1MB.
 ///
-pub struct MbootBasicMeminfo <'a>{
+pub struct MbootBasicMeminfo<'a> {
     /// Tag.
     tag: &'a MbootBasicMeminfoTag,
     /// Lower memory size in kilobytes.
@@ -64,7 +64,7 @@ pub struct MbootBasicMeminfo <'a>{
     mem_upper: &'a usize,
 }
 
-impl<'a> MbootBasicMeminfo<'a> {
+impl MbootBasicMeminfo<'_> {
     pub unsafe fn from_raw(ptr: *const u8) -> Result<Self, Error> {
         // Ensure that `ptr` is not null.
         if ptr.is_null() {
@@ -107,7 +107,11 @@ impl<'a> MbootBasicMeminfo<'a> {
         // Cast pointer to upper memory address.
         let mem_upper: &usize = &*(ptr as *const usize);
 
-        Ok(Self { tag, mem_lower, mem_upper })
+        Ok(Self {
+            tag,
+            mem_lower,
+            mem_upper,
+        })
     }
 
     ///

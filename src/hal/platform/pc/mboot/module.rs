@@ -68,7 +68,7 @@ pub struct MbootModule<'a> {
     cmdline: &'a str,
 }
 
-impl<'a> MbootModule<'a> {
+impl MbootModule<'_> {
     ///
     /// # Description
     ///
