@@ -38,13 +38,13 @@ use ::sys::{
 pub fn write(message: Message) -> Result<(), Error> {
     trace!(
         "write(): message.type={:?}, message.source={:?}, message.destination={:?}",
-        message.message_type,
-        message.source,
-        message.destination
+        { message.message_type },
+        { message.source },
+        { message.destination }
     );
 
     // Checks if message type is not supported.
-    if message.message_type != MessageType::Ikc {
+    if { message.message_type } != MessageType::Ikc {
         let reason: &str = "unsupported message type";
         error!("write(): {}", reason);
         return Err(Error::new(ErrorCode::InvalidArgument, reason));
@@ -87,7 +87,7 @@ pub fn read() -> Result<Option<Message>, Error> {
     match Message::try_from_bytes(message) {
         Ok(message) => {
             // Check if message is empty.
-            if message.message_type == MessageType::Empty {
+            if { message.message_type } == MessageType::Empty {
                 Ok(None)
             } else {
                 // NOTE: trace command after reading the first byte, to avoid flooding the log.
