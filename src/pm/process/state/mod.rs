@@ -76,7 +76,7 @@ pub enum ProcessRefMut<'a> {
     Zombie(&'a mut ZombieProcess),
 }
 
-impl<'a> ProcessRefMut<'a> {
+impl ProcessRefMut<'_> {
     pub fn state_mut(&mut self) -> &mut ProcessState {
         match self {
             ProcessRefMut::Runnable(process) => process.state_mut(),
@@ -96,7 +96,7 @@ pub enum ProcessRef<'a> {
     Zombie(&'a ZombieProcess),
 }
 
-impl<'a> ProcessRef<'a> {
+impl ProcessRef<'_> {
     pub fn state(&self) -> &ProcessState {
         match self {
             ProcessRef::Runnable(process) => process.state(),

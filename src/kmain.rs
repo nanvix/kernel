@@ -8,6 +8,7 @@
 #![deny(clippy::all)]
 #![forbid(clippy::large_stack_frames)]
 #![forbid(clippy::large_stack_arrays)]
+#![allow(static_mut_refs)] // https://github.com/nanvix/kernel/issues/454
 #![allow(internal_features)]
 #![feature(core_intrinsics)] // bios require this.
 #![feature(allocator_api)] // kheap uses this.
@@ -225,20 +226,19 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
         LinkedList<TruncatedMemoryRegion<VirtualAddress>>,
         LinkedList<KernelModule>,
     );
-    let (madt, mem_lower, mut memory_regions, mut mmio_regions, kernel_modules): KernelArgs = match kargs
-        .parse()
-    {
-        Ok(bootinfo) => {
-            (bootinfo.madt, 
-             bootinfo.mem_lower, 
-             bootinfo.memory_regions, 
-             bootinfo.mmio_regions, 
-             bootinfo.kernel_modules)
-        },
-        Err(err) => {
-            panic!("failed to parse kernel arguments: {:?}", err);
-        },
-    };
+    let (madt, mem_lower, mut memory_regions, mut mmio_regions, kernel_modules): KernelArgs =
+        match kargs.parse() {
+            Ok(bootinfo) => (
+                bootinfo.madt,
+                bootinfo.mem_lower,
+                bootinfo.memory_regions,
+                bootinfo.mmio_regions,
+                bootinfo.kernel_modules,
+            ),
+            Err(err) => {
+                panic!("failed to parse kernel arguments: {:?}", err);
+            },
+        };
 
     info!("parsing kernel image...");
     let kimage: KernelImage = match KernelImage::new() {
@@ -268,12 +268,7 @@ pub extern "C" fn kmain(kargs: &KernelArguments) {
         }
     }
 
-    let mut hal: Hal = match hal::init(
-        &mut memory_regions,
-        &mut mmio_regions,
-        &madt,
-        mem_lower)
-    {
+    let mut hal: Hal = match hal::init(&mut memory_regions, &mut mmio_regions, &madt, mem_lower) {
         Ok(hal) => hal,
         Err(err) => {
             panic!("failed to initialize hardware abstraction layer: {:?}", err);

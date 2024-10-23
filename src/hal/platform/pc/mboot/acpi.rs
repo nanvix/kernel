@@ -56,7 +56,7 @@ pub struct MbootAcpi<'a> {
     rsdp: *const u8,
 }
 
-impl<'a> MbootAcpi<'a> {
+impl MbootAcpi<'_> {
     ///
     /// # Description
     ///
